@@ -214,6 +214,46 @@ class Core(base.Core):
         assert self.qtile is not None
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
+    def on_config_load(self, initial: bool) -> None:
+        if initial:
+            # This backend does not support restarting
+            return
+
+        assert self.qtile is not None
+
+        managed_wins = [
+            w for w in self.qtile.windows_map.values() if isinstance(w, Window)
+        ]
+        for win in managed_wins:
+            group = None
+            if win.group:
+                if win.group.name in self.qtile.groups_map:
+                    # Put window on group with same name as its old group if one exists
+                    group = self.qtile.groups_map[win.group.name]
+                else:
+                    # Otherwise place it on the group at the same index
+                    for i, old_group in self.qtile._state.groups:  # type: ignore
+                        if i < len(self.qtile.groups):
+                            name = old_group[0]
+                            if win.group.name == name:
+                                group = self.qtile.groups[i]
+                if win in win.group.windows:
+                    # Remove window from old group
+                    win.group.remove(win)
+            if group is None:
+                # Falling back to current group if none found
+                group = self.qtile.current_group
+            group.add(win)
+            if group == self.qtile.current_group:
+                win.unhide()
+            else:
+                win.hide()
+
+        # Apply input device configuration
+        if self.qtile.config.wl_input_rules:
+            # TODO: configure devices (keyboards, pointers)
+            pass
+
     def handle_screen_change(self):
         hook.fire("screen_change", None)
 
