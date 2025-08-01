@@ -39,15 +39,6 @@ class LayerGroup(IntEnum):
     SYSTEM = 10
 
 
-@dataclass
-class StackInfo:
-    sibling: _Window
-    above: bool
-
-    def __post_init__(self):
-        self.wid = self.sibling.wid
-
-
 def check_window(func):
     """
     Decorator that requires window to be stacked before proceeding.
@@ -93,23 +84,23 @@ class ZManager:
         """Remove window from stack information."""
 
     @abstractmethod
-    def move_up(self, window) -> StackInfo | None:
+    def move_up(self, window) -> None:
         """Move window up in the stack (in its layer group)."""
 
     @abstractmethod
-    def move_down(self, window) -> StackInfo | None:
+    def move_down(self, window) -> None:
         """Move window down in the stack (in its layer group)."""
 
     @abstractmethod
-    def move_to_top(self, window) -> StackInfo | None:
+    def move_to_top(self, window) -> None:
         """Move window to top of stack (in its layer group)."""
 
     @abstractmethod
-    def move_to_bottom(self, window) -> StackInfo | None:
+    def move_to_bottom(self, window) -> None:
         """Move window to bottom of stack (in its layer group)."""
 
     @abstractmethod
-    def move_window_to_layer(self, window, new_layer, position="top") -> StackInfo | None:
+    def move_window_to_layer(self, window, new_layer, position="top") -> None:
         """Move window to a new layer group."""
 
     def show_stacking_order(self):

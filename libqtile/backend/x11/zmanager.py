@@ -17,10 +17,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import xcffib.xproto
+
 from libqtile import hook
 from libqtile.backend.base import zmanager
 from libqtile.backend.base.window import _Window
-from libqtile.backend.base.zmanager import LayerGroup, StackInfo, check_window
+from libqtile.backend.base.zmanager import LayerGroup, check_window
 from libqtile.backend.x11 import window
 from libqtile.log_utils import logger
 
@@ -39,21 +41,45 @@ class ZManager(zmanager.ZManager):
         layer, _ = self.layer_map.get(window, (None, 0))
         return layer
 
-    @check_window
-    def get_window_above(self, window) -> StackInfo | None:
-        stack = self.get_z_order()
-        idx = stack.index(window)
-        if idx < (len(stack) - 1):
-            sibling = stack[idx + 1]
-            return StackInfo(sibling=sibling, above=True)
+    def stack(self, window: _Window) -> None:
+        sibling, above = self.get_sibling(window)
+
+        if sibling is None:
+            return
+
+        window.window.configure(
+            stackmode=xcffib.xproto.StackMode.Above if above else xcffib.xproto.StackMode.Below,
+            sibling=sibling.wid,
+        )
+        self.raise_children(window)
+        self.update_client_lists()
+        window._layer_group = self.get_window_layer(window)
+
+    def raise_children(self, window: _Window):
+        """Ensure any transient windows are moved up with the parent."""
+        query = window.window.conn.conn.core.QueryTree(window.window.wid).reply()
+        children = list(query.children)
+        if children:
+            parent = window.window.wid
+            for child in children:
+                window.window.conn.conn.core.ConfigureWindow(
+                    child,
+                    xcffib.xproto.ConfigWindow.Sibling | xcffib.xproto.ConfigWindow.StackMode,
+                    [parent, xcffib.xproto.StackMode.Above],
+                )
+                parent = child
 
     @check_window
-    def get_window_below(self, window) -> StackInfo | None:
+    def get_sibling(self, window) -> tuple[_Window | None, bool]:
         stack = self.get_z_order()
+        if len(stack) == 1:
+            return (None, True)
+        
         idx = stack.index(window)
-        if idx > 0:
-            sibling = stack[idx - 1]
-            return StackInfo(sibling=sibling, above=False)
+        if idx == 0:
+            return (stack[1], False)
+        else:
+            return (stack[idx - 1], True)
 
     def add_window(
         self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top"
@@ -73,7 +99,7 @@ class ZManager(zmanager.ZManager):
 
         self._reindex_layer(layer)
 
-        window.stack(self.get_window_below(window) or self.get_window_above(window))
+        self.stack(window)
 
     @check_window
     def remove_window(self, window) -> None:
@@ -92,7 +118,7 @@ class ZManager(zmanager.ZManager):
         self.update_client_lists()
 
     @check_window
-    def move_up(self, window) -> StackInfo | None:
+    def move_up(self, window) -> None:
         layer, cur_idx = self.layer_map[window]
         visible = [
             w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
@@ -105,11 +131,16 @@ class ZManager(zmanager.ZManager):
 
         self._reindex_layer(layer)
 
-        return self.get_window_below(window)
+        self.stack(window)
 
     @check_window
-    def move_down(self, window) -> StackInfo | None:
+    def move_down(self, window) -> None:
         layer, cur_idx = self.layer_map[window]
+
+        if layer == LayerGroup.BRING_TO_FRONT:
+            window.change_layer()
+            layer, cur_idx = self.layer_map[window]            
+
         visible = [
             w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
         ]
@@ -121,28 +152,28 @@ class ZManager(zmanager.ZManager):
 
         self._reindex_layer(layer)
 
-        return self.get_window_above(window)
+        self.stack(window)
 
     @check_window
-    def move_to_top(self, window) -> StackInfo | None:
+    def move_to_top(self, window) -> None:
         layer, _ = self.layer_map[window]
         self.layers[layer].remove(window)
         self.layers[layer].append(window)
         self._reindex_layer(layer)
 
-        return self.get_window_below(window)
+        self.stack(window)
 
     @check_window
-    def move_to_bottom(self, window) -> StackInfo | None:
+    def move_to_bottom(self, window) -> None:
         layer, _ = self.layer_map[window]
         self.layers[layer].remove(window)
         self.layers[layer].insert(0, window)
         self._reindex_layer(layer)
 
-        return self.get_window_above(window)
+        self.stack(window)
 
     @check_window
-    def move_window_to_layer(self, window, new_layer, position="top") -> StackInfo | None:
+    def move_window_to_layer(self, window, new_layer, position="top") -> None:
         old_layer, _ = self.layer_map[window]
         if old_layer is new_layer:
             return
@@ -157,13 +188,18 @@ class ZManager(zmanager.ZManager):
         self._reindex_layer(old_layer)
         self._reindex_layer(new_layer)
 
-        return self.get_window_below(window) or self.get_window_above(window)
+        self.stack(window)
 
     def get_z_order(self) -> list[_Window]:
         z_order = []
         for clients in self.layers.values():
             z_order.extend(clients)
         return z_order
+
+    @check_window
+    def get_window_layer(self, window: _Window) -> LayerGroup | None:
+        layer, _ = self.layer_map[window]
+        return layer
 
     def _reindex_layer(self, layer) -> None:
         for idx, win in enumerate(self.layers[layer]):
