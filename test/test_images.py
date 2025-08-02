@@ -182,6 +182,22 @@ class TestImgScale:
         with pytest.raises(ValueError):
             png_img.scale()
 
+    @pytest.mark.parametrize("width_factor,height_factor", [(0, 0), (-1, -1)])
+    def test_scale_less_than_one(self, png_img, width_factor, height_factor):
+        png_img.scale(width_factor, height_factor)
+        assert png_img.width == 1
+        assert png_img.height == 1
+
+    @pytest.mark.parametrize("width_factor", [0, -1])
+    def test_scale_less_than_one_width(self, png_img, width_factor):
+        png_img.scale(width_factor=width_factor)
+        assert png_img.width == 1
+
+    @pytest.mark.parametrize("height_factor", [0, -1])
+    def test_scale_less_than_one_height(self, png_img, height_factor):
+        png_img.scale(height_factor=height_factor)
+        assert png_img.height == 1
+
 
 class TestImgResize:
     def test_resize(self, png_img):
@@ -202,6 +218,26 @@ class TestImgResize:
         png_img.resize(height=10)
         assert png_img.height == 10
         assert (png_img.width / png_img.height) == pytest.approx(ratio)
+
+    def test_resize_fail(self, png_img):
+        with pytest.raises(ValueError):
+            png_img.resize()
+
+    @pytest.mark.parametrize("width,height", [(0, 0), (-1, -1)])
+    def test_resize_less_than_one(self, png_img, width, height):
+        png_img.resize(width, height)
+        assert png_img.width == 1
+        assert png_img.height == 1
+
+    @pytest.mark.parametrize("width", [0, -1])
+    def test_resize_less_than_one_width(self, png_img, width):
+        png_img.resize(width=width)
+        assert png_img.width == 1
+
+    @pytest.mark.parametrize("height", [0, -1])
+    def test_resize_less_than_one_height(self, png_img, height):
+        png_img.resize(height=height)
+        assert png_img.height == 1
 
 
 class TestLoader:
