@@ -37,6 +37,18 @@ class ZManager(zmanager.ZManager):
     def is_stacked(self, window: _Window) -> bool:
         return window in self.layer_map
 
+    def is_above(self, window: _Window, other: _Window) -> bool:
+        if other not in self.layer_map:
+            return False
+
+        w_layer, w_idx = self.layer_map[window]
+        o_layer, o_idx = self.layer_map[other]
+
+        if w_layer != o_layer:
+            return False
+
+        return w_idx > o_idx
+
     def get_layer(self, window) -> LayerGroup | None:
         layer, _ = self.layer_map.get(window, (None, 0))
         return layer
@@ -155,6 +167,14 @@ class ZManager(zmanager.ZManager):
         self.stack(window)
 
     @check_window
+    def move_to_index(self, window: _Window, index: int) -> None:
+        layer, _ = self.layer_map[window]
+        self.layers[layer].remove(window)
+        self.layers[layer].insert(index, window)
+        self._reindex_layer(layer)
+        self.stack(window)
+
+    @check_window
     def move_to_top(self, window) -> None:
         layer, _ = self.layer_map[window]
         self.layers[layer].remove(window)
@@ -217,6 +237,12 @@ class ZManager(zmanager.ZManager):
             for client in clients:
                 if client != window:
                     client.change_layer()
+                    # We drop windows into the new layer after a new window has taken focus
+                    # This means it will be stacked above the new window which is
+                    # undesirable so we can move it below that window.
+                    if self.is_above(client, window):
+                        _, index = self.layer_map[window]
+                        self.move_to_index(client, index)
 
     def update_client_lists(self):
         """
