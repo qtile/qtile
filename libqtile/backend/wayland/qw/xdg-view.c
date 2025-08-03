@@ -75,7 +75,7 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.height = geom.height;
 
     xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
-                                     xdg_view->base.server->cb_data);
+                                          xdg_view->base.server->cb_data);
 
     // Focus the view upon mapping
     qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
@@ -130,8 +130,8 @@ static void qw_xdg_view_clip(struct qw_xdg_view *xdg_view) {
 }
 
 // Place the xdg_view at given position and size with border and stacking info
-static void qw_xdg_view_place(void *self, int x, int y, int width, int height, int bw,
-                              float (*bc)[4], int bn, int above) {
+static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
+                              const struct qw_border *borders, int border_count, int above) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
     struct wlr_xdg_toplevel_state state = xdg_view->xdg_toplevel->current;
@@ -164,7 +164,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height, i
     }
 
     // Paint borders around the view with given border colors and width
-    qw_view_paint_borders((struct qw_view *)xdg_view, bc, bw, bn);
+    qw_view_paint_borders((struct qw_view *)xdg_view, borders, border_count);
 
     // Raise view to front if requested
     if (above != 0) {
