@@ -1,4 +1,5 @@
 #include "view.h"
+#include "cairo-buffer.h"
 #include "server.h"
 #include <stdlib.h>
 #include <wlr/util/log.h>
@@ -10,11 +11,28 @@ void qw_view_cleanup_borders(struct qw_view *view) {
     if (!view->borders) {
         return;
     }
-    for (int i = 0; i < view->bn; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            wlr_scene_node_destroy(&view->borders[i][j]->node);
+
+    for (int i = 0; i < view->bn; i++) {
+        switch (view->borders[i].type) {
+        case QW_BORDER_RECT:
+            for (int j = 0; j < 4; j++) {
+                if (view->borders[i].rects[j]) {
+                    wlr_scene_node_destroy(&view->borders[i].rects[j]->node);
+                    view->borders[i].rects[j] = NULL;
+                }
+            }
+            break;
+        case QW_BORDER_BUFFER:
+            for (int j = 0; j < 4; j++) {
+                if (view->borders[i].scene_bufs[j]) {
+                    wlr_scene_node_destroy(&view->borders[i].scene_bufs[j]->node);
+                    view->borders[i].scene_bufs[j] = NULL;
+                }
+            }
+            break;
         }
     }
+
     free(view->borders);
 }
 
@@ -69,69 +87,81 @@ void qw_view_move_down(struct qw_view *view) {
     }
 }
 
-bool qw_view_is_visible(struct qw_view *view) {
-    return view->content_tree->node.enabled;
-}
+bool qw_view_is_visible(struct qw_view *view) { return view->content_tree->node.enabled; }
 
 // Creates and paints multiple border layers around the view content.
-// colors: array of RGBA colors for each border layer (each is 4 floats).
-// width: total border width in pixels.
-// n: number of border layers to draw.
-void qw_view_paint_borders(struct qw_view *view, float (*colors)[4], int width, int n) {
+// borders: array of qw_border for each border.
+// border_count: number of border layers to draw.
+void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders,
+                           int border_count) {
     struct wlr_scene_node *tree_node = view->get_tree_node(view);
     if (!tree_node || !view->content_tree) {
         return;
     }
+
     qw_view_cleanup_borders(view);
 
-    view->bn = n;
-    view->borders = malloc(n * sizeof(struct wlr_scene_rect[4]));
+    view->borders = calloc(border_count, sizeof(*view->borders));
     if (!view->borders) {
-        wlr_log(WLR_ERROR, "failed to allocate memory for borders");
+        wlr_log(WLR_ERROR, "Failed to allocate border layer tracking");
         return;
     }
+    view->bn = border_count;
 
-    // Offset the view's tree node by the border width so content appears centered inside borders
-    wlr_scene_node_set_position(tree_node, width, width);
+    int total_width = 0;
+    for (int i = 0; i < border_count; i++) {
+        total_width += borders[i].width;
+    }
 
-    int outer_w = view->width + width * 2;
-    int outer_h = view->height + width * 2;
-    int coord = 0; // Keeps track of cumulative offset for layering borders
+    wlr_scene_node_set_position(tree_node, total_width, total_width);
 
-    // Helper struct to define rectangle parameters for each border side
-    struct border_pairs {
-        int x;
-        int y;
-        int w;
-        int h;
-    };
+    int outer_w = view->width + total_width * 2;
+    int outer_h = view->height + total_width * 2;
 
-    for (int i = 0; i < n; i++) {
-        // Divide the total border width into equal parts for each border layer
-        // Add leftover pixels to the first few layers to sum to total width
-        int bw = (int)(width / n) + (int)(i < (width % n));
+    int coord = 0;
+    for (int i = 0; i < border_count; i++) {
+        const struct qw_border *src = &borders[i];
+        view->borders[i].type = src->type;
+
+        int bw = src->width;
 
         // clang-format off
-        struct border_pairs pairs[4] = {
-            { .x = coord, .y = coord, .w = outer_w - coord * 2, .h = bw },                          // top border
-            { .x = outer_w - bw - coord, .y = bw + coord, .w = bw, .h = outer_h - bw * 2 - coord * 2 },  // right border
-            { .x = coord, .y = outer_h - bw - coord, .w = outer_w - coord * 2, .h = bw },          // bottom border
-            { .x = coord, .y = bw + coord, .w = bw, .h = outer_h - bw * 2 - coord * 2 },          // left border
+        struct wlr_box sides[4] = {
+            { coord, coord, outer_w - coord * 2, bw },                              // top
+            { outer_w - bw - coord, bw + coord, bw, outer_h - 2 * bw - coord * 2 }, // right
+            { coord, outer_h - bw - coord, outer_w - coord * 2, bw },               // bottom
+            { coord, bw + coord, bw, outer_h - 2 * bw - coord * 2 },                // left
         };
         // clang-format on
 
-        // Create rectangles and position them according to pairs
-        for (int j = 0; j < 4; j++) {
-            view->borders[i][j] =
-                wlr_scene_rect_create(view->content_tree, pairs[j].w, pairs[j].h, colors[i]);
-            view->borders[i][j]->node.data = view;
-            wlr_scene_node_set_position(&view->borders[i][j]->node, pairs[j].x, pairs[j].y);
+        if (src->type == QW_BORDER_RECT) {
+            for (int j = 0; j < 4; j++) {
+                struct wlr_scene_rect *rect = wlr_scene_rect_create(
+                    view->content_tree, sides[j].width, sides[j].height, src->rect.color[j]);
+                if (!rect) {
+                    wlr_log(WLR_ERROR, "Failed to create scene_rect for border");
+                    continue;
+                }
+                wlr_scene_node_set_position(&rect->node, sides[j].x, sides[j].y);
+                view->borders[i].rects[j] = rect;
+            }
+
+        } else if (src->type == QW_BORDER_BUFFER) {
+            cairo_surface_t *surface = src->buffer.surface;
+            struct wlr_scene_buffer **buffers =
+                create_scene_buffers_from_surface(view->content_tree, surface, sides, 4);
+
+            for (int j = 0; j < 4; j++) {
+                if (!buffers[j]) {
+                    continue;
+                }
+                wlr_scene_node_set_position(&buffers[j]->node, sides[j].x, sides[j].y);
+                view->borders[i].scene_bufs[j] = buffers[j];
+            }
         }
 
-        // Increase the offset for the next inner border layer
         coord += bw;
     }
 
-    // Ensure the tree node is painted above other nodes
     wlr_scene_node_raise_to_top(tree_node);
 }
