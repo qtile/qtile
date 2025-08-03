@@ -1,5 +1,5 @@
 #include "cairo-buffer.h"
-
+#include "wlr/util/log.h"
 #include <drm_fourcc.h>
 #include <wlr/interfaces/wlr_buffer.h>
 
@@ -50,4 +50,59 @@ struct wlr_buffer *cairo_buffer_create(int width, int height, size_t stride, voi
     cairo_buffer->data = data;
     cairo_buffer->stride = stride;
     return &cairo_buffer->base;
+}
+
+// Creates a wlr_buffer from a subregion of a cairo image surface
+struct wlr_buffer *cairo_buffer_from_surface_region(cairo_surface_t *surface, int x, int y,
+                                                    int width, int height) {
+    if (cairo_surface_get_type(surface) != CAIRO_SURFACE_TYPE_IMAGE) {
+        wlr_log(WLR_ERROR, "Cairo surface is not an image surface\n");
+        return NULL;
+    }
+
+    cairo_surface_flush(surface);
+
+    unsigned char *data = cairo_image_surface_get_data(surface);
+    int surface_width = cairo_image_surface_get_width(surface);
+    int surface_height = cairo_image_surface_get_height(surface);
+    int stride = cairo_image_surface_get_stride(surface);
+
+    if (x < 0 || y < 0 || x + width > surface_width || y + height > surface_height) {
+        wlr_log(WLR_ERROR, "Requested subregion (%d,%d %dx%d) is out of bounds (%dx%d)\n", x, y,
+                width, height, surface_width, surface_height);
+        return NULL;
+    }
+
+    // Compute offset pointer for the subregion
+    unsigned char *sub_data = data + y * stride + x * 4;
+
+    return cairo_buffer_create(width, height, stride, sub_data);
+}
+
+// Given a surface, slice it into 4 fixed regions and create scene buffers
+struct wlr_scene_buffer **create_scene_buffers_from_surface(struct wlr_scene_tree *scene,
+                                                            cairo_surface_t *surface,
+                                                            struct wlr_box *regions,
+                                                            int num_regions) {
+    struct wlr_scene_buffer **scene_buffers =
+        calloc(num_regions, sizeof(struct wlr_scene_buffer *));
+    if (!scene_buffers) {
+        wlr_log(WLR_ERROR, "Failed to allocate scene buffer array\n");
+        return NULL;
+    }
+
+    for (int i = 0; i < num_regions; ++i) {
+        struct wlr_buffer *buf = cairo_buffer_from_surface_region(
+            surface, regions[i].x, regions[i].y, regions[i].width, regions[i].height);
+
+        if (!buf) {
+            wlr_log(WLR_ERROR, "Failed to create buffer for region %d\n", i);
+            continue;
+        }
+
+        scene_buffers[i] = wlr_scene_buffer_create(scene, buf);
+        wlr_buffer_drop(buf); // Transfer ownership to the scene buffer
+    }
+
+    return scene_buffers;
 }

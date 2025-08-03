@@ -169,18 +169,30 @@ class Base(base._Window):
                 colors = bordercolor
             n = len(colors)
 
-            c_bordercolor = ffi.new(f"float[{n}][4]")
-            i = 0
-            for bc in colors:
-                # TODO: mypy type error
-                c_bordercolor[i] = ffi.new("float[4]", rgb(bc))
-                i += 1
+            # Allocate array of qw_border
+            c_layers = ffi.new(f"struct qw_border[{n}]")
 
-            c_bordercolor_ptr = ffi.cast("float(*)[4]", c_bordercolor)
+            base_width = borderwidth // n
+            remainder = borderwidth % n
+
+            for i, bc in enumerate(colors):
+                # Set type RECT
+                c_layers[i].type = lib.QW_BORDER_RECT
+
+                # Set width, distribute remainder
+                c_layers[i].width = base_width + (1 if i < remainder else 0)
+
+                # Convert python color to RGBA float[4]
+                rgba = rgb(bc)
+
+                # Copy RGBA into c struct color field
+                # Each edge is set to the same colour
+                for side in range(4):
+                    for j in range(4):
+                        c_layers[i].rect.color[side][j] = rgba[j]
+
         self.bordercolor = bordercolor
-        self._ptr.place(
-            self._ptr, x, y, width, height, borderwidth, c_bordercolor_ptr, n, int(above)
-        )
+        self._ptr.place(self._ptr, x, y, width, height, c_layers, n, int(above))
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:

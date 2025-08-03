@@ -58,8 +58,8 @@ static struct wlr_scene_node *qw_internal_view_get_tree_node(void *self) {
 
 // Place the internal view at a new position and resize if needed
 // If 'above' is nonzero, bring the view to the front
-static void qw_internal_view_place(void *self, int x, int y, int width, int height, int bw,
-                                   float (*bc)[4], int bn, int above) {
+static void qw_internal_view_place(void *self, int x, int y, int width, int height,
+                                   const struct qw_border *borders, int bn, int above) {
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     if (above != 0) {
         qw_view_reparent(&view->base, LAYER_BRINGTOFRONT);

@@ -1,7 +1,9 @@
 #ifndef VIEW_H
 #define VIEW_H
 
+#include <cairo/cairo.h>
 #include <wayland-server-core.h>
+#include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_scene.h>
 
 // TODO: avoid this duplication
@@ -29,6 +31,26 @@ typedef void (*set_app_id_cb_t)(char *app_id, void *userdata);
 
 struct qw_server;
 
+enum qw_border_type {
+    QW_BORDER_RECT,
+    QW_BORDER_BUFFER,
+};
+
+struct qw_border {
+    enum qw_border_type type;
+    uint32_t width; // border thickness (for all sides)
+
+    union {
+        struct {
+            float color[4][4]; // RGBA per side (NESW)
+        } rect;
+
+        struct {
+            cairo_surface_t *surface; // Full border ring image
+        } buffer;
+    };
+};
+
 struct qw_view {
     struct qw_server *server;
     int layer;
@@ -54,8 +76,8 @@ struct qw_view {
     struct wlr_scene_node *(*get_tree_node)(void *self);
     void (*update_fullscreen)(void *self, bool fullscreen);
     void (*update_maximized)(void *self, bool maximize);
-    void (*place)(void *self, int x, int y, int width, int height, int bw, float (*bc)[4], int bn,
-                  int above);
+    void (*place)(void *self, int x, int y, int width, int height, const struct qw_border *borders,
+                  int border_count, int above);
     void (*focus)(void *self, int warp);
     void (*kill)(void *self);
     void (*hide)(void *self);
@@ -63,7 +85,13 @@ struct qw_view {
     int (*get_pid)(void *self);
 
     // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
-    struct wlr_scene_rect *(*borders)[4];
+    struct {
+        enum qw_border_type type;
+        union {
+            struct wlr_scene_rect *rects[4];
+            struct wlr_scene_buffer *scene_bufs[4];
+        };
+    } *borders;
 };
 
 void qw_view_reparent(struct qw_view *view, int layer);
@@ -77,7 +105,7 @@ bool qw_view_is_visible(struct qw_view *view);
 // Free all border rectangles and clear border data
 void qw_view_cleanup_borders(struct qw_view *xdg_view);
 
-// Create and paint borders with specified colors, border width, and number of layers
-void qw_view_paint_borders(struct qw_view *xdg_view, float (*colors)[4], int width, int n);
+// Create and paint borders with specified colors
+void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders, int border_count);
 
 #endif /* VIEW_H */
