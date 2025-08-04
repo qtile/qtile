@@ -384,6 +384,26 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         return subprocess.check_output(command, **kwargs, encoding="utf-8")
 
+    async def acall_process(self, command, shell=False) -> str:
+        """
+        Like call_process, but the async version
+        """
+        stdin = asyncio.subprocess.DEVNULL
+        stdout = asyncio.subprocess.PIPE
+        stderr = asyncio.subprocess.STDOUT
+
+        if shell:
+            p = await asyncio.subprocess.create_subprocess_shell(
+                command, stdin=stdin, stdout=stdout, stderr=stderr
+            )
+        else:
+            p = await asyncio.subprocess.create_subprocess_exec(
+                *command, stdin=stdin, stdout=stdout, stderr=stderr
+            )
+
+        (out, _) = await p.communicate()
+        return out.decode("utf-8")
+
     def _remove_dead_timers(self):
         """Remove completed and cancelled timers from the list."""
 
@@ -866,14 +886,11 @@ class BackgroundPoll(_TextBox):
 
     async def do_tick(self):
         if type(self).apoll != BackgroundPoll.apoll:
-            logger.warning(f"tick running apoll {id(self.apoll)} {id(BackgroundPoll.apoll)}")
             result = await self.apoll()
         elif type(self).poll != BackgroundPoll.poll:
-            logger.warning("tick running poll")
             future = self.qtile.run_in_executor(self.poll)
             result = await future
         else:
-            logger.warning("tick not running poll")
             raise Exception(f"widget {self.name} has neither apoll() nor poll() overridden?")
         if result is not None:
             try:
@@ -885,7 +902,7 @@ class BackgroundPoll(_TextBox):
         if result is not None:
             self.update(result)
 
-        if self.update_interval is not None:
+        if result is not None and self.update_interval is not None:
             await asyncio.sleep(self.update_interval)
             asyncio.create_task(self.do_tick())
 

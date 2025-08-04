@@ -1,5 +1,4 @@
 import json
-import subprocess
 from http.client import HTTPException
 from typing import Any
 from urllib.error import URLError
@@ -116,14 +115,9 @@ class GenPollCommand(base.BackgroundPoll):
         base.BackgroundPoll._configure(self, qtile, bar)
         self.add_callbacks({"Button1": self.force_update})
 
-    def poll(self):
-        process = subprocess.run(
-            self.cmd,
-            capture_output=True,
-            text=True,
-            shell=self.shell,
-        )
+    async def apoll(self):
+        out = await self.acall_process(self.cmd, self.shell)
         if self.parse:
-            return self.parse(process.stdout)
+            return self.parse(out)
 
-        return process.stdout.strip()
+        return out.strip()
