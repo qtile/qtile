@@ -76,9 +76,21 @@ static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void
 
     // Only allow focused client to set cursor surface
     struct wlr_seat_client *focused_client = cursor->server->seat->pointer_state.focused_client;
-    if (focused_client == event->seat_client) {
-        wlr_cursor_set_surface(cursor->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+    if (focused_client != event->seat_client) {
+        return;
     }
+
+    // Save the requested surface and hotspot info
+    cursor->saved_surface = event->surface;
+    cursor->saved_hotspot_x = event->hotspot_x;
+    cursor->saved_hotspot_y = event->hotspot_y;
+
+    if (cursor->hidden) {
+        // Skip applying the cursor while hidden
+        return;
+    }
+
+    wlr_cursor_set_surface(cursor->cursor, event->surface, event->hotspot_x, event->hotspot_y);
 }
 
 static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool pressed) {
@@ -183,4 +195,22 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     wl_signal_add(&cursor->cursor->events.button, &cursor->button);
 
     return cursor;
+}
+
+void qw_cursor_hide(struct qw_cursor *cursor) {
+    if (cursor->hidden)
+        return;
+    cursor->hidden = true;
+    wlr_cursor_set_surface(cursor->cursor, NULL, 0, 0);
+}
+
+void qw_cursor_show(struct qw_cursor *cursor) {
+    if (!cursor->hidden)
+        return;
+    cursor->hidden = false;
+
+    if (cursor->saved_surface) {
+        wlr_cursor_set_surface(cursor->cursor, cursor->saved_surface, cursor->saved_hotspot_x,
+                               cursor->saved_hotspot_y);
+    }
 }
