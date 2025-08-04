@@ -36,6 +36,13 @@ jobs:
                   libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
                   libxcb-xfixes0-dev vlc volumeicon-alsa libxkbcommon-dev python-gi-dev libcairo2-dev \
                   gir1.2-gdkpixbuf-2.0 librsvg2-dev
+            - name: Cache Wayland dependencies
+              uses: actions/cache@v4
+              with:
+                path: cache
+                key: ${{ runner.os }}-wayland-${{ hashFiles('scripts/ubuntu_wayland_setup') }}
+                restore-keys: |
+                  ${{ runner.os }}-wayland-
             - name: Install wayland
               run: bash -x ./scripts/ubuntu_wayland_setup
             - name: Run Tests

@@ -7,6 +7,9 @@
 
 set -e
 
+mkdir -p cache
+
+
 # The versions we want
 WAYLAND=1.22.0
 WAYLAND_PROTOCOLS=1.32
@@ -16,6 +19,18 @@ LIBDRM=2.4.121
 PIXMAN=0.42.0
 XWAYLAND=22.1.9
 HWDATA=0.364
+
+
+fetch_source() {
+    url=$1
+    filename=$2
+    if [ -f "cache/$filename" ]; then
+        echo "$filename found, skipping download."
+    else
+        wget -P cache "$url"
+    fi
+}
+
 
 # Packaged dependencies
 sudo apt update
@@ -47,8 +62,9 @@ sudo apt-get install -y --no-install-recommends \
      meson
 
 # Build wayland
-wget https://gitlab.freedesktop.org/wayland/wayland/-/releases/$WAYLAND/downloads/wayland-$WAYLAND.tar.xz
-tar -xJf wayland-$WAYLAND.tar.xz
+tarball="wayland-$WAYLAND.tar.xz"
+fetch_source "https://gitlab.freedesktop.org/wayland/wayland/-/releases/$WAYLAND/downloads/$tarball" "$tarball"
+tar -xJf "cache/$tarball"
 cd wayland-$WAYLAND
 meson setup build -Ddocumentation=false --prefix=/usr
 ninja -C build
@@ -56,8 +72,9 @@ sudo ninja -C build install
 cd ../
 
 # Build wayland-protocols
-wget https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/$WAYLAND_PROTOCOLS/downloads/wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
-tar -xJf wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz
+tarball="wayland-protocols-$WAYLAND_PROTOCOLS.tar.xz"
+fetch_source "https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/$WAYLAND_PROTOCOLS/downloads/$tarball" "$tarball"
+tar -xJf "cache/$tarball"
 cd wayland-protocols-$WAYLAND_PROTOCOLS
 meson setup build -Dtests=false --prefix=/usr
 ninja -C build
@@ -65,8 +82,9 @@ sudo ninja -C build install
 cd ../
 
 # Build libdrm
-wget https://gitlab.freedesktop.org/mesa/libdrm/-/archive/libdrm-$LIBDRM/libdrm-libdrm-$LIBDRM.tar.gz
-tar -xzf libdrm-libdrm-$LIBDRM.tar.gz
+tarball="libdrm-libdrm-$LIBDRM.tar.gz"
+fetch_source "https://gitlab.freedesktop.org/mesa/libdrm/-/archive/libdrm-$LIBDRM/$tarball" "$tarball"
+tar -xzf "cache/$tarball"
 cd libdrm-libdrm-$LIBDRM
 meson setup build --prefix=/usr
 ninja -C build
@@ -74,8 +92,9 @@ sudo ninja -C build install
 cd ../
 
 # Build seatd
-wget https://github.com/kennylevinsen/seatd/archive/refs/tags/$SEATD.tar.gz
-tar -xzf $SEATD.tar.gz
+tarball="$SEATD.tar.gz"
+fetch_source "https://github.com/kennylevinsen/seatd/archive/refs/tags/$tarball" "$tarball"
+tar -xzf "cache/$tarball"
 cd seatd-$SEATD
 meson setup build --prefix=/usr
 ninja -C build
@@ -83,8 +102,9 @@ sudo ninja -C build install
 cd ../
 
 # Build pixman
-wget https://gitlab.freedesktop.org/pixman/pixman/-/archive/pixman-$PIXMAN/pixman-pixman-$PIXMAN.tar.gz
-tar -xzf pixman-pixman-$PIXMAN.tar.gz
+tarball="pixman-pixman-$PIXMAN.tar.gz"
+fetch_source "https://gitlab.freedesktop.org/pixman/pixman/-/archive/pixman-$PIXMAN/$tarball" "$tarball"
+tar -xzf "cache/$tarball"
 cd pixman-pixman-$PIXMAN
 meson setup build --prefix=/usr
 ninja -C build
@@ -92,8 +112,9 @@ sudo ninja -C build install
 cd ../
 
 # Build hwdata
-wget https://github.com/vcrhonek/hwdata/archive/refs/tags/v$HWDATA.tar.gz
-tar -xzf v$HWDATA.tar.gz
+tarball="v$HWDATA.tar.gz"
+fetch_source "https://github.com/vcrhonek/hwdata/archive/refs/tags/$tarball" "$tarball"
+tar -xzf "cache/$tarball"
 cd hwdata-$HWDATA
 ./configure --prefix=/usr --libdir=/lib --datadir=/usr/share
 make
@@ -101,8 +122,9 @@ sudo make install
 cd ../
 
 # Build xwayland
-wget https://gitlab.freedesktop.org/xorg/xserver/-/archive/xwayland-$XWAYLAND/xserver-xwayland-$XWAYLAND.tar.gz
-tar -xzf xserver-xwayland-$XWAYLAND.tar.gz
+tarball="xserver-xwayland-$XWAYLAND.tar.gz"
+fetch_source "https://gitlab.freedesktop.org/xorg/xserver/-/archive/xwayland-$XWAYLAND/$tarball" "$tarball"
+tar -xzf "cache/$tarball"
 cd xserver-xwayland-$XWAYLAND
 meson setup build --prefix=/usr
 ninja -C build
@@ -110,8 +132,9 @@ sudo ninja -C build install
 cd ../
 
 # Build wlroots
-wget https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/wlroots-$WLROOTS.tar.gz
-tar -xzf wlroots-$WLROOTS.tar.gz
+tarball="wlroots-$WLROOTS.tar.gz"
+fetch_source "https://gitlab.freedesktop.org/wlroots/wlroots/-/archive/$WLROOTS/$tarball" "$tarball"
+tar -xzf "cache/$tarball"
 cd wlroots-$WLROOTS
 meson setup build -Dexamples=false --prefix=/usr -Dxwayland=enabled
 ninja -C build
