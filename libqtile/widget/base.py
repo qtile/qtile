@@ -384,6 +384,26 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         return subprocess.check_output(command, **kwargs, encoding="utf-8")
 
+    async def acall_process(self, command, shell=False) -> str:
+        """
+        Like call_process, but the async version
+        """
+        stdin = asyncio.subprocess.DEVNULL
+        stdout = asyncio.subprocess.PIPE
+        stderr = asyncio.subprocess.STDOUT
+
+        if shell:
+            p = await asyncio.subprocess.create_subprocess_shell(
+                command, stdin=stdin, stdout=stdout, stderr=stderr
+            )
+        else:
+            p = await asyncio.subprocess.create_subprocess_exec(
+                *command, stdin=stdin, stdout=stdout, stderr=stderr
+            )
+
+        (out, _) = await p.communicate()
+        return out.decode("utf-8")
+
     def _remove_dead_timers(self):
         """Remove completed and cancelled timers from the list."""
 
