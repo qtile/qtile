@@ -26,6 +26,7 @@ from types import ModuleType
 
 import pytest
 
+import libqtile
 from libqtile.widget import generic_poll_text
 
 
@@ -129,3 +130,12 @@ def test_gen_poll_url_broken_parse(monkeypatch):
     monkeypatch.setattr(generic_poll_text, "urlopen", Mockurlopen)
     generic_poll_text.Request.return_value = b"OK"
     assert gpurl.poll() == "Can't parse"
+
+
+def test_gen_poll_command(manager_nospawn, minimal_conf_noscreen):
+    gpcommand = generic_poll_text.GenPollCommand(cmd=["echo", "hello"])
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([gpcommand], 10))]
+    manager_nospawn.start(config)
+    command = manager_nospawn.c.widget["genpollcommand"]
+    assert command.info()["text"] == "hello"
