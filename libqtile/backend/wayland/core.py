@@ -564,12 +564,12 @@ class Core(base.Core):
     @expose_command()
     def hide_cursor(self) -> None:
         """Hide the cursor."""
-        raise Exception("TODO: implement")
+        lib.qw_cursor_hide(self.qw_cursor)
 
     @expose_command()
     def unhide_cursor(self) -> None:
         """Unhide the cursor."""
-        raise Exception("TODO: implement")
+        lib.qw_cursor_show(self.qw_cursor)
 
     @expose_command()
     def get_inputs(self) -> dict[str, list[dict[str, str]]]:
