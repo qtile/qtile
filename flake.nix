@@ -158,6 +158,7 @@
 
             shellHook = ''
               export PYTHONPATH=$(readlink -f .):$PYTHONPATH
+              export WLR_RENDERER=pixman
             '';
 
             inputsFrom = [ self.packages.${pkgs.system}.qtile ];
