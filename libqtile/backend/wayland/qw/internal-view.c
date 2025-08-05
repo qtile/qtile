@@ -131,6 +131,7 @@ struct qw_internal_view *qw_server_internal_view_new(struct qw_server *server, i
         .unhide = qw_internal_view_unhide,
     };
     view->base = base;
+    view->base.content_tree->node.data = view;
 
     // Create the initial buffer and disable the scene node by default
     qw_internal_view_buffer_new(view, true);

@@ -199,6 +199,7 @@ class Internal(Base, base.Internal):
     def __init__(self, qtile: Qtile, ptr, wid):
         Base.__init__(self, qtile, lib.qw_internal_view_get_base(ptr), wid)
         base.Internal.__init__(self)
+        ptr.base.wid = wid
         self._internal_ptr = ptr
 
     @property
