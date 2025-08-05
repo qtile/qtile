@@ -4,6 +4,7 @@
 // Include the generic view base struct and Wayland/WLRoots core and types
 #include "view.h"
 #include <wayland-server-core.h>
+#include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 
 // Forward declarations for server and decoration struct types
