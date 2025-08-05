@@ -46,12 +46,21 @@
 #
 # This is not intended to be a complete cffi-based pango binding.
 
+import ctypes.util
 
 from libqtile.pango_ffi import pango_ffi as ffi
 
-gobject = ffi.dlopen("libgobject-2.0.so.0")  # type: ignore
-pango = ffi.dlopen("libpango-1.0.so.0")  # type: ignore
-pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")  # type: ignore
+
+def load_library(name):
+    lib_path = ctypes.util.find_library(name)
+    if lib_path is None:
+        raise ImportError(f"Could not find library: {name}")
+    return ffi.dlopen(lib_path)
+
+
+gobject = load_library("gobject-2.0")
+pango = load_library("pango-1.0")
+pangocairo = load_library("pangocairo-1.0")
 
 
 def patch_cairo_context(cairo_t):
