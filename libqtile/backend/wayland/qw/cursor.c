@@ -133,7 +133,8 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
         } else {
             button = (0 < event->delta) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
         }
-        handled = qw_cursor_process_button(cursor, button, true);
+        uint32_t button_mapped = qw_util_get_button_code(button);
+        handled = qw_cursor_process_button(cursor, button_mapped, true);
     }
 
     if (!handled) {
