@@ -12,8 +12,7 @@ static void qw_layer_view_handle_destroy(struct wl_listener *listener, void *dat
     wl_list_remove(&layer_view->destroy.link);
     wl_list_remove(&layer_view->unmap.link);
     wl_list_remove(&layer_view->commit.link);
-    // TODO: this crashes, why???????
-    // wlr_scene_node_destroy(&layer_view->scene->tree->node);
+    wlr_scene_node_destroy(&layer_view->scene->tree->node);
     wlr_scene_node_destroy(&layer_view->popups->node);
     free(layer_view);
 }
@@ -103,7 +102,7 @@ void qw_server_layer_view_new(struct qw_server *server,
     layer_view->unmap.notify = qw_layer_view_handle_unmap;
     wl_signal_add(&layer_surface->surface->events.unmap, &layer_view->unmap);
     layer_view->destroy.notify = qw_layer_view_handle_destroy;
-    wl_signal_add(&layer_surface->surface->events.destroy, &layer_view->destroy);
+    wl_signal_add(&layer_surface->events.destroy, &layer_view->destroy);
 
     int layer = zlayer_to_layer[layer_surface->pending.layer];
     struct wlr_scene_tree *layer_tree = layer_view->server->scene_windows_layers[layer];
