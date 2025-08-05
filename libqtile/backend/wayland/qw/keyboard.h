@@ -18,4 +18,9 @@ struct qw_keyboard {
 // Creates and sets up a new keyboard on the server from the input device
 void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *device);
 
+void qw_keyboard_set_keymap(struct qw_keyboard *keyboard,
+                            const char* layout,
+                            const char* options,
+                            const char* variant);
+
 #endif /* KEYBOARD_H */
