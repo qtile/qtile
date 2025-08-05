@@ -365,11 +365,12 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
     if (node->type == WLR_SCENE_NODE_BUFFER) {
         struct wlr_scene_buffer *scene_buffer = wlr_scene_buffer_from_node(node);
         struct wlr_scene_surface *scene_surface = wlr_scene_surface_try_from_buffer(scene_buffer);
-        if (!scene_surface) {
-            return NULL;
+        if (scene_buffer && !scene_surface) {
+            // An internal window
+            struct wlr_scene_tree *tree = node->parent;
+            return tree->node.data;
         }
 
-        // TODO: fix when we have internal windows working
         *surface = scene_surface->surface;
         struct wlr_scene_tree *tree = node->parent;
         while (tree && !tree->node.data) {
@@ -379,7 +380,7 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
     } else if (node->type == WLR_SCENE_NODE_RECT) {
         // Rect nodes are only used for window borders. We can get their window at .data.
         // We have to differentiate between internal windows and normal windows
-        // TODO: handle internal windows
+        // TODO: handle internal window borders
         return node->data;
     }
 
