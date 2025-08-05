@@ -295,7 +295,17 @@ class Core(base.Core):
         assert self.qtile is not None
         if pressed:
             self._focus_by_click()
-            return self.qtile.process_button_click(int(button), int(mask), x, y)
+
+            handled = self.qtile.process_button_click(int(button), int(mask), x, y)
+
+            if isinstance(self._hovered_window, Internal):
+                self._hovered_window.process_button_click(
+                    int(self.qw_cursor.cursor.x - self._hovered_window.x),
+                    int(self.qw_cursor.cursor.y - self._hovered_window.y),
+                    int(button),
+                )
+
+            return handled
         else:
             return self.qtile.process_button_release(button, mask)
 
