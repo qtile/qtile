@@ -62,6 +62,26 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
     wlr_seat_keyboard_notify_modifiers(keyboard->server->seat, &keyboard->wlr_keyboard->modifiers);
 }
 
+void qw_keyboard_set_keymap(struct qw_keyboard *keyboard,
+                            const char* layout,
+                            const char* options,
+                            const char* variant) {
+    struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+
+    struct xkb_rule_names names = {
+        .layout = layout,
+        .options = options,
+        .variant = variant
+    };
+
+    struct xkb_keymap *keymap =
+        xkb_keymap_new_from_names(context, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    wlr_keyboard_set_keymap(keyboard->wlr_keyboard, keymap);
+    xkb_keymap_unref(keymap);
+    xkb_context_unref(context);
+}
+
 // Creates and initializes a new keyboard input device attached to the server
 void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *device) {
     struct qw_keyboard *keyboard = calloc(1, sizeof(*keyboard));
