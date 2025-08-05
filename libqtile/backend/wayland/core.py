@@ -508,7 +508,10 @@ class Core(base.Core):
         not specified are taken from the environment. Acceptable values are strings
         identical to those accepted by the env variables.
         """
-        raise Exception("TODO: implement")
+        lib.qw_server_set_keymap(self.qw,
+                                 ffi.new("char[]", (layout or "").encode()),
+                                 ffi.new("char[]", (options or "").encode()),
+                                 ffi.new("char[]", (variant or "").encode()))
 
     @expose_command()
     def change_vt(self, vt: int) -> bool:
