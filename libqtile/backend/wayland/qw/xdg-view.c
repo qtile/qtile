@@ -77,7 +77,7 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.height = geom.height;
 
     xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
-                                     xdg_view->base.server->cb_data);
+                                          xdg_view->base.server->cb_data);
 
     // Focus the view upon mapping
     qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);

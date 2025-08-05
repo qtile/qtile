@@ -69,9 +69,7 @@ void qw_view_move_down(struct qw_view *view) {
     }
 }
 
-bool qw_view_is_visible(struct qw_view *view) {
-    return view->content_tree->node.enabled;
-}
+bool qw_view_is_visible(struct qw_view *view) { return view->content_tree->node.enabled; }
 
 // Creates and paints multiple border layers around the view content.
 // colors: array of RGBA colors for each border layer (each is 4 floats).
