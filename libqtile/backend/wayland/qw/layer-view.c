@@ -38,8 +38,12 @@ static void qw_layer_view_handle_commit(struct wl_listener *listener, void *data
     struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, commit);
 
     if (layer_view->surface->initial_commit) {
-        // TODO: set scale
-        //
+        struct qw_output *output = layer_view->surface->output->data;
+        wlr_fractional_scale_v1_notify_scale(layer_view->surface->surface,
+                                             output->wlr_output->scale);
+        wlr_surface_set_preferred_buffer_scale(layer_view->surface->surface,
+                                               (int32_t)ceilf(output->wlr_output->scale));
+
         struct wlr_layer_surface_v1_state state = layer_view->surface->current;
         layer_view->surface->current = layer_view->surface->pending;
         qw_output_arrange_layers(layer_view->output);
