@@ -167,4 +167,9 @@ bool qw_server_change_vt(struct qw_server *server, int vt);
 
 struct qw_cursor *qw_server_get_cursor(struct qw_server *server);
 
+void qw_server_set_keymap(struct qw_server *server,
+                            const char* layout,
+                            const char* options,
+                            const char* variant);
+
 #endif /* SERVER_H */
