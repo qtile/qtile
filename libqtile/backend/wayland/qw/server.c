@@ -390,6 +390,15 @@ struct qw_cursor *qw_server_get_cursor(struct qw_server *server) {
     return server->cursor;
 }
 
+void qw_server_set_keymap(struct qw_server *server,
+                            const char* layout,
+                            const char* options,
+                            const char* variant) {
+    struct qw_keyboard *keyboard;
+    wl_list_for_each(keyboard, &server->keyboards, link) {
+        qw_keyboard_set_keymap(keyboard, layout, options, variant);
+    }
+}
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     wlr_log_init(WLR_INFO, NULL);
