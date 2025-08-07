@@ -133,10 +133,13 @@ struct qw_server {
     struct wlr_xdg_shell *xdg_shell;
     struct wlr_layer_shell_v1 *layer_shell;
     struct wlr_xdg_decoration_manager_v1 *xdg_decoration_mgr;
+    struct wlr_xwayland *xwayland;
+    struct wlr_xwayland_shell_v1 *xwayland_shell;
     struct wl_listener new_xdg_toplevel;
     struct wl_listener new_decoration;
     struct wl_listener new_layer_surface;
     struct wl_listener request_cursor;
+    struct wl_listener new_xwayland_surface;
 };
 
 // Utility functions exposed by the server API

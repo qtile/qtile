@@ -15,6 +15,7 @@
 #include "wayland-util.h"
 #include "wlr/util/log.h"
 #include "xdg-view.h"
+#include "xwayland-view.h"
 
 // Get the file descriptor of the Wayland event loop (used for epoll integration)
 int qw_server_get_event_loop_fd(struct qw_server *server) {
@@ -353,6 +354,14 @@ static void qw_server_handle_new_layer_surface(struct wl_listener *listener, voi
     qw_server_layer_view_new(server, layer_surface);
 }
 
+static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, void *data) {
+    wlr_log(WLR_ERROR, ">>>>>>>>>>>> handle_new_");
+    struct qw_server *server = wl_container_of(listener, server, new_xwayland_surface);
+    struct wlr_xwayland_surface *xwayland_surface = data;
+    qw_server_xwayland_view_new(server, xwayland_surface);
+}
+
+
 // Return the view at the given layout coordinates, if any.
 // Also fills out surface and surface-local coords if found.
 struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly,
@@ -491,6 +500,12 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
     server->renderer_lost.notify = qw_server_handle_renderer_lost;
     wl_signal_add(&server->renderer->events.lost, &server->renderer_lost);
+
+    //xwayland
+    server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
+    //server->xwayland_shell = wlr_xwayland_shell_v1_create(server->display, 1); //TODO: set version correctly
+    server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
+    wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
 
     // TODO: XDG activation, gamma control, power manager
 
