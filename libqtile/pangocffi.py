@@ -45,13 +45,12 @@
 # [1]: https://groups.google.com/forum/#!topic/python-cffi/SPND0rRmazA
 #
 # This is not intended to be a complete cffi-based pango binding.
-
-
+from libqtile import DynamicLibraries, find_library
 from libqtile.pango_ffi import pango_ffi as ffi
 
-gobject = ffi.dlopen("libgobject-2.0.so.0")  # type: ignore
-pango = ffi.dlopen("libpango-1.0.so.0")  # type: ignore
-pangocairo = ffi.dlopen("libpangocairo-1.0.so.0")  # type: ignore
+gobject = ffi.dlopen(find_library(DynamicLibraries.GOBJECT))  # type: ignore
+pango = ffi.dlopen(find_library(DynamicLibraries.PANGO))  # type: ignore
+pangocairo = ffi.dlopen(find_library(DynamicLibraries.PANGOCAIRO))  # type: ignore
 
 
 def patch_cairo_context(cairo_t):

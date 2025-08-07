@@ -1,3 +1,4 @@
+from libqtile import DynamicLibraries, find_library
 from libqtile.backend.x11.xcursors_ffi import xcursors_ffi as ffi
 from libqtile.log_utils import logger
 
@@ -102,11 +103,12 @@ class Cursors(dict):
         self._cursor_ctx = None
 
     def _setup_xcursor_binding(self):
-        try:
-            xcursor = ffi.dlopen("libxcb-cursor.so.0")
-        except Exception:
+        lib = find_library(DynamicLibraries.XCBCURSOR)
+        if lib is None:
             logger.info("xcb-cursor not found, fallback to font pointer")
             return False
+
+        xcursor = ffi.dlopen(lib)
 
         conn = self.conn.conn
         screen_pointer = conn.get_screen_pointers()[0]
