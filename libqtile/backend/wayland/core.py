@@ -168,6 +168,12 @@ def on_screen_reserve_space_cb(output, userdata):
     core.handle_screen_reserve_space(output)
 
 
+@ffi.def_extern()
+def view_urgent_cb(view, userdata):
+    core = ffi.from_handle(userdata)
+    core.handle_view_urgent(view)
+
+
 def get_wlr_log_level():
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -206,6 +212,8 @@ class Core(base.Core):
         self.qw.cursor_button_cb = lib.cursor_button_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
+        self.qw.view_urgent_cb = lib.view_urgent_cb
+        self.qw.view_urgent_cb_data = self._userdata
         lib.qw_server_start(self.qw)
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
@@ -221,9 +229,7 @@ class Core(base.Core):
 
         assert self.qtile is not None
 
-        managed_wins = [
-            w for w in self.qtile.windows_map.values() if isinstance(w, Window)
-        ]
+        managed_wins = [w for w in self.qtile.windows_map.values() if isinstance(w, Window)]
         for win in managed_wins:
             group = None
             if win.group:
@@ -308,7 +314,7 @@ class Core(base.Core):
             win.name = ffi.string(view.title).decode()
         if view.app_id != ffi.NULL:
             win._wm_class = ffi.string(view.app_id).decode()
-        win._float_width = win.width # todo: should we be using getter/setter for _float_width
+        win._float_width = win.width  # todo: should we be using getter/setter for _float_width
         win._float_height = win.height
 
         self.qtile.manage(win)
@@ -366,7 +372,9 @@ class Core(base.Core):
                 self.qtile.current_group.focus(win, False)
 
         else:
-            screen = self.qtile.find_screen(int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y))
+            screen = self.qtile.find_screen(
+                int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
+            )
             if screen:
                 self.qtile.focus_screen(screen.index, warp=False)
 
@@ -401,6 +409,20 @@ class Core(base.Core):
                         self.qtile.focus_screen(win.group.screen.index, False)
 
         self._hovered_window = win
+
+    def handle_view_urgent(self, view):
+        """Handle view urgency notification"""
+        assert self.qtile is not None
+        wid = view.wid
+        win = self.qtile.windows_map.get(wid)
+
+        if win:
+            # Mark window as urgent in Qtile
+            win.urgent = True
+            hook.fire("client_urgent_hint_changed", win)
+
+            if self.qtile.config.focus_on_window_activation == "smart":
+                win.focus(False)
 
     def finalize(self) -> None:
         lib.qw_server_finalize(self.qw)
@@ -548,10 +570,12 @@ class Core(base.Core):
         not specified are taken from the environment. Acceptable values are strings
         identical to those accepted by the env variables.
         """
-        lib.qw_server_set_keymap(self.qw,
-                                 ffi.new("char[]", (layout or "").encode()),
-                                 ffi.new("char[]", (options or "").encode()),
-                                 ffi.new("char[]", (variant or "").encode()))
+        lib.qw_server_set_keymap(
+            self.qw,
+            ffi.new("char[]", (layout or "").encode()),
+            ffi.new("char[]", (options or "").encode()),
+            ffi.new("char[]", (variant or "").encode()),
+        )
 
     @expose_command()
     def change_vt(self, vt: int) -> bool:
