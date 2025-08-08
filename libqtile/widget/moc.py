@@ -48,8 +48,8 @@ class Moc(base.ThreadPoolText):
         self.add_callbacks(
             {
                 "Button1": self.play,
-                "Button4": partial(subprocess.Popen, ["mocp", "-f"]),
-                "Button5": partial(subprocess.Popen, ["mocp", "-r"]),
+                "Button4": partial(self.call_process, ["mocp", "-f"]),
+                "Button5": partial(self.call_process, ["mocp", "-r"]),
             }
         )
 
@@ -101,9 +101,9 @@ class Moc(base.ThreadPoolText):
     def play(self):
         """Play music if stopped, else toggle pause."""
         if self.status in ("PLAY", "PAUSE"):
-            subprocess.Popen(["mocp", "-G"])
+            self.call_process(["mocp", "-G"])
         elif self.status == "STOP":
-            subprocess.Popen(["mocp", "-p"])
+            self.call_process(["mocp", "-p"])
 
     def poll(self):
         """Poll content for the text box."""
