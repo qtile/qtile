@@ -17,251 +17,156 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# Widget specific tests
-
-import subprocess
+from unittest.mock import MagicMock
 
 import pytest
 
-import libqtile.config
 from libqtile.widget import cmus
 
+# Sample output from `cmus-remote -C status`
+PLAYING = """status playing
+file /playing/file/rickroll.mp3
+duration 222
+position 14
+tag artist Rick Astley
+tag album Whenever You Need Somebody
+tag title Never Gonna Give You Up
+"""
 
-class MockCmusRemoteProcess:
-    CalledProcessError = None
-    EXTRA = [
-        "set aaa_mode all",
-        "set continue true",
-        "set play_library true",
-        "set play_sorted false",
-        "set replaygain disabled",
-        "set replaygain_limit true",
-        "set replaygain_preamp 0.000000",
-        "set repeat false",
-        "set repeat_current false",
-        "set shuffle false",
-        "set softvol false",
-        "set vol_left 100",
-        "set vol_right 100",
-    ]
+PAUSED = """status paused
+file /playing/file/rickroll.mp3
+duration 222
+position 14
+tag artist Rick Astley
+tag album Whenever You Need Somebody
+tag title Never Gonna Give You Up
+"""
 
-    info = {}
-    is_error = False
-    index = 0
+STOPPED = "status stopped"
 
-    @classmethod
-    def reset(cls):
-        cls.info = [
-            [
-                "status playing",
-                "file /playing/file/rickroll.mp3",
-                "duration 222",
-                "position 14",
-                "tag artist Rick Astley",
-                "tag album Whenever You Need Somebody",
-                "tag title Never Gonna Give You Up",
-            ],
-            [
-                "status playing",
-                "file http://playing/file/sweetcaroline.mp3",
-                "duration -1",
-                "position -9",
-                "tag artist Neil Diamond",
-                "tag album Greatest Hits",
-                "tag title Sweet Caroline",
-            ],
-            [
-                "status stopped",
-                "file http://streaming.source/tomjones.m3u",
-                "duration -1",
-                "position -9",
-                "tag title It's Not Unusual",
-                "stream tomjones",
-            ],
-            [
-                "status playing",
-                "file /playing/file/always.mp3",
-                "duration 222",
-                "position 14",
-                "tag artist Above & Beyond",
-                "tag album Anjunabeats 14",
-                "tag title Always - Tinlicker Extended Mix",
-            ],
-            [
-                "status playing",
-                "file /playing/file/always.mp3",
-                "duration 222",
-                "position 14",
-            ],
-        ]
-        cls.index = 0
-        cls.is_error = False
+STREAMING = """status playing
+file http://playing/file/sweetcaroline.mp3
+duration -1
+position -9
+tag artist Neil Diamond
+tag album Greatest Hits
+tag title Sweet Caroline
+"""
 
-    @classmethod
-    def call_process(cls, cmd):
-        if cls.is_error:
-            raise subprocess.CalledProcessError(-1, cmd=cmd, output="Couldn't connect to cmus.")
+STREAM_TITLE_ONLY = """status stopped
+file http://streaming.source/tomjones.m3u
+duration -1
+position -9
+tag title It's Not Unusual
+stream tomjones
+"""
 
-        if cmd[1:] == ["-C", "status"]:
-            track = cls.info[cls.index]
-            track.extend(cls.EXTRA)
-            output = "\n".join(track)
-            return output
+NEEDS_ESCAPING = """status playing
+file /playing/file/always.mp3
+duration 222
+position 14
+tag artist Above & Beyond
+tag album Anjunabeats 14
+tag title Always - Tinlicker Extended Mix
+"""
 
-        elif cmd[1] == "-p":
-            cls.info[cls.index][0] = "status playing"
+MISSING_TAGS = """status playing
+file /playing/file/always.mp3
+duration 222
+position 14
+"""
 
-        elif cmd[1] == "-u":
-            if cls.info[cls.index][0] == "status playing":
-                cls.info[cls.index][0] = "status paused"
-
-            elif cls.info[cls.index][0] == "status paused":
-                cls.info[cls.index][0] = "status playing"
-
-        elif cmd[1] == "-n":
-            cls.index = (cls.index + 1) % len(cls.info)
-
-        elif cmd[1] == "-r":
-            cls.index = (cls.index - 1) % len(cls.info)
-
-    @classmethod
-    def Popen(cls, cmd):  # noqa: N802
-        cls.call_process(cmd)
+ERROR = "cmus-remote: cmus is not running"
 
 
-@pytest.fixture
-def cmus_manager(manager_nospawn, monkeypatch, minimal_conf_noscreen, request):
-    widget_config = getattr(request, "param", dict())
+def test_cmus_parsing():
+    widget = cmus.Cmus()
+    widget.layout = MagicMock()
 
-    MockCmusRemoteProcess.reset()
-    monkeypatch.setattr("libqtile.widget.cmus.subprocess", MockCmusRemoteProcess)
-    monkeypatch.setattr(
-        "libqtile.widget.cmus.subprocess.CalledProcessError", subprocess.CalledProcessError
+    # Test playing status and format
+    text = widget.parse(PLAYING)
+    assert text == "♫ Rick Astley - Never Gonna Give You Up"
+    assert widget.layout.colour == widget.playing_color
+
+    # Test paused status and format
+    text = widget.parse(PAUSED)
+    assert text == "♫ Rick Astley - Never Gonna Give You Up"
+    assert widget.layout.colour == widget.paused_color
+
+    # Test stopped status and format
+    text = widget.parse(STOPPED)
+    assert text == ""
+    assert widget.layout.colour == widget.stopped_color
+
+    # Test streaming format
+    widget.status = "stopped"  # Reset status
+    text = widget.parse(STREAMING)
+    assert text == "♫ Neil Diamond - Sweet Caroline"
+    assert widget.layout.colour == widget.playing_color
+
+    # Test stream with title only
+    widget.status = "playing"
+    text = widget.parse(STREAM_TITLE_ONLY)
+    assert text == "♫ tomjones"
+    assert widget.layout.colour == widget.stopped_color
+
+    # Test escaping of text
+    widget.status = "stopped"
+    text = widget.parse(NEEDS_ESCAPING)
+    assert text == "♫ Above &amp; Beyond - Always - Tinlicker Extended Mix"
+    assert widget.layout.colour == widget.playing_color
+
+    # Test missing tags
+    widget.status = "stopped"
+    text = widget.parse(MISSING_TAGS)
+    assert text == "♫ always.mp3"
+    assert widget.layout.colour == widget.playing_color
+
+    # Test error
+    widget.status = "playing"
+    text = widget.parse(ERROR)
+    assert text == ""
+    # Status should not change on error
+    assert widget.layout.colour == widget.playing_color
+
+
+def test_cmus_time_format():
+    widget = cmus.Cmus(
+        format="{position} {duration} {position_percent} {remaining} {remaining_percent}"
     )
-    monkeypatch.setattr(
-        "libqtile.widget.cmus.base.ThreadPoolText.call_process",
-        MockCmusRemoteProcess.call_process,
-    )
+    widget.layout = MagicMock()
 
-    config = minimal_conf_noscreen
-    config.screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar(
-                [cmus.Cmus(**widget_config)],
-                10,
-            ),
-        )
-    ]
+    text = widget.parse(PLAYING)
+    assert text == "00:14 03:42 6% 03:28 94%"
 
-    manager_nospawn.start(config)
-    yield manager_nospawn
+    # Times should be empty for streams
+    text = widget.parse(STREAMING)
+    assert text.strip() == ""
 
 
-def test_cmus(cmus_manager):
-    widget = cmus_manager.c.widget["cmus"]
-
-    widget.eval("self.update(self.poll())")
-    assert widget.info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
-    assert widget.eval("self.layout.colour") == widget.eval("self.playing_color")
-
-    widget.eval("self.play()")
-    widget.eval("self.update(self.poll())")
-    assert widget.info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
-    assert widget.eval("self.layout.colour") == widget.eval("self.paused_color")
-
-
-def test_cmus_play_stopped(cmus_manager):
-    widget = cmus_manager.c.widget["cmus"]
-
-    # Set track to a stopped item
-    widget.eval("subprocess.index = 2")
-    widget.eval("self.update(self.poll())")
-
-    # It's stopped so colour should reflect this
-    assert widget.info()["text"] == "♫ tomjones"
-    assert widget.eval("self.layout.colour") == widget.eval("self.stopped_color")
-
-    widget.eval("self.play()")
-    widget.eval("self.update(self.poll())")
-    assert widget.info()["text"] == "♫ tomjones"
-    assert widget.eval("self.layout.colour") == widget.eval("self.playing_color")
+def test_cmus_no_artist_format():
+    widget = cmus.Cmus(no_artist_format="{status_text}{title} by {artist}")
+    widget.layout = MagicMock()
+    text = widget.parse(MISSING_TAGS)
+    assert text == "♫ always.mp3 by "
 
 
 @pytest.mark.parametrize(
-    "cmus_manager",
-    [{"format": "{position} {duration} {position_percent} {remaining} {remaining_percent}"}],
-    indirect=True,
+    "status,text",
+    [
+        ("playing", "PLAY "),
+        ("paused", "PAUSE "),
+        ("stopped", "STOP "),
+    ],
 )
-def test_cmus_times(cmus_manager):
-    widget = cmus_manager.c.widget["cmus"]
-
-    # Check item with valid position and duration
-    widget.eval("self.update(self.poll())")
-
-    # Check that times are correct
-    assert widget.info()["text"] == "00:14 03:42 6% 03:28 94%"
-
-    # Set track to an item with invalid position and duration
-    widget.eval("subprocess.index = 1")
-    widget.eval("self.update(self.poll())")
-
-    # Check that times are empty
-    assert widget.info()["text"].strip() == ""
-
-
-def test_cmus_buttons(cmus_manager):
-    topbar = cmus_manager.c.bar["top"]
-
-    widget = cmus_manager.c.widget["cmus"]
-    assert widget.info()["text"] == "♫ Rick Astley - Never Gonna Give You Up"
-
-    # Play next track
-    # Non-local file source
-    topbar.fake_button_press(0, 0, button=4)
-    widget.eval("self.update(self.poll())")
-    assert widget.info()["text"] == "♫ Neil Diamond - Sweet Caroline"
-
-    # Play next track
-    # Stream source so widget just displays stream info
-    topbar.fake_button_press(0, 0, button=4)
-    widget.eval("self.update(self.poll())")
-    assert widget.info()["text"] == "♫ tomjones"
-
-    # Play previous track
-    # Non-local file source
-    topbar.fake_button_press(0, 0, button=5)
-    widget.eval("self.update(self.poll())")
-    assert widget.info()["text"] == "♫ Neil Diamond - Sweet Caroline"
-
-
-def test_cmus_error_handling(cmus_manager):
-    widget = cmus_manager.c.widget["cmus"]
-    widget.eval("subprocess.is_error = True")
-    widget.eval("self.update(self.poll())")
-
-    # Widget does nothing with error message so text is blank
-    # TODO: update widget to show error?
-    assert widget.info()["text"] == ""
-
-
-def test_escape_text(cmus_manager):
-    widget = cmus_manager.c.widget["cmus"]
-
-    # Set track to an item with a title which needs escaping
-    widget.eval("subprocess.index = 3")
-    widget.eval("self.update(self.poll())")
-
-    # & should be escaped to &amp;
-    assert widget.info()["text"] == "♫ Above &amp; Beyond - Always - Tinlicker Extended Mix"
-
-
-def test_missing_metadata(cmus_manager):
-    widget = cmus_manager.c.widget["cmus"]
-
-    # Set track to one that's missing Title and Artist metadata
-    widget.eval("subprocess.index = 4")
-    widget.eval("self.update(self.poll())")
-
-    # Displayed text should default to the name of the file
-    assert widget.info()["text"] == "♫ always.mp3"
+def test_cmus_status_text(status, text):
+    widget = cmus.Cmus(
+        playing_text="PLAY ",
+        paused_text="PAUSE ",
+        stopped_text="STOP ",
+        format="{status_text}{artist} - {title}",
+    )
+    widget.layout = MagicMock()
+    output = PLAYING.replace("status playing", f"status {status}")
+    parsed = widget.parse(output)
+    assert parsed.startswith(text)

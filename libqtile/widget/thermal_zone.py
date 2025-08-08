@@ -2,7 +2,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class ThermalZone(base.ThreadPoolText):
+class ThermalZone(base.BackgroundPoll):
     """Thermal zone widget.
 
     This widget was made to read thermal zone files and transform values to

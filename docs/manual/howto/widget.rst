@@ -85,12 +85,12 @@ returns the required text.
 .. note::
     This loop runs in the event loop so it is important that the poll method does not
     call some blocking function. If this is required, widgets should inherit the
-    ``base.ThreadPoolText`` class (see below).
+    ``base.BackgroundPoll`` class (see below).
 
-ThreadPoolText
+BackgroundPoll
 --------------
 
-The ``base.ThreadPoolText`` class is very similar to the ``base.InLoopPollText`` class.
+The ``base.BackgroundPoll`` class is very similar to the ``base.InLoopPollText`` class.
 The key difference is that the ``poll`` method is run asynchronously and triggers a
 callback once the function completes. This allows widgets to get text from
 long-running functions without blocking Qtile.
@@ -368,7 +368,7 @@ A non-blocking timer can be called by using the ``self.timeout_add`` method.
 
 .. note::
 
-    Consider using the ``ThreadPoolText`` superclass where you are calling a function
+    Consider using the ``BackgroundPoll`` superclass where you are calling a function
     repeatedly and displaying its output as text.
 
 Hooks

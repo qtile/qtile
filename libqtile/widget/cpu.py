@@ -23,7 +23,7 @@ import psutil
 from libqtile.widget import base
 
 
-class CPU(base.ThreadPoolText):
+class CPU(base.BackgroundPoll):
     """
     A simple widget to display CPU load and frequency.
 

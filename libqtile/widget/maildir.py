@@ -31,7 +31,7 @@ import os.path
 from libqtile.widget import base
 
 
-class Maildir(base.ThreadPoolText):
+class Maildir(base.BackgroundPoll):
     """A simple widget showing the number of new mails in maildir mailboxes"""
 
     defaults = [
@@ -59,7 +59,7 @@ class Maildir(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(Maildir.defaults)
 
         # if it looks like a list of strings then we just convert them
