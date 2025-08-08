@@ -28,7 +28,6 @@ def widget(fake_qtile, monkeypatch, fake_window):
     # mocwidget = moc.Moc
     MockMocpProcess.reset()
     monkeypatch.setattr(moc.Moc, "call_process", MockMocpProcess.run)
-    monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockMocpProcess.run)
     yield moc.Moc
 
 
