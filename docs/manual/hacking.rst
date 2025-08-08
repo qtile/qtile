@@ -210,7 +210,7 @@ and click on ``Mark Directory as -> Sources Root``.
 
 Next, add a Configuration using a Python template with these fields:
 
-- Script path: ``bin/qtile``, or the absolute path to it
+- Script path: ``libqtile/scripts/main.py``, or the absolute path to it
 - Parameters: ``-c libqtile/resources/default_config.py``,
   or nothing if you want to use your own config file in ``~/.config/qtile/config.py``
 - Environment variables: ``PYTHONUNBUFFERED=1;DISPLAY=:1``
@@ -251,7 +251,7 @@ Create a launch.json file with the following lines.
             "name": "Python: Qtile",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/qtile",
+            "program": "${workspaceFolder}/libqtile/scripts/main.py",
             "cwd": "${workspaceFolder}",
             "args": ["-c", "libqtile/resources/default_config.py"],
             "console": "integratedTerminal",

@@ -22,6 +22,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 import pytest
 
@@ -95,8 +96,8 @@ server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True
 
 
 def run_qtile_cmd(args, no_json_loads=False):
-    cmd = os.path.join(os.path.dirname(__file__), "..", "bin", "qtile")
-    argv = [cmd, "cmd-obj"]
+    cmd = os.path.join(os.path.dirname(__file__), "..", "libqtile", "scripts", "main.py")
+    argv = [sys.executable, cmd, "cmd-obj"]
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()

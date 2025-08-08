@@ -13,7 +13,7 @@ Xephyr +extension RANDR -screen ${SCREEN_SIZE} ${XDISPLAY} -ac &
 XEPHYR_PID=$!
 (
   sleep 1
-  env DISPLAY=${XDISPLAY} QTILE_XEPHYR=1 ${PYTHON} "${HERE}"/../bin/qtile start -l ${LOG_LEVEL} $@ &
+  env DISPLAY=${XDISPLAY} QTILE_XEPHYR=1 ${PYTHON} "${HERE}"/../libqtile/scripts/main.py start -l ${LOG_LEVEL} $@ &
   QTILE_PID=$!
   env DISPLAY=${XDISPLAY} ${APP} &
   wait $QTILE_PID
