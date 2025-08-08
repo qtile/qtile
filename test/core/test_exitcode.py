@@ -21,6 +21,7 @@
 import multiprocessing
 import os
 import subprocess
+import sys
 import tempfile
 import time
 
@@ -31,8 +32,8 @@ socket_path = tempfile.NamedTemporaryFile().name
 
 
 def run_qtile(backend):
-    cmd = os.path.join(repo_path, "bin/qtile")
-    args = [cmd, "start", "-s", socket_path]
+    cmd = os.path.join(repo_path, "libqtile/scripts/main.py")
+    args = [sys.executable, cmd, "start", "-s", socket_path]
     args.extend(["-b", backend.name])
 
     env = os.environ.copy()
@@ -46,8 +47,8 @@ def run_qtile(backend):
 
 
 def stop_qtile(code):
-    cmd = os.path.join(repo_path, "bin/qtile")
-    args = [cmd, "cmd-obj", "-o", "cmd", "-s", socket_path, "-f", "shutdown"]
+    cmd = os.path.join(repo_path, "libqtile/scripts/main.py")
+    args = [sys.executable, cmd, "cmd-obj", "-o", "cmd", "-s", socket_path, "-f", "shutdown"]
     if code:
         args.extend(["-a", str(code)])
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)

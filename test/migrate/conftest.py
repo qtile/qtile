@@ -49,7 +49,7 @@ class MigrationTester:
     def __init__(self, test_id, test):
         self.test_id = test_id
         self.test = test
-        self.cmd = Path(__file__).parent / ".." / ".." / "bin" / "qtile"
+        self.cmd = Path(__file__).parent / ".." / ".." / "libqtile" / "scripts" / "main.py"
 
     def assert_migrate(self):
         if not self.test.source:

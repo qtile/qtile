@@ -19,11 +19,12 @@
 
 import os
 import subprocess
+import sys
 
 
 def run_qtile(args):
-    cmd = os.path.join(os.path.dirname(__file__), "..", "bin", "qtile")
-    argv = [cmd]
+    cmd = os.path.join(os.path.dirname(__file__), "..", "libqtile", "scripts", "main.py")
+    argv = [sys.executable, cmd]
     argv.extend(args)
     proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = proc.communicate()
