@@ -174,7 +174,7 @@ static void qw_xwayland_view_clip(struct qw_xwayland_view *xwayland_view) {
 static void qw_xwayland_view_place(void *self, int x, int y, int width, int height, int bw,
                                    float (*bc)[4], int bn, int above) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
 
     // Check if placement or geometry changed
     bool place_changed = xwayland_view->base.x != x || xwayland_view->base.y != y ||
@@ -231,7 +231,7 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
 // Handle commit event: called when XWayland surface commits state changes
 static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, commit);
-    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
 
 
@@ -261,40 +261,76 @@ static void qw_xwayland_view_handle_scene_tree_destroy(struct wl_listener *liste
 }
 
 // Called when the XWayland surface is mapped (i.e., ready to be shown).
-static void qw_xwayland_view_map(struct wl_listener *listener, void *data) {
+static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, map);
-    struct qw_view *view = &xwayland_view->base;
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    //struct qw_view *view = &xwayland_view->base;
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
     struct qw_server *server = xwayland_view->server; // Assuming server is stored in view
 
     // Set the view's initial dimensions based on the surface.
-    view->width = qw_xsurface->width;
-    view->height = qw_xsurface->height;
+    xwayland_view->base.width = xwayland_surface->width;
+    xwayland_view->base.height = xwayland_surface->height;
 
     // Attach a listener to the surface's commit signal.
-    wl_signal_add(&qw_xsurface->surface->events.commit, &xwayland_view->commit);
+    wl_signal_add(&xwayland_surface->surface->events.commit, &xwayland_view->commit);
     xwayland_view->commit.notify = qw_xwayland_view_handle_commit;
 
     // Create a subsurface tree for this view under the content tree.
     xwayland_view->scene_tree =
-        wlr_scene_subsurface_tree_create(view->content_tree, qw_xsurface->surface);
+        wlr_scene_subsurface_tree_create(xwayland_view->base.content_tree, xwayland_surface->surface);
+
+    xwayland_view->scene_tree->node.data = xwayland_view;
+    xwayland_surface->data = xwayland_view;
+
 
     // Add destroy listener for scene tree to clean up on teardown.
-    if (xwayland_view->scene_tree) {
-        xwayland_view->scene_tree_destroy.notify = qw_xwayland_view_handle_scene_tree_destroy;
-        wl_signal_add(&xwayland_view->scene_tree->node.events.destroy,
-                      &xwayland_view->scene_tree_destroy);
-    }
+    // if (xwayland_view->scene_tree) {
+    //     xwayland_view->scene_tree_destroy.notify = qw_xwayland_view_handle_scene_tree_destroy;
+    //     wl_signal_add(&xwayland_view->scene_tree->node.events.destroy,
+    //                   &xwayland_view->scene_tree_destroy);
+    // }
 
     // Notify the server that this view is ready to be managed (added to layout/focus system).
-    server->manage_view_cb(view, server->cb_data);
+    //server->manage_view_cb(view, server->cb_data);
 }
 
+// static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data) {
+//     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, map);
+//     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+//
+//     // This is just debugging code
+//     if (!xwayland_surface->surface) {
+//     wlr_log(WLR_ERROR, "xwayland_surface->surface is NULL\n");
+//     } else {
+//     wlr_log(WLR_ERROR, "Mapped X11 surface size: %dx%d\n",
+//         xwayland_surface->surface->current.width,
+//         xwayland_surface->surface->current.height);
+//     };
+//
+//
+//     // Wire up the commit listener here, because xwayland map/unmap can change
+//     // the underlying wlr_surface
+//     wl_signal_add(&xwayland_surface->surface->events.commit, &xwayland_view->commit);
+//     xwayland_view->commit.notify = qw_xwayland_view_handle_commit;
+//
+//
+//     wlr_log(WLR_ERROR, ">>>>>>>>>>>> handle map");
+//     // Create scene node for the toplevel surface under the content tree
+//     //xwayland_view->scene_tree =
+//     //struct wlr_scene_surface *scene_surface = wlr_scene_surface_create(xwayland_view->base.content_tree, xwayland_surface->surface);
+//     xwayland_view->scene_tree = wlr_scene_subsurface_tree_create(
+//         xwayland_view->base.content_tree, xwayland_surface->surface);
+//     xwayland_view->scene_tree->node.data = xwayland_view;
+//     xwayland_surface->data = xwayland_view;
+// }
+
+
+
 // Called when the XWayland surface is unmapped (i.e., hidden or destroyed).
-static void qw_xwayland_view_unmap(struct wl_listener *listener, void *data) {
+static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, unmap);
     struct qw_view *view = &xwayland_view->base;
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
     struct qw_server *server = xwayland_view->server;
 
     // Remove listeners to avoid dangling pointers.
@@ -319,16 +355,36 @@ static void qw_xwayland_view_unmap(struct wl_listener *listener, void *data) {
 }
 
 // Called when an override-redirect surface is being converted to a managed view.
-static void qw_xwayland_view_associate(struct wl_listener *listener, void *data) {
+static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, associate);
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
     // Attach map and unmap listeners to the new surface events.
-    wl_signal_add(&qw_xsurface->surface->events.unmap, &xwayland_view->unmap);
-    xwayland_view->unmap.notify = qw_xwayland_view_unmap;
-    wl_signal_add(&qw_xsurface->surface->events.map, &xwayland_view->map);
-    xwayland_view->map.notify = qw_xwayland_view_map;
+    wl_signal_add(&xwayland_surface->surface->events.unmap, &xwayland_view->unmap);
+    xwayland_view->unmap.notify = qw_xwayland_view_handle_unmap;
+    wl_signal_add(&xwayland_surface->surface->events.map, &xwayland_view->map);
+    xwayland_view->map.notify = qw_xwayland_view_handle_map;
 }
+
+// static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void *data) {
+//     // TODO: implement
+//     // reference:
+//     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L772
+//     // struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
+//     // xdg_view->mapped = true;
+//     //
+//     // struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
+//     // struct wlr_box geom = surface->geometry;
+//
+//
+//
+//     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, associate);
+//     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+//     wl_signal_add(&xwayland_surface->surface->events.map, &xwayland_view->map);
+//     xwayland_view->map.notify = qw_xwayland_view_handle_map;
+// }
+
+
 
 static struct qw_xwayland_view *qw_xwayland_view_from_view(struct qw_view *view) {
     if (strcmp(view->shell, "XWayland") != 0) {
@@ -346,7 +402,7 @@ static uint32_t qw_xwayland_view_configure(struct qw_view *view, double lx, doub
         return 0;
     }
 
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
 
     wlr_xwayland_surface_configure(qw_xsurface, lx, ly, width, height);
 
@@ -359,7 +415,7 @@ static void qw_xwayland_view_handle_request_configure(struct wl_listener *listen
         wl_container_of(listener, xwayland_view, request_configure);
     struct wlr_xwayland_surface_configure_event *event = data;
     struct qw_view *view = &xwayland_view->base;
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
 
     if (qw_xsurface->surface == NULL || !qw_xsurface->surface->mapped) {
         wlr_xwayland_surface_configure(qw_xsurface, event->x, event->y, event->width,
@@ -380,7 +436,7 @@ static void qw_xwayland_view_handle_request_configure(struct wl_listener *listen
 static void qw_xwayland_view_handle_request_fullscreen(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view =
         wl_container_of(listener, xwayland_view, request_fullscreen);
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
 
     if (qw_xsurface->surface == NULL || !qw_xsurface->surface->mapped) {
         return;
@@ -421,7 +477,7 @@ static void qw_xwayland_view_handle_request_resize(struct wl_listener *listener,
 
 static void qw_xwayland_view_handle_set_title(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_title);
-    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->qw_xwayland_surface;
+    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
 
     if (qw_xsurface->surface == NULL || !qw_xsurface->surface->mapped) {
         return;
@@ -469,54 +525,6 @@ static void qw_xwayland_view_handle_set_decorations(struct wl_listener *listener
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L342
 }
 
-static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data) {
-    struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, map);
-    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->qw_xwayland_surface;
-
-    // This is just debugging code
-    if (!xwayland_surface->surface) {
-    wlr_log(WLR_ERROR, "xwayland_surface->surface is NULL\n");
-    } else {
-    wlr_log(WLR_ERROR, "Mapped X11 surface size: %dx%d\n",
-        xwayland_surface->surface->current.width,
-        xwayland_surface->surface->current.height);
-    };
-
-
-    // Wire up the commit listener here, because xwayland map/unmap can change
-    // the underlying wlr_surface
-    wl_signal_add(&xwayland_surface->surface->events.commit, &xwayland_view->commit);
-    xwayland_view->commit.notify = qw_xwayland_view_handle_commit;
-
-
-    wlr_log(WLR_ERROR, ">>>>>>>>>>>> handle map");
-    // Create scene node for the toplevel surface under the content tree
-    //xwayland_view->scene_tree =
-    //struct wlr_scene_surface *scene_surface = wlr_scene_surface_create(xwayland_view->base.content_tree, xwayland_surface->surface);
-    xwayland_view->scene_tree = wlr_scene_subsurface_tree_create(
-        xwayland_view->base.content_tree, xwayland_surface->surface);
-    xwayland_view->scene_tree->node.data = xwayland_view;
-    xwayland_surface->data = xwayland_view;
-}
-
-static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void *data) {
-    // TODO: implement
-    // reference:
-    // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L772
-    // struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
-    // xdg_view->mapped = true;
-    //
-    // struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
-    // struct wlr_box geom = surface->geometry;
-
-
-
-    struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, associate);
-    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->qw_xwayland_surface;
-    wl_signal_add(&xwayland_surface->surface->events.map, &xwayland_view->map);
-    xwayland_view->map.notify = qw_xwayland_view_handle_map;
-}
-
 static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, void *data) {
     // TODO: implement
     // reference:
@@ -533,7 +541,7 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, destroy);
 
     wl_list_remove(&xwayland_view->commit.link);
-    xwayland_view->qw_xwayland_surface = NULL;
+    xwayland_view->xwayland_surface = NULL;
 
     wl_list_remove(&xwayland_view->destroy.link);
     wl_list_remove(&xwayland_view->request_configure.link);
@@ -566,7 +574,7 @@ void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_s
     struct wlr_box geom = {.x = 0, .y = 0, .width = 0, .height = 0};
     xwayland_view->geom = geom;
     xwayland_view->base.server = server;
-    xwayland_view->qw_xwayland_surface = xwayland_surface;
+    xwayland_view->xwayland_surface = xwayland_surface;
 
     xwayland_view->base.shell = "Xwayland";
     // Create a scene tree node for this view inside the main layout tree
@@ -629,7 +637,7 @@ struct qw_xwayland_view *create_xwayland_view(struct wlr_xwayland_surface *qw_xs
     //     return NULL;
     // }
 
-    xwayland_view->qw_xwayland_surface = qw_xsurface;
+    xwayland_view->xwayland_surface = qw_xsurface;
 
     wl_signal_add(&qw_xsurface->events.destroy, &xwayland_view->destroy);
     xwayland_view->destroy.notify = qw_xwayland_view_handle_destroy;
