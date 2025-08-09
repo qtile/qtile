@@ -59,6 +59,9 @@ typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x
 // Output dimensions callback: x, y, width, height of output
 typedef void (*output_dims_cb_t)(int x, int y, int width, int height);
 
+// Query tree node wid callback
+typedef void (*node_wid_cb_t)(int wid);
+
 // Callback for when screen configuration changes
 typedef void (*on_screen_change_cb_t)(void *userdata);
 
@@ -166,6 +169,8 @@ void qw_server_keyboard_clear_focus(struct qw_server *server);
 bool qw_server_change_vt(struct qw_server *server, int vt);
 
 struct qw_cursor *qw_server_get_cursor(struct qw_server *server);
+
+void qw_server_loop_visible_views(struct qw_server *server, node_wid_cb_t);
 
 void qw_server_set_keymap(struct qw_server *server,
                             const char* layout,
