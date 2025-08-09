@@ -1,4 +1,4 @@
-# Copyright (c) 2023, elParaguayo. All rights reserved.
+# Copyright (c) 2025 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@ import sys
 from setuptools import build_meta as _orig
 from setuptools.build_meta import *  # noqa: F401,F403
 
-WAYLAND_DEPENDENCIES = ["pywlroots>=0.17.0,<0.18.0"]
+WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
 
 
 def wants_wayland(config_settings):
@@ -34,25 +34,21 @@ def wants_wayland(config_settings):
     return False
 
 
-def get_requires_for_build_wheel(config_settings=None):
-    """Inject pywlroots into build dependencies if wayland requested."""
-    reqs = _orig.get_requires_for_build_wheel(config_settings)
-    if wants_wayland(config_settings):
-        reqs += WAYLAND_DEPENDENCIES
-
-    return reqs
-
-
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
-    """Stop building if wayland requested but pywlroots is not installed."""
+    """If wayland backend is requested, build it!"""
     if config_settings is None:
         config_settings = {}
 
-    if wants_wayland(config_settings):
-        try:
-            import wlroots  # noqa: F401
-        except ImportError:
-            sys.exit("Wayland backend requested but pywlroots is not installed.")
+    wayland_requested = wants_wayland(config_settings)
+    try:
+        from libqtile.backend.wayland.cffi.build import ffi
+
+        ffi.compile(verbose=wayland_requested)
+    except Exception as e:
+        if wayland_requested:
+            sys.exit(f"Wayland backend requested but backend could not be built: {e}")
+        else:
+            print("Wayland backend was not built.")
 
     # Write library paths to file, if they are specified at build time via
     # --config-settings=PANGO_PATH=...
@@ -63,3 +59,4 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
             f.write(f"{p} = {config_settings.get(p)!r}\n")
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
+
