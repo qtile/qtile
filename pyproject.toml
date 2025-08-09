@@ -6,7 +6,8 @@ requires = [
     "setuptools-scm>=7.0",
     "wheel",
 ]
-build-backend = "setuptools.build_meta"
+backend-path=["."]
+build-backend = "builder"
 
 [project]
 name = "qtile"
@@ -43,46 +44,14 @@ classifiers = [
 [project.scripts]
 qtile = "libqtile.scripts.main:main"
 
-[project.optional-dependencies]
-dev = [
-    "coverage",
-    "pytest-cov",
-    "pre-commit",
-    "PyGObject",
-    "isort",
-    "pytest >= 6.2.1",
-    "mypy",
-    "anyio",
-    "check-manifest",
-    "twine",
-    "build",
-]
-optional_core = [
-    "dbus-fast",
-    "libcst >= 1.0.0",
-    "setproctitle",
-]
-widgets = [
-    "imaplib2",
-    "keyring",
-    "mailbox",
-    "psutil",
-    "pulsectl",
-    "pulsectl_asyncio",
-    "python-mpd2",
-    "pytz",
-    "xdg",
-    "xmltodict",
-]
-wayland = [
-    "pywayland==0.4.17",
-    "xkbcommon >= 0.3",
-    "pywlroots==0.17.0",
-]
-
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["libqtile*"]
+
+[tool.setuptools.package-data]
+"libqtile.backend.wayland" = ["*.so"]
 
 [tool.setuptools_scm]
 
