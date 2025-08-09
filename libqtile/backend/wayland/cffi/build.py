@@ -1,8 +1,9 @@
-import os
-import subprocess
+from cffi import FFI
 from pathlib import Path
 
-from cffi import FFI
+import cairocffi
+import os
+import subprocess
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
@@ -46,12 +47,6 @@ enum wlr_log_importance {
     WLR_DEBUG,
     ...
 };
-
-// Add XCB types for xwayland support
-typedef uint32_t xcb_atom_t;
-typedef uint32_t xcb_window_t;
-typedef uint32_t xcb_timestamp_t;
-
 extern "Python" void log_cb(enum wlr_log_importance importance,
                                        const char *log_str);
 
