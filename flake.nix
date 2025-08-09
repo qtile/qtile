@@ -40,20 +40,11 @@
 
       overlays.default = import ./nix/overlays.nix self;
 
-      packages = forAllSystems (
-        pkgs:
-        let
-          qtile' = pkgs.python3Packages.qtile;
-        in
-        {
-          default = self.packages.${pkgs.system}.qtile;
+      packages = forAllSystems (pkgs: {
+        inherit (pkgs.python3Packages) qtile;
 
-          qtile = qtile'.overrideAttrs (prev: {
-            name = "${qtile'.pname}-${qtile'.version}";
-            passthru.unwrapped = qtile';
-          });
-        }
-      );
+        default = self.packages.${pkgs.system}.qtile;
+      });
 
       devShells = forAllSystems (
         pkgs:
