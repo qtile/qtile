@@ -137,10 +137,10 @@ struct qw_server {
     struct wl_listener new_decoration;
     struct wl_listener new_layer_surface;
     struct wl_listener request_cursor;
-    #if WLR_HAS_XWAYLAND
+#if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;
-    #endif
+#endif
 };
 
 // Utility functions exposed by the server API
@@ -182,5 +182,6 @@ void qw_server_loop_visible_views(struct qw_server *server, node_wid_cb_t);
 
 void qw_server_set_keymap(struct qw_server *server, const char *layout, const char *options,
                           const char *variant);
+const char *qw_server_xwayland_display_name(struct qw_server *server);
 
 #endif /* SERVER_H */

@@ -363,6 +363,10 @@ static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, 
     struct wlr_xwayland_surface *xwayland_surface = data;
     qw_server_xwayland_view_new(server, xwayland_surface);
 }
+
+const char* qw_server_xwayland_display_name(struct qw_server *server) {
+    return server->xwayland->display_name;
+}
 #endif
 
 
@@ -507,6 +511,10 @@ struct qw_server *qw_server_create() {
 
     #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
+    setenv("DISPLAY", server->xwayland->display_name, 1);
+    wlr_log(WLR_ERROR, "$$$$$$$$$$ %s", server->xwayland->display_name);
+    int a = setenv("DISPLAY", server->xwayland->display_name, 1);
+    wlr_log(WLR_ERROR,"get %s %i", getenv("DISPLAY"), a);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
     #endif
