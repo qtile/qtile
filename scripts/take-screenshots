@@ -43,7 +43,7 @@ XEPHYR_PID=$!
 
 (
   sleep 1
-  nested "${PYTHON}" "${PROJECT_DIR}/bin/qtile" -l CRITICAL -c "${PROJECT_DIR}/docs/screenshots/config.py" &
+  nested "${PYTHON}" "${PROJECT_DIR}/libqtile/scripts/main.py" -l CRITICAL -c "${PROJECT_DIR}/docs/screenshots/config.py" &
   QTILE_PID=$!
 
   case $1 in

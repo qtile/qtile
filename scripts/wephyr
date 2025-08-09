@@ -19,7 +19,7 @@ sys.path.insert(0, BASE_DIR)
 from libqtile.utils import get_cache_dir, guess_terminal  # noqa: E402
 
 CACHE_DIR = Path(get_cache_dir())
-QTILE = BASE_DIR / "bin" / "qtile"
+QTILE = BASE_DIR / "libqtile" / "scripts" / "main.py"
 
 
 # This script can be configured with environmental variables and arguments:
@@ -27,7 +27,7 @@ outputs = os.environ.get("OUTPUTS", 1)
 app = os.environ.get("APP", guess_terminal())
 log_level = os.environ.get("LOG_LEVEL", "INFO")
 
-cmd = [QTILE.as_posix(), "start", "-b", "wayland", "-l", log_level]
+cmd = [sys.executable, QTILE.as_posix(), "start", "-b", "wayland", "-l", log_level]
 cmd.extend(sys.argv[1:])
 
 
