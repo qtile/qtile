@@ -1,13 +1,11 @@
 {
   description = "Qtile's flake, full-featured, hackable tiling window manager written and configured in Python";
-
   inputs = {
     # note: we are using a commit hash to a fix,
     # this should be removed one the pr has landed into unstable, see:
     # https://nixpk.gs/pr-tracker.html?pr=431532
     nixpkgs.url = "github:nixos/nixpkgs/a66fdcbf442afb2e4c3b8795c73a3c3ded92392a";
   };
-
   outputs =
     {
       self,
@@ -32,103 +30,94 @@
           in
           function (import nixpkgs nixpkgs-settings)
         );
+
+      flake-attributes = forAllSystems (pkgs: rec {
+        build-config = import ./nix/build-config.nix pkgs;
+
+        common-python-deps = with pkgs.python3Packages; [
+          python-dateutil
+
+          # docs building
+          numpydoc
+          sphinx
+          sphinx_rtd_theme
+
+          # tests
+          coverage
+          pytest
+          isort
+        ];
+
+        tests = {
+          wayland = pkgs.writeScriptBin "qtile-run-tests-wayland" ''
+            pytest -x --backend=wayland
+          '';
+          x11 = pkgs.writeScriptBin "qtile-run-tests-x11" ''
+            pytest -x --backend=x11
+          '';
+        };
+
+        common-system-deps = with pkgs; [
+          # Gdk namespaces
+          wrapGAppsHook
+          gobject-introspection
+
+          # docs graphs
+          graphviz
+
+          # x11 deps
+          xorg.xorgserver
+          xorg.libX11
+          wlroots_0_17
+
+          # test/backend/wayland/test_window.py
+          gtk-layer-shell
+          imagemagick
+
+          pre-commit
+        ];
+
+        shell-env = {
+          LD_LIBRARY_PATH =
+            with pkgs;
+            lib.makeLibraryPath [
+              glib
+              pango
+              xcb-util-cursor
+              pixman
+              libdrm.dev
+            ];
+        }
+        // build-config.resolved-env-vars;
+
+        pkgs-wrapped = pkgs.lib.lists.flatten [
+          common-python-deps
+          common-system-deps
+          (builtins.attrValues tests)
+        ];
+      });
     in
     {
       formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
 
       checks = forAllSystems (pkgs: pkgs.python3Packages.qtile.passthru.tests);
 
-      overlays.default = import ./nix/overlays.nix self;
-
       packages = forAllSystems (pkgs: {
         inherit (pkgs.python3Packages) qtile;
-
         default = self.packages.${pkgs.system}.qtile;
       });
 
-      devShells = forAllSystems (
-        pkgs:
-        let
-          common-python-deps =
-            ps:
-            with ps;
-            [ python-dateutil ]
-            ++ [
-              # docs building
-              numpydoc
-              sphinx
-              sphinx_rtd_theme
-              # tests
-              coverage
-              pytest
-              isort
-            ];
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          env = flake-attributes.${pkgs.system}.shell-env;
 
-          tests = {
-            wayland = pkgs.writeScriptBin "qtile-run-tests-wayland" ''
-              ./scripts/ffibuild -v
-              pytest -x --backend=wayland
-            '';
+          shellHook = ''
+            export PYTHONPATH=$(readlink -f .):$PYTHONPATH
+          '';
 
-            x11 = pkgs.writeScriptBin "qtile-run-tests-x11" ''
-              ./scripts/ffibuild -v
-              pytest -x --backend=x11
-            '';
-          };
-
-          common-system-deps =
-            with pkgs;
-            [
-              # Gdk namespaces
-              wrapGAppsHook
-              gobject-introspection
-
-              # docs graphs
-              graphviz
-
-              # x11 deps
-              xorg.xorgserver
-              xorg.libX11
-
-              wlroots_0_17
-              # test/backend/wayland/test_window.py
-              gtk-layer-shell
-              imagemagick
-            ]
-            ++ (builtins.attrValues tests);
-        in
-        {
-          default = pkgs.mkShell {
-            env = {
-              QTILE_PIXMAN_PATH = "${pkgs.pixman}/include/pixman-1";
-              QTILE_LIBDRM_PATH = "${pkgs.libdrm.dev}/include/libdrm";
-
-              LD_LIBRARY_PATH =
-                with pkgs;
-                lib.makeLibraryPath [
-                  glib
-                  pango
-                  xcb-util-cursor
-                  pixman
-                  libdrm.dev
-                ];
-            };
-
-            shellHook = ''
-              export PYTHONPATH=$(readlink -f .):$PYTHONPATH
-            '';
-
-            inputsFrom = [ self.packages.${pkgs.system}.qtile ];
-
-            packages =
-              with pkgs;
-              [
-                (python3.withPackages common-python-deps)
-                pre-commit
-              ]
-              ++ common-system-deps;
-          };
-        }
-      );
+          inputsFrom = [ self.packages.${pkgs.system}.qtile ];
+          packages = flake-attributes.${pkgs.system}.pkgs-wrapped;
+        };
+      });
     };
 }
