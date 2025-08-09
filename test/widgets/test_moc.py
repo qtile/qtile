@@ -25,7 +25,7 @@ import subprocess
 import pytest
 
 import libqtile.config
-from libqtile.widget import base, moc
+from libqtile.widget import moc
 from test.widgets.conftest import FakeBar
 
 
