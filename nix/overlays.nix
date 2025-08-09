@@ -1,4 +1,10 @@
-self: final: prev: {
+self: final: prev:
+let
+  inherit (prev) lib pkgs;
+
+  build-config = import ./build-config.nix pkgs;
+in
+{
   pythonPackagesOverlays = (prev.pythonPackagesOverlays or [ ]) ++ [
     (_: pprev: {
       qtile =
@@ -25,6 +31,13 @@ self: final: prev: {
             # use the source of the git repo
             src = ./..;
             disabled = false;
+
+            env = build-config.resolved-env-vars;
+
+            pypaBuildFlags = build-config.resolved-config-settings;
+
+            # removes nixpkgs postPatch
+            postPatch = "";
           }
         )).override
           { wlroots = prev.wlroots_0_17; };
