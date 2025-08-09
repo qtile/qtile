@@ -25,7 +25,7 @@ import subprocess
 import pytest
 
 import libqtile.config
-from libqtile.widget import moc
+from libqtile.widget import base, moc
 from test.widgets.conftest import FakeBar
 
 
@@ -98,7 +98,6 @@ def patched_moc(fake_qtile, monkeypatch, fake_window):
     widget = moc.Moc()
     MockMocpProcess.reset()
     monkeypatch.setattr(widget, "call_process", MockMocpProcess.run)
-    monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockMocpProcess.run)
     fakebar = FakeBar([widget], window=fake_window)
     widget._configure(fake_qtile, fakebar)
     return widget
@@ -135,14 +134,13 @@ def test_moc_state_and_colours(patched_moc):
 
 def test_moc_button_presses(manager_nospawn, minimal_conf_noscreen, monkeypatch):
     # This needs to be patched before initialising the widgets as mouse callbacks
-    # bind subprocess.Popen.
-    monkeypatch.setattr("subprocess.Popen", MockMocpProcess.run)
+    # bind call_process.
+    monkeypatch.setattr(base._Widget, "call_process", MockMocpProcess.run)
 
     # Long interval as we don't need this polling on its own.
     mocwidget = moc.Moc(update_interval=30)
     MockMocpProcess.reset()
     monkeypatch.setattr(mocwidget, "call_process", MockMocpProcess.run)
-    monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockMocpProcess.run)
 
     config = minimal_conf_noscreen
     config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([mocwidget], 10))]
