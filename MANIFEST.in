@@ -30,7 +30,6 @@ prune bin
 prune docs
 prune scripts
 prune rpm
-include scripts/ffibuild
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

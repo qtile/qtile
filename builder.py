@@ -45,10 +45,21 @@ def get_requires_for_build_wheel(config_settings=None):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Stop building if wayland requested but pywlroots is not installed."""
+    if config_settings is None:
+        config_settings = {}
+
     if wants_wayland(config_settings):
         try:
             import wlroots  # noqa: F401
         except ImportError:
             sys.exit("Wayland backend requested but pywlroots is not installed.")
+
+    # Write library paths to file, if they are specified at build time via
+    # --config-settings=PANGO_PATH=...
+    with open("libqtile/build_config.py", "w") as f:
+        f.write("# This file is generated at build time by builder.py\n")
+        for lib in ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]:
+            p = lib + "_PATH"
+            f.write(f"{p} = {config_settings.get(p)!r}\n")
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
