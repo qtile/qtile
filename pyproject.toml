@@ -6,7 +6,8 @@ requires = [
     "setuptools-scm>=7.0",
     "wheel",
 ]
-build-backend = "setuptools.build_meta"
+backend-path=["."]
+build-backend = "builder"
 
 [project]
 name = "qtile"
@@ -38,8 +39,14 @@ classifiers = [
 [project.scripts]
 qtile = "libqtile.scripts.main:main"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 include = ["libqtile*"]
+
+[tool.setuptools.package-data]
+"libqtile.backend.wayland" = ["*.so"]
 
 [tool.setuptools_scm]
 
