@@ -25,7 +25,7 @@ class LifeCycle:
 
     def _atexit(self) -> None:
         if self.behavior is Behavior.RESTART:
-            argv = [sys.executable] + sys.argv
+            argv = sys.argv
             if "--no-spawn" not in argv:
                 argv.append("--no-spawn")
             argv = [s for s in argv if not s.startswith("--with-state")]
@@ -33,7 +33,7 @@ class LifeCycle:
                 argv.append("--with-state=" + self.state_file)
             logger.warning("Restarting Qtile with os.execv(...)")
             # No other code will execute after the following line does
-            os.execv(sys.executable, argv)
+            os.execv(argv[0], argv)
         elif self.behavior is Behavior.TERMINATE:
             logger.warning("Qtile will now terminate")
             # the if statement should be unnecessary, but keeps code coverage working
