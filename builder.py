@@ -1,13 +1,4 @@
-#!/usr/bin/env python3
-
-# Copyright (c) 2008 Aldo Cortesi
-# Copyright (c) 2011 Mounier Florian
-# Copyright (c) 2012 dmpayton
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 roger
-# Copyright (c) 2014 Pedro Algarvio
-# Copyright (c) 2014-2015 Tycho Andersen
-# Copyright (c) 2023 Matt Colligan
+# Copyright (c) 2025 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,37 +17,33 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import importlib
+import distutils.errors
+import subprocess
 import sys
-from pathlib import Path
 
-from setuptools import setup
+from setuptools import build_meta as _orig
+from setuptools.build_meta import *  # noqa: F401,F403
 
-ROOT = Path(__file__).parent.resolve()
-sys.path.insert(0, ROOT.as_posix())
-
-
-def can_import(module):
-    try:
-        importlib.import_module(module)
-    except Exception:
-        return False
-    return True
+WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
 
 
-def get_cffi_modules():
-    # Check we have cffi around. If not, none of these will get built.
-    if not can_import("cffi.pkgconfig"):
-        print("CFFI package is missing")
-        return
+def wants_wayland(config_settings):
+    if config_settings:
+        for key in ["Backend", "backend"]:
+            if config_settings.get(key, "").lower() == "wayland":
+                return True
 
-    cffi_modules = []
-
-    return cffi_modules
+    return False
 
 
-setup(
-    use_scm_version=True,
-    cffi_modules=get_cffi_modules(),
-    include_package_data=True,
-)
+def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+    """If wayland backend is requested, build it!"""
+    if wants_wayland(config_settings):
+        try:
+            from libqtile.backend.wayland.cffi.build import ffi
+
+            ffi.compile(verbose=True)
+        except (distutils.errors.DistutilsError, subprocess.CalledProcessError) as e:
+            sys.exit(f"Wayland backend requested but backend could not be built: {e}")
+
+    return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
