@@ -32,8 +32,12 @@ let
       env = build-config.resolved-env-vars;
 
       pypaBuildFlags = build-config.resolved-config-settings;
+    }
+    // {
+      # removes nixpkgs patching, as we handle it locally
+      postPatch = "";
 
-      postPatch = ""; # removes nixpkgs postPatch
+      patches = [ ];
     };
 in
 {
