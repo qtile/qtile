@@ -485,11 +485,6 @@ static void qw_xwayland_view_handle_request_resize(struct wl_listener *listener,
 static void qw_xwayland_view_handle_set_title(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_title);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
-
-    if (qw_xsurface->surface == NULL || !qw_xsurface->surface->mapped) {
-        return;
-    }
-
     xwayland_view->base.title = qw_xsurface->title;
     if (xwayland_view->base.set_title_cb && xwayland_view->base.title) {
         xwayland_view->base.set_title_cb(xwayland_view->base.title, xwayland_view->base.cb_data);
@@ -497,9 +492,12 @@ static void qw_xwayland_view_handle_set_title(struct wl_listener *listener, void
 }
 
 static void qw_xwayland_view_handle_set_class(struct wl_listener *listener, void *data) {
-    // TODO: implement
-    // reference:
-    // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L694
+    struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_class);
+    struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
+    xwayland_view->base.app_id = qw_xsurface->class;
+    if (xwayland_view->base.set_title_cb && xwayland_view->base.app_id) {
+        xwayland_view->base.set_app_id_cb(xwayland_view->base.app_id, xwayland_view->base.cb_data);
+    }
 }
 
 static void qw_xwayland_view_handle_set_role(struct wl_listener *listener, void *data) {
@@ -607,6 +605,11 @@ void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_s
     wl_signal_add(&xwayland_surface->events.associate, &xwayland_view->associate);
     xwayland_view->associate.notify = qw_xwayland_view_handle_associate;
 
+    wl_signal_add(&xwayland_surface->events.set_title, &xwayland_view->set_title);
+    xwayland_view->set_title.notify = qw_xwayland_view_handle_set_title;
+
+    wl_signal_add(&xwayland_surface->events.set_class, &xwayland_view->set_class);
+    xwayland_view->set_class.notify = qw_xwayland_view_handle_set_class;
 
     // Assign function pointers for base view operations
     // xdg_view->base.get_tree_node = qw_xdg_view_get_tree_node;
