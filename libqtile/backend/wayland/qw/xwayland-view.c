@@ -10,6 +10,42 @@
 #include <stdlib.h>
 #include <wlr/xwayland.h>
 
+static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
+                                      struct wlr_surface *surface) {
+    if (!xwayland_view) {
+        return;
+    }
+
+    struct qw_server *server = xwayland_view->base.server;
+    struct wlr_seat *seat = server->seat;
+    struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+
+    if (prev_surface == surface) {
+        return;
+    }
+
+    // Deactivate previous toplevel if any
+    // if (prev_surface) {
+    //     struct wlr_xdg_toplevel *prev_toplevel =
+    //         wlr_xdg_toplevel_try_from_wlr_surface(prev_surface);
+    //     if (prev_toplevel) {
+    //         wlr_xdg_toplevel_set_activated(prev_toplevel, false);
+    //     }
+    // }
+
+    wlr_scene_node_raise_to_top(&xwayland_view->base.content_tree->node);
+
+    // wlr_xdg_toplevel_set_activated(xdg_view->xdg_toplevel, true);
+
+    // Notify keyboard about entering this surface (for keyboard input)
+    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
+    if (keyboard) {
+        wlr_seat_keyboard_notify_enter(seat, xwayland_view->xwayland_surface->surface,
+                                       keyboard->keycodes, keyboard->num_keycodes,
+                                       &keyboard->modifiers);
+    }
+}
+
 /* Handle configure requests from unmanaged XWayland surfaces (popups, override-redirect windows).
  * Forwards resize/move requests directly to wlroots since these surfaces bypass window management.
  */
@@ -221,9 +257,9 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
 
     // TODO: don't force repo
     if (needs_repos) {
-    //if (true) {
-    //    width = 300;
-    //    height = 300;
+        // if (true) {
+        //     width = 300;
+        //     height = 300;
 
         // For XWayland, we configure the surface position and size
         wlr_xwayland_surface_configure(qw_xsurface, x, y, width, height);
@@ -271,21 +307,19 @@ static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *d
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, commit);
     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
-
-
-
     // For XWayland, we don't need to check for initial_commit or manage the view here
     // The view is already managed when it's mapped (see qw_xwayland_view_map)
     // This commit handler can be used for other purposes like updating geometry
     // or handling surface state changes after the view is already managed
 
     // Update clipping if geometry changed
-    //qw_xwayland_view_clip(xwayland_view);
+    // qw_xwayland_view_clip(xwayland_view);
     wlr_log(WLR_ERROR, ">>>>>>>>>>>> handle commit");
-    //TODO: Remove hardcoded values
-    // float bc[4] = {0, 0, 0, 0};
-    // qw_xwayland_view_place(xwayland_view, 0, 0, xwayland_surface->width, xwayland_surface->height, 0,
-    //                                &bc, 0, 1);
+    // TODO: Remove hardcoded values
+    //  float bc[4] = {0, 0, 0, 0};
+    //  qw_xwayland_view_place(xwayland_view, 0, 0, xwayland_surface->width,
+    //  xwayland_surface->height, 0,
+    //                                 &bc, 0, 1);
 }
 
 // Called when the XWayland surface is mapped (i.e., ready to be shown).
@@ -308,15 +342,15 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
 
     // Notify the server that this view is ready to be managed (added to layout/focus system).
     xwayland_view->base.server->manage_view_cb((struct qw_view *)&xwayland_view->base,
-                                     xwayland_view->base.server->cb_data);
+                                               xwayland_view->base.server->cb_data);
 
-    //TODO: move this up?
-    // Attach a listener to the surface's commit signal.
+    // TODO: move this up?
+    //  Attach a listener to the surface's commit signal.
     wl_signal_add(&xwayland_surface->surface->events.commit, &xwayland_view->commit);
     xwayland_view->commit.notify = qw_xwayland_view_handle_commit;
 
     // Focus the view upon mapping
-    //qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
+    // qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
 }
 
 // static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data) {
@@ -342,14 +376,13 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
 //     wlr_log(WLR_ERROR, ">>>>>>>>>>>> handle map");
 //     // Create scene node for the toplevel surface under the content tree
 //     //xwayland_view->scene_tree =
-//     //struct wlr_scene_surface *scene_surface = wlr_scene_surface_create(xwayland_view->base.content_tree, xwayland_surface->surface);
+//     //struct wlr_scene_surface *scene_surface =
+//     wlr_scene_surface_create(xwayland_view->base.content_tree, xwayland_surface->surface);
 //     xwayland_view->scene_tree = wlr_scene_subsurface_tree_create(
 //         xwayland_view->base.content_tree, xwayland_surface->surface);
 //     xwayland_view->scene_tree->node.data = xwayland_view;
 //     xwayland_surface->data = xwayland_view;
 // }
-
-
 
 // Called when the XWayland surface is unmapped (i.e., hidden or destroyed).
 static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *data) {
@@ -362,7 +395,7 @@ static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *da
     //     xwayland_view->scene_tree = NULL;
     // }
 
-    qw_view_cleanup_borders((struct qw_view*)xwayland_view);
+    qw_view_cleanup_borders((struct qw_view *)xwayland_view);
 
     // If this surface had keyboard focus, clear it.
     // if (qw_xsurface->surface == server->seat->keyboard_state.focused_surface) {
@@ -389,7 +422,8 @@ static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void
 // static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void *data) {
 //     // TODO: implement
 //     // reference:
-//     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L772
+//     //
+//     https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L772
 //     // struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
 //     // xdg_view->mapped = true;
 //     //
@@ -403,8 +437,6 @@ static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void
 //     wl_signal_add(&xwayland_surface->surface->events.map, &xwayland_view->map);
 //     xwayland_view->map.notify = qw_xwayland_view_handle_map;
 // }
-
-
 
 static struct qw_xwayland_view *qw_xwayland_view_from_view(struct qw_view *view) {
     if (strcmp(view->shell, "XWayland") != 0) {
@@ -582,8 +614,16 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     // wl_list_remove(&xwayland_view->override_redirect.link);
 }
 
+void qw_xwayland_view_focus(void *self, int above) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    if (!xwayland_view->xwayland_surface->surface->mapped) {
+        return; // Can't focus if not mapped
+    }
+    qw_xwayland_view_do_focus(xwayland_view, xwayland_view->xwayland_surface->surface);
+}
 
-void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_surface *xwayland_surface) {
+void qw_server_xwayland_view_new(struct qw_server *server,
+                                 struct wlr_xwayland_surface *xwayland_surface) {
     wlr_log(WLR_ERROR, ">>>>>>>>>>>> view_new");
 
     struct qw_xwayland_view *xwayland_view = calloc(1, sizeof(*xwayland_view));
@@ -599,7 +639,8 @@ void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_s
 
     xwayland_view->base.shell = "Xwayland";
     // Create a scene tree node for this view inside the main layout tree
-    xwayland_view->base.content_tree = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
+    xwayland_view->base.content_tree =
+        wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xwayland_view->base.layer = LAYER_LAYOUT;
 
     // // If the protocol version supports WM capabilities, set maximize/fullscreen/minimize
@@ -629,7 +670,7 @@ void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_s
     // xdg_view->base.update_fullscreen = qw_xdg_view_update_fullscreen;
     // xdg_view->base.update_maximized = qw_xdg_view_update_maximized;
     xwayland_view->base.place = qw_xwayland_view_place;
-    // xdg_view->base.focus = qw_xdg_view_focus;
+    xwayland_view->base.focus = qw_xwayland_view_focus;
     // xdg_view->base.get_pid = qw_xdg_view_get_pid;
     xwayland_view->base.kill = qw_xwayland_view_kill;
     xwayland_view->base.hide = qw_xwayland_view_hide;
@@ -647,7 +688,6 @@ void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_s
 
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
     xwayland_view->destroy.notify = qw_xwayland_view_handle_destroy;
-
 }
 
 struct qw_xwayland_view *create_xwayland_view(struct wlr_xwayland_surface *qw_xsurface) {
