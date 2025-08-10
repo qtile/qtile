@@ -139,6 +139,18 @@
 //     free(qw_surface);
 // }
 
+
+static struct wlr_scene_node *qw_xwayland_view_get_tree_node(void *self) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+
+    if (!xwayland_view->scene_tree) {
+        return NULL;
+    }
+
+    return &xwayland_view->scene_tree->node;
+}
+
+
 // Bring the xwayland_view's content scene node to the front
 static void qw_xwayland_view_bring_to_front(void *self) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
@@ -217,7 +229,6 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
         wlr_xwayland_surface_configure(qw_xsurface, x, y, width, height);
         qw_xwayland_view_clip(xwayland_view);
     }
-    return;
 
     // Paint borders around the view with given border colors and width
     qw_view_paint_borders((struct qw_view *)xwayland_view, bc, bw, bn);
@@ -612,7 +623,7 @@ void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_s
     xwayland_view->set_class.notify = qw_xwayland_view_handle_set_class;
 
     // Assign function pointers for base view operations
-    // xdg_view->base.get_tree_node = qw_xdg_view_get_tree_node;
+    xwayland_view->base.get_tree_node = qw_xwayland_view_get_tree_node;
     // xdg_view->base.update_fullscreen = qw_xdg_view_update_fullscreen;
     // xdg_view->base.update_maximized = qw_xdg_view_update_maximized;
     xwayland_view->base.place = qw_xwayland_view_place;
