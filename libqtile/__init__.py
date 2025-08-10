@@ -58,10 +58,10 @@ def find_library(key: DynamicLibraries) -> str | None:
     # on a source tree, no install has actually taken place, so let's make its
     # presence optional.
     try:
-        from . import build_config  # type: ignore
+        from . import _build_config  # type: ignore
 
         attr = key.name + "_PATH"
-        value = getattr(build_config, attr, None)
+        value = getattr(_build_config, attr, None)
         if value is not None:
             return value
     except ImportError:
