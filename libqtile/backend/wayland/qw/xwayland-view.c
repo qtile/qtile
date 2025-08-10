@@ -614,7 +614,7 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     // wl_list_remove(&xwayland_view->override_redirect.link);
 }
 
-void qw_xwayland_view_focus(void *self, int above) {
+static void qw_xwayland_view_focus(void *self, int above) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
     if (!xwayland_view->xwayland_surface->surface->mapped) {
         return; // Can't focus if not mapped
