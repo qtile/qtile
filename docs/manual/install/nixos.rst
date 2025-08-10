@@ -65,49 +65,68 @@ or, if you have a directory containing multiple python files:
 Flake
 *****
 
-Qtile also has a flake in the repository. This can be used for the following use cases:
+Qtile provides a Nix flake in its repository. This can be useful for:
 
-- Run a bleeding edge version of Qtile by using it as an overlay in your flake config
-- Hack on Qtile with a Nix develop shell
+- Running a bleeding-edge version of Qtile by specifying the flake input as the package.
 
-Note that flakes are an experimental NixOS feature but they are already widely used. This section is meant for users that already use flakes.
+- Hacking on Qtile using a Nix develop shell.
 
-To run a bleeding edge version of Qtile with the flake, add the Qtile repo to your inputs and define the overlay. An example flake is the following:
+.. Note:: 
+
+   Nix flakes are still an experimental NixOS feature, but they are already widely used. This section is intended for users who are already familiar with flakes.
+
+To run a bleeding-edge version of Qtile with the flake, add the Qtile repository to your flake inputs and define the package. For example:
 
 
 .. code-block:: nix
 
   {
-     description = "A very basic flake";
-     inputs = {
-       nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    description = "A very basic flake";
+    inputs = {
+      nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
 
-       qtile-flake = {
-         url = "github:qtile/qtile";
-         inputs.nixpkgs.follows = "nixpkgs";
-       };
-     };
+      qtile-flake = {
+        url = "github:qtile/qtile";
+        inputs.nixpkgs.follows = "nixpkgs";
+      };
+    };
 
-     outputs = { self, nixpkgs, qtile-flake }: {
-       nixosConfigurations.demo = nixpkgs.lib.nixosSystem {
-         system = "x86_64-linux";
+    outputs =
+      {
+        self,
+        nixpkgs,
+        qtile-flake,
+      }:
+      {
+        nixosConfigurations.demo = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
 
-         modules = [
-           (_: { nixpkgs.overlays = [ qtile-flake.overlays.default ]; })
-           ({ config, pkgs, lib, ...}: {
-             services.xserver = {
-               enable = true;
-               windowManager.qtile.enable = true;
-             };
+          modules = [
+            (
+              {
+                config,
+                pkgs,
+                lib,
+                ...
+              }:
+              {
+                services.xserver = {
+                  enable = true;
+                  windowManager.qtile = {
+                    enable = true;
+                    package = qtile-flake.packages.${pkgs.system}.default;
+                  };
+                };
 
-             # make qtile X11 the default session
-             services.displayManager.defaultSession = lib.mkForce "qtile";
+                # make qtile X11 the default session
+                services.displayManager.defaultSession = lib.mkForce "qtile";
 
-             # rest of your NixOS config
-           })
-         ];
-       };
-     };
+                # rest of your NixOS config
+              }
+            )
+          ];
+        };
+      };
   }
 
 This flake can also be tested with a vm:
