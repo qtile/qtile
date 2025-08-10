@@ -143,7 +143,7 @@
 static struct wlr_scene_node *qw_xwayland_view_get_tree_node(void *self) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
 
-    if (!xwayland_view->scene_tree) {
+    if (xwayland_view->scene_tree == NULL) {
         return NULL;
     }
 
