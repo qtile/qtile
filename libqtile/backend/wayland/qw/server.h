@@ -90,6 +90,14 @@ enum {
     LAYER_END           // keeping track of the end
 };
 
+// Mode for drawing wallpaper
+enum qw_wallpaper_mode {
+    WALLPAPER_MODE_ORIGINAL, // Don't modify wallpaper
+    WALLPAPER_MODE_STRETCH,  // Fit to screen - don't preserve aspect ratio
+    WALLPAPER_MODE_FILL,     // Resize to screen - preserve aspect ratio
+    WALLPAPER_MODE_CENTER,   // Don't resize - place in centre of screen
+};
+
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
     // Public API
@@ -183,5 +191,10 @@ void qw_server_loop_visible_views(struct qw_server *server, node_wid_cb_t);
 void qw_server_set_keymap(struct qw_server *server, const char *layout, const char *options,
                           const char *variant);
 const char *qw_server_xwayland_display_name(struct qw_server *server);
+
+void qw_server_paint_wallpaper(struct qw_server *server, int x, int y, cairo_surface_t *source,
+                               enum qw_wallpaper_mode mode);
+
+void qw_server_paint_background_color(struct qw_server *server, int x, int y, float color[4]);
 
 #endif /* SERVER_H */
