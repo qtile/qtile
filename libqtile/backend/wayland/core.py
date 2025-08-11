@@ -195,13 +195,9 @@ class Core(base.Core):
         if not self.qw:
             sys.exit(1)
 
-        #TODO: thinking qw_server_xwayland_display_name could return null if no XWAYLAND
-        # and check for that before setting DISPLAY
-        # (ideally set display in wayc but I can't get this to work)
-        logger.warning("*******************")
-        dn = ffi.string(lib.qw_server_xwayland_display_name(self.qw)).decode()
-        logger.warning(dn)
-        os.environ["DISPLAY"] = dn
+        xwayland_display_name_ptr = lib.qw_server_xwayland_display_name(self.qw)
+        if xwayland_display_name_ptr != ffi.NULL:
+            os.environ["DISPLAY"] = ffi.string(xwayland_display_name_ptr).decode()
         self._output_reserved_space = {}
         self.current_window = None
         self.grabbed_keys: list[tuple[int, int]] = []
