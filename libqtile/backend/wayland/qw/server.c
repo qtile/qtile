@@ -16,6 +16,9 @@
 #include "wlr/util/log.h"
 #include "xdg-view.h"
 
+#include <cairo/cairo.h>
+#include <wlr/render/wlr_texture.h>
+
 // Get the file descriptor of the Wayland event loop (used for epoll integration)
 int qw_server_get_event_loop_fd(struct qw_server *server) {
     return wl_event_loop_get_fd(server->event_loop);
@@ -530,4 +533,21 @@ static void qw_server_query_iterator(struct wlr_scene_buffer *buffer, int sx, in
 // Iterate visible views in ascending Z order
 void qw_server_loop_visible_views(struct qw_server *server, node_wid_cb_t cb) {
     wlr_scene_node_for_each_buffer(&server->scene->tree.node, qw_server_query_iterator, cb);
+}
+
+void qw_server_paint_wallpaper(struct qw_server *server, int x, int y, cairo_surface_t *source,
+                               enum qw_wallpaper_mode mode) {
+    struct wlr_output *output = wlr_output_layout_output_at(server->output_layout, x, y);
+
+    if (output != NULL) {
+        qw_output_paint_wallpaper(output->data, source, mode);
+    }
+}
+
+void qw_server_paint_background_color(struct qw_server *server, int x, int y, float color[4]) {
+    struct wlr_output *output = wlr_output_layout_output_at(server->output_layout, x, y);
+
+    if (output != NULL) {
+        qw_output_paint_background_color(output->data, color);
+    }
 }

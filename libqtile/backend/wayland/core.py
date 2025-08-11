@@ -1,4 +1,5 @@
-# Copyright (c) 2021-3 Matt Colligan
+# Copyright (c) 2021-5 Matt Colligan
+# Copyright (c) 2025 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,6 +68,7 @@ import signal
 import sys
 import time
 from collections.abc import Generator
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from libqtile import hook, log_utils
@@ -74,8 +76,9 @@ from libqtile.backend import base
 from libqtile.backend.wayland.window import Internal, Window, WindowType
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
+from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import QtileError, reap_zombies
+from libqtile.utils import QtileError, reap_zombies, rgb
 
 try:
     from libqtile.backend.wayland._ffi import ffi, lib
@@ -209,6 +212,8 @@ class Core(base.Core):
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
         lib.qw_server_start(self.qw)
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
+
+        self.painter = Painter(self)
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""
@@ -600,3 +605,36 @@ class Core(base.Core):
 
         lib.qw_server_loop_visible_views(self.qw, loop)
         return wids
+
+
+class Painter:
+    """
+    Helper class to manage displaying wallpaper image and solid colours
+    on a `Screen`.
+    """
+
+    def __init__(self, core):
+        self.core = core
+        self._mode_map = {
+            "stretch": lib.WALLPAPER_MODE_STRETCH,
+            "fill": lib.WALLPAPER_MODE_FILL,
+            "center": lib.WALLPAPER_MODE_CENTER,
+        }
+
+    def fill(self, screen, background):
+        col = ffi.new("float[4]", rgb(background))
+        lib.qw_server_paint_background_color(self.core.qw, screen.x, screen.y, col)
+
+    def paint(self, screen, image_path, mode=None):
+        filename = Path(image_path).expanduser().resolve()
+        if not filename.exists():
+            logger.warning("Wallpaper image not found: %s", image_path)
+            return
+
+        surface = Img.from_path(image_path).default_surface
+        surface_pointer = ffi.cast("cairo_surface_t *", surface._pointer)
+        w_mode = self._mode_map.get(mode, lib.WALLPAPER_MODE_STRETCH)
+        lib.qw_server_paint_wallpaper(self.core.qw, screen.x, screen.y, surface_pointer, w_mode)
+
+        # Destroy the surface
+        surface.finish()
