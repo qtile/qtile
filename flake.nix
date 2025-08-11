@@ -1,10 +1,7 @@
 {
   description = "Qtile's flake, full-featured, hackable tiling window manager written and configured in Python";
   inputs = {
-    # note: we are using a commit hash to a fix,
-    # this should be removed one the pr has landed into unstable, see:
-    # https://nixpk.gs/pr-tracker.html?pr=431532
-    nixpkgs.url = "github:nixos/nixpkgs/a66fdcbf442afb2e4c3b8795c73a3c3ded92392a";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
   outputs =
     {
