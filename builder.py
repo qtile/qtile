@@ -61,4 +61,3 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
                 f.write(f"{p} = {config_settings.get(lib)!r}\n")
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
-
