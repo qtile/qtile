@@ -538,6 +538,8 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     wl_list_remove(&xwayland_view->associate.link);
     // wl_list_remove(&xwayland_view->dissociate.link);
     // wl_list_remove(&xwayland_view->override_redirect.link);
+
+    free(xwayland_view);
 }
 
 static void qw_xwayland_view_focus(void *self, int above) {
