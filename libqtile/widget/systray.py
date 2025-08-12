@@ -96,9 +96,7 @@ class Icon(window._Window):
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
 
-# Mypy doesn't like the inheritance of height and width as _Widget's
-# properties are read only but _Window's have a getter and setter.
-class Systray(base._Widget, window._Window):  # type: ignore[misc]
+class Systray(base._Widget, window._Window):
     """
     A widget that manages system tray.
 
