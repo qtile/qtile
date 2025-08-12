@@ -90,9 +90,9 @@
       checks = forAllSystems (pkgs: pkgs.python3Packages.qtile.passthru.tests);
 
       packages = forAllSystems (pkgs: {
-        inherit (pkgs.python3Packages) qtile;
+        default = self.packages.${pkgs.system}.qtile;
 
-        default = import ./nix/qtile.nix { inherit pkgs self; };
+        qtile = import ./nix/qtile.nix { inherit pkgs self; };
       });
 
       devShells = forAllSystems (pkgs: {
