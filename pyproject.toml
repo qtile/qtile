@@ -76,9 +76,7 @@ widgets = [
     "xmltodict",
 ]
 wayland = [
-    "pywayland==0.4.17",
     "xkbcommon >= 0.3",
-    "pywlroots==0.17.0",
 ]
 
 [tool.setuptools]
