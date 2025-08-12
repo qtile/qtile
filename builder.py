@@ -17,8 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import distutils.errors
-import subprocess
 import sys
 
 from setuptools import build_meta as _orig
@@ -38,12 +36,15 @@ def wants_wayland(config_settings):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """If wayland backend is requested, build it!"""
-    if wants_wayland(config_settings):
-        try:
-            from libqtile.backend.wayland.cffi.build import ffi
+    wayland_requested = wants_wayland(config_settings)
+    try:
+        from libqtile.backend.wayland.cffi.build import ffi
 
-            ffi.compile(verbose=True)
-        except (distutils.errors.DistutilsError, subprocess.CalledProcessError) as e:
+        ffi.compile(verbose=wayland_requested)
+    except Exception as e:
+        if wayland_requested:
             sys.exit(f"Wayland backend requested but backend could not be built: {e}")
+        else:
+            print("Wayland backend was not built.")
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
