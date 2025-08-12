@@ -15,18 +15,7 @@
       ];
 
       forAllSystems =
-        function:
-        nixpkgs.lib.genAttrs supportedSystems (
-          system:
-          let
-            nixpkgs-settings = {
-              inherit system;
-
-              overlays = [ (import ./nix/overlays.nix self) ];
-            };
-          in
-          function (import nixpkgs nixpkgs-settings)
-        );
+        f: nixpkgs.lib.genAttrs supportedSystems (system: f nixpkgs.legacyPackages.${system});
 
       flake-attributes = forAllSystems (pkgs: rec {
         build-config = import ./nix/build-config.nix pkgs;
@@ -62,10 +51,11 @@
           # docs graphs
           graphviz
 
-          # x11 deps
-          xorg.xorgserver
-          xorg.libX11
-          wlroots_0_17
+          # generating compile_commands.json
+          bear
+
+          # clang-format for formatting
+          clang-tools
 
           # test/backend/wayland/test_window.py
           gtk-layer-shell
@@ -101,16 +91,13 @@
 
       packages = forAllSystems (pkgs: {
         inherit (pkgs.python3Packages) qtile;
-        default = self.packages.${pkgs.system}.qtile;
+
+        default = import ./nix/qtile.nix { inherit pkgs self; };
       });
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           env = flake-attributes.${pkgs.system}.shell-env;
-
-          shellHook = ''
-            export PYTHONPATH=$(readlink -f .):$PYTHONPATH
-          '';
 
           inputsFrom = [ self.packages.${pkgs.system}.qtile ];
           packages = flake-attributes.${pkgs.system}.pkgs-wrapped;
