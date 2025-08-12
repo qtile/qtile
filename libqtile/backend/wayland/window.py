@@ -1,13 +1,12 @@
-from typing import TYPE_CHECKING
-from libqtile import hook, utils
-from libqtile.group import _Group
-from libqtile.core.manager import Qtile
 import libqtile.backend.base.window as base
-from libqtile.backend.wayland.drawer import Drawer
+from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
+from libqtile.backend.wayland.drawer import Drawer
 from libqtile.command.base import CommandError, expose_command
-from libqtile.utils import rgb, ColorsType
+from libqtile.core.manager import Qtile
+from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.utils import ColorsType, rgb
 
 ffi = None
 lib = None
@@ -159,7 +158,6 @@ class Base(base._Window):
         if self.group is not None and self.group.screen is not None:
             self.float_x = x - self.group.screen.x
             self.float_y = y - self.group.screen.y
-        c_bordercolor_ptr = ffi.NULL
         n = 0
         c_layers = ffi.NULL
         if bordercolor is not None:
@@ -250,6 +248,7 @@ class Internal(Base, base.Internal):
             height=self.height,
             id=self.wid,
         )
+
 
 @ffi.def_extern()
 def request_fullscreen_cb(view, userdata):
@@ -345,7 +344,6 @@ class Window(Base, base.Window):
     def move_to_bottom(self) -> None:
         lib.qw_view_lower_to_bottom(self._ptr)
 
-
     def handle_request_fullscreen(self, fullscreen):
         if self.qtile.config.auto_fullscreen:
             if self.fullscreen != fullscreen:
@@ -426,9 +424,7 @@ class Window(Base, base.Window):
 
         hook.fire("client_managed", win)
 
-    def _to_static(
-        self, x: int | None, y: int | None, width: int | None, height: int | None
-    ):
+    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None):
         return Static(
             self.qtile,
             self._ptr,
@@ -482,7 +478,7 @@ class Window(Base, base.Window):
         if switch_group:
             group.toscreen(toggle=toggle)
 
-    def _items(self, name: str): # todo: restore return type -> ItemT:
+    def _items(self, name: str):  # todo: restore return type -> ItemT:
         if name == "group":
             return True, []
         if name == "layout":
@@ -494,7 +490,9 @@ class Window(Base, base.Window):
                 return True, []
         return None
 
-    def _select(self, name: str, sel: str | int | None): # todo: restore reutrn type -> CommandObject | None:
+    def _select(
+        self, name: str, sel: str | int | None
+    ):  # todo: restore reutrn type -> CommandObject | None:
         if name == "group":
             return self.group
         elif name == "layout":
@@ -556,7 +554,7 @@ class Window(Base, base.Window):
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
-            self.reparent(lib.LAYER_LAYOUT);
+            self.reparent(lib.LAYER_LAYOUT)
             self._update_fullscreen(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
@@ -770,6 +768,7 @@ class Window(Base, base.Window):
     def disable_fullscreen(self) -> None:
         self.fullscreen = False
 
+
 class Static(Base, base.Static):
     def __init__(self, qtile: Qtile, ptr, wid):
         Base.__init__(self, qtile, ptr, wid)
@@ -828,7 +827,7 @@ class Static(Base, base.Static):
 
         n = 1
         # borderwidth must be 0 so bordercolor has no effect
-        c_bordercolor = ffi.new("float[1][4]", [rgb([0,0,0,1])])
+        c_bordercolor = ffi.new("float[1][4]", [rgb([0, 0, 0, 1])])
         c_bordercolor_ptr = ffi.cast("float(*)[4]", c_bordercolor)
         self._ptr.place(
             self._ptr, x, y, width, height, borderwidth, c_bordercolor_ptr, n, int(above)
@@ -838,7 +837,10 @@ class Static(Base, base.Static):
     def info(self) -> dict:
         """Return a dictionary of info."""
         info = base.Static.info(self)
-        info["shell"] = ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
+        info["shell"] = (
+            ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
+        )
         return info
+
 
 WindowType = Window | Internal | Static

@@ -66,6 +66,7 @@ import os
 import signal
 import sys
 import time
+from collections.abc import Generator
 from typing import TYPE_CHECKING
 
 from libqtile import hook, log_utils
@@ -99,7 +100,7 @@ def translate_masks(modifiers: list[str]) -> int:
     for i in modifiers:
         code = int(lib.qw_util_get_modifier_code(i.lower().encode()))
         if code == -1:
-            raise QtileError("unknown modifier: %s" % i)
+            raise QtileError(f"unknown modifier: {i}")
         masks.append(code)
     if masks:
         return functools.reduce(operator.or_, masks)
@@ -221,9 +222,7 @@ class Core(base.Core):
 
         assert self.qtile is not None
 
-        managed_wins = [
-            w for w in self.qtile.windows_map.values() if isinstance(w, Window)
-        ]
+        managed_wins = [w for w in self.qtile.windows_map.values() if isinstance(w, Window)]
         for win in managed_wins:
             group = None
             if win.group:
@@ -318,7 +317,7 @@ class Core(base.Core):
             win.name = ffi.string(view.title).decode()
         if view.app_id != ffi.NULL:
             win._wm_class = ffi.string(view.app_id).decode()
-        win._float_width = win.width # todo: should we be using getter/setter for _float_width
+        win._float_width = win.width  # todo: should we be using getter/setter for _float_width
         win._float_height = win.height
 
         self.qtile.manage(win)
@@ -376,7 +375,9 @@ class Core(base.Core):
                 self.qtile.current_group.focus(win, False)
 
         else:
-            screen = self.qtile.find_screen(int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y))
+            screen = self.qtile.find_screen(
+                int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
+            )
             if screen:
                 self.qtile.focus_screen(screen.index, warp=False)
 
@@ -558,10 +559,12 @@ class Core(base.Core):
         not specified are taken from the environment. Acceptable values are strings
         identical to those accepted by the env variables.
         """
-        lib.qw_server_set_keymap(self.qw,
-                                 ffi.new("char[]", (layout or "").encode()),
-                                 ffi.new("char[]", (options or "").encode()),
-                                 ffi.new("char[]", (variant or "").encode()))
+        lib.qw_server_set_keymap(
+            self.qw,
+            ffi.new("char[]", (layout or "").encode()),
+            ffi.new("char[]", (options or "").encode()),
+            ffi.new("char[]", (variant or "").encode()),
+        )
 
     @expose_command()
     def change_vt(self, vt: int) -> bool:
@@ -590,9 +593,10 @@ class Core(base.Core):
     def query_tree(self) -> list[int]:
         """Get IDs of all mapped windows in ascending Z order."""
         wids = []
+
         @ffi.callback("void(int)")
         def loop(wid):
             wids.append(wid)
 
-        test = lib.qw_server_loop_visible_views(self.qw, loop)
+        lib.qw_server_loop_visible_views(self.qw, loop)
         return wids
