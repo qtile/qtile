@@ -1,7 +1,6 @@
 from cffi import FFI
 from pathlib import Path
 
-import cairocffi
 import os
 import subprocess
 
@@ -94,13 +93,23 @@ for file in cdef_files:
                 continue
             CDEF += line
 
-SOURCE = ""
 
-for root, dirs, files in os.walk(QW_PATH):
-    for file in files:
-        if file.endswith(".c"):
-            with open(QW_PATH / file) as f:
-                SOURCE += f.read()
+
+def make_unity_build() -> str:
+    collected_source_files = (
+        (QW_PATH / file).relative_to(QW_PATH)
+        for *_, files in os.walk(QW_PATH)
+        for file in files
+        if file.endswith(".c")
+    )
+
+    unity_build_includes = (
+        f'#include "{filepath}"'
+        for filepath in sorted(collected_source_files)
+        # ensure deterministic include order for the unity build
+    )
+
+    return '\n'.join(unity_build_includes)
 
 
 def get_include_path(lib):
@@ -111,8 +120,8 @@ def get_include_path(lib):
 
 ffi = FFI()
 ffi.set_source(
-    "libqtile.backend.wayland._ffi",
-    SOURCE,
+    module_name="libqtile.backend.wayland._ffi",
+    source=make_unity_build(),
     libraries=["wlroots-0.19", "wayland-server", "input", "cairo"],
     define_macros=[("WLR_USE_UNSTABLE", None)],
     include_dirs=[
