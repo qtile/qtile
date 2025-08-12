@@ -51,6 +51,12 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_decoration.link);
     wl_list_remove(&server->new_layer_surface.link);
     wl_list_remove(&server->renderer_lost.link);
+    wl_list_remove(&server->request_activate.link);
+    wl_list_remove(&server->new_token.link);
+    #if WLR_HAS_XWAYLAND
+    wl_list_remove(&server->new_xwayland_surface.link);
+    wlr_xwayland_destroy(server->xwayland);
+    #endif
 
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
