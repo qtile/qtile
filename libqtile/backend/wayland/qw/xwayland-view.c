@@ -282,6 +282,12 @@ static void qw_xwayland_view_unhide(void *self) {
     }
 }
 
+// Retrieve the PID of the client owning this xwayland_view
+static int qw_xwayland_view_get_pid(void *self) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    return xwayland_view->xwayland_surface->pid;
+}
+
 // Handle commit event: called when XWayland surface commits state changes
 static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, commit);
@@ -588,6 +594,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.kill = qw_xwayland_view_kill;
     xwayland_view->base.hide = qw_xwayland_view_hide;
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
+    xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
 
     // Add listener for toplevel destroy event
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
