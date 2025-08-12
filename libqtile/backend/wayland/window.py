@@ -161,6 +161,7 @@ class Base(base._Window):
             self.float_y = y - self.group.screen.y
         c_bordercolor_ptr = ffi.NULL
         n = 0
+        c_layers = ffi.NULL
         if bordercolor is not None:
             colors = [bordercolor]
             # multiple border colors
