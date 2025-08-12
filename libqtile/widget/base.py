@@ -470,7 +470,7 @@ class _Widget(CommandObject, configurable.Configurable):
     def add_mirror(self, widget: _Widget):
         if not self._mirrors:
             self._old_draw = self.draw
-            self.draw = self._draw_with_mirrors  # type: ignore
+            self.draw = self._draw_with_mirrors
 
         self._mirrors.add(widget)
         if not self.drawer.has_mirrors:
