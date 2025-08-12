@@ -358,7 +358,6 @@ static void qw_server_handle_new_layer_surface(struct wl_listener *listener, voi
 
 #if WLR_HAS_XWAYLAND
 static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, void *data) {
-    wlr_log(WLR_ERROR, ">>>>>>>>>>>> handle_new_");
     struct qw_server *server = wl_container_of(listener, server, new_xwayland_surface);
     struct wlr_xwayland_surface *xwayland_surface = data;
     qw_server_xwayland_view_new(server, xwayland_surface);
