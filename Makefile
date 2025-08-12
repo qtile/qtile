@@ -41,10 +41,6 @@ lint: ## Check the source code
 clean: ## Clean generated files
 	-rm -rf dist qtile.egg-info docs/_build build/ .mypy_cache/ .pytest_cache/ .eggs/
 
-.PHONY: run-ffibuild
-run-ffibuild: ## Build FFI modules
-	./scripts/ffibuild -v
-
 .PHONY: update-flake
 update-flake: ## Update the Nix flake.lock file, requires Nix installed with flake support, see: https://nixos.wiki/wiki/Flakes
 	nix flake update

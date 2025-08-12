@@ -45,19 +45,6 @@ Testing with the X11 backend requires Xephyr_ (and xvfb for headless mode) in ad
 dependencies.
 
 
-Building cffi module
-====================
-
-Qtile ships with a small in-tree pangocairo binding built using cffi,
-``pangocffi.py``, and also binds to xcursor with cffi.  The bindings are not
-built at run time and will have to be generated manually when the code is
-downloaded or when any changes are made to the cffi library.  This can be done
-by calling:
-
-.. code-block:: bash
-
-    ./scripts/ffibuild
-
 Setting up the environment
 ==========================
 
