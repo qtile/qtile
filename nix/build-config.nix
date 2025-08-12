@@ -27,6 +27,11 @@ let
   # header files provided through environment variables
   headers-location = [
     {
+      varname = "CAIRO";
+      pkg = pkgs.cairo;
+      header-dir = "cairo";
+    }
+    {
       varname = "PIXMAN";
       pkg = pkgs.pixman;
       header-dir = "pixman-1";
@@ -35,6 +40,11 @@ let
       varname = "LIBDRM";
       pkg = pkgs.libdrm;
       header-dir = "libdrm";
+    }
+    {
+      varname = "WLROOTS";
+      pkg = pkgs.wlroots_0_19;
+      header-dir = "wlroots-0.19";
     }
   ];
 
