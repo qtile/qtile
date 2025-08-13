@@ -49,7 +49,10 @@ let
         ])
         ++ (lib.filter removeOldDeps qtile-prev.propagatedBuildInputs);
 
+      buildInputs = (qtile-prev.buildInputs or [ ]) ++ build-config.libs;
+
       pypaBuildFlags = [ "--config-setting=backend=wayland" ] ++ build-config.resolved-config-settings;
+      # TODO: remove ^
     }
     // {
       # removes nixpkgs patching, as we handle it locally
