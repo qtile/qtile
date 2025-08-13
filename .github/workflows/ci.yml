@@ -47,7 +47,26 @@ jobs:
               run: bash -x ./scripts/ubuntu_wayland_setup
             - name: Run Tests
               run: |
+                set +e
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
+                uv sync --python=${{ matrix.python-version }} --all-extras
+                uv tool install .
+                uv tool install --reinstall '.[wayland]'
+                uv run --python=${{ matrix.python-version }} --with setuptools --directory=$(uv tool dir)/qtile/lib/python${{ matrix.python-version }}/site-packages/ $(uv tool dir)/qtile/lib/python${{ matrix.python-version }}/site-packages/libqtile/backend/wayland/cffi/build.py
+                if [[ ${{ matrix.backend }} == "x11" ]]; then
+                  export DISPLAY=:99
+                  sudo Xvfb -ac $DISPLAY -screen 0 1280x1024x24 &>/dev/null &
+                else
+                  export XDG_RUNTIME_DIR=/tmp
+                  export WLR_BACKENDS=headless
+                  export WLR_HEADLESS_OUTPUTS=1
+                  export WLR_LIBINPUT_NO_DEVICES=1
+                  export WLR_RENDERER_ALLOW_SOFTWARE=1
+                  export WLR_RENDERER=pixman
+                fi
+                qtile start -b ${{ matrix.backend }} &
+                qtile cmd-obj -f qtile_info
+                exit
                 make QTILE_CI_PYTHON=${{ matrix.python-version }} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
                 uv run coverage combine -q
                 uv run coverage report -m
