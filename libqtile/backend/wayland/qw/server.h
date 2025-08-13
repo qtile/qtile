@@ -5,6 +5,8 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <unistd.h>
+
+#include <cairo.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
 #include <wlr/backend/session.h>
