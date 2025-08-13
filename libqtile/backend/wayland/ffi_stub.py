@@ -8,17 +8,18 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    T = TypeVar('T')
+    T = TypeVar("T")
 
 
 class FFIStub:
-
     @staticmethod
     def def_extern() -> Callable[[T], T]:
         return lambda f: f
+
 
 ffi = FFIStub
 lib = None
