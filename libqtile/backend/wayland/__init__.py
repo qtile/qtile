@@ -26,11 +26,9 @@ except ModuleNotFoundError:
 
 
 try:
-    import libqtile.backend.wayland.wayland_backend as wayland_backend
+    from libqtile.backend.wayland import wayland_backend
 
 except Exception as e:
-    print("Fail to import Wayland Backend", e)
-    wayland_backend = None
-
+    print("Fail to import Wayland Backend:", e)
 else:
     wayland_backend.hello()

@@ -122,13 +122,12 @@ qw_logger = logging.getLogger("qw")
 @ffi.def_extern()
 def log_cb(importance: int, formatted_str: ffi.CData) -> None:
     """Callback that logs the string at the given level"""
-    log_str = ffi.string(formatted_str).decode()
     if importance == wayland_backend.WLR_ERROR:
-        qw_logger.error(log_str)
+        qw_logger.error(formatted_str)
     elif importance == wayland_backend.WLR_INFO:
-        qw_logger.info(log_str)
+        qw_logger.info(formatted_str)
     elif importance == wayland_backend.WLR_DEBUG:
-        qw_logger.debug(log_str)
+        qw_logger.debug(formatted_str)
 
 
 @ffi.def_extern()
@@ -205,12 +204,12 @@ def on_session_lock_cb(locked: bool, userdata: ffi.CData) -> None:
 
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
-        return lib.WLR_DEBUG
+        return wayland_backend.WLR_DEBUG
     elif logger.level <= logging.INFO:
-        return lib.WLR_INFO
+        return wayland_backend.WLR_INFO
     elif logger.level <= logging.ERROR:
-        return lib.WLR_ERROR
-    return lib.WLR_SILENT
+        return wayland_backend.WLR_ERROR
+    return wayland_backend.WLR_SILENT
 
 
 class Core(base.Core):
@@ -224,7 +223,8 @@ class Core(base.Core):
 
         """Setup the Wayland core backend"""
         log_utils.init_log(logger.level, log_path=log_utils.get_default_log(), logger=qw_logger)
-        lib.qw_log_init(get_wlr_log_level(), lib.log_cb)
+
+        wayland_backend.set_log_callback(get_wlr_log_level(), log_cb)
         self.qw = lib.qw_server_create()
         if not self.qw:
             sys.exit(1)

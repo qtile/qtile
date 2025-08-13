@@ -4,30 +4,30 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include <Python.h>
+#include "extension_internal.h"
+
 #include <structmember.h>
 #include <wlr/util/log.h>
 
-static PyObject *py__hello(PyObject *, PyObject *)
-{
-    fprintf(stderr, "Hello, python ext!\n");
+static PyObject *py__hello(PyObject *self, PyObject *args) {
+    fprintf(stderr, "Hello, from the wayland backend extension!\n");
     Py_RETURN_NONE;
 }
 
-static
-PyMethodDef EXPOSED_METHODS[] = {
-    {"hello", py__hello, METH_VARARGS, "."},
+static PyMethodDef EXPOSED_METHODS[] = {
+    {"hello", py__hello, METH_VARARGS, "dummy function"},
+    {"set_log_callback", py__set_log_callback, METH_VARARGS, "set the python callback for logging"},
     {NULL, NULL, 0, NULL} // sentinel
 };
 
-static
-struct PyModuleDef WAYLAND_BACKEND_MODULE = {
+// clang-format off
+static struct PyModuleDef WAYLAND_BACKEND_MODULE = {
     PyModuleDef_HEAD_INIT,
     "wayland_backend",
     "Wayland Backend Extension", // __doc__
-    -1,
-    EXPOSED_METHODS
+    -1, EXPOSED_METHODS
 };
+// clang-format on
 
 PyMODINIT_FUNC PyInit_wayland_backend(void) // NOLINT: prefix must be PyInit_
 {
