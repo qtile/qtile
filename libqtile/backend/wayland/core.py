@@ -76,13 +76,13 @@ from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, reap_zombies
 
-ffi = None
-lib = None
 try:
-    # Continue if ffi not built, so that docs can be built without wayland deps.
     from libqtile.backend.wayland._ffi import ffi, lib
+
 except ModuleNotFoundError:
     print("Warning: Wayland backend not built. Backend will not run.")
+
+    from libqtile.backend.wayland.ffi_stub import ffi, lib
 
 if TYPE_CHECKING:
     from libqtile import config
