@@ -49,7 +49,7 @@ let
         ])
         ++ (lib.filter removeOldDeps qtile-prev.propagatedBuildInputs);
 
-      buildInputs = (qtile-prev.buildInputs or []) ++ build-config.libs;
+      buildInputs = (qtile-prev.buildInputs or [ ]) ++ build-config.libs;
 
       pypaBuildFlags = [ "--config-setting=backend=wayland" ] ++ build-config.resolved-config-settings;
       # TODO: remove ^

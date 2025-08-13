@@ -71,6 +71,8 @@ wayland_backend = Extension(
     "wayland_backend",
     sources=list(find_sources(WAYLAND_BACKEND_DIR)),
     language="c",
+    library_dirs=libdirs,
+    libraries=libs,
     include_dirs=[str(WAYLAND_BACKEND_DIR), str(QW_PROTO_OUT_PATH)] + includes,
     extra_compile_args=["-DWLR_USE_UNSTABLE"]
 )

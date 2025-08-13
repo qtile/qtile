@@ -28,7 +28,8 @@ except ModuleNotFoundError:
 
 try:
     import wayland_backend
-
+except ImportError as e:
+    print("Fail to import Wayland Backend")
+    print(e)
+else:
     wayland_backend.hello()
-except ModuleNotFoundError:
-    print("Wayland Backend (python ext) is not present")

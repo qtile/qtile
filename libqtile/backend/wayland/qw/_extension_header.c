@@ -10,7 +10,7 @@
 
 static PyObject *py__hello(PyObject *, PyObject *)
 {
-    wlr_log(WLR_INFO, "Hello, python ext!");
+    fprintf(stderr, "Hello, python ext!\n");
     Py_RETURN_NONE;
 }
 
