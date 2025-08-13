@@ -296,3 +296,36 @@ def test_columns_initial_ratio_left(manager):
     manager.c.layout.normalize()
     info = manager.c.window.info()
     assert info["width"] == WIDTH / 2
+
+
+def test_columns_swap():
+    columns = layout.Columns()
+    columns._group = libqtile.group._Group("A")
+
+    columns.add_client("one")
+    columns.add_client("two")
+    columns.add_client("three")
+    columns.focus("one")
+    columns.add_client("four")
+
+    assert columns.get_windows() == ["four", "one", "three", "two"]  # test vertical swap
+
+    columns.swap("four", "one")
+
+    assert columns.get_windows() == ["one", "four", "three", "two"]
+
+    columns.swap("one", "two")
+
+    assert columns.get_windows() == ["two", "four", "three", "one"]  # test horizontal swap
+
+    columns.add_client("five")
+    columns.shuffle_left()
+    columns.swap("five", "three")
+
+    assert columns.get_windows() == [
+        "three",
+        "two",
+        "four",
+        "five",
+        "one",
+    ]  # test swap with three columns
