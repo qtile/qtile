@@ -195,6 +195,9 @@ class Core(base.Core):
         if not self.qw:
             sys.exit(1)
 
+        xwayland_display_name_ptr = lib.qw_server_xwayland_display_name(self.qw)
+        if xwayland_display_name_ptr != ffi.NULL:
+            os.environ["DISPLAY"] = ffi.string(xwayland_display_name_ptr).decode()
         self._output_reserved_space = {}
         self.current_window = None
         self.grabbed_keys: list[tuple[int, int]] = []
