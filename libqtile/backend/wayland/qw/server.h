@@ -8,6 +8,7 @@
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
 #include <wlr/backend/session.h>
+#include <wlr/config.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_alpha_modifier_v1.h>
@@ -36,6 +37,9 @@
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
+#if WLR_HAS_XWAYLAND
+#include <wlr/xwayland/xwayland.h>
+#endif
 
 // Callback typedefs for input and view events
 
@@ -133,6 +137,10 @@ struct qw_server {
     struct wl_listener new_decoration;
     struct wl_listener new_layer_surface;
     struct wl_listener request_cursor;
+#if WLR_HAS_XWAYLAND
+    struct wlr_xwayland *xwayland;
+    struct wl_listener new_xwayland_surface;
+#endif
 };
 
 // Utility functions exposed by the server API
@@ -174,5 +182,6 @@ void qw_server_loop_visible_views(struct qw_server *server, node_wid_cb_t);
 
 void qw_server_set_keymap(struct qw_server *server, const char *layout, const char *options,
                           const char *variant);
+const char *qw_server_xwayland_display_name(struct qw_server *server);
 
 #endif /* SERVER_H */
