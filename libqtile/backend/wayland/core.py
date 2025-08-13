@@ -89,6 +89,8 @@ except ModuleNotFoundError:
 
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
+from libqtile.backend.wayland import wayland_backend
+
 if TYPE_CHECKING:
     from libqtile import config
     from libqtile.config import Screen
@@ -121,11 +123,11 @@ qw_logger = logging.getLogger("qw")
 def log_cb(importance: int, formatted_str: ffi.CData) -> None:
     """Callback that logs the string at the given level"""
     log_str = ffi.string(formatted_str).decode()
-    if importance == lib.WLR_ERROR:
+    if importance == wayland_backend.WLR_ERROR:
         qw_logger.error(log_str)
-    elif importance == lib.WLR_INFO:
+    elif importance == wayland_backend.WLR_INFO:
         qw_logger.info(log_str)
-    elif importance == lib.WLR_DEBUG:
+    elif importance == wayland_backend.WLR_DEBUG:
         qw_logger.debug(log_str)
 
 
