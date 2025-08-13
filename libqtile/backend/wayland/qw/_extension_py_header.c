@@ -4,19 +4,21 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include <Python.h>
+#include "_extension_internal.h"
+
 #include <structmember.h>
 #include <wlr/util/log.h>
 
-static PyObject *py__hello(PyObject *, PyObject *)
+static PyObject *py__hello(PyObject *self, PyObject *args)
 {
-    fprintf(stderr, "Hello, python ext!\n");
+    fprintf(stderr, "Hello, from the wayland backend extension!\n");
     Py_RETURN_NONE;
 }
 
 static
 PyMethodDef EXPOSED_METHODS[] = {
-    {"hello", py__hello, METH_VARARGS, "."},
+    {"hello", py__hello, METH_VARARGS, "dummy function"},
+    {"set_log_callback", py__set_log_callback, METH_VARARGS, "set the python callback for logging"},
     {NULL, NULL, 0, NULL} // sentinel
 };
 

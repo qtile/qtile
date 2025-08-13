@@ -83,7 +83,7 @@ def prepare_extensions():
         library_dirs=libdirs,
         libraries=list(libs),
         include_dirs=[str(WAYLAND_BACKEND_DIR), str(QW_PROTO_OUT_PATH)] + includes,
-        extra_compile_args=["-DWLR_USE_UNSTABLE"]
+        extra_compile_args=["-DWLR_USE_UNSTABLE", "-DWAYLAND_BACKEND_EXTENSION=1"]
     )
 
     return [wayland_backend]

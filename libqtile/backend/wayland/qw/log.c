@@ -36,22 +36,56 @@
  * See the LICENSE file in the root of this repository for details.
  */
 
-#include "log.h"
-#include <stdio.h>
+#if defined(WAYLAND_BACKEND_EXTENSION)
+    #include "_extension_internal.h"
 
-// Function pointer for Python callback to receive formatted log messages
-static wrapped_log_func_t py_callback = NULL;
+static PyObject *LOG_CALLBACK = NULL;
 
-// Callback function passed to wlroots logging system
-// Formats the log message and forwards it to the Python callback
-static void qw_log_callback(enum wlr_log_importance importance, const char *fmt, va_list args) {
-    char formatted_str[4096];
-    vsnprintf(formatted_str, 4096, fmt, args); // Format the message safely into buffer
-    py_callback(importance, formatted_str);    // Call the Python callback with formatted string
+static
+void log_callback(enum wlr_log_importance importance, const char *fmt, va_list args)
+{
+    if (LOG_CALLBACK == NULL) {
+        return; // No callback registered
+    }
+
+#define LOG_BUFFER_SZ 4096
+
+    char formatted_str[LOG_BUFFER_SZ];
+    vsnprintf(formatted_str, LOG_BUFFER_SZ, fmt, args);
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyObject *result = PyObject_CallFunction(LOG_CALLBACK, "is", importance, formatted_str);
+    if (!result) {
+        PyErr_Print();
+    }
+
+    Py_XDECREF(result);
+    PyGILState_Release(gstate);
 }
 
-// Initializes wlroots logging with the specified verbosity and Python callback
-void qw_log_init(enum wlr_log_importance verbosity, wrapped_log_func_t callback) {
-    py_callback = callback;                   // Store Python callback for use in log handler
-    wlr_log_init(verbosity, qw_log_callback); // Register our log callback with wlroots
+// def set_log_callback(verbosity: int, callback: Callable[[int, str], None]) -> None: ...
+PyObject *py__set_log_callback(PyObject *self, PyObject *args)
+{
+    int verbosity;
+    PyObject *callback;
+
+    if (!PyArg_ParseTuple(args, "iO:set_log_callback", &verbosity, &callback)) {
+        return NULL;
+    }
+
+    if (!PyCallable_Check(callback)) {
+        PyErr_SetString(PyExc_TypeError, "Parameter must be callable");
+        return NULL;
+    }
+
+    Py_XINCREF(callback);
+    Py_XDECREF(LOG_CALLBACK);
+    LOG_CALLBACK = callback;
+
+    wlr_log_init(verbosity, log_callback);
+
+    Py_INCREF(callback);
+    return callback;
 }
+
+#endif
