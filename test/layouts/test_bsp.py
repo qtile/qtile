@@ -112,3 +112,24 @@ def test_bsp_wrap_clients(manager):
     # and here
     manager.c.layout.previous()
     assert_focused(manager, "two")
+
+
+def test_bsp_swap():
+    bsp = layout.Bsp()
+    bsp._group = libqtile.group._Group("A")
+
+    bsp.add_client("one")
+    bsp.add_client("two")
+    bsp.add_client("three")
+    bsp.add_client("four")
+
+    assert bsp.get_windows() == ["one", "three", "two", "four"]
+
+    bsp.swap("one", "two")
+
+    assert bsp.get_windows() == ["two", "three", "one", "four"]
+
+    bsp.add_client("five")
+    bsp.swap("one", "five")
+
+    assert bsp.get_windows() == ["two", "one", "three", "five", "four"]
