@@ -156,7 +156,7 @@ int qw_server_get_event_loop_fd(struct qw_server *server);
 void qw_server_loop_output_dims(struct qw_server *server, output_dims_cb_t cb);
 
 // Create and initialize a new server instance (allocates memory)
-struct qw_server *qw_server_create();
+struct qw_server *qw_server_create(void);
 
 // Find the view at a given layout coordinate (lx, ly)
 // If a surface pointer is provided, it will be set to the surface under the point
