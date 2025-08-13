@@ -98,9 +98,13 @@ for file in cdef_files:
             CDEF += line
 
 SOURCE = ""
+EXTENSION = ("_extension_header.c",)
 
 for root, dirs, files in os.walk(QW_PATH):
     for file in files:
+        if file in EXTENSION:
+            continue
+
         if file.endswith(".c"):
             with open(QW_PATH / file) as f:
                 SOURCE += f.read()
