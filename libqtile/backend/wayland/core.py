@@ -88,6 +88,8 @@ except ModuleNotFoundError:
 
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
+from libqtile.backend.wayland import wayland_backend
+
 if TYPE_CHECKING:
     from libqtile import config
 
@@ -114,15 +116,15 @@ def translate_masks(modifiers: list[str]) -> int:
 qw_logger = logging.getLogger("qw")
 
 
-@ffi.def_extern()
-def log_cb(importance: int, formatted_str) -> None:
+def log_cb(importance: int, formatted_str: str) -> None:
     """Callback that logs the string at the given level"""
-    log_str = ffi.string(formatted_str).decode()
-    if importance == lib.WLR_ERROR:
+    log_str = formatted_str
+
+    if importance == wayland_backend.WLR_ERROR:
         qw_logger.error(log_str)
-    elif importance == lib.WLR_INFO:
+    elif importance == wayland_backend.WLR_INFO:
         qw_logger.info(log_str)
-    elif importance == lib.WLR_DEBUG:
+    elif importance == wayland_backend.WLR_DEBUG:
         qw_logger.debug(log_str)
 
 
@@ -180,12 +182,12 @@ def view_urgent_cb(view, userdata):
 
 def get_wlr_log_level():
     if logger.level <= logging.DEBUG:
-        return lib.WLR_DEBUG
+        return wayland_backend.WLR_DEBUG
     elif logger.level <= logging.INFO:
-        return lib.WLR_INFO
+        return wayland_backend.WLR_INFO
     elif logger.level <= logging.ERROR:
-        return lib.WLR_ERROR
-    return lib.WLR_SILENT
+        return wayland_backend.WLR_ERROR
+    return wayland_backend.WLR_SILENT
 
 
 class Core(base.Core):
@@ -199,7 +201,8 @@ class Core(base.Core):
 
         """Setup the Wayland core backend"""
         log_utils.init_log(logger.level, log_path=log_utils.get_default_log(), logger=qw_logger)
-        lib.qw_log_init(get_wlr_log_level(), lib.log_cb)
+
+        wayland_backend.set_log_callback(get_wlr_log_level(), log_cb);
         self.qw = lib.qw_server_create()
         if not self.qw:
             sys.exit(1)

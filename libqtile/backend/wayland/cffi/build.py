@@ -1,7 +1,6 @@
 from cffi import FFI
 from pathlib import Path
 
-import cairocffi
 import os
 import subprocess
 
@@ -39,18 +38,6 @@ for proto in PROTOS:
     ).stdout.strip()
 
 CDEF = """
-// logging
-enum wlr_log_importance {
-    WLR_SILENT,
-    WLR_ERROR,
-    WLR_INFO,
-    WLR_DEBUG,
-    ...
-};
-extern "Python" void log_cb(enum wlr_log_importance importance,
-                                       const char *log_str);
-
-
 struct wlr_box {
 	int x, y;
 	int width, height;
@@ -80,7 +67,7 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h"]
+cdef_files = ["server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h"]
 
 for file in cdef_files:
     with open(QW_PATH / file) as f:
@@ -99,9 +86,13 @@ for file in cdef_files:
             CDEF += line
 
 SOURCE = ""
+EXTENSION = ("_extension_py_header.c",)
 
 for root, dirs, files in os.walk(QW_PATH):
     for file in files:
+        if file in EXTENSION:
+            continue
+
         if file.endswith(".c"):
             with open(QW_PATH / file) as f:
                 SOURCE += f.read()
@@ -111,7 +102,6 @@ def get_include_path(lib):
     return subprocess.run(
         ["pkg-config", "--variable=includedir", lib], text=True, stdout=subprocess.PIPE
     ).stdout.strip()
-
 
 ffi = FFI()
 ffi.set_source(
