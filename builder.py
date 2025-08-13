@@ -18,96 +18,82 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 import subprocess
-
 from pathlib import Path
-from setuptools import Extension, setup
-from typing import Iterator
 
-from setuptools import setup
+from setuptools import Distribution, Extension
 from setuptools import build_meta as _orig
-from setuptools.build_meta import *  # noqa: F401,F403
 
-WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
+WAYLAND_DIR = Path("libqtile/backend/wayland")
 
-WAYLAND_BACKEND_DIR = Path("libqtile/backend/wayland/qw")
+WAYLAND_BACKEND_DIR = WAYLAND_DIR / "qw"
+WAYLAND_EXT_DIR = WAYLAND_DIR / "ext"
+
 QW_PROTO_OUT_PATH = WAYLAND_BACKEND_DIR / "proto"
+WAYLAND_FFI_BUILD = WAYLAND_DIR / "cffi/build.py"
 
 
-def find_sources(basepath: Path) -> Iterator[str]:
-    files = (
-        (current_dir, file)
-        for current_dir, _, files in os.walk(basepath)
-        for file in files
-    )
-
-    for current_dir, file in files:
-        *_, ext = os.path.splitext(file)
-        if ext != f"{os.path.extsep}c":
-            continue
-
-        fullpath = os.path.join(current_dir, file)
-        print(f"Registering {fullpath} to sources")
-        yield fullpath
+def generate_build_config(config_settings: dict[str, str]) -> None:
+    with open("libqtile/_build_config.py", "w") as f:
+        f.write("# This file is generated at build time by builder.py\n")
+        for lib in ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]:
+            p = lib + "_PATH"
+            f.write(f"{p} = {config_settings.get(p)!r}\n")
 
 
-def pkg_config_flags(*packages):
-    # todo: improve me
+def pkg_config_lookup_var(lib, varname) -> str:
+    full_cmd = ["pkg-config", lib, f"--variable={varname}"]
+    # print the command for transparency
+    print(" ".join(full_cmd))
+    return subprocess.check_output(full_cmd).decode().strip()
+
+
+def pkg_config_flags(*libraries: str):
     include_dirs = []
     library_dirs = []
-    libraries = []
 
-    for pkg in packages:
-        cflags = subprocess.check_output(["pkg-config", "--cflags", pkg]).decode().split()
-        libs = subprocess.check_output(["pkg-config", "--libs", pkg]).decode().split()
+    for libname in libraries:
+        library_dirs.append(pkg_config_lookup_var(libname, "libdir"))
 
-        include_dirs.extend(f[2:] for f in cflags if f.startswith("-I"))
-        library_dirs.extend(l[2:] for l in libs if l.startswith("-L"))
-        libraries.extend(l[2:] for l in libs if l.startswith("-l"))
+        inc_dir = pkg_config_lookup_var(libname, "includedir")
 
-    include_dirs = list(dict.fromkeys(include_dirs))
-    library_dirs = list(dict.fromkeys(library_dirs))
-    libraries  = list(dict.fromkeys(libraries))
+        if (subdir := Path(inc_dir) / libname).exists():
+            inc_dir = subdir
 
-    return include_dirs, library_dirs, libraries
+        include_dirs.append(inc_dir)
+
+    libs = [lib.removeprefix("lib") for lib in libraries]
+    return include_dirs, library_dirs, libs
 
 
-
-def build_wayland_extension():
+def prepare_extensions():
     includes, libdirs, libs = pkg_config_flags(
         "wlroots-0.19", "wayland-server", "cairo", "pixman-1", "libdrm"
     )
 
-
     wayland_backend = Extension(
         "wayland_backend",
-        sources=list(find_sources(WAYLAND_BACKEND_DIR)),
+        sources=[
+            str(filepath)
+            for source_dirs in (WAYLAND_BACKEND_DIR, WAYLAND_EXT_DIR)
+            for filepath in source_dirs.rglob("*.c")
+        ],
         language="c",
         library_dirs=libdirs,
-        libraries=libs,
+        libraries=list(libs),
         include_dirs=[str(WAYLAND_BACKEND_DIR), str(QW_PROTO_OUT_PATH)] + includes,
         extra_compile_args=["-DWLR_USE_UNSTABLE"],
     )
 
-    return wayland_backend
+    return [wayland_backend]
 
 
-def wants_wayland(config_settings):
-    if config_settings:
-        for key in ["Backend", "backend"]:
-            if config_settings.get(key, "").lower() == "wayland":
-                return True
+def build_cff_lib(config_settings: dict[str, str]) -> None:
+    wayland_requested = any(
+        config_settings.get(key, "").lower() == "wayland"
+        for key in ("Backend", "backend")
+    )
 
-    return False
-
-
-def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
-    """If wayland backend is requested, build it!"""
-    if config_settings is None:
-        config_settings = {}
-
-    wayland_requested = wants_wayland(config_settings)
     try:
         from libqtile.backend.wayland.cffi.build import ffi_compile
 
@@ -118,33 +104,24 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
         else:
             print("Wayland backend was not built.")
 
-    # Write library paths to file, if they are specified at build time via
-    # --config-settings=PANGO_PATH=...
-    libs = ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]
-    if set(libs).intersection(config_settings.keys()):
-        with open("libqtile/_build_config.py", "w") as f:
-            f.write("# This file is generated at build time by builder.py\n")
-            for lib in ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]:
-                p = lib + "_PATH"
-                f.write(f"{p} = {config_settings.get(lib)!r}\n")
+
+def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+    if config_settings is None:
+        config_settings = {}
+
+    from setuptools.command.build_ext import build_ext
+
+    generate_build_config(config_settings or {})
+    build_cff_lib(config_settings or {})
+
+    dist = Distribution()
+    dist.ext_modules = prepare_extensions()
+
+    print("Building Wayland backend extension")
+
+    cmd = build_ext(dist)
+    cmd.build_lib = WAYLAND_DIR
+    cmd.ensure_finalized()
+    cmd.run()
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
-
-
-# what lies below is sorcery
-
-def hook_sys_modules_ext(*ext):
-    sys.modules["__SETUPTOOLS_EXTS__"] = {"ext_modules": exts} # type: ignore 
-
-
-def _patched_setup(**kwargs):
-    exts = sys.modules.pop("__SETUPTOOLS_EXTS__", {}).get("ext_modules", [])
-    kwargs.setdefault("ext_modules", exts)
-
-    from setuptools import _orig_setup # type: ignore
-    return _orig_setup(**kwargs)
-
-
-import setuptools
-setuptools._orig_setup = setuptools.setup # type: ignore
-setuptools.setup = _patched_setup
