@@ -88,21 +88,41 @@ def prepare_extensions():
     return [wayland_backend]
 
 
-def build_cff_lib(config_settings: dict[str, str]) -> None:
-    wayland_requested = any(
-        config_settings.get(key, "").lower() == "wayland"
-        for key in ("Backend", "backend")
-    )
-
+def build_cff_lib(wayland_requested: bool) -> bool:
     try:
         from libqtile.backend.wayland.cffi.build import ffi_compile
 
         ffi_compile(verbose=wayland_requested)
     except Exception as e:
-        if wayland_requested:
-            sys.exit(f"Wayland backend requested but backend could not be built: {e}")
-        else:
-            print("Wayland backend was not built.")
+        print("Wayland backend was not built:", e)
+        return False
+
+    return True
+
+
+def build_wayland_backend_extension() -> bool:
+    dist = Distribution()
+    dist.verbose = True
+    try:
+        dist.ext_modules = prepare_extensions()
+    except Exception as e:
+        print("Wayland backend extension cannot be build:", e)
+
+    print("Building Wayland backend extension")
+
+    try:
+        from setuptools.command.build_ext import build_ext
+
+        cmd = build_ext(dist)
+        cmd.build_lib = WAYLAND_DIR
+        cmd.ensure_finalized()
+        cmd.run()
+
+    except Exception as e:
+        print("Wayland backend extension failed to build:", e)
+        return False
+
+    return True
 
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
@@ -112,7 +132,7 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     from setuptools.command.build_ext import build_ext
 
     generate_build_config(config_settings or {})
-    build_cff_lib(config_settings or {})
+    build_cff_lib(config_settings.get("backend") == "wayland")
 
     dist = Distribution()
     dist.ext_modules = prepare_extensions()
