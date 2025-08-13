@@ -75,7 +75,15 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h"]
+cdef_files = [
+    "cursor.h",
+    "internal-view.h",
+    "log.h",
+    "output.h",
+    "server.h",
+    "util.h",
+    "view.h",
+]
 
 for file in cdef_files:
     with open(QW_PATH / file) as f:
@@ -94,22 +102,15 @@ for file in cdef_files:
             CDEF += line
 
 
-
-def make_unity_build() -> str:
-    collected_source_files = (
-        (QW_PATH / file).relative_to(QW_PATH)
+def make_unity_build() -> list[str]:
+    collected_source_files = sorted(
+        str(QW_PATH / file)
         for *_, files in os.walk(QW_PATH)
         for file in files
         if file.endswith(".c")
     )
 
-    unity_build_includes = (
-        f'#include "{filepath}"'
-        for filepath in sorted(collected_source_files)
-        # ensure deterministic include order for the unity build
-    )
-
-    return '\n'.join(unity_build_includes)
+    return list(collected_source_files)
 
 
 def get_include_path(lib):
@@ -119,9 +120,15 @@ def get_include_path(lib):
 
 
 ffi = FFI()
+
+ffi.cdef(CDEF)
 ffi.set_source(
     module_name="libqtile.backend.wayland._ffi",
-    source=make_unity_build(),
+
+    # this is not the real source file provider ??
+    source='\n'.join(f'#include "{filename}"' for filename in cdef_files),
+    # ^ we have no idea what this is, but it does not work without it
+
     libraries=["wlroots-0.19", "wayland-server", "input", "cairo"],
     define_macros=[("WLR_USE_UNSTABLE", None)],
     include_dirs=[
@@ -132,8 +139,10 @@ ffi.set_source(
         QW_PATH,
         QW_PROTO_OUT_PATH,
     ],
+    # actual source list ????
+    sources=make_unity_build()
 )
 
-ffi.cdef(CDEF)
+
 if __name__ == "__main__":
-    ffi.compile()
+    ffi.compile(verbose=True)
