@@ -172,9 +172,7 @@ struct qw_cursor *qw_server_get_cursor(struct qw_server *server);
 
 void qw_server_loop_visible_views(struct qw_server *server, node_wid_cb_t);
 
-void qw_server_set_keymap(struct qw_server *server,
-                            const char* layout,
-                            const char* options,
-                            const char* variant);
+void qw_server_set_keymap(struct qw_server *server, const char *layout, const char *options,
+                          const char *variant);
 
 #endif /* SERVER_H */

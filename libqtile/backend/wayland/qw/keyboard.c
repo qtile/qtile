@@ -62,17 +62,11 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
     wlr_seat_keyboard_notify_modifiers(keyboard->server->seat, &keyboard->wlr_keyboard->modifiers);
 }
 
-void qw_keyboard_set_keymap(struct qw_keyboard *keyboard,
-                            const char* layout,
-                            const char* options,
-                            const char* variant) {
+void qw_keyboard_set_keymap(struct qw_keyboard *keyboard, const char *layout, const char *options,
+                            const char *variant) {
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 
-    struct xkb_rule_names names = {
-        .layout = layout,
-        .options = options,
-        .variant = variant
-    };
+    struct xkb_rule_names names = {.layout = layout, .options = options, .variant = variant};
 
     struct xkb_keymap *keymap =
         xkb_keymap_new_from_names(context, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
