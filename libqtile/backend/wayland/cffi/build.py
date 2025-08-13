@@ -121,6 +121,24 @@ def get_include_path(lib):
 
 ffi = FFI()
 
+import sys
+
+if "--verbose" in sys.argv:
+    import subprocess
+
+    def run_wrapper(fn):
+        def wrapper(*args, **kwargs):
+            cmd, *_ = args
+            print(' '.join(cmd))
+
+            return fn(*args, **kwargs)
+        return wrapper
+
+    # this is a hack, to print the compile commands
+    subprocess.run = run_wrapper(subprocess.run)
+    subprocess.check_call = run_wrapper(subprocess.check_call)
+
+
 ffi.cdef(CDEF)
 ffi.set_source(
     module_name="libqtile.backend.wayland._ffi",
@@ -140,7 +158,26 @@ ffi.set_source(
         QW_PROTO_OUT_PATH,
     ],
     # actual source list ????
-    sources=make_unity_build()
+    sources=make_unity_build(),
+    extra_compile_args=[
+        "-fanalyzer",
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Wunused-result",
+        "-Wcast-align",
+        "-Wduplicated-branches",
+        "-Wduplicated-cond",
+        "-Wformat=2",
+        "-Wstrict-prototypes",
+        "-Wunreachable-code",
+        "-Wno-discarded-qualifiers",
+        "-Wformat-nonliteral",
+        "-Wint-conversion",
+        "-Wreturn-type",
+        "-Wwrite-strings",
+        "-Wshadow",
+    ]
 )
 
 
