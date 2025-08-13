@@ -17,12 +17,80 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import sys
 
+import os
+import subprocess
+
+from pathlib import Path
+from setuptools import Extension, setup
+from typing import Iterator
+
+from setuptools import setup
 from setuptools import build_meta as _orig
 from setuptools.build_meta import *  # noqa: F401,F403
 
 WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
+
+WAYLAND_BACKEND_DIR = Path("libqtile/backend/wayland/qw")
+QW_PROTO_OUT_PATH = WAYLAND_BACKEND_DIR / "proto"
+
+
+def find_sources(basepath: Path) -> Iterator[str]:
+    files = (
+        (current_dir, file)
+        for current_dir, _, files in os.walk(basepath)
+        for file in files
+    )
+
+    for current_dir, file in files:
+        *_, ext = os.path.splitext(file)
+        if ext != f"{os.path.extsep}c":
+            continue
+
+        fullpath = os.path.join(current_dir, file)
+        print(f"Registering {fullpath} to sources")
+        yield fullpath
+
+
+def pkg_config_flags(*packages):
+    # todo: improve me
+    include_dirs = []
+    library_dirs = []
+    libraries = []
+
+    for pkg in packages:
+        cflags = subprocess.check_output(["pkg-config", "--cflags", pkg]).decode().split()
+        libs = subprocess.check_output(["pkg-config", "--libs", pkg]).decode().split()
+
+        include_dirs.extend(f[2:] for f in cflags if f.startswith("-I"))
+        library_dirs.extend(l[2:] for l in libs if l.startswith("-L"))
+        libraries.extend(l[2:] for l in libs if l.startswith("-l"))
+
+    include_dirs = list(dict.fromkeys(include_dirs))
+    library_dirs = list(dict.fromkeys(library_dirs))
+    libraries  = list(dict.fromkeys(libraries))
+
+    return include_dirs, library_dirs, libraries
+
+
+
+def build_wayland_extension():
+    includes, libdirs, libs = pkg_config_flags(
+        "wlroots-0.19", "wayland-server", "cairo", "pixman-1", "libdrm"
+    )
+
+
+    wayland_backend = Extension(
+        "wayland_backend",
+        sources=list(find_sources(WAYLAND_BACKEND_DIR)),
+        language="c",
+        library_dirs=libdirs,
+        libraries=libs,
+        include_dirs=[str(WAYLAND_BACKEND_DIR), str(QW_PROTO_OUT_PATH)] + includes,
+        extra_compile_args=["-DWLR_USE_UNSTABLE"],
+    )
+
+    return wayland_backend
 
 
 def wants_wayland(config_settings):
@@ -61,3 +129,22 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
                 f.write(f"{p} = {config_settings.get(lib)!r}\n")
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
+
+
+# what lies below is sorcery
+
+def hook_sys_modules_ext(*ext):
+    sys.modules["__SETUPTOOLS_EXTS__"] = {"ext_modules": exts} # type: ignore 
+
+
+def _patched_setup(**kwargs):
+    exts = sys.modules.pop("__SETUPTOOLS_EXTS__", {}).get("ext_modules", [])
+    kwargs.setdefault("ext_modules", exts)
+
+    from setuptools import _orig_setup # type: ignore
+    return _orig_setup(**kwargs)
+
+
+import setuptools
+setuptools._orig_setup = setuptools.setup # type: ignore
+setuptools.setup = _patched_setup
