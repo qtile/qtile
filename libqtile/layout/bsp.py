@@ -191,6 +191,15 @@ class Bsp(Layout):
         if self.margin_on_single is None:
             self.margin_on_single = self.margin
 
+    def swap(self, c1: Window, c2: Window) -> None:
+        node_c1 = self.get_node(c1)
+        node_c2 = self.get_node(c2)
+
+        node_c1.client = c2
+        node_c2.client = c1
+
+        self.group.layout_all()
+
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.root = _BspNode()

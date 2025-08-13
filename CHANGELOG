@@ -9,6 +9,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
       - the GenPollUrl widget now uses the asyncio infrastrcutre of
         BackgroundPoll above, and depends on aiohttp as a result. in-tree
         widgets that use GenPollUrl also depend on aihottp now.
+      - Add `swap` method to Bsp layout
     * bugfixes
 
 Qtile 0.33.0, released 2025-07-24:
