@@ -9,14 +9,14 @@ from libqtile.command.base import CommandError, expose_command
 from libqtile.utils import rgb, ColorsType
 from libqtile.log_utils import logger
 
-ffi = None
-lib = None
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
     from libqtile.backend.wayland._ffi import ffi, lib
 except ModuleNotFoundError:
     print("Warning: Wayland backend not built. Backend will not run.")
-
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    # Provide a stub for FFI to keep going
+    from libqtile.backend.wayland.ffi_stub import ffi, lib
 
 class Base(base._Window):
     def __init__(self, qtile: Qtile, ptr, wid):
