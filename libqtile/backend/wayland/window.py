@@ -17,6 +17,7 @@ except ModuleNotFoundError:
     # Provide a stub for FFI to keep going
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
+
 class Base(base._Window):
     def __init__(self, qtile: Qtile, ptr, wid):
         base._Window.__init__(self)
