@@ -193,6 +193,26 @@ class Columns(Layout):
             )
             self.align = Columns._right
 
+    def swap(self, c1: Window, c2: Window) -> None:
+        col_c1: tuple[_Column, int]
+        col_c2: tuple[_Column, int]
+
+        for c in self.columns:
+            for i, w in enumerate(c.clients):
+                if w is c1:
+                    col_c1 = (c, i)
+                elif w is c2:
+                    col_c2 = (c, i)
+
+        col_c1[0].clients[col_c1[1]], col_c2[0].clients[col_c2[1]] = c2, c1
+
+        height_c1 = col_c1[0].heights.pop(c1)
+        height_c2 = col_c2[0].heights.pop(c2)
+
+        col_c1[0].heights[c2], col_c2[0].heights[c1] = height_c1, height_c2
+
+        self.group.layout_all()
+
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)
         c.columns = [_Column(self.split, self.insert_position)]
