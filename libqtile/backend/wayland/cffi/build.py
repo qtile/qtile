@@ -1,9 +1,8 @@
-from cffi import FFI
-from pathlib import Path
-
-import cairocffi
 import os
 import subprocess
+from pathlib import Path
+
+from cffi import FFI
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
@@ -80,7 +79,16 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h"]
+cdef_files = [
+    "log.h",
+    "session-lock.h",
+    "server.h",
+    "view.h",
+    "util.h",
+    "output.h",
+    "internal-view.h",
+    "cursor.h",
+]
 
 for file in cdef_files:
     with open(QW_PATH / file) as f:
