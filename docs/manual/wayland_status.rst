@@ -96,32 +96,8 @@ Current Status
 We've started working on this in a dedicated branch:  
 `wayc <https://github.com/qtile/qtile/tree/wayc>`_ in the main Qtile repo.
 
-What's Done
------------
-
-- Input/output device handling
-- View & XDG-view management
-- Initial WayC server setup
-- Switched to ``wlroots 0.19``
-- Logging and debugging (QW logs)
-- Fullscreen/maximize request handling
-- Gamma control manager
-- Simulated keypress restoration
-- XDG window names and app IDs
-- Resize/move handling
-- Cleaned up unnecessary dependencies
-- Flake dev shell update
-- XDG activation support
-
-Work in Progress
-----------------
-
-- Layer shell / Z-ordering
-- XWayland support
-- Layout system
-- Tests and refactoring
-
-----
+To check wayc progression visit:
+`wayc backend development <https://github.com/orgs/qtile/projects/7/views/1>`_ in Qtile projects.
 
 How You Can Help
 ================
