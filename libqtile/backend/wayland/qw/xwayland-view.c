@@ -291,8 +291,6 @@ static int qw_xwayland_view_get_pid(void *self) {
 // Handle commit event: called when XWayland surface commits state changes
 static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, commit);
-    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
-
     // For XWayland, we don't need to check for initial_commit or manage the view here
     // The view is already managed when it's mapped (see qw_xwayland_view_map)
     // This commit handler can be used for other purposes like updating geometry
@@ -334,22 +332,7 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
 // Called when the XWayland surface is unmapped (i.e., hidden or destroyed).
 static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, unmap);
-    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
-
-    // Destroy scene tree if it exists.
-    // if (xwayland_view->scene_tree) {
-    //     wlr_scene_node_destroy(&xwayland_view->scene_tree->node);
-    //     xwayland_view->scene_tree = NULL;
-    // }
-
     qw_view_cleanup_borders((struct qw_view *)xwayland_view);
-
-    // If this surface had keyboard focus, clear it.
-    // if (qw_xsurface->surface == server->seat->keyboard_state.focused_surface) {
-    //     wlr_seat_keyboard_clear_focus(server->seat);
-    // }
-
-    // Notify server that this view should no longer be managed.
     xwayland_view->base.server->unmanage_view_cb((struct qw_view *)&xwayland_view->base,
                                                  xwayland_view->base.server->cb_data);
 }
