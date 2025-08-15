@@ -17,29 +17,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import subprocess
-
 import pytest
 
-import libqtile.widget.cmus
-from test.widgets.test_cmus import MockCmusRemoteProcess
+from libqtile.widget.textbox import TextBox
 
 
 @pytest.fixture
-def widget(monkeypatch):
-    MockCmusRemoteProcess.reset()
-    monkeypatch.setattr("libqtile.widget.cmus.subprocess", MockCmusRemoteProcess)
-    monkeypatch.setattr(
-        "libqtile.widget.cmus.subprocess.CalledProcessError",
-        subprocess.CalledProcessError,
-    )
-    monkeypatch.setattr(
-        "libqtile.widget.cmus.base.ThreadPoolText.call_process",
-        MockCmusRemoteProcess.call_process,
-    )
-    yield libqtile.widget.cmus.Cmus
+def widget():
+    yield TextBox
 
 
 @pytest.mark.parametrize("screenshot_manager", [{}], indirect=True)
 def ss_cmus(screenshot_manager):
+    screenshot_manager.c.widget["textbox"].update("♫ Rick Astley - Never Gonna Give You Up")
     screenshot_manager.take_screenshot()

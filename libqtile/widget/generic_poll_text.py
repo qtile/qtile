@@ -1,5 +1,4 @@
 import json
-import subprocess
 from http.client import HTTPException
 from typing import Any
 from urllib.error import URLError
@@ -21,7 +20,7 @@ except ImportError:
         raise Exception("no xmltodict library")
 
 
-class GenPollText(base.ThreadPoolText):
+class GenPollText(base.BackgroundPoll):
     """A generic text widget that polls using poll function to get the text"""
 
     defaults = [
@@ -29,7 +28,7 @@ class GenPollText(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(GenPollText.defaults)
 
     def poll(self):
@@ -38,7 +37,7 @@ class GenPollText(base.ThreadPoolText):
         return self.func()
 
 
-class GenPollUrl(base.ThreadPoolText):
+class GenPollUrl(base.BackgroundPoll):
     """A generic text widget that polls an url and parses it using parse function"""
 
     defaults: list[tuple[str, Any, str]] = [
@@ -52,7 +51,7 @@ class GenPollUrl(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(GenPollUrl.defaults)
 
         self.headers["User-agent"] = self.user_agent
@@ -98,7 +97,7 @@ class GenPollUrl(base.ThreadPoolText):
         return text
 
 
-class GenPollCommand(base.ThreadPoolText):
+class GenPollCommand(base.BackgroundPoll):
     """A generic text widget to display output from scripts or shell commands"""
 
     defaults = [
@@ -109,21 +108,16 @@ class GenPollCommand(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(GenPollCommand.defaults)
 
     def _configure(self, qtile, bar):
-        base.ThreadPoolText._configure(self, qtile, bar)
+        base.BackgroundPoll._configure(self, qtile, bar)
         self.add_callbacks({"Button1": self.force_update})
 
-    def poll(self):
-        process = subprocess.run(
-            self.cmd,
-            capture_output=True,
-            text=True,
-            shell=self.shell,
-        )
+    async def apoll(self):
+        out = await self.acall_process(self.cmd, self.shell)
         if self.parse:
-            return self.parse(process.stdout)
+            return self.parse(out)
 
-        return process.stdout.strip()
+        return out.strip()

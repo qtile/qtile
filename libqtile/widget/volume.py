@@ -30,6 +30,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import re
 import subprocess
 
@@ -120,6 +121,11 @@ class Volume(base._TextBox):
             }
         )
 
+    def timer_setup(self):
+        asyncio.create_task(self.do_volume())
+        if self.theme_path:
+            self.setup_images()
+
     def _configure(self, qtile, parent_bar):
         if self.theme_path:
             self.length_type = bar.STATIC
@@ -127,12 +133,7 @@ class Volume(base._TextBox):
         base._TextBox._configure(self, qtile, parent_bar)
         self.unmute_foreground = self.foreground
 
-    def timer_setup(self):
-        self.timeout_add(self.update_interval, self.update)
-        if self.theme_path:
-            self.setup_images()
-
-    def create_amixer_command(self, *args):
+    def create_amixer_command(self, *args) -> str:
         cmd = ["amixer"]
 
         if self.cardid is not None:
@@ -148,8 +149,8 @@ class Volume(base._TextBox):
         base._TextBox.button_press(self, x, y, button)
         self.draw()
 
-    def update(self):
-        vol, muted = self.get_volume()
+    async def do_volume(self):
+        vol, muted = await self.get_volume()
         if vol != self.volume or muted != self.is_mute:
             self.volume = vol
             self.is_mute = muted
@@ -157,7 +158,8 @@ class Volume(base._TextBox):
             # to figure out how big it is and draw it.
             self._update_drawer()
             self.bar.draw()
-        self.timeout_add(self.update_interval, self.update)
+        await asyncio.sleep(self.update_interval)
+        asyncio.create_task(self.do_volume())
 
     def _update_drawer(self):
         if self.mute_foreground is not None:
@@ -213,20 +215,20 @@ class Volume(base._TextBox):
                 self.length = img.width + self.padding * 2
             self.surfaces[name] = img.pattern
 
-    def get_volume(self):
+    async def get_volume(self):
         try:
             if self.get_volume_command is not None:
                 get_volume_cmd = self.get_volume_command
             else:
                 get_volume_cmd = self.create_amixer_command("sget", self.channel)
 
-            mixer_out = subprocess.getoutput(get_volume_cmd)
+            mixer_out = await self.acall_process(get_volume_cmd, shell=True)
         except subprocess.CalledProcessError:
             return -1, False
 
         check_mute = mixer_out
         if self.check_mute_command:
-            check_mute = subprocess.getoutput(self.check_mute_command)
+            check_mute = await self.acall_process(self.check_mute_command, shell=True)
 
         muted = self.check_mute_string in check_mute
 

@@ -384,6 +384,26 @@ class _Widget(CommandObject, configurable.Configurable):
         """
         return subprocess.check_output(command, **kwargs, encoding="utf-8")
 
+    async def acall_process(self, command, shell=False) -> str:
+        """
+        Like call_process, but the async version
+        """
+        stdin = asyncio.subprocess.DEVNULL
+        stdout = asyncio.subprocess.PIPE
+        stderr = asyncio.subprocess.STDOUT
+
+        if shell:
+            p = await asyncio.subprocess.create_subprocess_shell(
+                command, stdin=stdin, stdout=stdout, stderr=stderr
+            )
+        else:
+            p = await asyncio.subprocess.create_subprocess_exec(
+                *command, stdin=stdin, stdout=stdout, stderr=stderr
+            )
+
+        (out, _) = await p.communicate()
+        return out.decode("utf-8")
+
     def _remove_dead_timers(self):
         """Remove completed and cancelled timers from the list."""
 
@@ -760,7 +780,7 @@ class _TextBox(_Widget):
     def update(self, text):
         """Update the widget text."""
         # Don't try to update text in dead layouts
-        # This is mainly required for ThreadPoolText based widgets as the
+        # This is mainly required for BackgroundPoll based widgets as the
         # polling function cannot be cancelled and so may be called after the widget
         # is finalised.
         if not self.can_draw():
@@ -785,10 +805,10 @@ class _TextBox(_Widget):
 class InLoopPollText(_TextBox):
     """A common interface for polling some 'fast' information, munging it, and
     rendering the result in a text box. You probably want to use
-    ThreadPoolText instead.
+    BackgroundPoll instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
-    you want to run something nontrivial, use ThreadPoolText.)"""
+    you want to run something nontrivial, use BackgroundPoll.)"""
 
     defaults = [
         (
@@ -825,14 +845,19 @@ class InLoopPollText(_TextBox):
         self.update(text)
 
 
-class ThreadPoolText(_TextBox):
+class BackgroundPoll(_TextBox):
     """A common interface for wrapping blocking events which when triggered
     will update a textbox.
 
-    The poll method is intended to wrap a blocking function which may take
-    quite a while to return anything.  It will be executed as a future and
-    should return updated text when completed.  It may also return None to
-    disable any further updates.
+    The poll/apoll methods are intended to wrap a blocking function which may
+    take quite a while to return anything. Either method should return the
+    string to update the widget text to. It may also return None to disable
+    any further updates.
+
+    If an `async def apoll()` is defined, that will be used to do the polling.
+
+    For widgets that have not been ported to asyncio and define a `def poll()`
+    method, their poll method will still be run in a thread as it is today.
 
     param: text - Initial text to display.
     """
@@ -847,41 +872,41 @@ class ThreadPoolText(_TextBox):
 
     def __init__(self, text="N/A", **config):
         super().__init__(text, **config)
-        self.add_defaults(ThreadPoolText.defaults)
+        self.add_defaults(BackgroundPoll.defaults)
 
     def timer_setup(self):
-        def on_done(future):
-            try:
-                result = future.result()
-            except Exception:
-                result = None
-                logger.exception("poll() raised exceptions, not rescheduling")
-
-            if result is not None:
-                try:
-                    self.update(result)
-
-                    if self.update_interval is not None:
-                        self.timeout_add(self.update_interval, self.timer_setup)
-
-                except Exception:
-                    logger.exception("Failed to reschedule timer for %s.", self.name)
-            else:
-                logger.warning("%s's poll() returned None, not rescheduling", self.name)
-
-        self.future = self.qtile.run_in_executor(self.poll)
-        self.future.add_done_callback(on_done)
+        create_task(self.do_tick())
 
     def poll(self):
-        pass
+        """An optional non-async-based method for polling. Will be run as an
+        async future."""
+
+    async def apoll(self):
+        """An optional async-based method for polling."""
+
+    async def do_tick(self, requeue=True):
+        if type(self).apoll != BackgroundPoll.apoll:
+            result = await self.apoll()
+        elif type(self).poll != BackgroundPoll.poll:
+            future = self.qtile.run_in_executor(self.poll)
+            result = await future
+        else:
+            raise Exception(f"widget {self.name} has neither apoll() nor poll() overridden?")
+        if result is not None:
+            try:
+                self.update(result)
+            except Exception:
+                logger.exception("Failed to reschedule timer for %s.", self.name)
+            if requeue and self.update_interval is not None:
+                await asyncio.sleep(self.update_interval)
+                create_task(self.do_tick())
+        else:
+            logger.warning("%s's poll() returned None, not rescheduling", self.name)
 
     @expose_command()
     def force_update(self):
         """Immediately poll the widget. Existing timers are unaffected."""
-        self.update(self.poll())
-
-
-# these two classes below look SUSPICIOUSLY similar
+        create_task(self.do_tick(requeue=False))
 
 
 class PaddingMixin(configurable.Configurable):

@@ -27,7 +27,7 @@ from libqtile.utils import add_signal_receiver
 from libqtile.widget import base
 
 
-class KeyboardKbdd(base.ThreadPoolText):
+class KeyboardKbdd(base.BackgroundPoll):
     """Widget for changing keyboard layouts per window, using kbdd
 
     kbdd should be installed and running, you can get it from:
@@ -55,7 +55,7 @@ class KeyboardKbdd(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.BackgroundPoll.__init__(self, "", **config)
         self.add_defaults(KeyboardKbdd.defaults)
         self.keyboard = self.configured_keyboards[0]
         self.is_kbdd_running = self._check_kbdd()

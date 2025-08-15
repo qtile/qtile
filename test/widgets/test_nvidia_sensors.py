@@ -30,7 +30,6 @@ def fake_nvidia(fake_qtile, monkeypatch, fake_window):
     # Replace internal call_process since we cant rely
     # on the test computer having the required hardware.
     monkeypatch.setattr(n, "call_process", MockNvidiaSMI.get_temperature)
-    monkeypatch.setattr("libqtile.widget.moc.subprocess.Popen", MockNvidiaSMI.get_temperature)
     fakebar = FakeBar([n], window=fake_window)
     n._configure(fake_qtile, fakebar)
     return n

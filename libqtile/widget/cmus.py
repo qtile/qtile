@@ -19,7 +19,7 @@ import subprocess
 from functools import partial
 
 from libqtile import pangocffi
-from libqtile.widget import base
+from libqtile.widget.generic_poll_text import GenPollCommand
 
 
 def format_time(time_seconds_string):
@@ -27,7 +27,7 @@ def format_time(time_seconds_string):
     return str(datetime.timedelta(seconds=float(time_seconds_string))).lstrip("0").lstrip(":")
 
 
-class Cmus(base.ThreadPoolText):
+class Cmus(GenPollCommand):
     """A simple Cmus widget.
 
     Show the metadata of now listening song and allow basic mouse
@@ -89,7 +89,8 @@ class Cmus(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        config["cmd"] = ["cmus-remote", "-C", "status"]
+        GenPollCommand.__init__(self, **config)
         self.add_defaults(Cmus.defaults)
         self.status = ""
         self.local = None
@@ -103,7 +104,7 @@ class Cmus(base.ThreadPoolText):
         )
 
     def _configure(self, qtile, parent_bar):
-        base.ThreadPoolText._configure(self, qtile, parent_bar)
+        GenPollCommand._configure(self, qtile, parent_bar)
         # Backwards compatibility
         if self.play_color:
             self.playing_color = self.play_color
@@ -111,12 +112,8 @@ class Cmus(base.ThreadPoolText):
         if self.noplay_color:
             self.stopped_color = self.noplay_color
 
-    def get_info(self):
+    def get_info(self, output):
         """Return a dictionary with info about the current cmus status."""
-        try:
-            output = self.call_process(["cmus-remote", "-C", "status"])
-        except subprocess.CalledProcessError as err:
-            output = err.output
         if output.startswith("status"):
             output = output.splitlines()
             info = {
@@ -181,9 +178,9 @@ class Cmus(base.ThreadPoolText):
 
             return info
 
-    def now_playing(self):
+    def parse(self, output):
         """Return a string with the now playing info."""
-        info = self.get_info()
+        info = self.get_info(output)
         now_playing = ""
         if info:
             display_format = self.format
@@ -219,7 +216,3 @@ class Cmus(base.ThreadPoolText):
             subprocess.Popen(["cmus-remote", "-u"])
         elif self.status == "stopped":
             subprocess.Popen(["cmus-remote", "-p"])
-
-    def poll(self):
-        """Poll content for the text box."""
-        return self.now_playing()

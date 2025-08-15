@@ -17,29 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import subprocess
 
 import pytest
 
-from libqtile.widget import CapsNumLockIndicator
-from test.widgets.test_caps_num_lock_indicator import MockCapsNumLockIndicator
+from libqtile.widget.textbox import TextBox
 
 
 @pytest.fixture
-def widget(monkeypatch):
-    MockCapsNumLockIndicator.reset()
-    monkeypatch.setattr(
-        "libqtile.widget.caps_num_lock_indicator.subprocess", MockCapsNumLockIndicator
-    )
-    monkeypatch.setattr(
-        "libqtile.widget.caps_num_lock_indicator.subprocess.CalledProcessError",
-        subprocess.CalledProcessError,
-    )
-    monkeypatch.setattr(
-        "libqtile.widget.caps_num_lock_indicator.base.ThreadPoolText.call_process",
-        MockCapsNumLockIndicator.call_process,
-    )
-    return CapsNumLockIndicator
+def widget():
+    return TextBox
 
 
 @pytest.mark.parametrize(
@@ -50,4 +36,5 @@ def widget(monkeypatch):
     indirect=True,
 )
 def ss_caps_num_lock_indicator(screenshot_manager):
+    screenshot_manager.c.widget["textbox"].update("Caps on Num on")
     screenshot_manager.take_screenshot()

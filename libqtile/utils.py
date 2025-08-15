@@ -295,6 +295,9 @@ def send_notification(
     passed when calling this function again to replace that notification. See:
     https://developer.gnome.org/notification-spec/
     """
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        logger.warning("skipped notification because we are in tests")
+        return -1
     if not has_dbus:
         logger.warning("dbus-fast is not installed. Unable to send notifications.")
         return -1

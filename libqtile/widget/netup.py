@@ -25,7 +25,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class NetUP(base.ThreadPoolText):
+class NetUP(base.BackgroundPoll):
     """
     A widget to display whether the network connection is up or down by probing a host via ping
     or tcp connection.
@@ -46,7 +46,7 @@ class NetUP(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, **config)
+        base.BackgroundPoll.__init__(self, **config)
         self.add_defaults(NetUP.defaults)
 
     def is_host_empty(self):
