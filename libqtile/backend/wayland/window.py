@@ -827,12 +827,9 @@ class Static(Base, base.Static):
         self._width = width
         self._height = height
 
-        n = 1
-        # borderwidth must be 0 so bordercolor has no effect
-        c_bordercolor = ffi.new("float[1][4]", [rgb([0, 0, 0, 1])])
-        c_bordercolor_ptr = ffi.cast("float(*)[4]", c_bordercolor)
+        n = 0
         self._ptr.place(
-            self._ptr, x, y, width, height, borderwidth, c_bordercolor_ptr, n, int(above)
+            self._ptr, x, y, width, height, ffi.NULL, n, int(above)
         )
 
     @expose_command()
