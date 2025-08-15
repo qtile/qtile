@@ -18,7 +18,6 @@ dependencies = [
     "cairocffi >= 1.7.0",
     "cffi >= 1.1.0",
     "xcffib >= 1.4.0",
-    "pycairo >= 1.25.1",
 ]
 license = "MIT"
 license-files = [ "LICENSE" ]
@@ -50,6 +49,7 @@ dev = [
     "pytest-cov",
     "pre-commit",
     "PyGObject",
+    "pycairo >= 1.25.1",
     "isort",
     "pytest >= 6.2.1",
     "mypy",
