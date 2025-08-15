@@ -24,8 +24,14 @@ from test.helpers import (
 from test.test_images2 import should_skip
 from test.test_manager import ManagerConfig
 
+
+class ManagerConfigNormalFloats(ManagerConfig):
+    floats_kept_above = False
+
+
 bare_config = pytest.mark.parametrize("xmanager", [BareConfig], indirect=True)
 manager_config = pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=True)
+manager_config_normal_floats = pytest.mark.parametrize("xmanager", [ManagerConfigNormalFloats], indirect=True)
 
 
 @manager_config
@@ -851,7 +857,7 @@ def test_net_wm_state_focused(xmanager, conn):
     xmanager.kill_window(one)
 
 
-@manager_config
+@manager_config_normal_floats
 def test_window_stacking_order(xmanager):
     """Test basic window stacking controls."""
     conn = xcbq.Connection(xmanager.display)
@@ -868,10 +874,10 @@ def test_window_stacking_order(xmanager):
         return [x[0] for x in wins]
 
     xmanager.test_window("one")
-    xmanager.test_window("two")
-    xmanager.test_window("three")
-    xmanager.test_window("four")
-    xmanager.test_window("five")
+    xmanager.test_window("two", floating=True)
+    xmanager.test_window("three", floating=True)
+    xmanager.test_window("four", floating=True)
+    xmanager.test_window("five", floating=True)
 
     # We're testing 3 "layers"
     # BELOW, 'everything else', ABOVE
@@ -935,15 +941,13 @@ def test_window_stacking_order(xmanager):
 
     # BELOW: two, ABOVE: None
     _wnd("three").keep_below()
-    assert _clients() == ["two", "three", "four", "five", "one"]
+    assert _clients() == ["two", "four", "five", "one", "three"]
     _wnd("one").move_down()
-    assert _clients() == ["two", "three", "four", "one", "five"]
-
-    # BELOW: None ABOVE: None
-    _wnd("two").keep_below()
-    assert _clients() == ["two", "three", "four", "one", "five"]
+    assert _clients() == ["two", "four", "one", "five", "three"]
 
     # BELOW: three, ABOVE: None
+    _wnd("two").keep_below()
+    _wnd("two").move_to_bottom()
     _wnd("three").keep_below()
     assert _clients() == ["three", "two", "four", "one", "five"]
     _wnd("two").move_down()
