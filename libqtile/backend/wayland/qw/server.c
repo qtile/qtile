@@ -53,10 +53,10 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->renderer_lost.link);
     wl_list_remove(&server->request_activate.link);
     wl_list_remove(&server->new_token.link);
-    #if WLR_HAS_XWAYLAND
+#if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wlr_xwayland_destroy(server->xwayland);
-    #endif
+#endif
 
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
@@ -370,7 +370,7 @@ static void qw_server_handle_new_layer_surface(struct wl_listener *listener, voi
 static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_xwayland_surface);
     struct wlr_xwayland_surface *xwayland_surface = data;
-    qw_server_xwayland_view_new(server, xwayland_surface);
+    qw_create_xwayland_view(server, xwayland_surface);
 }
 
 const char *qw_server_xwayland_display_name(struct qw_server *server) {
