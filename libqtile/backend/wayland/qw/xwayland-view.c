@@ -305,11 +305,6 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->scene_tree =
         wlr_scene_subsurface_tree_create(xwayland_view->base.content_tree, xwayland_surface->surface);
 
-    if (!xwayland_view->scene_tree) {
-    } else {
-        xwayland_view->scene_tree->node.data = xwayland_view;
-        xwayland_surface->data = xwayland_view;
-    }
     // Set the view's initial dimensions based on the surface.
     xwayland_view->base.width = xwayland_surface->width;
     xwayland_view->base.height = xwayland_surface->height;
@@ -567,6 +562,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     // Create a scene tree node for this view inside the main layout tree
     xwayland_view->base.content_tree =
         wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
+    xwayland_view->base.content_tree->node.data = xwayland_view;
     xwayland_view->base.layer = LAYER_LAYOUT;
 
     wl_signal_add(&xwayland_surface->events.associate, &xwayland_view->associate);
