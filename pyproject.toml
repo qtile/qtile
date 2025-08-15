@@ -81,9 +81,14 @@ wayland = [
     "pywlroots==0.17.0",
 ]
 
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ["libqtile*"]
+
+[tool.setuptools.package-data]
+"libqtile.backend.wayland" = ["*.so"]
 
 [tool.setuptools_scm]
 
