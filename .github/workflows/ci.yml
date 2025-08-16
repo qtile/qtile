@@ -54,8 +54,8 @@ jobs:
                 uv tool install .
                 uv tool install --reinstall '.[wayland]'
                 if [[ ${{ matrix.backend }} == "x11" ]]; then
-                  export DISPLAY=:99
-                  sudo Xvfb -ac $DISPLAY -screen 0 1280x1024x24 &>/dev/null &
+                  export DISPLAY=:1
+                  sudo Xvfb $DISPLAY &
                 else
                   export XDG_RUNTIME_DIR=/tmp
                   export WLR_BACKENDS=headless
@@ -65,6 +65,7 @@ jobs:
                   export WLR_RENDERER=pixman
                 fi
                 qtile start -b ${{ matrix.backend }} &
+                ls $HOME/.cache/qtile/
                 qtile cmd-obj -f qtile_info
                 exit
                 make QTILE_CI_PYTHON=${{ matrix.python-version }} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
