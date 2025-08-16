@@ -50,9 +50,9 @@ jobs:
                 set +e
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 uv sync --python=${{ matrix.python-version }} --all-extras
+                uv run ./libqtile/backend/wayland/cffi/build.py
                 uv tool install .
                 uv tool install --reinstall '.[wayland]'
-                uv run --python=${{ matrix.python-version }} --with setuptools --directory=$(uv tool dir)/qtile/lib/python${{ matrix.python-version }}/site-packages/ $(uv tool dir)/qtile/lib/python${{ matrix.python-version }}/site-packages/libqtile/backend/wayland/cffi/build.py
                 if [[ ${{ matrix.backend }} == "x11" ]]; then
                   export DISPLAY=:99
                   sudo Xvfb -ac $DISPLAY -screen 0 1280x1024x24 &>/dev/null &
