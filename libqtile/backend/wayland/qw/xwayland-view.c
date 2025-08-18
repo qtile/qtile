@@ -6,6 +6,7 @@
 #include "wlr/types/wlr_xdg_decoration_v1.h"
 #include "wlr/util/log.h"
 #include "xdg-view.h"
+#include "qw/util.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <wlr/xwayland.h>
@@ -25,6 +26,13 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
     }
 
     wlr_scene_node_raise_to_top(&xwayland_view->base.content_tree->node);
+
+    //Deactivate previous surface if any
+    if (prev_surface) {
+        qw_util_deactivate_surface(prev_surface);
+    }
+
+    wlr_xwayland_surface_activate(xwayland_view->xwayland_surface, true);
 
     // Notify keyboard about entering this surface (for keyboard input)
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
