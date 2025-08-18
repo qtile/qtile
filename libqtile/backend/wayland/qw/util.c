@@ -70,3 +70,19 @@ int qw_util_get_modifier_code(const char *codestr) {
 xkb_keysym_t qwu_keysym_from_name(const char *name) {
 	return xkb_keysym_from_name(name, XKB_KEYSYM_CASE_INSENSITIVE);
 }
+
+void qw_util_deactivate_surface(struct wlr_surface *surface) {
+    struct wlr_xdg_toplevel *xdg_toplevel = wlr_xdg_toplevel_try_from_wlr_surface(surface);
+    if (xdg_toplevel) {
+        wlr_xdg_toplevel_set_activated(xdg_toplevel, false);
+        return;
+    }
+
+    #if WLR_HAS_XWAYLAND
+    struct wlr_xwayland_surface *xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(surface);
+    if (xwayland_surface) {
+        wlr_xwayland_surface_activate(xwayland_surface, false);
+        return;
+    }
+    #endif
+}
