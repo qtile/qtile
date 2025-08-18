@@ -29,8 +29,7 @@ struct qw_session_lock {
     struct wl_listener destroy;
 };
 
-// Function when server receives new session lock request
-static void qw_session_lock_handle_new(struct wl_listener *listener, void *data);
+void qw_session_lock_init(struct qw_server *server);
 
 void qw_session_lock_output_change(struct qw_output *output);
 void qw_session_lock_output_destroy(struct qw_output *output);

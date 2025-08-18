@@ -572,13 +572,7 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->renderer->events.lost, &server->renderer_lost);
 
     // Session lock setup
-    server->lock_state = QW_SESSION_LOCK_UNLOCKED;
-    server->lock_manager = wlr_session_lock_manager_v1_create(server->display);
-    server->new_session_lock.notify = qw_session_lock_handle_new;
-    wl_signal_add(&server->lock_manager->events.new_lock, &server->new_session_lock);
-
-    // Disable lock screen layer
-    wlr_scene_node_set_enabled(&server->scene_windows_layers[LAYER_LOCK]->node, false);
+    qw_session_lock_init(server);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);

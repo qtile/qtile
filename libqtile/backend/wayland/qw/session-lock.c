@@ -91,14 +91,14 @@
 
 void qw_session_lock_restore_focus(struct qw_server *server) {
     wlr_log(WLR_ERROR, "SESSION LOCK - RESTORE FOCUS");
-    // To do:
-    // - Move focus to client window
-    // - Restore keyboard focus?
-    // - Restore pointer focus?
+    // Called after unlock to restore focus back to the "real" client surfaces.
+    // Currently a placeholder: needs to restore keyboard + pointer focus.
     // qw_cursor_process_motion(server->cursor, 0);
 }
 
 // Focus the first available lock surface
+// Useful if one lock surface disappears (e.g. output disconnect)
+// but others remain.
 void qw_session_lock_focus_first_lock_surface(struct qw_server *server) {
     struct wlr_seat *seat = server->seat;
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
@@ -106,17 +106,20 @@ void qw_session_lock_focus_first_lock_surface(struct qw_server *server) {
     surface = wl_container_of(server->lock->surfaces.next, surface, link);
 
     if (keyboard != NULL) {
+        // Redirect keyboard input to the chosen lock surface
         wlr_seat_keyboard_notify_enter(seat, surface->surface, keyboard->keycodes,
                                        keyboard->num_keycodes, &keyboard->modifiers);
     }
     if (server->cursor != NULL) {
+        // Redirect pointer focus as well
         wlr_log(WLR_ERROR, "SESSION LOCK - CURSOR FOCUS");
         wlr_seat_pointer_notify_enter(seat, surface->surface, 0, 0);
     }
 }
 
 // When output changes, we need to reposition and resize any lock surface and
-// blanking rect attached to that output
+// blanking rect attached to that output.
+// Ensures lock surfaces always cover the full output geometry.
 void qw_session_lock_output_change(struct qw_output *output) {
     int x, y, w, h;
     x = output->full_area.x;
@@ -140,6 +143,7 @@ void qw_session_lock_output_change(struct qw_output *output) {
 }
 
 // If an output is destroyed, remove its blanking rect
+// (lock surfaces are cleaned up separately via their destroy handler)
 void qw_session_lock_output_destroy(struct qw_output *output) {
     if (output->blanking_rect != NULL) {
         wlr_scene_node_destroy(&output->blanking_rect->node);
@@ -147,7 +151,8 @@ void qw_session_lock_output_destroy(struct qw_output *output) {
 }
 
 // If the lock client crashes we change the blanking rect colours to let
-// the user know
+// the user know.
+// This visually indicates "something went wrong" instead of showing unlocked windows.
 void qw_session_lock_crashed_update_rects(struct qw_server *server) {
     wlr_log(WLR_INFO, "SESSION LOCK - Blanking rect crashed");
     struct qw_output *o;
@@ -182,12 +187,10 @@ void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *
     if (server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
         wlr_log(WLR_ERROR, "SESSION LOCK - NOT UNLOCKED");
         if (server->lock != NULL && wl_list_length(&server->lock->surfaces) > 1) {
-            // We've lost a lock surface but there are other lock surfaces
-            // available (e.g. one output has been disconnected while we're locked)
-            // so we move focus to first available lock surface
+            // One lock surface gone, but others still exist → shift focus
             qw_session_lock_focus_first_lock_surface(server);
         } else {
-            // No more lock surfaces but we're still locked - client has crashed
+            // No lock surfaces left while still locked → treat as crash
             wlr_log(WLR_ERROR, "SESSION LOCK - CRAAAAASH!");
             server->lock_state = QW_SESSION_LOCK_CRASHED;
             qw_session_lock_crashed_update_rects(server);
@@ -196,22 +199,21 @@ void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *
             wlr_seat_pointer_clear_focus(seat);
         }
     }
-    // We shouldn't need to do anything if the server is unlocked as this
-    // should have already been handled in qw_session_lock_destroy
+    // If unlocked, do nothing here (cleanup already handled in qw_session_lock_destroy).
 }
 
 void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) {
     wlr_log(WLR_INFO, "SESSION LOCK - destroy lock (unlock %d)", unlock);
     struct qw_server *server = session_lock->server;
     struct wlr_seat *seat = server->seat;
-    // Stop focusing
+    // Always clear focus when lock is destroyed
     wlr_log(WLR_INFO, "SESSION LOCK - stop focus keyboard");
     wlr_seat_keyboard_notify_clear_focus(seat);
     wlr_log(WLR_INFO, "SESSION LOCK - stop focus pointer");
     wlr_seat_pointer_clear_focus(seat);
 
     if (server->lock_state == QW_SESSION_LOCK_LOCKED && unlock) {
-        // Hide the lock layer
+        // Lock was explicitly unlocked → disable lock layer, restore focus
         wlr_log(WLR_INFO, "SESSION LOCK - hide blanking rects");
         wlr_scene_node_set_enabled(&session_lock->server->scene_windows_layers[LAYER_LOCK]->node,
                                    false);
@@ -223,6 +225,7 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
     }
     wlr_log(WLR_ERROR, "Destroying lock.");
 
+    // Remove event listeners for this lock
     wlr_log(WLR_INFO, "Removing new surface link");
     wl_list_remove(&session_lock->new_surface.link);
     wlr_log(WLR_INFO, "Removing unlock link");
@@ -230,6 +233,7 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
     wlr_log(WLR_INFO, "Removing destroy link");
     wl_list_remove(&session_lock->destroy.link);
 
+    // Clean up lock scene subtree
     wlr_scene_node_destroy(&session_lock->scene->node);
     session_lock->server->lock = NULL;
     free(session_lock);
@@ -238,15 +242,15 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
 void qw_session_lock_handle_unlock(struct wl_listener *listener, void *data) {
     wlr_log(WLR_ERROR, "SESSION LOCK - HANDLE UNLOCK");
     struct qw_session_lock *lock = wl_container_of(listener, lock, unlock);
-    // Destroy the lock and unlock the system
+    // Unlock event from client → destroy lock with unlock=true
     qw_session_lock_destroy(lock, true);
 }
 
 void qw_session_lock_handle_destroy(struct wl_listener *listener, void *data) {
     wlr_log(WLR_ERROR, "SESSION LOCK - DESTROY");
     struct qw_session_lock *lock = wl_container_of(listener, lock, destroy);
-    // Destroy the lock but leave the system locked as we've not
-    // had a valid unlock event
+    // Lock object destroyed without unlock → destroy lock with unlock=false
+    // This leaves the compositor in a "crashed lock" state.
     qw_session_lock_destroy(lock, false);
 }
 
@@ -256,6 +260,7 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
     struct wlr_session_lock_surface_v1 *lock_surface = data;
     struct qw_output *output = lock_surface->output->data;
 
+    // Create a scene node tree for this lock surface
     struct wlr_scene_tree *scene_tree = lock_surface->surface->data =
         wlr_scene_subsurface_tree_create(lock->scene, lock_surface->surface);
     output->lock_surface = lock_surface;
@@ -267,7 +272,7 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
     wlr_session_lock_surface_v1_configure(lock_surface, output->full_area.width,
                                           output->full_area.height);
 
-    // Focus the surface on the current screen
+    // If this is the current output, redirect keyboard + pointer input to it
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(lock->server->seat);
     if (keyboard && output->wlr_output == lock->server->current_output) {
         wlr_log(WLR_ERROR, "SESSION LOCK - NEW SURFACE - KEYBOARD + POINTER REDIRECT");
@@ -288,7 +293,7 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
 
     wlr_log(WLR_ERROR, "SESSION LOCK - HANDLE NEW LOCK");
 
-    // Reject any income lock request if we're not unlocked
+    // Reject any incoming lock request if already locked or crashed
     if (server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
         wlr_session_lock_v1_destroy(session_lock);
         return;
@@ -297,10 +302,9 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     // Enable the LOCK layer to show blanking rects
     wlr_scene_node_set_enabled(&server->scene_windows_layers[LAYER_LOCK]->node, true);
 
-    // Block focus of other windows
+    // TODO: Explicitly block focus/input for normal windows here.
 
-    // Stop input in other windows
-
+    // Allocate compositor-side lock tracking struct
     struct qw_session_lock *lock = calloc(1, sizeof(*lock));
     if (lock == NULL) {
         wlr_log(WLR_ERROR, "Could not allocate memory for session lock.");
@@ -314,6 +318,7 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     server->lock = session_lock;
     server->lock_state = QW_SESSION_LOCK_LOCKED;
 
+    // Hook up listeners for session lock lifecycle
     lock->new_surface.notify = qw_session_lock_handle_new_surface;
     wl_signal_add(&session_lock->events.new_surface, &lock->new_surface);
 
@@ -323,5 +328,21 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     lock->unlock.notify = qw_session_lock_handle_unlock;
     wl_signal_add(&session_lock->events.unlock, &lock->unlock);
 
+    // Inform client it is now locked
     wlr_session_lock_v1_send_locked(session_lock);
+}
+
+void qw_session_lock_init(struct qw_server *server) {
+    // Start unlocked
+    server->lock_state = QW_SESSION_LOCK_UNLOCKED;
+
+    // Create the wlroots session lock manager
+    server->lock_manager = wlr_session_lock_manager_v1_create(server->display);
+
+    // Listen for new lock requests
+    server->new_session_lock.notify = qw_session_lock_handle_new;
+    wl_signal_add(&server->lock_manager->events.new_lock, &server->new_session_lock);
+
+    // Disable lock screen layer by default (only enabled on lock)
+    wlr_scene_node_set_enabled(&server->scene_windows_layers[LAYER_LOCK]->node, false);
 }
