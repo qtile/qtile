@@ -17,14 +17,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from contextlib import wraps
+from functools import wraps
 
 import xcffib.xproto
 
 from libqtile import hook
 from libqtile.backend.base import LayerGroup
-from libqtile.backend.base.window import _Window
-from libqtile.backend.x11 import window
+from libqtile.backend.x11.window import Window, _Window
 from libqtile.log_utils import logger
 
 
@@ -48,7 +47,7 @@ class ZManager:
     def __init__(self, core) -> None:
         self.core = core
         self.layers: dict[LayerGroup, list[_Window]] = {l: [] for l in LayerGroup}
-        self.layer_map: dict[_Window, tuple(LayerGroup, int)] = {}
+        self.layer_map: dict[_Window, tuple[LayerGroup, int]] = {}
         hook.subscribe.client_focus(self._restack_on_focus_change)
 
     def is_stacked(self, window: _Window) -> bool:
@@ -103,7 +102,7 @@ class ZManager:
         stack = self.get_z_order()
         if len(stack) == 1:
             return (None, True)
-        
+
         idx = stack.index(window)
         if idx == 0:
             return (stack[1], False)
@@ -147,7 +146,7 @@ class ZManager:
         self.update_client_lists()
 
     @check_window
-    def move_up(self, window) -> None:
+    def move_up(self, window: _Window) -> None:
         layer, cur_idx = self.layer_map[window]
         visible = [
             w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
@@ -168,7 +167,7 @@ class ZManager:
 
         if layer == LayerGroup.BRING_TO_FRONT:
             window.change_layer()
-            layer, cur_idx = self.layer_map[window]            
+            layer, cur_idx = self.layer_map[window]
 
         visible = [
             w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
@@ -271,7 +270,7 @@ class ZManager:
         assert self.core.qtile
         z_order = self.get_z_order()
         # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
-        wids = [win.wid for win in z_order if isinstance(win, window.Window)]
+        wids = [win.wid for win in z_order if isinstance(win, Window)]
         self.core._root.set_property("_NET_CLIENT_LIST", wids)
 
         self.core._root.set_property("_NET_CLIENT_LIST_STACKING", [win.wid for win in z_order])
