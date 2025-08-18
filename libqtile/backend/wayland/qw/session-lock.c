@@ -1,3 +1,88 @@
+/*
+ * Session Lock Implementation (wlroots protocol: wlr_session_lock_v1)
+ *
+ * This file implements the wlroots session lock protocol, which allows a
+ * compositor to "lock" the session (typically for login/lock screens).
+ *
+ * Acknowledgements:
+ *   Portions of the logic and design were informed by dwl's implementation,
+ *   which was used as a reference when structuring this code.
+ *
+ * Locking Flow (Detailed):
+ *
+ * 1. New lock request:
+ *    - When a client requests a new session lock,
+ *      qw_session_lock_handle_new() is called.
+ *    - If the compositor is currently unlocked, a lock is created and the
+ *      LAYER_LOCK scene is enabled to show blanking rects. Input to normal
+ *      windows is blocked at this stage.
+ *
+ * 2. New lock surfaces:
+ *    - For each output, the lock client will create a surface.
+ *      qw_session_lock_handle_new_surface() sets up the lock surface:
+ *        • Positions and resizes it to cover the output
+ *        • Sets keyboard/pointer focus if appropriate
+ *        • Hooks a destroy listener (qw_session_lock_surface_handle_destroy)
+ *
+ * 3. Maintaining lock surfaces:
+ *    - If an output is resized/reconfigured:
+ *        qw_session_lock_output_change() repositions and resizes lock surfaces
+ *        and blanking rects to continue covering the outputs fully.
+ *    - If an output is destroyed:
+ *        qw_session_lock_output_destroy() cleans up its blanking rect.
+ *
+ * 4. Lock surface lifecycle:
+ *    - If a lock surface is destroyed:
+ *        qw_session_lock_surface_handle_destroy() checks if other lock surfaces
+ *        remain. If not, and the session is still locked, the lock is considered
+ *        crashed and qw_session_lock_crashed_update_rects() is called to show
+ *        an error-colored blanking rect.
+ *
+ * 5. Unlocking:
+ *    - If the client sends an unlock event:
+ *        qw_session_lock_handle_unlock() destroys the lock via
+ *        qw_session_lock_destroy(unlock = true).
+ *        This hides the lock layer, restores input focus via
+ *        qw_session_lock_restore_focus(), and marks the server unlocked.
+ *
+ * 6. Forced destroy:
+ *    - If the lock is destroyed without a valid unlock (e.g. client exit):
+ *        qw_session_lock_handle_destroy() calls qw_session_lock_destroy(unlock = false),
+ *        keeping the compositor locked (crashed state).
+ *
+ * Key Functions:
+ *    - qw_session_lock_handle_new()            : Entry point when a new lock is requested
+ *    - qw_session_lock_handle_new_surface()    : Sets up lock surfaces per output
+ *    - qw_session_lock_output_change()         : Keeps lock surfaces in sync with outputs
+ *    - qw_session_lock_surface_handle_destroy(): Handles surface destruction
+ *    - qw_session_lock_handle_unlock()         : Handles unlock events
+ *    - qw_session_lock_destroy()               : Tears down lock state and resources
+ *
+ * Locking Flow:
+ *
+ *   Client requests lock
+ *     → qw_session_lock_handle_new()
+ *       → compositor enters QW_SESSION_LOCK_LOCKED state, blanking rects shown
+ *       → client creates per-output surfaces
+ *         → qw_session_lock_handle_new_surface() (setup + focus)
+ *
+ *   While locked:
+ *     → qw_session_lock_output_change() keeps surfaces synced to outputs
+ *
+ *   Client requests unlock
+ *     → qw_session_lock_handle_unlock()
+ *       → qw_session_lock_destroy(unlock = true)
+ *         → hides blanking rects, restores focus
+ *         → compositor returns to QW_SESSION_LOCK_UNLOCKED state
+ *
+ *   Client exits without unlocking
+ *     → qw_session_lock_destroy(unlock = false)
+ *       → blanking rects changed to indicate error state
+ *       → compositor set to QW_SESSION_LOCK_CRASHED state
+ *
+ * This flow ensures the compositor maintains a secure lock state until an
+ * explicit unlock event is received, or a crash is detected.
+ */
 #include "session-lock.h"
 #include "output.h"
 #include "server.h"
