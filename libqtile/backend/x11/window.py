@@ -15,8 +15,7 @@ from xcffib.xproto import EventMask, SetMode
 
 from libqtile import hook, utils
 from libqtile.backend import base
-from libqtile.backend.base import FloatStates
-from libqtile.backend.base.zmanager import LayerGroup
+from libqtile.backend.base import FloatStates, LayerGroup
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
 from libqtile.command.base import CommandError, expose_command

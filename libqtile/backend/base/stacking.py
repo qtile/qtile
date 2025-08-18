@@ -17,35 +17,23 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from libqtile.backend.base import zmanager
-from libqtile.backend.base.window import _Window
-from libqtile.backend.base.zmanager import LayerGroup
+from enum import IntEnum
 
 
-class ZManager(zmanager.ZManager):
-    def __init__(self, core) -> None:
-        super().__init__(core)
-
-    def is_stacked(self, window: _Window) -> bool:
-        pass
-
-    def add_window(self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top") -> None:
-        pass
-
-    def remove_window(self, window) -> None:
-        pass
-
-    def move_up(self, window) -> None:
-        pass
-
-    def move_down(self, window) -> None:
-        pass
-
-    def move_to_top(self, window) -> None:
-        pass
-
-    def move_to_bottom(self, window) -> None:
-        pass
-
-    def move_window_to_layer(self, window, new_layer, position="top") -> None:
-        pass
+class LayerGroup(IntEnum):
+    """
+    Helper object to specify stacking layers. `LayerGroup` is backend-agnostic,
+    so backends will need to map behaviour accordingly. However, a common object
+    allows us have more common code across backends.
+    """
+    BACKGROUND = 0
+    BOTTOM = 1
+    KEEP_BELOW = 2
+    LAYOUT = 3
+    KEEP_ABOVE = 4
+    MAX = 5
+    FULLSCREEN = 6
+    BRING_TO_FRONT = 7
+    TOP = 8
+    OVERLAY = 9
+    SYSTEM = 10

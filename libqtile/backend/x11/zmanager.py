@@ -17,19 +17,36 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from contextlib import wraps
+
 import xcffib.xproto
 
 from libqtile import hook
-from libqtile.backend.base import zmanager
+from libqtile.backend.base import LayerGroup
 from libqtile.backend.base.window import _Window
-from libqtile.backend.base.zmanager import LayerGroup, check_window
 from libqtile.backend.x11 import window
 from libqtile.log_utils import logger
 
 
-class ZManager(zmanager.ZManager):
+def check_window(func):
+    """
+    Decorator that requires window to be stacked before proceeding.
+
+    The decorated method must take the window's id as the first argument.
+    """
+
+    @wraps(func)
+    def _wrapper(self, window, *args, **kwargs):
+        if not self.is_stacked(window):
+            return
+        return func(self, window, *args, **kwargs)
+
+    return _wrapper
+
+
+class ZManager:
     def __init__(self, core) -> None:
-        super().__init__(core)
+        self.core = core
         self.layers: dict[LayerGroup, list[_Window]] = {l: [] for l in LayerGroup}
         self.layer_map: dict[_Window, tuple(LayerGroup, int)] = {}
         hook.subscribe.client_focus(self._restack_on_focus_change)
