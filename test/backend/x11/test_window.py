@@ -31,7 +31,9 @@ class ManagerConfigNormalFloats(ManagerConfig):
 
 bare_config = pytest.mark.parametrize("xmanager", [BareConfig], indirect=True)
 manager_config = pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=True)
-manager_config_normal_floats = pytest.mark.parametrize("xmanager", [ManagerConfigNormalFloats], indirect=True)
+manager_config_normal_floats = pytest.mark.parametrize(
+    "xmanager", [ManagerConfigNormalFloats], indirect=True
+)
 
 
 @manager_config

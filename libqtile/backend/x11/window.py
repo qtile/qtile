@@ -1270,6 +1270,9 @@ class _Window:
         if self.get_wm_type() != "desktop":
             self.change_layer(layer=LayerGroup.BRING_TO_FRONT)
 
+    def is_visible(self):
+        return not self.hidden
+
 
 class Internal(_Window, base.Internal):
     """An internal window, that should not be managed by qtile"""

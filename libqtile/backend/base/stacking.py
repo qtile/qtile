@@ -26,6 +26,7 @@ class LayerGroup(IntEnum):
     so backends will need to map behaviour accordingly. However, a common object
     allows us have more common code across backends.
     """
+
     BACKGROUND = 0
     BOTTOM = 1
     KEEP_BELOW = 2
