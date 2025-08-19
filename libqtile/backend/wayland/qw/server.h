@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include "session-lock.h"
 #include <cairo.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
@@ -32,6 +33,7 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_seat.h>
+#include <wlr/types/wlr_session_lock_v1.h>
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
@@ -77,6 +79,7 @@ struct qw_output;
 // Callback for when the screen reserves space
 typedef void (*on_screen_reserve_space_cb_t)(struct qw_output *output, void *userdata);
 
+// Forrward declaration of
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -89,6 +92,7 @@ enum {
     LAYER_BRINGTOFRONT, // windows that are marked bring to front
     LAYER_TOP,          // top, layer shell
     LAYER_OVERLAY,      // overlay, layer shell
+    LAYER_LOCK,         // session lock above everything
     LAYER_END           // keeping track of the end
 };
 
@@ -152,6 +156,12 @@ struct qw_server {
     struct wl_listener new_decoration;
     struct wl_listener new_layer_surface;
     struct wl_listener request_cursor;
+    struct wl_listener new_session_lock;
+    struct wlr_session_lock_manager_v1 *lock_manager;
+    struct wlr_session_lock_v1 *lock;
+    struct wlr_scene_tree *lock_tree;
+    enum qw_session_lock_state lock_state;
+    bool locked;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;

@@ -10,6 +10,7 @@
 #include "layer-view.h"
 #include "output.h"
 #include "server.h"
+#include "session-lock.h"
 #include "view.h"
 #include "wayland-server-core.h"
 #include "wayland-server-protocol.h"
@@ -57,6 +58,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_xwayland_surface.link);
     wlr_xwayland_destroy(server->xwayland);
     #endif
+    wl_list_remove(&server->new_session_lock.link);
 
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
@@ -150,10 +152,13 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         o->area = o->full_area;
 
         wlr_scene_output_set_position(o->scene, o->x, o->y);
+        wlr_log(WLR_INFO, "Updating: %d,%d (%dx%d)", o->full_area.x, o->full_area.y,
+                o->full_area.width, o->full_area.height);
 
         // TODO: fullscreen bg
 
         // TODO: lock surface
+        qw_session_lock_output_change(o);
 
         qw_output_arrange_layers(o);
 
@@ -469,6 +474,7 @@ void qw_server_set_keymap(struct qw_server *server, const char *layout, const ch
         qw_keyboard_set_keymap(keyboard, layout, options, variant);
     }
 }
+
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     wlr_log_init(WLR_INFO, NULL);
@@ -564,6 +570,9 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
     server->renderer_lost.notify = qw_server_handle_renderer_lost;
     wl_signal_add(&server->renderer->events.lost, &server->renderer_lost);
+
+    // Session lock setup
+    qw_session_lock_init(server);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
