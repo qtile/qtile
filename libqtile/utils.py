@@ -360,7 +360,7 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         # Wayland-only terminals
         test_terminals += [
             "foot",
-            "mlterm-wl",            
+            "mlterm-wl",
         ]
     test_terminals += [
         "alacritty",
