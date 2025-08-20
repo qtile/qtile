@@ -737,3 +737,78 @@ def test_current_screen_change(manager_nospawn):
 
     manager_nospawn.c.prev_screen()
     assert_inc_calls(3)
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_transient_hooks_syncronous():
+    def t_hook():
+        return True
+
+    def group_window(value):
+        return value == 2
+
+    hook.subscribe.startup(t_hook)
+    assert len(hook.subscriptions["qtile"]["startup"]) == 1
+    hook.fire("startup")
+    assert len(hook.subscriptions["qtile"]["startup"]) == 0
+
+    hook.subscribe.group_window_add(group_window)
+    assert len(hook.subscriptions["qtile"]["group_window_add"]) == 1
+    hook.fire("group_window_add", 1)
+    assert len(hook.subscriptions["qtile"]["group_window_add"]) == 1
+    hook.fire("group_window_add", 2)
+    assert len(hook.subscriptions["qtile"]["group_window_add"]) == 0
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_transient_hooks_asyncronous():
+    async def t_hook():
+        return True
+
+    async def group_window(value):
+        return value == 2
+
+    hook.subscribe.startup(t_hook)
+    assert len(hook.subscriptions["qtile"]["startup"]) == 1
+    hook.fire("startup")
+    assert len(hook.subscriptions["qtile"]["startup"]) == 0
+
+    hook.subscribe.group_window_add(group_window)
+    assert len(hook.subscriptions["qtile"]["group_window_add"]) == 1
+    hook.fire("group_window_add", 1)
+    assert len(hook.subscriptions["qtile"]["group_window_add"]) == 1
+    hook.fire("group_window_add", 2)
+    assert len(hook.subscriptions["qtile"]["group_window_add"]) == 0
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_transient_hooks_coroutine():
+    def len_hooks():
+        return len(hook.subscriptions["qtile"]["startup"])
+
+    async def wrapper():
+        async def t_hook():
+            return True
+
+        hook.subscribe.startup(t_hook())
+        assert len_hooks() == 1
+        hook.fire("startup")
+
+        # We need to cal asyncio.sleep to give the coroutine the
+        # opportunity to run. The first sleep should be enough
+        # but we add some extra loops to be safe.
+        count = 0
+        while count < 10:
+            if len_hooks() == 0:
+                break
+            await asyncio.sleep(0.1)
+            count += 1
+
+        # We only get here if we haven't broken out of the loop
+        else:
+            assert False
+
+        # Explicit confirmation that the hooks have been cleared
+        assert len(hook.subscriptions["qtile"]["startup"]) == 0
+
+    asyncio.run(wrapper())
