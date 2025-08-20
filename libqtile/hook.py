@@ -51,17 +51,24 @@ def clear():
     subscriptions.clear()
 
 
-def _fire_async_event(co):
+def _fire_async_event(co, unsubscribe):
     from libqtile.utils import create_task
+
+    def finish_task(task):
+        if task.result() is True:
+            unsubscribe()
 
     loop = None
     with contextlib.suppress(RuntimeError):
         loop = asyncio.get_running_loop()
 
     if loop is None:
-        asyncio.run(co)
+        result = asyncio.run(co)
+        if result is True:
+            unsubscribe()
     else:
-        create_task(co)
+        task = create_task(co)
+        task.add_done_callback(finish_task)
 
 
 # Custom hook functions receive a single argument, "self", which will refer to the
@@ -184,16 +191,32 @@ class Registry:
         # third party libraries will need this to prevent KeyErrors when firing hooks
         if self.name not in subscriptions:
             subscriptions[self.name] = dict()
+
+        # Handlers for transient hooks
+        def unsubscribe_func(event, func):
+            def _wrapper():
+                getattr(self.unsubscribe, event)(func)
+
+            return _wrapper
+
+        to_unsubscribe = []
+
         for i in subscriptions[self.name].get(event, []):
             try:
                 if asyncio.iscoroutinefunction(i):
-                    _fire_async_event(i(*args, **kwargs))
+                    _fire_async_event(i(*args, **kwargs), unsubscribe_func(event, i))
                 elif asyncio.iscoroutine(i):
-                    _fire_async_event(i)
+                    _fire_async_event(i, unsubscribe_func(event, i))
                 else:
-                    i(*args, **kwargs)
+                    result = i(*args, **kwargs)
+                    if result is True:
+                        to_unsubscribe.append(unsubscribe_func(event, i))
+
             except:  # noqa: E722
                 logger.exception("Error in hook %s", event)
+
+        for f in to_unsubscribe:
+            f()
 
 
 hooks: list[Hook] = [
