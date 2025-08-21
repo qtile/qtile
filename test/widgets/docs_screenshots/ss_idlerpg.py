@@ -30,7 +30,6 @@ def widget(monkeypatch):
 
     idler = idlerpg.IdleRPG
     idler.RESPONSE = online_response
-    monkeypatch.setattr(idler, "fetch", no_op)
     yield idler
 
 

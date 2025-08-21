@@ -19,22 +19,14 @@
 # SOFTWARE.
 import pytest
 
-import libqtile.widget
-from test.widgets.test_generic_poll_text import MockRequest, Mockurlopen
+from libqtile.widget.textbox import TextBox
 
 
 @pytest.fixture
-def widget(monkeypatch):
-    MockRequest.return_value = b"Text from URL"
-    monkeypatch.setattr("libqtile.widget.generic_poll_text.Request", MockRequest)
-    monkeypatch.setattr("libqtile.widget.generic_poll_text.urlopen", Mockurlopen)
-    yield libqtile.widget.GenPollUrl
+def widget():
+    yield TextBox
 
 
-@pytest.mark.parametrize(
-    "screenshot_manager",
-    [{}, {"url": "http://test.qtile.org", "json": False, "parse": lambda x: x}],
-    indirect=True,
-)
 def ss_genpollurl(screenshot_manager):
+    screenshot_manager.c.widget["textbox"].update("Text from URL")
     screenshot_manager.take_screenshot()

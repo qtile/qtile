@@ -46,6 +46,7 @@ qtile = "libqtile.scripts.main:main"
 dev = [
     "coverage",
     "pytest-cov",
+    "pytest-asyncio>=1.1.0",
     "pre-commit",
     "PyGObject",
     "pycairo >= 1.25.1",
@@ -73,6 +74,7 @@ widgets = [
     "pytz",
     "xdg",
     "xmltodict",
+    "aiohttp",
 ]
 wayland = [
     "pywayland==0.4.17",
