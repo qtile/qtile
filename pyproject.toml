@@ -4,7 +4,6 @@ requires = [
     "cairocffi[xcb]>=1.6.0",
     "setuptools>=61",
     "setuptools-scm>=7.0",
-    "wheel",
 ]
 backend-path=["."]
 build-backend = "builder"
