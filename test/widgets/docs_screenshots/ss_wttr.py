@@ -19,20 +19,15 @@
 # SOFTWARE.
 import pytest
 
-from libqtile.widget import wttr
-
-RESPONSE = "London: +17°C"
+from libqtile.widget.textbox import TextBox
 
 
 @pytest.fixture
-def widget(monkeypatch):
-    def result(self):
-        return RESPONSE
-
-    monkeypatch.setattr("libqtile.widget.wttr.Wttr.fetch", result)
-    yield wttr.Wttr
+def widget():
+    yield TextBox
 
 
-@pytest.mark.parametrize("screenshot_manager", [{"location": {"London": "Home"}}], indirect=True)
+@pytest.mark.parametrize("screenshot_manager", [{}], indirect=True)
 def ss_wttr(screenshot_manager):
+    screenshot_manager.c.widget["textbox"].update("Home: +17°C")
     screenshot_manager.take_screenshot()

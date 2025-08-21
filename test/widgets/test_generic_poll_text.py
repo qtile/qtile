@@ -20,40 +20,10 @@
 
 # Widget specific tests
 
-import sys
-from importlib import reload
-from types import ModuleType
-
 import pytest
 
 import libqtile
 from libqtile.widget import generic_poll_text
-
-
-class Mockxml(ModuleType):
-    @classmethod
-    def parse(cls, value):
-        return {"test": value}
-
-
-class MockRequest:
-    return_value = None
-
-    def __init__(self, *args, **kwargs):
-        pass
-
-
-class Mockurlopen:
-    def __init__(self, request):
-        self.request = request
-
-    class headers:  # noqa: N801
-        @classmethod
-        def get_content_charset(cls):
-            return "utf-8"
-
-    def read(self):
-        return self.request.return_value
 
 
 def test_gen_poll_text():
@@ -64,9 +34,10 @@ def test_gen_poll_text():
     assert gpt_with_func.poll() == "Has function"
 
 
-def test_gen_poll_url_not_configured():
+@pytest.mark.asyncio
+async def test_gen_poll_url_not_configured():
     gpurl = generic_poll_text.GenPollUrl()
-    assert gpurl.poll() == "Invalid config"
+    assert await gpurl.apoll() == "Invalid config"
 
 
 def test_gen_poll_url_no_json():
@@ -87,49 +58,55 @@ def test_gen_poll_url_headers_and_json():
     assert gpurl.data.decode() == '{"argument": "data value"}'
 
 
-def test_gen_poll_url_text(monkeypatch):
-    gpurl = generic_poll_text.GenPollUrl(json=False, parse=lambda x: x, url="testing")
-    monkeypatch.setattr(generic_poll_text, "Request", MockRequest)
-    monkeypatch.setattr(generic_poll_text, "urlopen", Mockurlopen)
-    generic_poll_text.Request.return_value = b"OK"
-    assert gpurl.poll() == "OK"
+@pytest.mark.asyncio
+async def test_gen_poll_url_text():
+    gpurl = generic_poll_text.GenPollUrl(
+        json=False, parse=lambda x: x, url="https://httpbin.org/anything"
+    )
+    result = await gpurl.apoll()
+    assert isinstance(result, str)
+    assert "httpbin.org" in result
 
 
-def test_gen_poll_url_json(monkeypatch):
-    gpurl = generic_poll_text.GenPollUrl(parse=lambda x: x, data=[1, 2, 3], url="testing")
-    monkeypatch.setattr(generic_poll_text, "Request", MockRequest)
-    monkeypatch.setattr(generic_poll_text, "urlopen", Mockurlopen)
-    generic_poll_text.Request.return_value = b'{"test": "OK"}'
-    assert gpurl.poll()["test"] == "OK"
+@pytest.mark.asyncio
+async def test_gen_poll_url_json_with_data():
+    gpurl = generic_poll_text.GenPollUrl(
+        parse=lambda x: x["data"], data={"test": "value"}, url="https://httpbin.org/anything"
+    )
+    result = await gpurl.apoll()
+    assert result == '{"test": "value"}'
 
 
-def test_gen_poll_url_xml_no_xmltodict(monkeypatch):
-    gpurl = generic_poll_text.GenPollUrl(json=False, xml=True, parse=lambda x: x, url="testing")
-    monkeypatch.setattr(generic_poll_text, "Request", MockRequest)
-    monkeypatch.setattr(generic_poll_text, "urlopen", Mockurlopen)
-    generic_poll_text.Request.return_value = b"OK"
-    with pytest.raises(Exception):
-        gpurl.poll()
+@pytest.mark.asyncio
+async def test_gen_poll_url_xml_no_xmltodict():
+    gpurl = generic_poll_text.GenPollUrl(
+        json=False, xml=True, parse=lambda x: x, url="https://httpbin.org/anything"
+    )
+    result = await gpurl.apoll()
+    assert result == "Can't parse"
 
 
-def test_gen_poll_url_xml_has_xmltodict(monkeypatch):
-    # injected fake xmltodict module but we have to reload the widget module
-    # as the ImportError test is only run once when the module is loaded.
-    monkeypatch.setitem(sys.modules, "xmltodict", Mockxml("xmltodict"))
-    reload(generic_poll_text)
-    gpurl = generic_poll_text.GenPollUrl(json=False, xml=True, parse=lambda x: x, url="testing")
-    monkeypatch.setattr(generic_poll_text, "Request", MockRequest)
-    monkeypatch.setattr(generic_poll_text, "urlopen", Mockurlopen)
-    generic_poll_text.Request.return_value = b"OK"
-    assert gpurl.poll()["test"] == "OK"
+@pytest.mark.asyncio
+async def test_gen_poll_url_broken_parse():
+    gpurl = generic_poll_text.GenPollUrl(
+        json=False, parse=lambda x: x.foo, url="https://httpbin.org/anything"
+    )
+    result = await gpurl.apoll()
+    assert result == "Can't parse"
 
 
-def test_gen_poll_url_broken_parse(monkeypatch):
-    gpurl = generic_poll_text.GenPollUrl(json=False, parse=lambda x: x.foo, url="testing")
-    monkeypatch.setattr(generic_poll_text, "Request", MockRequest)
-    monkeypatch.setattr(generic_poll_text, "urlopen", Mockurlopen)
-    generic_poll_text.Request.return_value = b"OK"
-    assert gpurl.poll() == "Can't parse"
+@pytest.mark.asyncio
+async def test_gen_poll_url_custom_headers():
+    gpurl = generic_poll_text.GenPollUrl(
+        headers={"X-Custom-Header": "test-value", "X-Another-Header": "another-value"},
+        parse=lambda x: x["headers"],
+        url="https://httpbin.org/headers",
+    )
+    result = await gpurl.apoll()
+    assert "X-Custom-Header" in result
+    assert result["X-Custom-Header"] == "test-value"
+    assert "X-Another-Header" in result
+    assert result["X-Another-Header"] == "another-value"
 
 
 def test_gen_poll_command(manager_nospawn, minimal_conf_noscreen):

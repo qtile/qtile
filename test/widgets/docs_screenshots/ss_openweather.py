@@ -19,28 +19,24 @@
 # SOFTWARE.
 import pytest
 
-import libqtile.widget.open_weather
-from test.widgets.test_openweather import mock_fetch
+from libqtile.widget.textbox import TextBox
 
 
 @pytest.fixture
-def widget(monkeypatch):
-    monkeypatch.setattr("libqtile.widget.generic_poll_text.GenPollUrl.fetch", mock_fetch)
-    yield libqtile.widget.open_weather.OpenWeather
+def widget():
+    yield TextBox
 
 
 @pytest.mark.parametrize(
-    "screenshot_manager",
+    "screenshot_manager,expected",
     [
-        {"location": "London"},
-        {"location": "London", "format": "{location_city}: {sunrise} {sunset}"},
-        {
-            "location": "London",
-            "format": "{location_city}: {wind_speed} {wind_deg} {wind_direction}",
-        },
-        {"location": "London", "format": "{location_city}: {icon}"},
+        ({}, "London: 7.0 °C 81% light intensity drizzle"),
+        ({}, "London: 07:40 16:47"),
+        ({}, "London: 4.1 80 E"),
+        ({}, "London: 🌧️"),
     ],
-    indirect=True,
+    indirect=["screenshot_manager"],
 )
-def ss_openweather(screenshot_manager):
+def ss_openweather(screenshot_manager, expected):
+    screenshot_manager.c.widget["textbox"].update(expected)
     screenshot_manager.take_screenshot()
