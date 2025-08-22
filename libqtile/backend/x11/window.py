@@ -981,9 +981,6 @@ class _Window:
         if full and focus:
             return LayerGroup.FULLSCREEN
 
-        if isinstance(self.qtile.groups_map.get(self.group), ScratchPad):
-            return LayerGroup.BRING_TO_FRONT
-
         return LayerGroup.LAYOUT
 
     def change_layer(self, layer=None, bottom=False):
