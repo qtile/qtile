@@ -27,14 +27,14 @@ class LayerGroup(IntEnum):
     allows us have more common code across backends.
     """
 
-    BACKGROUND = 0
-    BOTTOM = 1
-    KEEP_BELOW = 2
-    LAYOUT = 3
-    KEEP_ABOVE = 4
-    MAX = 5
-    FULLSCREEN = 6
-    BRING_TO_FRONT = 7
-    TOP = 8
-    OVERLAY = 9
-    SYSTEM = 10
+    BACKGROUND = 1
+    BOTTOM = 2
+    KEEP_BELOW = 3
+    LAYOUT = 4
+    KEEP_ABOVE = 5
+    MAX = 6
+    FULLSCREEN = 7
+    BRING_TO_FRONT = 8
+    TOP = 9
+    OVERLAY = 10
+    SYSTEM = 11

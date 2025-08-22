@@ -599,6 +599,11 @@ class _Window:
         wid = self.window.get_wm_transient_for()
         return self.qtile.windows_map.get(wid)
 
+    def is_modal(self):
+        reply = list(self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
+        atom = self.qtile.core.conn.atoms["_NET_WM_STATE_MODAL"]
+        return atom in reply
+
     def update_hints(self):
         """Update the local copy of the window's WM_HINTS
 
@@ -958,6 +963,11 @@ class _Window:
         full = (
             "fullscreen" in state
         )  # get_net_wm_state translates this state so we don't use _NET_WM name
+
+        # Modal window that is not transient should be placed above everything
+        # (transient windows are placed above their parent by the stacking manager)
+        if self.is_modal() and self.is_transient_for() is None:
+            return LayerGroup.OVERLAY
 
         if _type == "desktop":
             return LayerGroup.BACKGROUND
@@ -1776,25 +1786,38 @@ class Window(_Window, base.Window):
             else:
                 return
 
-        self.hide()
-        if self.group:
-            if self.group.screen:
-                # for floats remove window offset
-                self.x -= self.group.screen.x
-            group_ref = self.group
-            self.group.remove(self)
-            if (
-                not self.qtile.dgroups.groups_map[group_ref.name].persist
-                and len(group_ref.windows) <= 1
-            ):
-                # set back original group so _del() can grab it
-                self.group = group_ref
-                self.qtile.dgroups._del(self)
-                self.group = None
+        # When changing group, we try move the client's group of windows
+        # i.e. the parent window and all transient children are moved
+        stacking_node = self.qtile.core.zmanager.layer_map.get(self, None)
 
-        if group.screen and self.x < group.screen.x:
-            self.x += group.screen.x
-        group.add(self)
+        if stacking_node:
+            # Move the parent and all children, regardless of which window
+            # was focused.
+            tree = [node.win for node in stacking_node.client_root]
+        else:
+            tree = [self]
+
+        for win in tree:
+            win.hide()
+            if win.group:
+                if win.group.screen:
+                    # for floats remove window offset
+                    win.x -= win.group.screen.x
+                group_ref = win.group
+                win.group.remove(win)
+                if (
+                    not win.qtile.dgroups.groups_map[group_ref.name].persist
+                    and len(group_ref.windows) <= 1
+                ):
+                    # set back original group so _del() can grab it
+                    win.group = group_ref
+                    win.qtile.dgroups._del(win)
+                    win.group = None
+
+            if group.screen and win.x < group.screen.x:
+                win.x += group.screen.x
+            group.add(win)
+
         if switch_group:
             group.toscreen(toggle=toggle)
 

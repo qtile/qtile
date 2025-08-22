@@ -947,4 +947,4 @@ class Core(base.Core):
 
     @expose_command
     def show_stacking_order(self):
-        self.zmanager.show_stacking_order()
+        logger.warning("\n".join(self.zmanager.root.get_tree()))
