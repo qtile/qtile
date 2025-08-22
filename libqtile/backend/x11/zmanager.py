@@ -21,7 +21,6 @@ from functools import wraps
 
 import xcffib.xproto
 
-from libqtile import hook
 from libqtile.backend.base import LayerGroup
 from libqtile.backend.x11.window import Window, _Window
 from libqtile.log_utils import logger
@@ -43,203 +42,299 @@ def check_window(func):
     return _wrapper
 
 
-class ZManager:
-    def __init__(self, core) -> None:
-        self.core = core
-        self.layers: dict[LayerGroup, list[_Window]] = {l: [] for l in LayerGroup}
-        self.layer_map: dict[_Window, tuple[LayerGroup, int]] = {}
-        hook.subscribe.client_focus(self._restack_on_focus_change)
+class TreeNode:
+    """
+    Class to represent one node on ZManager's stacking tree.
 
-    def is_stacked(self, window: _Window) -> bool:
-        return window in self.layer_map
+    A node retains basic information about the layer group or client window
+    it represents.
 
-    def is_above(self, window: _Window, other: _Window) -> bool:
-        if other not in self.layer_map:
-            return False
+    Nodes have the ability to change their position in the tree.
+    """
 
-        w_layer, w_idx = self.layer_map[window]
-        o_layer, o_idx = self.layer_map[other]
+    def __init__(self, window=None, layer_group=None):
+        self.win = window
+        self.parent = None
+        self.children = []
+        self.layer_group = layer_group
+        self.depth = 0
 
-        if w_layer != o_layer:
-            return False
+    def __repr__(self):
+        if self.parent is None and self.layer_group is None:
+            return "<ZManager Tree Root>"
+        elif self.layer_group:
+            return f"{' ' * self.depth * 2}<ZManager: LayerGroup.{self.layer_group.name}>"
+        else:
+            return f"{' ' * self.depth * 2}<ZManager: {self.win}>"
 
-        return w_idx > o_idx
+    def __iter__(self):
+        yield self
+        for child in self.children:
+            yield from child
 
-    def get_layer(self, window) -> LayerGroup | None:
-        layer, _ = self.layer_map.get(window, (None, 0))
-        return layer
+    @property
+    def client_root(self):
+        root_node = self.root_node
+        node = self
+        if node.parent is None:
+            return None
+        while node.parent is not root_node:
+            node = node.parent
+        return node
 
-    def stack(self, window: _Window) -> None:
-        sibling, above = self.get_sibling(window)
+    @property
+    def root_node(self):
+        node = self
+        while getattr(node.parent, "parent", None) is not None:
+            node = node.parent
+        return node
 
-        if sibling is None:
+    @property
+    def tree_root(self):
+        return self.root_node.parent
+
+    @property
+    def grouped_siblings(self):
+        return [
+            child for child in self.parent.children if child.win.group in (None, self.win.group)
+        ]
+
+    def get_stack_order(self):
+        """Return self + all descendants in stacking order (parent first)."""
+        result = [self]
+        for c in self.children:
+            result.extend(c.get_stack_order())
+        return [node for node in result if node.win]
+
+    def stack(self):
+        stack_order = self.tree_root.get_stack_order()
+        index = stack_order.index(self)
+        if len(stack_order) == 1:
             return
 
-        window.window.configure(
+        above = index > 0
+        sibling = stack_order[index - 1 if above else index + 1]
+
+        self.win.window.configure(
             stackmode=xcffib.xproto.StackMode.Above if above else xcffib.xproto.StackMode.Below,
-            sibling=sibling.wid,
+            sibling=sibling.win.wid,
         )
-        self.raise_children(window)
-        self.update_client_lists()
-        window._layer_group = self.get_window_layer(window)
 
-    def raise_children(self, window: _Window):
-        """Ensure any transient windows are moved up with the parent."""
-        query = window.window.conn.conn.core.QueryTree(window.window.wid).reply()
-        children = list(query.children)
-        if children:
-            parent = window.window.wid
-            for child in children:
-                window.window.conn.conn.core.ConfigureWindow(
-                    child,
-                    xcffib.xproto.ConfigWindow.Sibling | xcffib.xproto.ConfigWindow.StackMode,
-                    [parent, xcffib.xproto.StackMode.Above],
-                )
-                parent = child
+        self.stack_children()
 
-    @check_window
-    def get_sibling(self, window) -> tuple[_Window | None, bool]:
-        stack = self.get_z_order()
-        if len(stack) == 1:
-            return (None, True)
+    def stack_children(self):
+        if not self.children:
+            return
 
-        idx = stack.index(window)
-        if idx == 0:
-            return (stack[1], False)
+        parent = self.win.wid
+        for child in list(self)[1:]:
+            child.win.window.configure(
+                stackmode=xcffib.xproto.StackMode.Above,
+                sibling=parent,
+            )
+            parent = child.win.wid
+
+    def get_tree(self):
+        lines = []
+        for node in self:
+            lines.append(repr(node))
+        return lines
+
+    def add_child(self, node, position=-1):
+        node.parent = self
+        node.depth = node.parent.depth + 1
+        if position == -1:
+            self.children.append(node)
         else:
-            return (stack[idx - 1], True)
+            self.children.insert(position, node)
+
+    def remove(self):
+        # If we have children windows then transfer them to
+        # our parent
+        if self.children:
+            for child in self.children:
+                self.parent.add_child(child)
+
+        self.parent.children.remove(self)
+
+    def get_ordered_nodes(self):
+        """Return self + all descendants in stacking order (parent first)."""
+        result = [self]
+        for c in self.children:
+            result.extend(c.all_nodes_flat())
+        return result
+
+    def move_up(self):
+        """Move this node up among siblings, if possible."""
+        if not self.parent:
+            return  # top-level; handle differently if needed
+        siblings = self.grouped_siblings
+        idx = siblings.index(self)
+        if idx < len(siblings) - 1:
+            dest_idx = self.parent.children.index(siblings[idx + 1])
+            self.parent.children.remove(self)
+            self.parent.add_child(self, dest_idx)
+        self.stack()
+
+    def move_down(self):
+        """Move this node down among siblings, if possible."""
+        if not self.parent:
+            return
+        siblings = self.grouped_siblings
+        idx = siblings.index(self)
+        if idx > 0:
+            dest_idx = self.parent.children.index(siblings[idx - 1])
+            self.parent.children.remove(self)
+            self.parent.add_child(self, dest_idx)
+        self.stack()
+
+    def move_to_top(self):
+        if not self.parent:
+            return
+        self.parent.children.remove(self)
+        self.parent.add_child(self)
+        self.stack()
+
+    def move_to_bottom(self):
+        if not self.parent:
+            return
+        self.parent.children.remove(self)
+        self.parent.add_child(self, 0)
+        self.stack()
+
+    def move_to_layer(self, layer):
+        pass
+
+
+class ZManager:
+    """
+    Helper class to manage stacking of windows in the X11 backend.
+
+    The manager creates a tree of multiple layer groups. New clients are added as children
+    of the appropriate layer group.
+
+    Nesting clients allows transient windows to be attached to their parent and moved up and
+    down the tree while ensuring the child is always above the parent.
+    """
+
+    def __init__(self, core) -> None:
+        self.core = core
+        self.layers: dict[LayerGroup, TreeNode] = {l: TreeNode(layer_group=l) for l in LayerGroup}
+        self.layer_map: dict[_Window, TreeNode] = {}
+        self.root = TreeNode()
+        for n in self.layers.values():
+            self.root.add_child(n)
+
+    def is_stacked(self, window: _Window) -> bool:
+        """Returns True if window has been added to the tree."""
+        return window in self.layer_map
 
     def add_window(
         self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top"
     ) -> None:
+        """Adds new client window to the stacking tree."""
         if layer not in self.layers:
             raise ValueError(f"Invalid layer: {layer}")
 
-        current_layer = self.get_layer(window)
-        if current_layer is not None and current_layer != layer:
-            logger.info("Window already stacked. Moving to new layer group.")
-            self.layers[current_layer].remove(window)
+        if window in self.layer_map:
+            logger.warning("Can't add existing window to zmanager.")
+            return
 
-        if position == "bottom":
-            self.layers[layer].insert(0, window)
+        # Create a tree node and keep a reference to it
+        node = TreeNode(window)
+        self.layer_map[window] = node
+
+        # Check if window is transient and, if so, save info
+        parent = window.is_transient_for()
+        if parent and parent in self.layer_map:
+            # Transient windows are added as a child of their parent
+            # so they are always displayed above their parent and moved
+            # with them.
+            self.layer_map[parent].add_child(node)
+
+        # Not transient so stack normally.
         else:
-            self.layers[layer].append(window)
+            if position == "bottom":
+                self.layers[layer].add_child(node, 0)
+            else:
+                self.layers[layer].add_child(node)
 
-        self._reindex_layer(layer)
-
-        self.stack(window)
+        # Display window in its correct location.
+        node.stack()
 
     @check_window
     def remove_window(self, window) -> None:
-        layer, _ = self.layer_map.pop(window)
-        self.layers[layer].remove(window)
-        self._reindex_layer(layer)
+        """Removes client window from the stacking tree."""
+        node = self.layer_map.pop(window)
+        node.remove()
 
     @check_window
     def replace_window(self, old_window, new_window) -> None:
-        layer, idx = self.layer_map[old_window]
-        del self.layer_map[old_window]
-        self.layer_map[new_window] = (layer, idx)
+        """
+        Replace one window in a node with another.
 
-        assert self.layers[layer][idx] == old_window
-        self.layers[layer][idx] = new_window
-        self.update_client_lists()
+        Currently only called when a window is converted to Static.
+        """
+        node = self.layer_map.pop(old_window)
+        node.win = new_window
+        self.layer_map[new_window] = node
 
     @check_window
     def move_up(self, window: _Window) -> None:
-        layer, cur_idx = self.layer_map[window]
-        visible = [
-            w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
-        ]
-        idx = visible.index(window)
-        if idx < (len(visible) - 1):
-            dest_idx = self.layers[layer].index(visible[idx + 1])
-            win = self.layers[layer].pop(cur_idx)
-            self.layers[layer].insert(dest_idx, win)
+        """
+        Move window up the tree.
 
-        self._reindex_layer(layer)
-
-        self.stack(window)
+        Movement is restricted to a layer group and window is
+        moved relative to other visible windows.
+        """
+        node = self.layer_map[window]
+        node.move_up()
+        self.update_client_lists()
 
     @check_window
     def move_down(self, window) -> None:
-        layer, cur_idx = self.layer_map[window]
+        """
+        Move window down the tree.
 
-        if layer == LayerGroup.BRING_TO_FRONT:
-            window.change_layer()
-            layer, cur_idx = self.layer_map[window]
-
-        visible = [
-            w for w in self.layers[layer] if w.is_visible() and w.group in (window.group, None)
-        ]
-        idx = visible.index(window)
-        if idx > 0:
-            dest_idx = self.layers[layer].index(visible[idx - 1])
-            win = self.layers[layer].pop(cur_idx)
-            self.layers[layer].insert(dest_idx, win)
-
-        self._reindex_layer(layer)
-
-        self.stack(window)
-
-    @check_window
-    def move_to_index(self, window: _Window, index: int) -> None:
-        layer, _ = self.layer_map[window]
-        self.layers[layer].remove(window)
-        self.layers[layer].insert(index, window)
-        self._reindex_layer(layer)
-        self.stack(window)
+        Movement is restricted to a layer group and window is
+        moved relative to other visible windows.
+        """
+        node = self.layer_map[window]
+        node.move_down()
+        self.update_client_lists()
 
     @check_window
     def move_to_top(self, window) -> None:
-        layer, _ = self.layer_map[window]
-        self.layers[layer].remove(window)
-        self.layers[layer].append(window)
-        self._reindex_layer(layer)
-
-        self.stack(window)
+        """Move window to the top of its layer group."""
+        node = self.layer_map[window]
+        node.move_to_top()
+        self.update_client_lists()
 
     @check_window
     def move_to_bottom(self, window) -> None:
-        layer, _ = self.layer_map[window]
-        self.layers[layer].remove(window)
-        self.layers[layer].insert(0, window)
-        self._reindex_layer(layer)
-
-        self.stack(window)
+        """Move window to the bottom of its layer group."""
+        node = self.layer_map[window]
+        node.move_to_bottom()
+        self.update_client_lists()
 
     @check_window
     def move_window_to_layer(self, window, new_layer, position="top") -> None:
-        old_layer, _ = self.layer_map[window]
-        if old_layer is new_layer:
-            return
-        self.layers[old_layer].remove(window)
-
-        if position == "bottom":
-            self.layers[new_layer].insert(0, window)
-        else:
-            self.layers[new_layer].append(window)
-
-        self.layer_map[window] = (new_layer, self.layers[new_layer].index(window))
-        self._reindex_layer(old_layer)
-        self._reindex_layer(new_layer)
-
-        self.stack(window)
-
-    def get_z_order(self) -> list[_Window]:
-        z_order = []
-        for clients in self.layers.values():
-            z_order.extend(clients)
-        return z_order
+        """Move window to a different layer group."""
+        node = self.layer_map[window]
+        root = node.root_node
+        root.children.remove(node)
+        self.layers[new_layer].add_child(node, 0 if position == "bottom" else -1)
+        node.stack()
+        self.update_client_lists()
 
     @check_window
-    def get_window_layer(self, window: _Window) -> LayerGroup | None:
-        layer, _ = self.layer_map[window]
-        return layer
-
-    def _reindex_layer(self, layer) -> None:
-        for idx, win in enumerate(self.layers[layer]):
-            self.layer_map[win] = (layer, idx)
+    def move_to_index(self, window: _Window, index: int) -> None:
+        pass
+        # layer, _ = self.layer_map[window]
+        # self.layers[layer].remove(window)
+        # self.layers[layer].insert(index, window)
+        # self._reindex_layer(layer)
+        # self.stack(window)
 
     def _restack_on_focus_change(self, window):
         """
@@ -268,24 +363,11 @@ class ZManager:
         chrome
         """
         assert self.core.qtile
-        z_order = self.get_z_order()
+        nodes = self.root.get_stack_order()
+        clients = [node.win.wid for node in nodes if isinstance(node.win, Window)]
+        wids = [node.win.wid for node in nodes]
         # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
-        wids = [win.wid for win in z_order if isinstance(win, Window)]
-        self.core._root.set_property("_NET_CLIENT_LIST", wids)
+        # wids = [win.wid for win in z_order if isinstance(win, Window)]
+        self.core._root.set_property("_NET_CLIENT_LIST", clients)
 
-        self.core._root.set_property("_NET_CLIENT_LIST_STACKING", [win.wid for win in z_order])
-
-    def show_stacking_order(self):
-        lines = []
-
-        for layer in LayerGroup:
-            clients = self.layers[layer]
-            if not clients:
-                continue
-            lines.append(f"LayerGroup {layer.name}")
-            for client in clients:
-                lines.append(
-                    f"-  {client} (Group: {client.group.name if client.group else 'None'})"
-                )
-        if lines:
-            logger.warning("\n".join(lines))
+        self.core._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
