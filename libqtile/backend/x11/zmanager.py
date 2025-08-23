@@ -278,6 +278,7 @@ class ZManager:
         node = self.layer_map.pop(old_window)
         node.win = new_window
         self.layer_map[new_window] = node
+        self.update_client_lists()
 
     @check_window
     def move_up(self, window: _Window) -> None:
@@ -363,11 +364,15 @@ class ZManager:
         chrome
         """
         assert self.core.qtile
-        nodes = self.root.get_stack_order()
-        clients = [node.win.wid for node in nodes if isinstance(node.win, Window)]
-        wids = [node.win.wid for node in nodes if isinstance(node.win, Window) and node.win.group]
-        # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
-        # wids = [win.wid for win in z_order if isinstance(win, Window)]
+
+        # _NET_CLIENT_LIST has initial mapping order, starting with the oldest window.
+        # We therefore use the order that qtile mapped these windows
+        clients = [
+            wid for wid, win in self.core.qtile.windows_map.items() if isinstance(win, Window)
+        ]
         self.core._root.set_property("_NET_CLIENT_LIST", clients)
 
+        # _NET_CLIENT_LIST_STACKING has bottom-to-top stacking order so we use the zmanager order
+        nodes = self.root.get_stack_order()
+        wids = [node.win.wid for node in nodes if isinstance(node.win, Window) and node.win.group]
         self.core._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
