@@ -95,6 +95,20 @@ def _geometry_setter(attr):
     return f
 
 
+def restack_window(window):
+    """Creates a function to restack a window when focus changes."""
+
+    def _window_focus_check(new_focus):
+        if new_focus is not window:
+            # Restack our window
+            window.change_layer()
+            # Make sure new window is on top
+            new_focus.move_to_top()
+            return True
+
+    return _window_focus_check
+
+
 class XWindow:
     def __init__(self, conn, wid):
         self.conn = conn
@@ -976,6 +990,7 @@ class _Window:
             return LayerGroup.KEEP_ABOVE
 
         if full and focus:
+            self.restack_on_focus_change()
             return LayerGroup.FULLSCREEN
 
         return LayerGroup.LAYOUT
@@ -984,6 +999,9 @@ class _Window:
         self.qtile.core.zmanager.move_window_to_layer(
             self, layer or self.get_layering_information(), position="bottom" if bottom else "top"
         )
+
+    def restack_on_focus_change(self):
+        hook.subscribe.client_focus(self)
 
     def paint_borders(self, color, width):
         self.borderwidth = width
@@ -1191,7 +1209,11 @@ class _Window:
         else:
             self.kept_below = enable
 
-        self.change_layer()
+        # When kindow is put on kept_below layer then we
+        # drop it to the bottom of that layer.
+        # If it's no longer kept_below then it will be added to the
+        # top of the new layer group.
+        self.change_layer(bottom=self.kept_below)
 
     @expose_command()
     def move_up(self, force=False):
@@ -1274,6 +1296,7 @@ class _Window:
         if self.get_wm_type() != "desktop":
             self.change_layer(layer=LayerGroup.BRING_TO_FRONT)
             self.move_to_top()
+            self.restack_on_focus_change()
 
     def is_visible(self):
         return not self.hidden
