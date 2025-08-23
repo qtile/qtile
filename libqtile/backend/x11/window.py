@@ -1004,7 +1004,7 @@ class _Window:
         )
 
     def restack_on_focus_change(self):
-        hook.subscribe.client_focus(self)
+        hook.subscribe.client_focus(restack_window(self))
 
     def paint_borders(self, color, width):
         self.borderwidth = width
