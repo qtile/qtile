@@ -365,7 +365,7 @@ class ZManager:
         assert self.core.qtile
         nodes = self.root.get_stack_order()
         clients = [node.win.wid for node in nodes if isinstance(node.win, Window)]
-        wids = [node.win.wid for node in nodes]
+        wids = [node.win.wid for node in nodes if isinstance(node.win, Window) and node.win.group]
         # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
         # wids = [win.wid for win in z_order if isinstance(win, Window)]
         self.core._root.set_property("_NET_CLIENT_LIST", clients)
