@@ -1273,6 +1273,7 @@ class _Window:
     def bring_to_front(self):
         if self.get_wm_type() != "desktop":
             self.change_layer(layer=LayerGroup.BRING_TO_FRONT)
+            self.move_to_top()
 
     def is_visible(self):
         return not self.hidden
