@@ -727,9 +727,6 @@ class Qtile(CommandObject):
         self.reserve_space(reserved_space, screen)
 
     def manage(self, win: base.WindowType) -> None:
-        # Add the window to our layer manager
-        self.core.zmanager.add_window(win)
-
         if isinstance(win, base.Internal):
             self.windows_map[win.wid] = win
             return
@@ -757,7 +754,6 @@ class Qtile(CommandObject):
             # Fire the hook before removing the group from the window so hooked
             # functions can access it
             hook.fire("client_killed", c)
-            self.core.zmanager.remove_window(c)
             if isinstance(c, base.Static):
                 if c.reserved_space:
                     self.free_reserved_space(c.reserved_space, c.screen)

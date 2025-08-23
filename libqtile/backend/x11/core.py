@@ -220,6 +220,14 @@ class Core(base.Core):
             loop.remove_reader(self.fd)
             self.fd = None
 
+    def manage(self, window) -> None:
+        self.zmanager.add_window(window)
+        self.qtile.manage(window)
+
+    def unmanage(self, window) -> None:
+        self.zmanager.remove_window(window)
+        self.qtile.unmanage(window)
+
     def on_config_load(self, initial) -> None:
         """Assign windows to groups"""
         assert self.qtile is not None
@@ -282,7 +290,7 @@ class Core(base.Core):
                     win.static(self.qtile.current_screen.index)
                     continue
 
-            self.qtile.manage(win)
+            self.manage(win)
 
             self.update_client_lists()
             # win.change_layer()
@@ -592,7 +600,7 @@ class Core(base.Core):
         win = self.conn.create_window(x, y, width, height, desired_depth)
         internal = window.Internal(win, self.qtile, desired_depth)
         internal.place(x, y, width, height, 0, None)
-        self.qtile.manage(internal)
+        self.manage(internal)
         return internal
 
     def handle_FocusOut(self, event) -> None:  # noqa: N802
@@ -740,7 +748,7 @@ class Core(base.Core):
 
         if internal:
             win = window.Internal(xwin, self.qtile)
-            self.qtile.manage(win)
+            self.manage(win)
             win.unhide()
         else:
             win = window.Window(xwin, self.qtile)
@@ -750,7 +758,7 @@ class Core(base.Core):
                 win.static(self.qtile.current_screen.index)
                 return
 
-            self.qtile.manage(win)
+            self.manage(win)
             if not win.group or not win.group.screen:
                 return
             win.unhide()
@@ -760,7 +768,7 @@ class Core(base.Core):
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
-        self.qtile.unmanage(event.window)
+        self.unmanage(event.window)
         self.update_client_lists()
         if self.qtile.current_window is None:
             self.conn.fixup_focus()
@@ -787,7 +795,7 @@ class Core(base.Core):
             win.window.conn.conn.core.DeleteProperty(
                 win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
             )
-        self.qtile.unmanage(event.window)
+        self.unmanage(event.window)
         self.update_client_lists()
         if self.qtile.current_window is None:
             self.conn.fixup_focus()
