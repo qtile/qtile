@@ -262,9 +262,11 @@ class ZManager:
         # Display window in its correct location.
         node.stack()
 
-    @check_window
-    def remove_window(self, window) -> None:
+    def remove_window(self, wid) -> None:
         """Removes client window from the stacking tree."""
+        window = self.core.qtile.windows_map.get(wid)
+        if window not in self.layer_map:
+            return
         node = self.layer_map.pop(window)
         node.remove()
 
