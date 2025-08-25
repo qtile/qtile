@@ -996,6 +996,9 @@ class _Window:
             self.restack_on_focus_change()
             return LayerGroup.FULLSCREEN
 
+        if isinstance(self, Internal):
+            return LayerGroup.INTERNAL
+
         return LayerGroup.LAYOUT
 
     def change_layer(self, layer=None, bottom=False):

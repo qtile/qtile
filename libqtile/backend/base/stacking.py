@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from enum import IntEnum
+from enum import IntEnum, auto
 
 
 class LayerGroup(IntEnum):
@@ -28,13 +28,14 @@ class LayerGroup(IntEnum):
     """
 
     BACKGROUND = 1
-    BOTTOM = 2
-    KEEP_BELOW = 3
-    LAYOUT = 4
-    KEEP_ABOVE = 5
-    MAX = 6
-    FULLSCREEN = 7
-    BRING_TO_FRONT = 8
-    TOP = 9
-    OVERLAY = 10
-    SYSTEM = 11
+    BOTTOM = auto()
+    KEEP_BELOW = auto()
+    INTERNAL = auto()
+    LAYOUT = auto()
+    KEEP_ABOVE = auto()
+    MAX = auto()
+    FULLSCREEN = auto()
+    BRING_TO_FRONT = auto()
+    TOP = auto()
+    OVERLAY = auto()
+    SYSTEM = auto()
