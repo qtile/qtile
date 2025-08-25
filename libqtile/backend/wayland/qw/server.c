@@ -632,3 +632,32 @@ void qw_server_paint_background_color(struct qw_server *server, int x, int y, fl
         qw_output_paint_background_color(output->data, color);
     }
 }
+
+// Helper function for qw_server_traverse_scene_graph()
+static void qw_server_traverse_scene_node(struct wlr_scene_node *node, node_info_cb_t cb, void *parent) {
+    struct scene_node_info info = {
+        .type = node->type,
+        .enabled = node->enabled,
+        .x = node->x,
+        .y = node->y,
+    };
+    if (node->data != NULL) {
+        info.view_wid = ((struct qw_view *)node->data)->wid;
+    }
+
+    cb((uintptr_t)node, (uintptr_t)parent, info);
+
+    if (node->type == WLR_SCENE_NODE_TREE) {
+        struct wlr_scene_tree *tree = wl_container_of(node, tree, node);
+        struct wlr_scene_node *child;
+
+        wl_list_for_each(child, &tree->children, link) {
+            qw_server_traverse_scene_node(child, cb, node);
+        }
+    }
+}
+
+void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb) {
+    struct wlr_scene_node *root = &server->scene->tree.node;
+    qw_server_traverse_scene_node(root, cb, NULL);
+}
