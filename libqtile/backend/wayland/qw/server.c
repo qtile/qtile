@@ -393,7 +393,7 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
         if (node->type == WLR_SCENE_NODE_BUFFER) {
             struct wlr_scene_buffer *scene_buffer = wlr_scene_buffer_from_node(node);
             struct wlr_scene_surface *scene_surface = wlr_scene_surface_try_from_buffer(scene_buffer);
-            if(scene_surface) {
+            if(scene_surface != NULL) {
                 *surface = scene_surface->surface;
             }
         }
