@@ -65,6 +65,8 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&xdg_view->set_app_id.link);
     // TODO: Remove request_move and request_resize listeners if added
 
+    wlr_scene_node_destroy(&xdg_view->base.content_tree->node);
+
     free(xdg_view);
 }
 
