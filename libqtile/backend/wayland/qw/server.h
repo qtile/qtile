@@ -109,6 +109,24 @@ enum qw_wallpaper_mode {
     WALLPAPER_MODE_CENTER,   // Don't resize - place in centre of screen
 };
 
+struct scene_node_info {
+    int type;
+    bool enabled;
+    int x;
+    int y;
+    int view_wid;
+    uintptr_t self;
+    uintptr_t parent;
+
+};
+
+// Callback for building scene graph in python
+typedef void (*node_info_cb_t)(
+    uintptr_t node_ptr,
+    uintptr_t parent_ptr,
+    struct scene_node_info info
+);
+
 typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
 
 // Main server struct containing Wayland and wlroots state and user callbacks
@@ -218,5 +236,6 @@ void qw_server_paint_wallpaper(struct qw_server *server, int x, int y, cairo_sur
 void qw_server_paint_background_color(struct qw_server *server, int x, int y, float color[4]);
 
 void qw_server_loop_input_devices(struct qw_server *server, input_device_cb_t cb);
+void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb);
 
 #endif /* SERVER_H */

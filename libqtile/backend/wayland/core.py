@@ -646,6 +646,38 @@ class Core(base.Core):
         lib.qw_server_loop_visible_views(self.qw, loop)
         return wids
 
+    @expose_command()
+    def get_scene_graph(self):
+        tree = {}
+        node_map = {}
+
+        @ffi.callback("void(uintptr_t, uintptr_t, struct scene_node_info)")
+        def on_node(node_ptr, parent_ptr, info):
+            node_id = int(node_ptr)
+            parent_id = int(parent_ptr) if parent_ptr else None
+
+            node = {
+                "node_id": node_id,
+                "parent_id": parent_id,
+                "type": info.type,
+                "enabled": bool(info.enabled),
+                "x": info.x,
+                "y": info.y,
+                "view_wid": getattr(info, "view_wid", None),
+                "children": []
+            }
+
+            node_map[node_id] = node
+
+            if parent_id is None:
+                tree.update(node)
+            else:
+                parent = node_map[parent_id]
+                parent["children"].append(node)
+
+        lib.qw_server_traverse_scene_graph(self.qw, on_node)
+
+        return tree
 
 class Painter:
     """
