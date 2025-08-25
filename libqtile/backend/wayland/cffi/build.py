@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import wlroots.ffi_build as wlr
 from cffi import FFI
@@ -30,5 +31,13 @@ ffi.include(wlr.ffi_builder)
 ffi.cdef(libinput.CDEF)
 ffi.cdef(cairo_buffer.CDEF)
 
+
+def ffi_compile(verbose: bool = False) -> None:
+    # Always output compiled file to correct folder, regardless from where the script is called
+    ffi.compile(
+        tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose
+    )
+
+
 if __name__ == "__main__":
-    ffi.compile()
+    ffi_compile()
