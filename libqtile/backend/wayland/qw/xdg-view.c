@@ -21,13 +21,9 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
         return;
     }
 
-    // Deactivate previous toplevel if any
+    // Deactivate previous surface if any
     if (prev_surface) {
-        struct wlr_xdg_toplevel *prev_toplevel =
-            wlr_xdg_toplevel_try_from_wlr_surface(prev_surface);
-        if (prev_toplevel) {
-            wlr_xdg_toplevel_set_activated(prev_toplevel, false);
-        }
+        qw_util_deactivate_surface(prev_surface);
     }
 
     wlr_xdg_toplevel_set_activated(xdg_view->xdg_toplevel, true);
