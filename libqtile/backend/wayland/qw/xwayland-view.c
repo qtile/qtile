@@ -28,7 +28,7 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
     wlr_scene_node_raise_to_top(&xwayland_view->base.content_tree->node);
 
     //Deactivate previous surface if any
-    if (prev_surface) {
+    if (prev_surface != NULL) {
         qw_util_deactivate_surface(prev_surface);
     }
 
