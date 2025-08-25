@@ -230,10 +230,12 @@ class ZManager:
         return window in self.layer_map
 
     def add_window(
-        self, window: _Window, layer: LayerGroup = LayerGroup.LAYOUT, position="top"
+        self, window: _Window, layer: LayerGroup | None = None, position="top"
     ) -> None:
         """Adds new client window to the stacking tree."""
-        if layer not in self.layers:
+        if layer is None:
+            layer = window.get_layering_information()
+        elif layer not in self.layers:
             raise ValueError(f"Invalid layer: {layer}")
 
         if window in self.layer_map:
