@@ -208,6 +208,12 @@ class TestManager:
         return os.read(self.logspipe, 64 * 1024).decode("utf-8")
 
     def start(self, config_class, no_spawn=False, state=None):
+        try:
+            multiprocessing.set_start_method("fork")
+        except RuntimeError:
+            # It's already been set somewhere else in your program
+            pass
+
         readlogs, writelogs = os.pipe()
         rpipe, wpipe = multiprocessing.Pipe()
 
