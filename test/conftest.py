@@ -93,9 +93,13 @@ def wayland_session(request, outputs):
 @pytest.fixture(scope="function")
 def backend(request, backend_name, xephyr, wayland_session):
     if backend_name == "x11":
-        yield ("x11", ({"DISPLAY": xephyr.display}, [xephyr.display]))
+        from test.backend.x11.conftest import XBackend
+
+        yield XBackend({"DISPLAY": xephyr.display}, args=[xephyr.display])
     elif backend_name == "wayland":
-        yield ("wayland", (wayland_session, []))
+        from test.backend.wayland.conftest import WaylandBackend
+
+        yield WaylandBackend(wayland_session)
 
 
 @pytest.fixture(scope="function")
