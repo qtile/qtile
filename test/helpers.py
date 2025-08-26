@@ -39,11 +39,32 @@ sleep_time = 0.1
 
 
 def run_qtile(
-    log_level, backend, config_class, sockfile, no_spawn, state, readlogs, writelogs, wpipe
+    log_level,
+    backend_args,
+    config_class,
+    sockfile,
+    no_spawn,
+    state,
+    readlogs,
+    writelogs,
+    wpipe,
+    test_manager,
 ):
+    raise ValueError
     try:
         os.environ.pop("DISPLAY", None)
         os.environ.pop("WAYLAND_DISPLAY", None)
+        backend_name, args = backend_args
+        if backend_name == "x11":
+            from test.backend.x11.conftest import XBackend
+
+            backend = XBackend(*args)
+        elif backend_name == "wayland":
+            from test.backend.wayland.conftest import WaylandBackend
+
+            backend = WaylandBackend(*args)
+        print(backend)
+        backend.manager = test_manager
         kore = backend.create()
         os.environ.update(backend.env)
 
@@ -175,7 +196,6 @@ class TestManager:
     def __init__(self, backend, debug_log):
         self.backend = backend
         self.log_level = logging.DEBUG if debug_log else logging.INFO
-        self.backend.manager = self
 
         self.proc = None
         self.c = None
@@ -223,6 +243,7 @@ class TestManager:
                 readlogs,
                 writelogs,
                 wpipe,
+                self,
             ),
         )
         self.proc.start()
