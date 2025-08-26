@@ -23,7 +23,7 @@ from libqtile import command, config, ipc, layout
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
 from libqtile.lazy import lazy
-from libqtile.log_utils import init_log, logger
+from libqtile.log_utils import init_log
 from libqtile.resources import default_config
 
 # the sizes for outputs
@@ -36,6 +36,33 @@ LOG_PIPE_BUFFER_SIZE = 128 * 1024
 
 max_sleep = 5.0
 sleep_time = 0.1
+
+
+def run_qtile(
+    log_level, backend, config_class, sockfile, no_spawn, state, readlogs, writelogs, wpipe
+):
+    try:
+        os.environ.pop("DISPLAY", None)
+        os.environ.pop("WAYLAND_DISPLAY", None)
+        kore = backend.create()
+        os.environ.update(backend.env)
+
+        init_log(log_level)
+        os.close(readlogs)
+        formatter = logging.Formatter("%(levelname)s - %(message)s")
+        handler = logging.StreamHandler(os.fdopen(writelogs, "w"))
+        handler.setFormatter(formatter)
+        logging.getLogger().addHandler(handler)
+
+        Qtile(
+            kore,
+            config_class(),
+            socket_path=sockfile,
+            no_spawn=no_spawn,
+            state=state,
+        ).loop()
+    except Exception:
+        wpipe.send(traceback.format_exc())
 
 
 class Retry:
@@ -184,36 +211,25 @@ class TestManager:
         readlogs, writelogs = os.pipe()
         rpipe, wpipe = multiprocessing.Pipe()
 
-        def run_qtile():
-            try:
-                os.environ.pop("DISPLAY", None)
-                os.environ.pop("WAYLAND_DISPLAY", None)
-                kore = self.backend.create()
-                os.environ.update(self.backend.env)
-
-                init_log(self.log_level)
-                os.close(readlogs)
-                formatter = logging.Formatter("%(levelname)s - %(message)s")
-                handler = logging.StreamHandler(os.fdopen(writelogs, "w"))
-                handler.setFormatter(formatter)
-                logger.addHandler(handler)
-
-                Qtile(
-                    kore,
-                    config_class(),
-                    socket_path=self.sockfile,
-                    no_spawn=no_spawn,
-                    state=state,
-                ).loop()
-            except Exception:
-                wpipe.send(traceback.format_exc())
-
-        self.proc = multiprocessing.Process(target=run_qtile)
+        self.proc = multiprocessing.Process(
+            target=run_qtile,
+            args=(
+                self.log_level,
+                self.backend,
+                config_class,
+                self.sockfile,
+                no_spawn,
+                state,
+                readlogs,
+                writelogs,
+                wpipe,
+            ),
+        )
         self.proc.start()
         os.close(writelogs)
         self.logspipe = readlogs
 
-        # First, wait for socket to appear
+        # wait for socket to appear
         if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
             ipc_client = ipc.Client(self.sockfile)
             ipc_command = command.interface.IPCCommandInterface(ipc_client)

@@ -16,7 +16,7 @@ jobs:
                 # python version in .readthedocs.yaml
                 # TODO: Add back pypy here and in release.yml once:
                 # https://github.com/pypy/pypy/issues/4956 is resolved
-                python-version: ['3.12', '3.13']
+                python-version: ['3.12', '3.13', '3.14-dev']
                 backend: ['x11', 'wayland']
         steps:
             - uses: actions/checkout@v4
@@ -45,10 +45,16 @@ jobs:
                   ${{ runner.os }}-wayland-
             - name: Install wayland
               run: bash -x ./scripts/ubuntu_wayland_setup
+            - name: Clean python version and export to env
+              shell: bash
+              run: |
+                PYTHON_VERSION="${{ matrix.python-version }}"
+                CLEAN_VERSION="${PYTHON_VERSION%-dev}"
+                echo "QTILE_CI_PYTHON=${CLEAN_VERSION}" >> $GITHUB_ENV
             - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
-                make QTILE_CI_PYTHON=${{ matrix.python-version }} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
+                make QTILE_CI_PYTHON=${QTILE_CI_PYTHON} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
                 uv run coverage combine -q
                 uv run coverage report -m
                 uv run coverage xml
