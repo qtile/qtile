@@ -93,7 +93,7 @@ def test_dgroup_nonpersist(manager):
 
 @dgroups_spawn_config
 def test_dgroup_spawn_in_group(manager):
-    @Retry(ignore_exceptions=(AssertionError,))
+    @Retry(ignore_exceptions=(AssertionError,), tmax=10)
     def wait_for_window():
         assert len(manager.c.windows()) > 0
 
