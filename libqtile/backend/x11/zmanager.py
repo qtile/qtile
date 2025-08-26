@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from enum import Enum
 from functools import wraps
 
 import xcffib.xproto
@@ -40,6 +41,12 @@ def check_window(func):
         return func(self, window, *args, **kwargs)
 
     return _wrapper
+
+
+class NodeType(Enum):
+    TREE_ROOT = "Tree root"
+    LAYER_GROUP = "Layer group"
+    WINDOW = "Window"
 
 
 class TreeNode:
@@ -73,6 +80,24 @@ class TreeNode:
             yield from child
 
     @property
+    def node_type(self):
+        if self.parent is None and self.layer_group is None:
+            return NodeType.TREE_ROOT
+        elif self.layer_group is not None:
+            return NodeType.LAYER_GROUP
+        else:
+            return NodeType.WINDOW
+
+    @property
+    def name(self):
+        if self.node_type is NodeType.TREE_ROOT:
+            return None
+        elif self.node_type is NodeType.LAYER_GROUP:
+            return self.layer_group.name
+        else:
+            return self.win.name
+
+    @property
     def client_root(self):
         root_node = self.root_node
         node = self
@@ -81,6 +106,13 @@ class TreeNode:
         while node.parent is not root_node:
             node = node.parent
         return node
+
+    @property
+    def position(self):
+        if self.node_type is NodeType.WINDOW:
+            return self.win.x, self.win.y
+        else:
+            return 0, 0
 
     @property
     def root_node(self):
@@ -204,6 +236,20 @@ class TreeNode:
 
     def move_to_layer(self, layer):
         pass
+
+    def info(self):
+        x, y = self.position
+        d = dict(
+            name=self.name,
+            x=x,
+            y=y,
+            type=self.node_type.value,
+            wid=self.win.wid if self.win is not None else 0,
+            children=[],
+        )
+        for child in self.children:
+            d["children"].append(child.info())
+        return d
 
 
 class ZManager:
