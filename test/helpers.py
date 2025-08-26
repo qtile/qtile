@@ -209,7 +209,7 @@ class TestManager:
 
     def start(self, config_class, no_spawn=False, state=None):
         try:
-            multiprocessing.set_start_method("fork")
+            multiprocessing.set_start_method("fork", force=True)
         except RuntimeError:
             # It's already been set somewhere else in your program
             pass
