@@ -79,7 +79,14 @@ wayland = [
     "xkbcommon >= 0.3",
     "pywlroots==0.17.0",
 ]
-
+docs = [
+    "funcparserlib==1.0.0a0",
+    "numpydoc",
+    "libcst>=1.0.0",
+    "readthedocs-sphinx-ext",
+    "setuptools-scm>=7.0",
+    "sphinx_rtd_theme",
+]
 
 [tool.setuptools.packages.find]
 include = ["libqtile*"]

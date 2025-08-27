@@ -20,6 +20,21 @@ build:
     - xvfb
     - dbus-x11
     - libnotify-bin
+    - libxcb-composite0-dev
+    - libxcb-icccm4-dev
+    - libxcb-res0-dev
+    - libxcb-render0-dev
+    - libxcb-xfixes0-dev
+    - libxkbcommon-dev
+    - python-gi-dev
+    - libcairo2-dev
+    - gir1.2-gdkpixbuf-2.0
+    - librsvg2-dev
+    - libxcb-cursor0
+    - git
+    - xterm
+    - vlc
+    - volumeicon-alsa
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
@@ -31,5 +46,10 @@ formats:
 # Optionally set the version of Python and requirements required to build your docs
 python:
   install:
-  # This first requirements file installs a pinned version of cffi as latest version causes crashes
-  - requirements: docs/requirements-rtd.txt
+  - method: pip
+    path: .
+    extra_requirements:
+      - dev
+      - optional_core
+      - widgets
+      - docs
