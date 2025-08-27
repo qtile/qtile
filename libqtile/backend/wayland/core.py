@@ -73,7 +73,8 @@ from typing import TYPE_CHECKING
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
-from libqtile.backend.wayland.window import Internal, Window, Static
+from libqtile.backend.wayland import inputs
+from libqtile.backend.wayland.window import Internal, Static, Window, WindowType
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.images import Img
@@ -268,8 +269,9 @@ class Core(base.Core):
 
         # Apply input device configuration
         if self.qtile.config.wl_input_rules:
-            # TODO: configure devices (keyboards, pointers)
-            pass
+            inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
+
+        #TODO: Also configure devices when a new device is added
 
     def handle_screen_change(self) -> None:
         hook.fire("screen_change", None)
