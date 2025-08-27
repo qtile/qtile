@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <libinput.h>
+#include <wlr/backend/libinput.h>
 #include <wlr/backend/session.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_server_decoration.h>
@@ -345,6 +347,8 @@ static void qw_server_handle_new_input(struct wl_listener *listener, void *data)
         caps |= WL_SEAT_CAPABILITY_KEYBOARD;
     }
     wlr_seat_set_capabilities(server->seat, caps);
+
+    qw_server_input_device_new(server, device);
 }
 
 // Handle new XDG toplevel window creation
@@ -541,6 +545,7 @@ struct qw_server *qw_server_create() {
     server->new_output.notify = qw_server_handle_new_output;
     wl_signal_add(&server->backend->events.new_output, &server->new_output);
     wl_list_init(&server->keyboards);
+    wl_list_init(&server->input_devices);
     server->seat = wlr_seat_create(server->display, "seat0");
     server->cursor = qw_server_cursor_create(server);
     if (!server->cursor) {
@@ -638,5 +643,22 @@ void qw_server_paint_background_color(struct qw_server *server, int x, int y, fl
 
     if (output != NULL) {
         qw_output_paint_background_color(output->data, color);
+    }
+}
+
+void qw_server_loop_input_devices(struct qw_server *server, input_device_cb_t cb) {
+    struct qw_input_device *input_device;
+    wl_list_for_each(input_device, &server->input_devices, link) {
+        struct wlr_input_device *device = input_device->device;
+
+        int vendor = 0;
+        int product = 0;
+        if (wlr_input_device_is_libinput(device) == true) {
+            struct libinput_device *libinput_device = wlr_libinput_get_device_handle(device);
+            vendor = libinput_device_get_id_vendor(libinput_device);
+            product = libinput_device_get_id_product(libinput_device);
+        }
+
+        cb(input_device, device->name, device->type, vendor, product);
     }
 }
