@@ -72,7 +72,7 @@ struct qw_xwayland_unmanaged {
 // void qw_xwayland_view_unmanaged_destroy(struct wl_listener *listener, void *data);
 // void qw_xwayland_view_unmanaged_override_redirect(struct wl_listener *listener, void *data);
 // void qw_xwayland_view_unmanaged_request_activate(struct wl_listener *listener, void *data);
-struct qw_xwayland_view *create_xwayland_view(struct wlr_xwayland_surface *qw_xsurface);
-void qw_server_xwayland_view_new(struct qw_server *server, struct wlr_xwayland_surface *xwayland_surface);
+struct qw_xwayland_view *qw_create_xwayland_view(struct qw_server *server,
+                                                 struct wlr_xwayland_surface *qw_xsurface);
 
 #endif /* QW_XWAYLAND_VIEW */
