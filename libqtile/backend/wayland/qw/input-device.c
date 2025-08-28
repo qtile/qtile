@@ -1,6 +1,7 @@
 #include <libinput.h>
 #include <wlr/backend/libinput.h>
 #include "input-device.h"
+#include "keyboard.h"
 
 // Called when the device is destroyed
 static void qw_input_device_handle_destroy(struct wl_listener *listener, void *data) {
@@ -41,6 +42,13 @@ struct wlr_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_
 
 void qw_input_device_config_kbd_set_repeat_info(struct wlr_keyboard *keyboard, int kb_repeat_rate, int kb_repeat_delay) {
     wlr_keyboard_set_repeat_info(keyboard, kb_repeat_rate, kb_repeat_delay);
+}
+
+void qw_input_device_config_kbd_set_keymap(struct wlr_keyboard *keyboard,
+                                           const char *layout,
+                                           const char *options,
+                                           const char *variant) {
+    qw_keyboard_set_keymap(keyboard, layout, options, variant);
 }
 
 void qw_input_device_config_accel_set_profile(struct libinput_device *device, int accel_profile) {
