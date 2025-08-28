@@ -2,6 +2,14 @@
 #include <wlr/backend/libinput.h>
 #include "input-device.h"
 
+// Called when the device is destroyed
+static void qw_input_device_handle_destroy(struct wl_listener *listener, void *data) {
+    struct qw_input_device *input_device = wl_container_of(listener, input_device, destroy);
+    wl_list_remove(&input_device->destroy.link);
+    wl_list_remove(&input_device->link);
+    free(input_device);
+}
+
 void qw_server_input_device_new(struct qw_server *server, struct wlr_input_device *device) {
     struct qw_input_device *input_device = calloc(1, sizeof(*input_device));
     if (input_device == NULL) {
@@ -11,9 +19,12 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
 
     input_device->server = server;
     input_device->device = device;
-    wl_list_insert(&server->input_devices, &input_device->link); 
 
-    // TODO: Remove devices from list when they are removed
+    input_device->destroy.notify = qw_input_device_handle_destroy;
+    wl_signal_add(&device->events.destroy, &input_device->destroy);
+
+    wl_list_insert(&server->input_devices, &input_device->link);
+
 }
 
 struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_device *input_device) {
