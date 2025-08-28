@@ -664,16 +664,56 @@ void qw_server_loop_input_devices(struct qw_server *server, input_device_cb_t cb
         cb(input_device, device->name, device->type, vendor, product);
     }
 }
+static char *LAYER_NAMES[] = {
+    [LAYER_BACKGROUND] = "LAYER_BACKGROUND",
+    [LAYER_BOTTOM] = "LAYER_BOTTOM",
+    [LAYER_KEEPBELOW] = "LAYER_KEEPBELOW",
+    [LAYER_LAYOUT] = "LAYER_LAYOUT",
+    [LAYER_KEEPABOVE] = "LAYER_KEEPABOVE",
+    [LAYER_MAX] = "LAYER_MAX",
+    [LAYER_FULLSCREEN] = "LAYER_FULLSCREEN",
+    [LAYER_BRINGTOFRONT] = "LAYER_BRINGTOFRONT",
+    [LAYER_TOP] = "LAYER_TOP",
+    [LAYER_OVERLAY] = "LAYER_OVERLAY"
+};
+
+static char *SCENE_NODE_TYPES[] = {
+    [WLR_SCENE_NODE_TREE] = "tree",
+    [WLR_SCENE_NODE_RECT] = "rect",
+    [WLR_SCENE_NODE_BUFFER] = "buffer"
+};
+
 // Helper function for qw_server_traverse_scene_graph()
-static void qw_server_traverse_scene_node(struct wlr_scene_node *node, node_info_cb_t cb, void *parent) {
+static void qw_server_traverse_scene_node(struct wlr_scene_node *node,
+                                          struct wlr_scene_tree *scene_windows_layers[],
+                                          node_info_cb_t cb,
+                                          void *parent) {
     struct scene_node_info info = {
-        .type = node->type,
+        .name = "",
+        .type = SCENE_NODE_TYPES[node->type],
         .enabled = node->enabled,
         .x = node->x,
         .y = node->y,
     };
+
     if (node->data != NULL) {
-        info.view_wid = ((struct qw_view *)node->data)->wid;
+        // Node is associated with a window
+        struct qw_view *view = (struct qw_view *)node->data;
+        info.view_wid = view->wid;
+        if (view->title != NULL) {
+            info.name = view->title;
+        }
+    } else if (node->type == WLR_SCENE_NODE_TREE) {
+        // Try and match with named layers
+        for (int i = 0; i < LAYER_END; ++i) {
+            if (scene_windows_layers[i] == wlr_scene_tree_from_node(node)) {
+                if (LAYER_NAMES[i] != NULL) {
+                    info.name = LAYER_NAMES[i];
+                } else {
+                    info.name = "UNKNOWN";
+                }
+            }
+        }
     }
 
     cb((uintptr_t)node, (uintptr_t)parent, info);
@@ -683,12 +723,12 @@ static void qw_server_traverse_scene_node(struct wlr_scene_node *node, node_info
         struct wlr_scene_node *child;
 
         wl_list_for_each(child, &tree->children, link) {
-            qw_server_traverse_scene_node(child, cb, node);
+            qw_server_traverse_scene_node(child, scene_windows_layers, cb, node);
         }
     }
 }
 
 void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb) {
     struct wlr_scene_node *root = &server->scene->tree.node;
-    qw_server_traverse_scene_node(root, cb, NULL);
+    qw_server_traverse_scene_node(root, server->scene_windows_layers, cb, NULL);
 }

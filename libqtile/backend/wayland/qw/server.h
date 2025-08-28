@@ -110,14 +110,12 @@ enum qw_wallpaper_mode {
 };
 
 struct scene_node_info {
-    int type;
+    char* name;
+    char* type;
     bool enabled;
     int x;
     int y;
     int view_wid;
-    uintptr_t self;
-    uintptr_t parent;
-
 };
 
 // Callback for building scene graph in python
