@@ -22,6 +22,8 @@ struct qw_input_device {
     struct qw_server *server;
     struct wl_list link;
     struct wlr_input_device *device;
+
+    struct wl_listener destroy;
 };
 
 void qw_server_input_device_new(struct qw_server *server, struct wlr_input_device *device);
