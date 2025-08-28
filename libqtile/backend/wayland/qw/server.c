@@ -349,6 +349,8 @@ static void qw_server_handle_new_input(struct wl_listener *listener, void *data)
     wlr_seat_set_capabilities(server->seat, caps);
 
     qw_server_input_device_new(server, device);
+
+    server->on_input_device_added_cb(server->cb_data);
 }
 
 // Handle new XDG toplevel window creation
