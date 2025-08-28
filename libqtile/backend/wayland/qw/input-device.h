@@ -34,6 +34,11 @@ struct wlr_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_
 
 void qw_input_device_config_kbd_set_repeat_info(struct wlr_keyboard *keyboard, int kb_repeat_rate, int kb_repeat_delay);
 
+void qw_input_device_config_kbd_set_keymap(struct wlr_keyboard *keyboard,
+                                           const char *layout,
+                                           const char *options,
+                                           const char *variant);
+
 void qw_input_device_config_accel_set_profile(struct libinput_device *device, int accel_profile);
 
 void qw_input_device_config_tap_set_drag_enabled(struct libinput_device *device, int drag);
