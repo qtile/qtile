@@ -647,7 +647,7 @@ class Core(base.Core):
         return wids
 
     @expose_command()
-    def get_scene_graph(self):
+    def stacking_info(self):
         tree = {}
         node_map = {}
 
@@ -657,13 +657,12 @@ class Core(base.Core):
             parent_id = int(parent_ptr) if parent_ptr else None
 
             node = {
-                "node_id": node_id,
-                "parent_id": parent_id,
-                "type": info.type,
+                "name": ffi.string(info.name).decode(),
                 "enabled": bool(info.enabled),
                 "x": info.x,
                 "y": info.y,
-                "view_wid": getattr(info, "view_wid", None),
+                "type": ffi.string(info.type).decode(),
+                "wid": getattr(info, "view_wid", None) or None,
                 "children": []
             }
 
