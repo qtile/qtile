@@ -655,7 +655,7 @@ void qw_server_loop_input_devices(struct qw_server *server, input_device_cb_t cb
 
         int vendor = 0;
         int product = 0;
-        if (wlr_input_device_is_libinput(device) == true) {
+        if (wlr_input_device_is_libinput(device)) {
             struct libinput_device *libinput_device = wlr_libinput_get_device_handle(device);
             vendor = libinput_device_get_id_vendor(libinput_device);
             product = libinput_device_get_id_product(libinput_device);
