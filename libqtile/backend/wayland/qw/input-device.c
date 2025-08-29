@@ -40,6 +40,11 @@ struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_d
     return keyboard;
 }
 
+bool qw_input_device_is_touchpad(struct qw_input_device *input_device) {
+    struct libinput_device* device = qw_input_device_get_libinput_handle(input_device);
+    return device && libinput_device_config_tap_get_finger_count(device) > 0;
+}
+
 void qw_input_device_config_accel_set_profile(struct libinput_device *device, int accel_profile) {
     if (libinput_device_config_accel_is_available(device)) {
         libinput_device_config_accel_set_profile(device, accel_profile);
