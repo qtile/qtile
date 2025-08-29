@@ -124,9 +124,11 @@ def configure_input_devices(server, configs):
         type_key = "type:" + InputDeviceType(type).name.lower()
         identifier = f"{vendor:d}:{product:d}:{name!s}"
 
-        #TODO: The original backend has a check for whether the pointer is a touchpad,
-        # but shouldn't touchpads be identified as touchpads? Is this needed because some
-        # touchpads are incorrectly identified as pointers?
+        if type_key == "type:pointer" and lib is not None:
+            # This checks whether the pointer is a touchpad, so that we can target those
+            # specifically.
+            if lib.qw_input_device_is_touchpad(input_device):
+                type_key = "type:touchpad"
 
         if identifier in configs:
             conf = configs[identifier]
