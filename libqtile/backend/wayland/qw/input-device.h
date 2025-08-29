@@ -50,6 +50,8 @@ struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_devi
 
 struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_device);
 
+bool qw_input_device_is_touchpad(struct qw_input_device *input_device);
+
 /* Acceleration */
 void qw_input_device_config_accel_set_profile(struct libinput_device *device, int accel_profile);
 void qw_input_device_config_accel_set_speed(struct libinput_device *device, double pointer_accel);
