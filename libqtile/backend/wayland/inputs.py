@@ -91,9 +91,27 @@ class InputDeviceType(enum.IntEnum):
     SWITCH = lib.WLR_INPUT_DEVICE_SWITCH
 
 @enum.unique
-class InputDeviceAccelProfile(enum.IntEnum):
+class AccelProfile(enum.IntEnum):
     adaptive = lib.LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE
     flat = lib.LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT
+
+@enum.unique
+class ClickMethod(enum.IntEnum):
+    none = lib.LIBINPUT_CONFIG_CLICK_METHOD_NONE
+    button_areas = lib.LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS
+    clickfinger = lib.LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER
+
+@enum.unique
+class TapMap(enum.IntEnum):
+    lrm = lib.LIBINPUT_CONFIG_TAP_MAP_LRM
+    lmr = lib.LIBINPUT_CONFIG_TAP_MAP_LMR
+
+@enum.unique
+class ScrollMethod(enum.IntEnum):
+    none = lib.LIBINPUT_CONFIG_SCROLL_NO_SCROLL
+    two_finger = lib.LIBINPUT_CONFIG_SCROLL_2FG
+    edge = lib.LIBINPUT_CONFIG_SCROLL_EDGE
+    on_button_down = lib.LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN
 
 def configure_input_devices(server, configs):
     @ffi.callback("void(struct qw_input_device *input_device, char *name, int type, int vendor, int product)")
@@ -126,16 +144,50 @@ def configure_input_devices(server, configs):
                     return
 
                 if conf.accel_profile is not None:
-                    lib.qw_input_device_config_accel_set_profile(device, InputDeviceAccelProfile[conf.accel_profile].value)
+                    lib.qw_input_device_config_accel_set_profile(device, AccelProfile[conf.accel_profile].value)
+
+                if conf.pointer_accel is not None:
+                    lib.qw_input_device_config_accel_set_speed(device, conf.pointer_accel)
+
+                if conf.click_method is not None:
+                    lib.qw_input_device_config_click_set_method(device, ClickMethod[conf.click_method].value)
 
                 if conf.drag is not None:
-                    lib.qw_input_device_config_tap_set_drag_enabled(device, conf.drag)
+                    lib.qw_input_device_config_tap_set_drag_enabled(device, int(conf.drag))
 
                 if conf.drag_lock is not None:
-                    lib.qw_input_device_config_tap_set_drag_lock_enabled(device, conf.drag_lock)
+                    lib.qw_input_device_config_tap_set_drag_lock_enabled(device, int(conf.drag_lock))
+
+                if conf.tap is not None:
+                    lib.qw_input_device_config_tap_set_enabled(device, int(conf.tap))
+
+                if conf.tap_button_map is not None:
+                    lib.qw_input_device_config_tap_set_button_map(device, TapMap[conf.tap_button_map].value)
 
                 if conf.natural_scroll is not None:
-                    lib.qw_input_device_config_scroll_set_natural_scroll_enabled(device, conf.natural_scroll)
+                    lib.qw_input_device_config_scroll_set_natural_scroll_enabled(device, int(conf.natural_scroll))
+
+                if conf.scroll_method is not None:
+                    lib.qw_input_device_config_scroll_set_method(device, ScrollMethod[conf.scroll_method].value)
+
+                if conf.scroll_button is not None:
+                    if isinstance(conf.scroll_button, str):
+                        if conf.scroll_button == "disable":
+                            button = 0
+                        else:
+                            button = lib.qw_util_get_button_code(int(conf.scroll_button[-1]) - 1)
+                    else:
+                         button = conf.scroll_button
+                    lib.qw_input_device_config_scroll_set_button(device, button)
+
+                if conf.dwt is not None:
+                    lib.qw_input_device_config_dwt_set_enabled(device, int(conf.dwt))
+
+                if conf.left_handed is not None:
+                    lib.qw_input_device_config_left_handed_set(device, int(conf.left_handed))
+
+                if conf.middle_emulation is not None:
+                    lib.qw_input_device_config_middle_emulation_set_enabled(device, int(conf.middle_emulation))
 
             elif type == InputDeviceType.KEYBOARD:
                 keyboard = lib.qw_input_device_get_keyboard(input_device)
