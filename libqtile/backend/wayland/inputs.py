@@ -142,11 +142,11 @@ def configure_input_devices(server, configs):
                 if keyboard == ffi.NULL:
                     return
 
-                lib.qw_input_device_config_kbd_set_repeat_info(keyboard, conf.kb_repeat_rate, conf.kb_repeat_delay) 
-                lib.qw_input_device_config_kbd_set_keymap(keyboard,
-                                                          ffi.new("char[]", (conf.kb_layout or "").encode()),
-                                                          ffi.new("char[]", (conf.kb_options or "").encode()),
-                                                          ffi.new("char[]", (conf.kb_variant or "").encode()))
+                lib.qw_keyboard_set_repeat_info(keyboard, conf.kb_repeat_rate, conf.kb_repeat_delay)
+                lib.qw_keyboard_set_keymap(keyboard,
+                                           ffi.new("char[]", (conf.kb_layout or "").encode()),
+                                           ffi.new("char[]", (conf.kb_options or "").encode()),
+                                           ffi.new("char[]", (conf.kb_variant or "").encode()))
 
     lib.qw_server_loop_input_devices(server, input_device_cb)
 

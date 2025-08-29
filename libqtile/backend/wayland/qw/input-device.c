@@ -35,20 +35,9 @@ struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_devi
     return wlr_libinput_get_device_handle(input_device->device);
 }
 
-struct wlr_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_device) {
-    struct wlr_keyboard *keyboard = wlr_keyboard_from_input_device(input_device->device);
+struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_device) {
+    struct qw_keyboard *keyboard = (struct qw_keyboard *)(input_device->device->data);
     return keyboard;
-}
-
-void qw_input_device_config_kbd_set_repeat_info(struct wlr_keyboard *keyboard, int kb_repeat_rate, int kb_repeat_delay) {
-    wlr_keyboard_set_repeat_info(keyboard, kb_repeat_rate, kb_repeat_delay);
-}
-
-void qw_input_device_config_kbd_set_keymap(struct wlr_keyboard *keyboard,
-                                           const char *layout,
-                                           const char *options,
-                                           const char *variant) {
-    qw_keyboard_set_keymap(keyboard, layout, options, variant);
 }
 
 void qw_input_device_config_accel_set_profile(struct libinput_device *device, int accel_profile) {
