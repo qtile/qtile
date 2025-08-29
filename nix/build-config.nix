@@ -48,7 +48,7 @@ in
       pkg,
       libname,
     }:
-    "--config-setting=${varname}_PATH=${lib.getLib pkg}/lib/${libname}"
+    "--config-setting=${varname}=${lib.getLib pkg}/lib/${libname}"
   ) runtime-libs;
 
   resolved-env-vars = lib.foldr (a: b: a // b) { } (
