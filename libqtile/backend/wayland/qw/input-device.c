@@ -29,7 +29,7 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
 }
 
 struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_device *input_device) {
-    if (wlr_input_device_is_libinput(input_device->device) == false) {
+    if (!wlr_input_device_is_libinput(input_device->device)) {
         return NULL;
     }
     return wlr_libinput_get_device_handle(input_device->device);
@@ -41,9 +41,19 @@ struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_d
 }
 
 void qw_input_device_config_accel_set_profile(struct libinput_device *device, int accel_profile) {
-    if (libinput_device_config_accel_is_available(device) != 0) {
+    if (libinput_device_config_accel_is_available(device)) {
         libinput_device_config_accel_set_profile(device, accel_profile);
     }
+}
+
+void qw_input_device_config_accel_set_speed(struct libinput_device *device, double pointer_accel) {
+    if (libinput_device_config_accel_is_available(device)) {
+        libinput_device_config_accel_set_speed(device, pointer_accel);
+    }
+}
+
+void qw_input_device_config_click_set_method(struct libinput_device *device, int click_method) {
+    libinput_device_config_click_set_method(device, click_method);
 }
 
 void qw_input_device_config_tap_set_drag_enabled(struct libinput_device *device, int drag) {
@@ -54,8 +64,46 @@ void qw_input_device_config_tap_set_drag_lock_enabled(struct libinput_device *de
     libinput_device_config_tap_set_drag_lock_enabled(device, drag_lock);
 }
 
+void qw_input_device_config_tap_set_enabled(struct libinput_device *device, int tap) {
+    if (libinput_device_config_tap_get_finger_count(device) > 1) {
+        libinput_device_config_tap_set_enabled(device, tap);
+    }
+}
+
+void qw_input_device_config_tap_set_button_map(struct libinput_device *device, int tap_button_map) {
+    if (libinput_device_config_tap_get_finger_count(device) > 1) {
+        libinput_device_config_tap_set_button_map(device, tap_button_map);
+    }
+}
+
 void qw_input_device_config_scroll_set_natural_scroll_enabled(struct libinput_device *device, int natural_scroll) {
     if (libinput_device_config_scroll_has_natural_scroll(device) != 0) {
         libinput_device_config_scroll_set_natural_scroll_enabled(device, natural_scroll);
     }
+}
+
+void qw_input_device_config_scroll_set_method(struct libinput_device *device, int scroll_method) {
+    libinput_device_config_scroll_set_method(device, scroll_method);
+}
+
+void qw_input_device_config_scroll_set_button(struct libinput_device *device, int scroll_button) {
+    if ((int)libinput_device_config_scroll_get_method(device) == LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN) {
+        libinput_device_config_scroll_set_button(device, scroll_button);
+    }
+}
+
+void qw_input_device_config_dwt_set_enabled(struct libinput_device *device, int dwt) {
+    if (libinput_device_config_dwt_is_available(device)) {
+        libinput_device_config_dwt_set_enabled(device, dwt);
+    }
+}
+
+void qw_input_device_config_left_handed_set(struct libinput_device *device, int left_handed) {
+    if (libinput_device_config_left_handed_is_available(device)) {
+        libinput_device_config_left_handed_set(device, left_handed);
+    }
+}
+
+void qw_input_device_config_middle_emulation_set_enabled(struct libinput_device *device, int middle_emulation) {
+    libinput_device_config_middle_emulation_set_enabled(device, middle_emulation);
 }
