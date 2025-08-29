@@ -20,6 +20,10 @@ jobs:
                 backend: ['x11', 'wayland']
         steps:
             - uses: actions/checkout@v4
+            - name: Start httpbin container
+              run: |
+                docker run -d --name httpbin -p 8080:80 kennethreitz/httpbin
+                timeout 30 bash -c 'until curl -s http://localhost:8080/get > /dev/null; do sleep 1; done'
             - name: Set up python ${{ matrix.python-version }}
               uses: actions/setup-python@v5
               with:
