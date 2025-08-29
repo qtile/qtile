@@ -20,10 +20,19 @@
 
 # Widget specific tests
 
+import os
+
 import pytest
 
 import libqtile
 from libqtile.widget import generic_poll_text
+
+# Use local httpbin in CI, fallback to httpbin.org for local development
+HTTPBIN_BASE = (
+    "http://localhost:8080"
+    if os.environ.get("GITHUB_ACTIONS") == "true"
+    else "https://httpbin.org"
+)
 
 
 def test_gen_poll_text():
@@ -61,17 +70,17 @@ def test_gen_poll_url_headers_and_json():
 @pytest.mark.asyncio
 async def test_gen_poll_url_text():
     gpurl = generic_poll_text.GenPollUrl(
-        json=False, parse=lambda x: x, url="https://httpbin.org/anything"
+        json=False, parse=lambda x: x, url=f"{HTTPBIN_BASE}/anything"
     )
     result = await gpurl.apoll()
     assert isinstance(result, str)
-    assert "httpbin.org" in result
+    assert "anything" in result
 
 
 @pytest.mark.asyncio
 async def test_gen_poll_url_json_with_data():
     gpurl = generic_poll_text.GenPollUrl(
-        parse=lambda x: x["data"], data={"test": "value"}, url="https://httpbin.org/anything"
+        parse=lambda x: x["data"], data={"test": "value"}, url=f"{HTTPBIN_BASE}/anything"
     )
     result = await gpurl.apoll()
     assert result == '{"test": "value"}'
@@ -80,7 +89,7 @@ async def test_gen_poll_url_json_with_data():
 @pytest.mark.asyncio
 async def test_gen_poll_url_xml_no_xmltodict():
     gpurl = generic_poll_text.GenPollUrl(
-        json=False, xml=True, parse=lambda x: x, url="https://httpbin.org/anything"
+        json=False, xml=True, parse=lambda x: x, url=f"{HTTPBIN_BASE}/anything"
     )
     result = await gpurl.apoll()
     assert result == "Can't parse"
@@ -89,7 +98,7 @@ async def test_gen_poll_url_xml_no_xmltodict():
 @pytest.mark.asyncio
 async def test_gen_poll_url_broken_parse():
     gpurl = generic_poll_text.GenPollUrl(
-        json=False, parse=lambda x: x.foo, url="https://httpbin.org/anything"
+        json=False, parse=lambda x: x.foo, url=f"{HTTPBIN_BASE}/anything"
     )
     result = await gpurl.apoll()
     assert result == "Can't parse"
@@ -100,7 +109,7 @@ async def test_gen_poll_url_custom_headers():
     gpurl = generic_poll_text.GenPollUrl(
         headers={"X-Custom-Header": "test-value", "X-Another-Header": "another-value"},
         parse=lambda x: x["headers"],
-        url="https://httpbin.org/headers",
+        url=f"{HTTPBIN_BASE}/headers",
     )
     result = await gpurl.apoll()
     assert "X-Custom-Header" in result
