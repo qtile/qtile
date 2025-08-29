@@ -62,7 +62,7 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
     wlr_seat_keyboard_notify_modifiers(keyboard->server->seat, &keyboard->wlr_keyboard->modifiers);
 }
 
-void qw_keyboard_set_keymap(struct wlr_keyboard *keyboard, const char *layout, const char *options,
+void qw_keyboard_set_keymap(struct qw_keyboard *keyboard, const char *layout, const char *options,
                             const char *variant) {
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
 
@@ -71,9 +71,13 @@ void qw_keyboard_set_keymap(struct wlr_keyboard *keyboard, const char *layout, c
     struct xkb_keymap *keymap =
         xkb_keymap_new_from_names(context, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
 
-    wlr_keyboard_set_keymap(keyboard, keymap);
+    wlr_keyboard_set_keymap(keyboard->wlr_keyboard, keymap);
     xkb_keymap_unref(keymap);
     xkb_context_unref(context);
+}
+
+void qw_keyboard_set_repeat_info(struct qw_keyboard *keyboard, int kb_repeat_rate, int kb_repeat_delay) {
+    wlr_keyboard_set_repeat_info(keyboard->wlr_keyboard, kb_repeat_rate, kb_repeat_delay);
 }
 
 // Creates and initializes a new keyboard input device attached to the server
@@ -88,6 +92,9 @@ void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *d
 
     keyboard->server = server;
     keyboard->wlr_keyboard = wlr_keyboard;
+
+    // Give keyboard input devices a reference to qw_keyboard
+    device->data = keyboard;
 
     // Create new xkb context and default keymap
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
