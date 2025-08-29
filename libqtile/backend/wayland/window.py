@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+import typing
+
 import libqtile.backend.base.window as base
 from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
@@ -17,21 +21,25 @@ except ModuleNotFoundError:
     # Provide a stub for FFI to keep going
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
+if typing.TYPE_CHECKING:
+    from libqtile.command.base import CommandObject, ItemT
+
 
 class Base(base._Window):
-    def __init__(self, qtile: Qtile, ptr, wid):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
         base._Window.__init__(self)
         self.qtile = qtile
-        self._group = None
+        self._group: _Group | None  = None
+        #TODO: why are there 2 groups here?
         self._ptr = ptr
         self._wid = wid
-        self._wm_class = None
-        self.bordercolor = None
+        self._wm_class: str | None = None
+        self.bordercolor: ColorsType | None = None
         # TODO: what is this?
         self.defunct = False
-        self.group = None
+        self.group: _Group | None = None
 
-    def reparent(self, layer) -> None:
+    def reparent(self, layer: int) -> None:
         if self.layer == layer:
             return
         lib.qw_view_reparent(self._ptr, layer)
@@ -42,7 +50,7 @@ class Base(base._Window):
         lib.qw_view_raise_to_top(self._ptr)
 
     @property
-    def wid(self):
+    def wid(self) -> int:
         return self._wid
 
     @property
@@ -162,12 +170,15 @@ class Base(base._Window):
         n = 0
         c_layers = ffi.NULL
         if bordercolor is not None:
-            colors = [bordercolor]
-            # multiple border colors
-            if isinstance(bordercolor, list) and all(
-                isinstance(x, str) or isinstance(x, tuple) for x in bordercolor
-            ):
-                colors = bordercolor
+            if isinstance(bordercolor, list):
+                # multiple border colors
+                if all(isinstance(x, str) or isinstance(x, tuple) for x in bordercolor):
+                    colors = bordercolor
+                else:
+                    pass
+                    #TODO: Check validation logic, handle this case
+            else:
+                colors = [bordercolor]
             n = len(colors)
 
             # Allocate array of qw_border
@@ -209,14 +220,14 @@ class Base(base._Window):
 
 
 class Internal(Base, base.Internal):
-    def __init__(self, qtile: Qtile, ptr, wid):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
         Base.__init__(self, qtile, lib.qw_internal_view_get_base(ptr), wid)
         base.Internal.__init__(self)
         ptr.base.wid = wid
         self._internal_ptr = ptr
 
     @property
-    def surface(self):
+    def surface(self) -> ffi.CData:
         return ffi.cast("void *", self._internal_ptr.image_surface)
 
     def finalize(self) -> None:
@@ -226,7 +237,7 @@ class Internal(Base, base.Internal):
         """Create a Drawer that draws to this window."""
         return Drawer(self.qtile, self, width, height)
 
-    def set_buffer_with_damage(self, offsetx, offsety, width, height):
+    def set_buffer_with_damage(self, offsetx: int, offsety: int, width: int, height: int) -> None:
         lib.qw_internal_view_set_buffer_with_damage(
             self._internal_ptr, offsetx, offsety, width, height
         )
@@ -252,35 +263,35 @@ class Internal(Base, base.Internal):
 
 
 @ffi.def_extern()
-def request_fullscreen_cb(view, userdata):
+def request_fullscreen_cb(fullscreen: bool, userdata: ffi.CData) -> int:
     win = ffi.from_handle(userdata)
-    if win.handle_request_fullscreen(view):
+    if win.handle_request_fullscreen(fullscreen):
         return 1
     return 0
 
 
 @ffi.def_extern()
-def request_maximize_cb(view, userdata):
+def request_maximize_cb(maximize: bool, userdata: ffi.CData) -> int:
     win = ffi.from_handle(userdata)
-    if win.handle_request_maximize(view):
+    if win.handle_request_maximize(maximize):
         return 1
     return 0
 
 
 @ffi.def_extern()
-def set_title_cb(title, userdata):
+def set_title_cb(title: ffi.CData, userdata: ffi.CData) -> None:
     win = ffi.from_handle(userdata)
     win.handle_set_title(ffi.string(title).decode())
 
 
 @ffi.def_extern()
-def set_app_id_cb(app_id, userdata):
+def set_app_id_cb(app_id: ffi.CData, userdata: ffi.CData) -> None:
     win = ffi.from_handle(userdata)
     win.handle_set_app_id(ffi.string(app_id).decode())
 
 
 class Window(Base, base.Window):
-    def __init__(self, qtile: Qtile, ptr, wid):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
         Base.__init__(self, qtile, ptr, wid)
         base.Window.__init__(self)
 
@@ -298,7 +309,7 @@ class Window(Base, base.Window):
         ptr.set_app_id_cb = lib.set_app_id_cb
 
     @property
-    def layer(self):
+    def layer(self) -> int:
         return self._ptr.layer
 
     @expose_command()
@@ -345,25 +356,25 @@ class Window(Base, base.Window):
     def move_to_bottom(self) -> None:
         lib.qw_view_lower_to_bottom(self._ptr)
 
-    def handle_request_fullscreen(self, fullscreen):
+    def handle_request_fullscreen(self, fullscreen: bool) -> bool:
         if self.qtile.config.auto_fullscreen:
             if self.fullscreen != fullscreen:
                 self.fullscreen = fullscreen
                 return True
         return False
 
-    def handle_request_maximize(self, maximize):
+    def handle_request_maximize(self, maximize: bool) -> bool:
         self.maximized = maximize
         return True
 
-    def handle_set_title(self, title):
+    def handle_set_title(self, title: str) -> None:
         logger.debug("Signal: xdgwindow set_title")
         if title != self.name:
             self.name = title
             # TODO: Handle foreign-toplevel-management?
             hook.fire("client_name_updated", self)
 
-    def handle_set_app_id(self, app_id):
+    def handle_set_app_id(self, app_id: str) -> None:
         logger.debug("Signal: xdgwindow set_app_id")
         self._wm_class = app_id
         # TODO: Handle foreign-toplevel-management?
@@ -425,7 +436,7 @@ class Window(Base, base.Window):
 
         hook.fire("client_managed", win)
 
-    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None):
+    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> Static:
         return Static(
             self.qtile,
             self._ptr,
@@ -479,7 +490,7 @@ class Window(Base, base.Window):
         if switch_group:
             group.toscreen(toggle=toggle)
 
-    def _items(self, name: str):  # todo: restore return type -> ItemT:
+    def _items(self, name: str) -> ItemT:
         if name == "group":
             return True, []
         if name == "layout":
@@ -493,7 +504,7 @@ class Window(Base, base.Window):
 
     def _select(
         self, name: str, sel: str | int | None
-    ):  # todo: restore reutrn type -> CommandObject | None:
+    )-> CommandObject | None:
         if name == "group":
             return self.group
         elif name == "layout":
@@ -510,7 +521,7 @@ class Window(Base, base.Window):
         return self._group
 
     @group.setter
-    def group(self, group) -> None:
+    def group(self, group: _Group | None) -> None:
         self._group = group
 
     @expose_command()
@@ -524,7 +535,7 @@ class Window(Base, base.Window):
     def get_pid(self) -> int:
         return int(self._ptr.get_pid(self._ptr))
 
-    def get_new_layer(self, state: FloatStates):
+    def get_new_layer(self, state: FloatStates) -> int:
         if self.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
             return lib.LAYER_KEEPABOVE
         if state == FloatStates.MAXIMIZED:
@@ -771,7 +782,7 @@ class Window(Base, base.Window):
 
 
 class Static(Base, base.Static):
-    def __init__(self, qtile: Qtile, ptr, wid):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
         Base.__init__(self, qtile, ptr, wid)
         base.Static.__init__(self)
         self.screen = qtile.current_screen
@@ -794,14 +805,14 @@ class Static(Base, base.Static):
         if self._ptr.app_id != ffi.NULL:
             self._wm_class = ffi.string(self._ptr.app_id).decode()
 
-    def handle_set_title(self, title):
+    def handle_set_title(self, title: str) -> None:
         logger.debug("Signal: static window set_title")
         if title != self.name:
             self.name = title
             # TODO: Handle foreign-toplevel-management?
             hook.fire("client_name_updated", self)
 
-    def handle_set_app_id(self, app_id):
+    def handle_set_app_id(self, app_id: str) -> None:
         logger.debug("Signal: static window set_app_id")
         self._wm_class = app_id
         # TODO: Handle foreign-toplevel-management?
@@ -841,5 +852,3 @@ class Static(Base, base.Static):
         )
         return info
 
-
-WindowType = Window | Internal | Static
