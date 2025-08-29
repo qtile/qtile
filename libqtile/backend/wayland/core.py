@@ -73,6 +73,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
+from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.window import Internal, Window, WindowType
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
@@ -177,6 +178,11 @@ def view_urgent_cb(view, userdata):
     core = ffi.from_handle(userdata)
     core.handle_view_urgent(view)
 
+@ffi.def_extern()
+def on_input_device_added_cb(userdata):
+    core = ffi.from_handle(userdata)
+    core.handle_input_device_added()
+
 
 def get_wlr_log_level():
     if logger.level <= logging.DEBUG:
@@ -221,6 +227,7 @@ class Core(base.Core):
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
         self.qw.view_urgent_cb = lib.view_urgent_cb
         self.qw.view_urgent_cb_data = self._userdata
+        self.qw.on_input_device_added_cb = lib.on_input_device_added_cb
         lib.qw_server_start(self.qw)
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
@@ -232,11 +239,15 @@ class Core(base.Core):
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
     def on_config_load(self, initial: bool) -> None:
+        assert self.qtile is not None
+
+        # Apply input device configuration
+        if self.qtile.config.wl_input_rules:
+            inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
+
         if initial:
             # This backend does not support restarting
             return
-
-        assert self.qtile is not None
 
         managed_wins = [w for w in self.qtile.windows_map.values() if isinstance(w, Window)]
         for win in managed_wins:
@@ -264,10 +275,9 @@ class Core(base.Core):
             else:
                 win.hide()
 
-        # Apply input device configuration
+    def handle_input_device_added(self):
         if self.qtile.config.wl_input_rules:
-            # TODO: configure devices (keyboards, pointers)
-            pass
+            inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
 
     def handle_screen_change(self):
         hook.fire("screen_change", None)

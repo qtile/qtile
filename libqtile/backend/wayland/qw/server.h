@@ -77,6 +77,15 @@ struct qw_output;
 // Callback for when the screen reserves space
 typedef void (*on_screen_reserve_space_cb_t)(struct qw_output *output, void *userdata);
 
+// Forward declaration of input device struct
+struct qw_input_device;
+
+// Iterate input devices callback
+typedef void (*input_device_cb_t)(struct qw_input_device *input_device, const char* name, int type, int vendor, int product);
+
+// Callback for when an input device is added
+typedef void (*on_input_device_added_cb_t)(void *userdata);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -114,6 +123,7 @@ struct qw_server {
     on_screen_change_cb_t on_screen_change_cb;
     on_screen_reserve_space_cb_t on_screen_reserve_space_cb;
     view_urgent_cb_t view_urgent_cb;
+    on_input_device_added_cb_t on_input_device_added_cb;
     void *view_urgent_cb_data;
     void *cb_data;
 
@@ -142,6 +152,7 @@ struct qw_server {
     struct wl_listener new_input;
     struct wl_listener renderer_lost;
     struct wl_list keyboards;
+    struct wl_list input_devices;
     struct wlr_seat *seat;
     struct qw_cursor *cursor;
     struct wlr_xdg_shell *xdg_shell;
@@ -205,5 +216,7 @@ void qw_server_paint_wallpaper(struct qw_server *server, int x, int y, cairo_sur
                                enum qw_wallpaper_mode mode);
 
 void qw_server_paint_background_color(struct qw_server *server, int x, int y, float color[4]);
+
+void qw_server_loop_input_devices(struct qw_server *server, input_device_cb_t cb);
 
 #endif /* SERVER_H */

@@ -73,6 +73,7 @@ extern "Python" void cursor_motion_cb(int x, int y, void *userdata);
 extern "Python" int cursor_button_cb(int button, uint32_t mask, bool pressed, int x, int y, void *userdata);
 extern "Python" void on_screen_change_cb(void *userdata);
 extern "Python" void on_screen_reserve_space_cb(struct qw_output *output, void *userdata);
+extern "Python" void on_input_device_added_cb(void *userdata);
 
 extern "Python" int request_fullscreen_cb(bool fullscreen, void *userdata);
 extern "Python" int request_maximize_cb(bool maximize, void *userdata);
@@ -80,7 +81,7 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h"]
+cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h", "input-device.h", "keyboard.h"]
 
 for file in cdef_files:
     with open(QW_PATH / file) as f:

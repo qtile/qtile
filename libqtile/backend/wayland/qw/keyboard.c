@@ -76,6 +76,10 @@ void qw_keyboard_set_keymap(struct qw_keyboard *keyboard, const char *layout, co
     xkb_context_unref(context);
 }
 
+void qw_keyboard_set_repeat_info(struct qw_keyboard *keyboard, int kb_repeat_rate, int kb_repeat_delay) {
+    wlr_keyboard_set_repeat_info(keyboard->wlr_keyboard, kb_repeat_rate, kb_repeat_delay);
+}
+
 // Creates and initializes a new keyboard input device attached to the server
 void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *device) {
     struct qw_keyboard *keyboard = calloc(1, sizeof(*keyboard));
@@ -88,6 +92,9 @@ void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *d
 
     keyboard->server = server;
     keyboard->wlr_keyboard = wlr_keyboard;
+
+    // Give keyboard input devices a reference to qw_keyboard
+    device->data = keyboard;
 
     // Create new xkb context and default keymap
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
