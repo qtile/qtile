@@ -1,6 +1,3 @@
-objgraph.dot: The Qtile command graph, in graphviz dot format. Render like so:
-    circo -Tpng objgraph.dot > objgraph.png
-
 qtile.desktop: A desktop file for qtile telling session managers about qtile
     and how to run it. This file should be installed to /usr/share/xsessions
 
