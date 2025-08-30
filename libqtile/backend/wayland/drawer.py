@@ -68,7 +68,7 @@ class Drawer(drawer.Drawer):
         # Allocation could have failed, NULL check
         if not self._win.surface:
             return
-        surface = cairocffi.Surface._from_pointer(self._win.surface, True)
+        surface = cairocffi.Surface._from_pointer(self._win.surface, True) # type: ignore[attr-defined]
         with cairocffi.Context(surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
             # Adjust the source surface position by src_x and src_y e.g. if we want

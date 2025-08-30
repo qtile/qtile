@@ -107,7 +107,7 @@ for root, dirs, files in os.walk(QW_PATH):
                 SOURCE += f.read()
 
 
-def get_include_path(lib):
+def get_include_path(lib: str) -> str:
     return subprocess.run(
         ["pkg-config", "--variable=includedir", lib], text=True, stdout=subprocess.PIPE
     ).stdout.strip()
