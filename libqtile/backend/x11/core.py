@@ -24,8 +24,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
-import signal
-import time
 from typing import TYPE_CHECKING
 
 import xcffib
@@ -896,43 +894,6 @@ class Core(base.Core):
 
     def flush(self):
         self.conn.flush()
-
-    def graceful_shutdown(self):
-        """Try to close windows gracefully before exiting"""
-
-        try:
-            pids = []
-            for win in self.qtile.windows_map.values():
-                if not isinstance(win, base.Internal):
-                    if pid := win.get_pid():
-                        pids.append(pid)
-        except xcffib.ConnectionException:
-            logger.warning("Server disconnected, couldn't close windows gracefully.")
-            return
-
-        # Give the windows a chance to shut down nicely.
-        for pid in pids:
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except OSError:
-                # might have died recently
-                pass
-
-        def still_alive(pid):
-            # most pids will not be children, so we can't use wait()
-            try:
-                os.kill(pid, 0)
-                return True
-            except OSError:
-                return False
-
-        # give everyone a little time to exit and write their state. but don't
-        # sleep forever (1s).
-        for i in range(10):
-            pids = list(filter(still_alive, pids))
-            if len(pids) == 0:
-                break
-            time.sleep(0.1)
 
     def get_mouse_position(self) -> tuple[int, int]:
         """
