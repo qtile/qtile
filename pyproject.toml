@@ -62,6 +62,7 @@ optional_core = [
     "dbus-fast",
     "libcst >= 1.0.0",
     "setproctitle",
+    "prompt_toolkit",
 ]
 widgets = [
     "imaplib2",
