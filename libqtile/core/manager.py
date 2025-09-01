@@ -58,7 +58,6 @@ from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
 from libqtile.scripts.main import VERSION
 from libqtile.utils import (
-    cancel_tasks,
     create_task,
     get_cache_dir,
     lget,
@@ -350,7 +349,6 @@ class Qtile(CommandObject):
         self._finalize_configurables()
         remove_dbus_rules()
         inhibitor.stop()
-        cancel_tasks()
         self.core.finalize()
 
     def add_autogen_group(self, screen_idx: int) -> _Group:

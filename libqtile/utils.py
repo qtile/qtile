@@ -63,7 +63,7 @@ dbus_bus_connections = set()
 
 # Create a list to collect references to tasks so they're not garbage collected
 # before they've run
-TASKS: list[asyncio.Task[None]] = []
+TASKS: set[asyncio.Task[None]] = set()
 
 
 def create_task(coro: Coroutine) -> asyncio.Task | None:
@@ -78,20 +78,11 @@ def create_task(coro: Coroutine) -> asyncio.Task | None:
     if not loop:
         return None
 
-    def tidy(task: asyncio.Task) -> None:
-        TASKS.remove(task)
-
     task = asyncio.create_task(coro)
-    TASKS.append(task)
-    task.add_done_callback(tidy)
+    TASKS.add(task)
+    task.add_done_callback(TASKS.discard)
 
     return task
-
-
-def cancel_tasks() -> None:
-    """Cancel scheduled tasks."""
-    for task in TASKS:
-        task.cancel()
 
 
 class QtileError(Exception):
