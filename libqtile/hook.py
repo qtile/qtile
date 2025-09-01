@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 from typing import TYPE_CHECKING
 
 from libqtile import backend, utils
@@ -203,7 +204,7 @@ class Registry:
 
         for i in subscriptions[self.name].get(event, []):
             try:
-                if asyncio.iscoroutinefunction(i):
+                if inspect.iscoroutinefunction(i):
                     _fire_async_event(i(*args, **kwargs), unsubscribe_func(event, i))
                 elif asyncio.iscoroutine(i):
                     _fire_async_event(i, unsubscribe_func(event, i))

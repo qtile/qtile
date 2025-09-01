@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import inspect
 import math
 import subprocess
 from typing import TYPE_CHECKING
@@ -432,7 +433,7 @@ class _Widget(CommandObject, configurable.Configurable):
     def _wrapper(self, method, *method_args):
         self._remove_dead_timers()
         try:
-            if asyncio.iscoroutinefunction(method):
+            if inspect.iscoroutinefunction(method):
                 create_task(method(*method_args))
             elif asyncio.iscoroutine(method):
                 create_task(method)

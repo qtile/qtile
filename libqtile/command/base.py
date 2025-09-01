@@ -338,7 +338,7 @@ class CommandObject(metaclass=abc.ABCMeta):
     def function(self, function, *args, **kwargs) -> asyncio.Task | None:
         """Call a function with current object as argument"""
         try:
-            if asyncio.iscoroutinefunction(function):
+            if inspect.iscoroutinefunction(function):
                 return create_task(function(self, *args, **kwargs))
             else:
                 return function(self, *args, **kwargs)
