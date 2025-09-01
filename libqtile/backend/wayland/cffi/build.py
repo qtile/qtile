@@ -1,7 +1,6 @@
 from cffi import FFI
 from pathlib import Path
 
-import cairocffi
 import os
 import subprocess
 
@@ -80,7 +79,15 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h"]
+cdef_files = [
+    "cursor.h",
+    "internal-view.h",
+    "log.h",
+    "output.h",
+    "server.h",
+    "util.h",
+    "view.h",
+]
 
 for file in cdef_files:
     with open(QW_PATH / file) as f:
@@ -98,13 +105,16 @@ for file in cdef_files:
                 continue
             CDEF += line
 
-SOURCE = ""
 
-for root, dirs, files in os.walk(QW_PATH):
-    for file in files:
-        if file.endswith(".c"):
-            with open(QW_PATH / file) as f:
-                SOURCE += f.read()
+def make_unity_build() -> list[str]:
+    collected_source_files = sorted(
+        str(QW_PATH / file)
+        for *_, files in os.walk(QW_PATH)
+        for file in files
+        if file.endswith(".c")
+    )
+
+    return list(collected_source_files)
 
 
 def get_include_path(lib):
@@ -114,9 +124,33 @@ def get_include_path(lib):
 
 
 ffi = FFI()
+
+import sys
+
+if "--verbose" in sys.argv:
+    import subprocess
+
+    def run_wrapper(fn):
+        def wrapper(*args, **kwargs):
+            cmd, *_ = args
+            print(' '.join(cmd))
+
+            return fn(*args, **kwargs)
+        return wrapper
+
+    # this is a hack, to print the compile commands
+    subprocess.run = run_wrapper(subprocess.run)
+    subprocess.check_call = run_wrapper(subprocess.check_call)
+
+
+ffi.cdef(CDEF)
 ffi.set_source(
-    "libqtile.backend.wayland._ffi",
-    SOURCE,
+    module_name="libqtile.backend.wayland._ffi",
+
+    # this is not the real source file provider ??
+    source='\n'.join(f'#include "{filename}"' for filename in cdef_files),
+    # ^ we have no idea what this is, but it does not work without it
+
     libraries=["wlroots-0.19", "wayland-server", "input", "cairo"],
     define_macros=[("WLR_USE_UNSTABLE", None)],
     include_dirs=[
@@ -127,8 +161,29 @@ ffi.set_source(
         QW_PATH,
         QW_PROTO_OUT_PATH,
     ],
+    # actual source list ????
+    sources=make_unity_build(),
+    extra_compile_args=[
+        "-fanalyzer",
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Wunused-result",
+        "-Wcast-align",
+        "-Wduplicated-branches",
+        "-Wduplicated-cond",
+        "-Wformat=2",
+        "-Wstrict-prototypes",
+        "-Wunreachable-code",
+        "-Wno-discarded-qualifiers",
+        "-Wformat-nonliteral",
+        "-Wint-conversion",
+        "-Wreturn-type",
+        "-Wwrite-strings",
+        "-Wshadow",
+    ]
 )
 
-ffi.cdef(CDEF)
+
 if __name__ == "__main__":
-    ffi.compile()
+    ffi.compile(verbose=True)
