@@ -37,6 +37,7 @@ import subprocess
 from libqtile import bar
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
+from libqtile.utils import create_task
 from libqtile.widget import base
 
 __all__ = [
@@ -122,7 +123,7 @@ class Volume(base._TextBox):
         )
 
     def timer_setup(self):
-        asyncio.create_task(self.do_volume())
+        create_task(self.do_volume())
         if self.theme_path:
             self.setup_images()
 
@@ -159,7 +160,7 @@ class Volume(base._TextBox):
             self._update_drawer()
             self.bar.draw()
         await asyncio.sleep(self.update_interval)
-        asyncio.create_task(self.do_volume())
+        create_task(self.do_volume())
 
     def _update_drawer(self):
         if self.mute_foreground is not None:
