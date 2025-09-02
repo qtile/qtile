@@ -1,7 +1,7 @@
 import enum
-from libqtile import configurable
 from typing import Any
-from libqtile.log_utils import logger
+
+from libqtile import configurable
 
 try:
     from libqtile.backend.wayland._ffi import ffi, lib
@@ -119,11 +119,13 @@ class ScrollMethod(enum.IntEnum):
     on_button_down = lib.LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN
 
 
-def configure_input_devices(server, configs):
+def configure_input_devices(server: ffi.CData, configs: dict[str, Any]) -> None:
     @ffi.callback(
         "void(struct qw_input_device *input_device, char *name, int type, int vendor, int product)"
     )
-    def input_device_cb(input_device, name, type, vendor, product):
+    def input_device_cb(
+        input_device: ffi.CData, name: ffi.CData, type: int, vendor: int, product: int
+    ) -> None:
         # Get the device type and identifier for this input device. These can be used be
         # used to assign ``InputConfig`` options to devices or types of devices.
         name = ffi.string(name).decode()
