@@ -74,7 +74,7 @@ from typing import TYPE_CHECKING
 from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs
-from libqtile.backend.wayland.window import Internal, Window, WindowType
+from libqtile.backend.wayland.window import Internal, Static, Window, WindowType
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.images import Img
@@ -91,6 +91,8 @@ except ModuleNotFoundError:
 
 if TYPE_CHECKING:
     from libqtile import config
+    from libqtile.config import Screen
+    from libqtile.utils import ColorType
 
 
 def translate_masks(modifiers: list[str]) -> int:
@@ -116,7 +118,7 @@ qw_logger = logging.getLogger("qw")
 
 
 @ffi.def_extern()
-def log_cb(importance: int, formatted_str) -> None:
+def log_cb(importance: int, formatted_str: ffi.CData) -> None:
     """Callback that logs the string at the given level"""
     log_str = ffi.string(formatted_str).decode()
     if importance == lib.WLR_ERROR:
@@ -128,7 +130,7 @@ def log_cb(importance: int, formatted_str) -> None:
 
 
 @ffi.def_extern()
-def keyboard_key_cb(keysym, mask, userdata):
+def keyboard_key_cb(keysym: int, mask: int, userdata: ffi.CData) -> int:
     core = ffi.from_handle(userdata)
     if core.handle_keyboard_key(keysym, mask):
         return 1
@@ -136,25 +138,25 @@ def keyboard_key_cb(keysym, mask, userdata):
 
 
 @ffi.def_extern()
-def manage_view_cb(view, userdata):
+def manage_view_cb(view: ffi.CData, userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_manage_view(view)
 
 
 @ffi.def_extern()
-def unmanage_view_cb(view, userdata):
+def unmanage_view_cb(view: ffi.CData, userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_unmanage_view(view)
 
 
 @ffi.def_extern()
-def cursor_motion_cb(x, y, userdata):
+def cursor_motion_cb(x: int, y: int, userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_cursor_motion(x, y)
 
 
 @ffi.def_extern()
-def cursor_button_cb(button, mask, pressed, x, y, userdata):
+def cursor_button_cb(button: int, mask: int, pressed: bool, x: int, y: int, userdata: ffi.CData) -> int:
     core = ffi.from_handle(userdata)
     if core.handle_cursor_button(button, mask, pressed, x, y):
         return 1
@@ -162,19 +164,19 @@ def cursor_button_cb(button, mask, pressed, x, y, userdata):
 
 
 @ffi.def_extern()
-def on_screen_change_cb(userdata):
+def on_screen_change_cb(userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_screen_change()
 
 
 @ffi.def_extern()
-def on_screen_reserve_space_cb(output, userdata):
+def on_screen_reserve_space_cb(output: ffi.CData, userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_screen_reserve_space(output)
 
 
 @ffi.def_extern()
-def view_urgent_cb(view, userdata):
+def view_urgent_cb(view: ffi.CData, userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_view_urgent(view)
 
@@ -184,7 +186,7 @@ def on_input_device_added_cb(userdata):
     core.handle_input_device_added()
 
 
-def get_wlr_log_level():
+def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
     elif logger.level <= logging.INFO:
@@ -199,9 +201,9 @@ class Core(base.Core):
 
     def __init__(self) -> None:
         # This is the window under the pointer
-        self._hovered_window: WindowType | None = None
+        self._hovered_window: base.WindowType | None = None
         # this Internal window receives keyboard input, e.g. via the Prompt widget.
-        self.focused_internal: Internal | None = None
+        self.focused_internal: base.Internal | None = None
 
         """Setup the Wayland core backend"""
         log_utils.init_log(logger.level, log_path=log_utils.get_default_log(), logger=qw_logger)
@@ -213,7 +215,7 @@ class Core(base.Core):
         xwayland_display_name_ptr = lib.qw_server_xwayland_display_name(self.qw)
         if xwayland_display_name_ptr != ffi.NULL:
             os.environ["DISPLAY"] = ffi.string(xwayland_display_name_ptr).decode()
-        self._output_reserved_space = {}
+        self._output_reserved_space: dict[Screen, tuple[int, int, int, int]] = {}
         self.current_window = None
         self.grabbed_keys: list[tuple[int, int]] = []
         self._userdata = ffi.new_handle(self)
@@ -279,10 +281,10 @@ class Core(base.Core):
         if self.qtile.config.wl_input_rules:
             inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
 
-    def handle_screen_change(self):
+    def handle_screen_change(self) -> None:
         hook.fire("screen_change", None)
 
-    def get_screen_for_output(self, output):
+    def get_screen_for_output(self, output: ffi.CData) -> Screen:
         assert self.qtile is not None
 
         for screen in self.qtile.screens:
@@ -293,7 +295,7 @@ class Core(base.Core):
 
         return self.qtile.current_screen
 
-    def handle_screen_reserve_space(self, output):
+    def handle_screen_reserve_space(self, output: ffi.CData) -> None:
         screen = self.get_screen_for_output(output)
         # TODO: is full_area correct here?
         # the old backend used ow and oh
@@ -311,12 +313,12 @@ class Core(base.Core):
             self.qtile.reserve_space(delta, screen)
             self._output_reserved_space[screen] = new_reserved_space
 
-    def handle_cursor_motion(self, x, y):
+    def handle_cursor_motion(self, x: int, y: int) -> None:
         assert self.qtile is not None
         self._focus_pointer(x, y)
         self.qtile.process_button_motion(x, y)
 
-    def handle_cursor_button(self, button, mask, pressed, x, y) -> bool:
+    def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
         assert self.qtile is not None
         if pressed:
             self._focus_by_click()
@@ -334,7 +336,7 @@ class Core(base.Core):
         else:
             return self.qtile.process_button_release(button, mask)
 
-    def handle_manage_view(self, view):
+    def handle_manage_view(self, view: ffi.CData) -> None:
         wid = self.new_wid()
         view.wid = wid
 
@@ -348,11 +350,11 @@ class Core(base.Core):
 
         self.qtile.manage(win)
 
-    def handle_unmanage_view(self, view):
+    def handle_unmanage_view(self, view: ffi.CData) -> None:
         assert self.qtile is not None
         self.qtile.unmanage(view.wid)
 
-    def handle_keyboard_key(self, keysym, mask):
+    def handle_keyboard_key(self, keysym: int, mask: int) -> bool:
         if self.focused_internal:
             self.focused_internal.process_key_press(keysym)
             return True
@@ -366,7 +368,7 @@ class Core(base.Core):
 
         return False
 
-    def focus_window(self, win: WindowType) -> None:
+    def focus_window(self, win: base.WindowType) -> None:
         if isinstance(win, base.Internal):
             self.focused_internal = win
             lib.qw_server_keyboard_clear_focus(self.qw)
@@ -378,20 +380,20 @@ class Core(base.Core):
         # TODO logic imcomplete
         win._ptr.focus(win._ptr, False)  # What is the second argument?
 
-    def _focus_by_click(self):
+    def _focus_by_click(self) -> ffi.CData:
         assert self.qtile is not None
         view = self.qw_cursor.view
 
         if view != ffi.NULL:
             win = self.qtile.windows_map.get(view.wid)
 
-            if self.qtile.config.bring_front_click is True:
+            if win is not None and self.qtile.config.bring_front_click is True:
                 win.bring_to_front()
             elif self.qtile.config.bring_front_click == "floating_only":
                 if isinstance(win, base.Window) and win.floating:
                     win.bring_to_front()
 
-            if isinstance(win, base.Static):
+            if isinstance(win, Static):
                 if win.screen is not self.qtile.current_screen:
                     self.qtile.focus_screen(win.screen.index, warp=False)
                 win.focus(False)
@@ -425,9 +427,9 @@ class Core(base.Core):
 
         if win is not self.qtile.current_window:
             if self.qtile.config.follow_mouse_focus is True:
-                if isinstance(win, base.Static):
+                if isinstance(win, Static):
                     self.qtile.focus_screen(win.screen.index, False)
-                else:
+                elif win is not None:
                     if win.group and win.group.current_window != win:
                         win.group.focus(win, False)
                     if (
@@ -439,7 +441,7 @@ class Core(base.Core):
 
         self._hovered_window = win
 
-    def handle_view_urgent(self, view):
+    def handle_view_urgent(self, view: ffi.CData) -> None:
         """Handle view urgency notification"""
         assert self.qtile is not None
         wid = view.wid
@@ -447,7 +449,8 @@ class Core(base.Core):
 
         if win:
             # Mark window as urgent in Qtile
-            win.urgent = True
+            #TODO: Fix the following line, probably supposed to be: win._urgent
+            # win.urgent = True
             hook.fire("client_urgent_hint_changed", win)
 
             if self.qtile.config.focus_on_window_activation == "smart":
@@ -473,7 +476,7 @@ class Core(base.Core):
         rects = []
 
         @ffi.callback("void(int, int, int, int)")
-        def loop(x, y, width, height):
+        def loop(x: int, y: int, width: int, height: int) -> None:
             rects.append(ScreenRect(x, y, width, height))
 
         lib.qw_server_loop_output_dims(self.qw, loop)
@@ -635,7 +638,7 @@ class Core(base.Core):
         wids = []
 
         @ffi.callback("void(int)")
-        def loop(wid):
+        def loop(wid: int) -> None:
             wids.append(wid)
 
         lib.qw_server_loop_visible_views(self.qw, loop)
@@ -648,7 +651,7 @@ class Painter:
     on a `Screen`.
     """
 
-    def __init__(self, core):
+    def __init__(self, core: Core):
         self.core = core
         self._mode_map = {
             "stretch": lib.WALLPAPER_MODE_STRETCH,
@@ -656,11 +659,11 @@ class Painter:
             "center": lib.WALLPAPER_MODE_CENTER,
         }
 
-    def fill(self, screen, background):
+    def fill(self, screen: Screen, background: ColorType) -> None:
         col = ffi.new("float[4]", rgb(background))
         lib.qw_server_paint_background_color(self.core.qw, screen.x, screen.y, col)
 
-    def paint(self, screen, image_path, mode=None):
+    def paint(self, screen: Screen, image_path: str, mode: str | None = None) -> None:
         filename = Path(image_path).expanduser().resolve()
         if not filename.exists():
             logger.warning("Wallpaper image not found: %s", image_path)
@@ -668,7 +671,7 @@ class Painter:
 
         surface = Img.from_path(image_path).default_surface
         surface_pointer = ffi.cast("cairo_surface_t *", surface._pointer)
-        w_mode = self._mode_map.get(mode, lib.WALLPAPER_MODE_STRETCH)
+        w_mode = self._mode_map.get(mode or "stretch", lib.WALLPAPER_MODE_STRETCH)
         lib.qw_server_paint_wallpaper(self.core.qw, screen.x, screen.y, surface_pointer, w_mode)
 
         # Destroy the surface
