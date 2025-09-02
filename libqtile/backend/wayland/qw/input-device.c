@@ -25,7 +25,6 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
     wl_signal_add(&device->events.destroy, &input_device->destroy);
 
     wl_list_insert(&server->input_devices, &input_device->link);
-
 }
 
 struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_device *input_device) {
@@ -41,7 +40,7 @@ struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_d
 }
 
 bool qw_input_device_is_touchpad(struct qw_input_device *input_device) {
-    struct libinput_device* device = qw_input_device_get_libinput_handle(input_device);
+    struct libinput_device *device = qw_input_device_get_libinput_handle(input_device);
     return device && libinput_device_config_tap_get_finger_count(device) > 0;
 }
 
@@ -65,7 +64,8 @@ void qw_input_device_config_tap_set_drag_enabled(struct libinput_device *device,
     libinput_device_config_tap_set_drag_enabled(device, drag);
 }
 
-void qw_input_device_config_tap_set_drag_lock_enabled(struct libinput_device *device, int drag_lock) {
+void qw_input_device_config_tap_set_drag_lock_enabled(struct libinput_device *device,
+                                                      int drag_lock) {
     libinput_device_config_tap_set_drag_lock_enabled(device, drag_lock);
 }
 
@@ -81,7 +81,8 @@ void qw_input_device_config_tap_set_button_map(struct libinput_device *device, i
     }
 }
 
-void qw_input_device_config_scroll_set_natural_scroll_enabled(struct libinput_device *device, int natural_scroll) {
+void qw_input_device_config_scroll_set_natural_scroll_enabled(struct libinput_device *device,
+                                                              int natural_scroll) {
     if (libinput_device_config_scroll_has_natural_scroll(device) != 0) {
         libinput_device_config_scroll_set_natural_scroll_enabled(device, natural_scroll);
     }
@@ -92,7 +93,8 @@ void qw_input_device_config_scroll_set_method(struct libinput_device *device, in
 }
 
 void qw_input_device_config_scroll_set_button(struct libinput_device *device, int scroll_button) {
-    if ((int)libinput_device_config_scroll_get_method(device) == LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN) {
+    if ((int)libinput_device_config_scroll_get_method(device) ==
+        LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN) {
         libinput_device_config_scroll_set_button(device, scroll_button);
     }
 }
@@ -109,6 +111,7 @@ void qw_input_device_config_left_handed_set(struct libinput_device *device, int 
     }
 }
 
-void qw_input_device_config_middle_emulation_set_enabled(struct libinput_device *device, int middle_emulation) {
+void qw_input_device_config_middle_emulation_set_enabled(struct libinput_device *device,
+                                                         int middle_emulation) {
     libinput_device_config_middle_emulation_set_enabled(device, middle_emulation);
 }
