@@ -164,7 +164,6 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
 //     free(qw_surface);
 // }
 
-
 static struct wlr_scene_node *qw_xwayland_view_get_tree_node(void *self) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
 
@@ -174,7 +173,6 @@ static struct wlr_scene_node *qw_xwayland_view_get_tree_node(void *self) {
 
     return &xwayland_view->scene_tree->node;
 }
-
 
 // Bring the xwayland_view's content scene node to the front
 static void qw_xwayland_view_bring_to_front(void *self) {
@@ -306,8 +304,8 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
     // Create a subsurface tree for this view under the content tree.
-    xwayland_view->scene_tree =
-        wlr_scene_subsurface_tree_create(xwayland_view->base.content_tree, xwayland_surface->surface);
+    xwayland_view->scene_tree = wlr_scene_subsurface_tree_create(xwayland_view->base.content_tree,
+                                                                 xwayland_surface->surface);
 
     // Set the view's initial dimensions based on the surface.
     xwayland_view->base.width = xwayland_surface->width;
@@ -321,7 +319,6 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     //  Attach a listener to the surface's commit signal.
     wl_signal_add(&xwayland_surface->surface->events.commit, &xwayland_view->commit);
     xwayland_view->commit.notify = qw_xwayland_view_handle_commit;
-
 }
 
 // Called when the XWayland surface is unmapped (i.e., hidden or destroyed).
@@ -386,11 +383,9 @@ static void qw_xwayland_view_handle_request_configure(struct wl_listener *listen
         // TODO: request resize
         // TODO: request configuration with pending parameters
     } else {
-        //TODO: call wlr_xwayland_surface_configure directly?
-        qw_xwayland_view_configure(&xwayland_view->base,
-                                   xwayland_view->base.x,
-                                   xwayland_view->base.y,
-                                   xwayland_view->base.width,
+        // TODO: call wlr_xwayland_surface_configure directly?
+        qw_xwayland_view_configure(&xwayland_view->base, xwayland_view->base.x,
+                                   xwayland_view->base.y, xwayland_view->base.width,
                                    xwayland_view->base.height);
     }
 }
