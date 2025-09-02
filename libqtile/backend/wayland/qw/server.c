@@ -409,7 +409,9 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
         while (tree && !tree->node.data) {
             tree = tree->node.parent;
         }
-        return tree->node.data;
+		if (tree != NULL) {
+			return tree->node.data;
+		}
     }
 
     return NULL;
