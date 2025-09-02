@@ -81,6 +81,7 @@ class InputConfig(configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(InputConfig.defaults)
 
+
 @enum.unique
 class InputDeviceType(enum.IntEnum):
     KEYBOARD = lib.WLR_INPUT_DEVICE_KEYBOARD
@@ -90,10 +91,12 @@ class InputDeviceType(enum.IntEnum):
     TABLET_PAD = lib.WLR_INPUT_DEVICE_TABLET_PAD
     SWITCH = lib.WLR_INPUT_DEVICE_SWITCH
 
+
 @enum.unique
 class AccelProfile(enum.IntEnum):
     adaptive = lib.LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE
     flat = lib.LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT
+
 
 @enum.unique
 class ClickMethod(enum.IntEnum):
@@ -101,10 +104,12 @@ class ClickMethod(enum.IntEnum):
     button_areas = lib.LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS
     clickfinger = lib.LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER
 
+
 @enum.unique
 class TapMap(enum.IntEnum):
     lrm = lib.LIBINPUT_CONFIG_TAP_MAP_LRM
     lmr = lib.LIBINPUT_CONFIG_TAP_MAP_LMR
+
 
 @enum.unique
 class ScrollMethod(enum.IntEnum):
@@ -113,8 +118,11 @@ class ScrollMethod(enum.IntEnum):
     edge = lib.LIBINPUT_CONFIG_SCROLL_EDGE
     on_button_down = lib.LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN
 
+
 def configure_input_devices(server, configs):
-    @ffi.callback("void(struct qw_input_device *input_device, char *name, int type, int vendor, int product)")
+    @ffi.callback(
+        "void(struct qw_input_device *input_device, char *name, int type, int vendor, int product)"
+    )
     def input_device_cb(input_device, name, type, vendor, product):
         # Get the device type and identifier for this input device. These can be used be
         # used to assign ``InputConfig`` options to devices or types of devices.
@@ -146,31 +154,43 @@ def configure_input_devices(server, configs):
                     return
 
                 if conf.accel_profile is not None:
-                    lib.qw_input_device_config_accel_set_profile(device, AccelProfile[conf.accel_profile].value)
+                    lib.qw_input_device_config_accel_set_profile(
+                        device, AccelProfile[conf.accel_profile].value
+                    )
 
                 if conf.pointer_accel is not None:
                     lib.qw_input_device_config_accel_set_speed(device, conf.pointer_accel)
 
                 if conf.click_method is not None:
-                    lib.qw_input_device_config_click_set_method(device, ClickMethod[conf.click_method].value)
+                    lib.qw_input_device_config_click_set_method(
+                        device, ClickMethod[conf.click_method].value
+                    )
 
                 if conf.drag is not None:
                     lib.qw_input_device_config_tap_set_drag_enabled(device, int(conf.drag))
 
                 if conf.drag_lock is not None:
-                    lib.qw_input_device_config_tap_set_drag_lock_enabled(device, int(conf.drag_lock))
+                    lib.qw_input_device_config_tap_set_drag_lock_enabled(
+                        device, int(conf.drag_lock)
+                    )
 
                 if conf.tap is not None:
                     lib.qw_input_device_config_tap_set_enabled(device, int(conf.tap))
 
                 if conf.tap_button_map is not None:
-                    lib.qw_input_device_config_tap_set_button_map(device, TapMap[conf.tap_button_map].value)
+                    lib.qw_input_device_config_tap_set_button_map(
+                        device, TapMap[conf.tap_button_map].value
+                    )
 
                 if conf.natural_scroll is not None:
-                    lib.qw_input_device_config_scroll_set_natural_scroll_enabled(device, int(conf.natural_scroll))
+                    lib.qw_input_device_config_scroll_set_natural_scroll_enabled(
+                        device, int(conf.natural_scroll)
+                    )
 
                 if conf.scroll_method is not None:
-                    lib.qw_input_device_config_scroll_set_method(device, ScrollMethod[conf.scroll_method].value)
+                    lib.qw_input_device_config_scroll_set_method(
+                        device, ScrollMethod[conf.scroll_method].value
+                    )
 
                 if conf.scroll_button is not None:
                     if isinstance(conf.scroll_button, str):
@@ -179,7 +199,7 @@ def configure_input_devices(server, configs):
                         else:
                             button = lib.qw_util_get_button_code(int(conf.scroll_button[-1]) - 1)
                     else:
-                         button = conf.scroll_button
+                        button = conf.scroll_button
                     lib.qw_input_device_config_scroll_set_button(device, button)
 
                 if conf.dwt is not None:
@@ -189,18 +209,23 @@ def configure_input_devices(server, configs):
                     lib.qw_input_device_config_left_handed_set(device, int(conf.left_handed))
 
                 if conf.middle_emulation is not None:
-                    lib.qw_input_device_config_middle_emulation_set_enabled(device, int(conf.middle_emulation))
+                    lib.qw_input_device_config_middle_emulation_set_enabled(
+                        device, int(conf.middle_emulation)
+                    )
 
             elif type == InputDeviceType.KEYBOARD:
                 keyboard = lib.qw_input_device_get_keyboard(input_device)
                 if keyboard == ffi.NULL:
                     return
 
-                lib.qw_keyboard_set_repeat_info(keyboard, conf.kb_repeat_rate, conf.kb_repeat_delay)
-                lib.qw_keyboard_set_keymap(keyboard,
-                                           ffi.new("char[]", (conf.kb_layout or "").encode()),
-                                           ffi.new("char[]", (conf.kb_options or "").encode()),
-                                           ffi.new("char[]", (conf.kb_variant or "").encode()))
+                lib.qw_keyboard_set_repeat_info(
+                    keyboard, conf.kb_repeat_rate, conf.kb_repeat_delay
+                )
+                lib.qw_keyboard_set_keymap(
+                    keyboard,
+                    ffi.new("char[]", (conf.kb_layout or "").encode()),
+                    ffi.new("char[]", (conf.kb_options or "").encode()),
+                    ffi.new("char[]", (conf.kb_variant or "").encode()),
+                )
 
     lib.qw_server_loop_input_devices(server, input_device_cb)
-
