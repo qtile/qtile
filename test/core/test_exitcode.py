@@ -25,7 +25,7 @@ import sys
 import tempfile
 import time
 
-import test
+from test.helpers import can_connect_qtile
 
 repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 socket_path = tempfile.NamedTemporaryFile().name
@@ -60,7 +60,7 @@ def stop_qtile(code):
 def deferred_stop(code=0):
     # wait for qtile process to start
     wait = 10
-    while not test.helpers.can_connect_qtile(socket_path):
+    while not can_connect_qtile(socket_path):
         time.sleep(1)
         if not wait:
             raise Exception("timeout waiting for qtile process")
@@ -75,6 +75,7 @@ def deferred_stop(code=0):
 # and a second instance started by run_qtile,
 # which is used to test the actual exit code behavior
 def test_exitcode_default(backend):
+    multiprocessing.set_start_method("fork", force=True)
     proc = multiprocessing.Process(target=deferred_stop)
     proc.start()
 
@@ -86,6 +87,7 @@ def test_exitcode_default(backend):
 def test_exitcode_explicit(backend):
     code = 23
 
+    multiprocessing.set_start_method("fork", force=True)
     proc = multiprocessing.Process(target=deferred_stop, args=(code,))
     proc.start()
 
