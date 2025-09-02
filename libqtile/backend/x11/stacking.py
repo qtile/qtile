@@ -17,15 +17,22 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import annotations
+
 from enum import Enum
 from functools import wraps
+from typing import TYPE_CHECKING
 
 import xcffib.xproto
 
 from libqtile.backend.base import LayerGroup, WindowType
-from libqtile.backend.x11.window import Window
+from libqtile.backend.x11.window import Window, XWindow
+from libqtile.command.base import expose_command
 from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 def check_window(func):
@@ -268,6 +275,7 @@ class _StackingManager:
     """
 
     qtile: Qtile
+    _root: XWindow
 
     def init_stacking(self) -> None:
         self.layers: dict[LayerGroup, TreeNode] = {l: TreeNode(layer_group=l) for l in LayerGroup}
@@ -411,7 +419,7 @@ class _StackingManager:
                         _, index = self.layer_map[window]
                         self.move_to_index(client, index)
 
-    def update_client_lists(self):
+    def update_client_lists(self) -> None:
         """
         Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties
 
@@ -429,3 +437,7 @@ class _StackingManager:
         nodes = self.root.get_stack_order()
         wids = [node.win.wid for node in nodes if isinstance(node.win, Window) and node.win.group]
         self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
+
+    @expose_command
+    def stacking_info(self) -> dict[str, Any]:
+        return self.root.info()
