@@ -1002,7 +1002,7 @@ class _Window:
         return LayerGroup.LAYOUT
 
     def change_layer(self, layer=None, bottom=False):
-        self.qtile.core.zmanager.move_window_to_layer(
+        self.qtile.core.move_window_to_layer(
             self, layer or self.get_layering_information(), position="bottom" if bottom else "top"
         )
 
@@ -1228,28 +1228,28 @@ class _Window:
         with self.qtile.core.masked():
             # Disable masks so that moving windows along the Z axis doesn't trigger
             # focus change events (i.e. due to `follow_mouse_focus`)
-            self.qtile.core.zmanager.move_up(self)
+            self.qtile.core.move_up(self)
 
     @expose_command()
     def move_down(self, force=False):
         if self.kept_above and force:
             self.kept_above = False
         with self.qtile.core.masked():
-            self.qtile.core.zmanager.move_down(self)
+            self.qtile.core.move_down(self)
 
     @expose_command()
     def move_to_top(self, force=False):
         if self.kept_below and force:
             self.kept_below = False
         with self.qtile.core.masked():
-            self.qtile.core.zmanager.move_to_top(self)
+            self.qtile.core.move_to_top(self)
 
     @expose_command()
     def move_to_bottom(self, force=False):
         if self.kept_above and force:
             self.kept_above = False
         with self.qtile.core.masked():
-            self.qtile.core.zmanager.move_to_bottom(self)
+            self.qtile.core.move_to_bottom(self)
 
     @property
     def kept_above(self):
@@ -1691,7 +1691,7 @@ class Window(_Window, base.Window):
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
         self.qtile.windows_map[self.window.wid] = s
-        self.qtile.core.zmanager.replace_window(self, s)
+        self.qtile.core.replace_window(self, s)
         hook.fire("client_managed", s)
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
@@ -1812,7 +1812,7 @@ class Window(_Window, base.Window):
 
         # When changing group, we try move the client's group of windows
         # i.e. the parent window and all transient children are moved
-        stacking_node = self.qtile.core.zmanager.layer_map.get(self, None)
+        stacking_node = self.qtile.core.layer_map.get(self, None)
 
         if stacking_node:
             # Move the parent and all children, regardless of which window
