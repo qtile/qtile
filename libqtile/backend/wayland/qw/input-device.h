@@ -1,40 +1,8 @@
 #ifndef INPUT_DEVICE_H
 #define INPUT_DEVICE_H
 
-enum wlr_input_device_type {
-    WLR_INPUT_DEVICE_KEYBOARD,
-    WLR_INPUT_DEVICE_POINTER,
-    WLR_INPUT_DEVICE_TOUCH,
-    WLR_INPUT_DEVICE_TABLET,
-    WLR_INPUT_DEVICE_TABLET_PAD,
-    WLR_INPUT_DEVICE_SWITCH,
-};
-
-enum libinput_config_accel_profile {
-    LIBINPUT_CONFIG_ACCEL_PROFILE_NONE = 0,
-    LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT = (1 << 0),
-    LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE = (1 << 1),
-    LIBINPUT_CONFIG_ACCEL_PROFILE_CUSTOM = (1 << 2),
-};
-
-enum libinput_config_click_method {
-        LIBINPUT_CONFIG_CLICK_METHOD_NONE = 0,
-        LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS = (1 << 0),
-        LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER = (1 << 1),
-};
-
-enum libinput_config_tap_button_map {
-        LIBINPUT_CONFIG_TAP_MAP_LRM,
-        LIBINPUT_CONFIG_TAP_MAP_LMR,
-};
-
-enum libinput_config_scroll_method {
-        LIBINPUT_CONFIG_SCROLL_NO_SCROLL = 0,
-        LIBINPUT_CONFIG_SCROLL_2FG = (1 << 0),
-        LIBINPUT_CONFIG_SCROLL_EDGE = (1 << 1),
-        LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN = (1 << 2),
-};
-
+#include <libinput.h>
+#include <wlr/backend/libinput.h>
 struct qw_input_device {
     // Private data
     struct qw_server *server;
