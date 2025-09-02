@@ -1,5 +1,6 @@
 #include "xdg-view.h"
 #include "server.h"
+#include "session-lock.h"
 #include "view.h"
 #include "wayland-server-core.h"
 #include "wayland-util.h"
@@ -16,6 +17,10 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
     struct qw_server *server = xdg_view->base.server;
     struct wlr_seat *seat = server->seat;
     struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+
+    if (server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
+        return;
+    }
 
     if (prev_surface == surface) {
         return;
@@ -79,7 +84,7 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.height = geom.height;
 
     xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
-                                     xdg_view->base.server->cb_data);
+                                          xdg_view->base.server->cb_data);
 
     // Focus the view upon mapping
     qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
