@@ -22,8 +22,9 @@ from functools import wraps
 
 import xcffib.xproto
 
-from libqtile.backend.base import LayerGroup
-from libqtile.backend.x11.window import Window, _Window
+from libqtile.backend.base import LayerGroup, WindowType
+from libqtile.backend.x11.window import Window
+from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
 
 
@@ -36,7 +37,7 @@ def check_window(func):
 
     @wraps(func)
     def _wrapper(self, window, *args, **kwargs):
-        if not self.is_stacked(window):
+        if window is None or not self.is_stacked(window):
             return
         return func(self, window, *args, **kwargs)
 
@@ -252,31 +253,35 @@ class TreeNode:
         return d
 
 
-class ZManager:
+class _StackingManager:
     """
-    Helper class to manage stacking of windows in the X11 backend.
+    Class to manage stacking of windows in the X11 backend.
 
     The manager creates a tree of multiple layer groups. New clients are added as children
     of the appropriate layer group.
 
     Nesting clients allows transient windows to be attached to their parent and moved up and
     down the tree while ensuring the child is always above the parent.
+
+    NB the class should not be instantiated directly. It is intended to be inherited by
+    libqtile.backend.x11.core.Core
     """
 
-    def __init__(self, core) -> None:
-        self.core = core
+    qtile: Qtile
+
+    def init_stacking(self) -> None:
         self.layers: dict[LayerGroup, TreeNode] = {l: TreeNode(layer_group=l) for l in LayerGroup}
-        self.layer_map: dict[_Window, TreeNode] = {}
+        self.layer_map: dict[WindowType, TreeNode] = {}
         self.root = TreeNode()
         for n in self.layers.values():
             self.root.add_child(n)
 
-    def is_stacked(self, window: _Window) -> bool:
+    def is_stacked(self, window: WindowType) -> bool:
         """Returns True if window has been added to the tree."""
         return window in self.layer_map
 
     def add_window(
-        self, window: _Window, layer: LayerGroup | None = None, position="top"
+        self, window: WindowType, layer: LayerGroup | None = None, position="top"
     ) -> None:
         """Adds new client window to the stacking tree."""
         if layer is None:
@@ -312,14 +317,14 @@ class ZManager:
 
     def remove_window(self, wid) -> None:
         """Removes client window from the stacking tree."""
-        window = self.core.qtile.windows_map.get(wid)
-        if window not in self.layer_map:
+        window = self.qtile.windows_map.get(wid)
+        if window is None or window not in self.layer_map:
             return
         node = self.layer_map.pop(window)
         node.remove()
 
-    @check_window
-    def replace_window(self, old_window, new_window) -> None:
+    # @check_window
+    def replace_window(self, old_window: WindowType, new_window: WindowType) -> None:
         """
         Replace one window in a node with another.
 
@@ -331,7 +336,7 @@ class ZManager:
         self.update_client_lists()
 
     @check_window
-    def move_up(self, window: _Window) -> None:
+    def move_up(self, window: WindowType) -> None:
         """
         Move window up the tree.
 
@@ -379,7 +384,7 @@ class ZManager:
         self.update_client_lists()
 
     @check_window
-    def move_to_index(self, window: _Window, index: int) -> None:
+    def move_to_index(self, window: WindowType, index: int) -> None:
         pass
         # layer, _ = self.layer_map[window]
         # self.layers[layer].remove(window)
@@ -413,16 +418,14 @@ class ZManager:
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
-        assert self.core.qtile
+        assert self.qtile
 
         # _NET_CLIENT_LIST has initial mapping order, starting with the oldest window.
         # We therefore use the order that qtile mapped these windows
-        clients = [
-            wid for wid, win in self.core.qtile.windows_map.items() if isinstance(win, Window)
-        ]
-        self.core._root.set_property("_NET_CLIENT_LIST", clients)
+        clients = [wid for wid, win in self.qtile.windows_map.items() if isinstance(win, Window)]
+        self._root.set_property("_NET_CLIENT_LIST", clients)
 
         # _NET_CLIENT_LIST_STACKING has bottom-to-top stacking order so we use the zmanager order
         nodes = self.root.get_stack_order()
         wids = [node.win.wid for node in nodes if isinstance(node.win, Window) and node.win.group]
-        self.core._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
+        self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)

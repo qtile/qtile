@@ -15,8 +15,8 @@ from libqtile.backend import base
 from libqtile.backend.base.idle_inhibit import IdleInhibitorManager, Inhibitor
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.idle_notify import IdleNotifier
+from libqtile.backend.x11.stacking import _StackingManager
 from libqtile.backend.x11.xkeysyms import keysyms
-from libqtile.backend.x11.zmanager import ZManager
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
@@ -65,7 +65,7 @@ class ExistingWMException(Exception):
     pass
 
 
-class Core(base.Core):
+class Core(base.Core, _StackingManager):
     idle_notifier: IdleNotifier
 
     def __init__(self, display_name: str | None = None) -> None:
@@ -172,7 +172,7 @@ class Core(base.Core):
         self.idle_inhibitor_manager: IdleInhibitorManager[Inhibitor] = IdleInhibitorManager(self)
         self.idle_notifier = IdleNotifier(self)
 
-        self.zmanager = ZManager(core=self)
+        self.init_stacking()
 
     @property
     def name(self):
@@ -221,11 +221,11 @@ class Core(base.Core):
             self.fd = None
 
     def manage(self, window) -> None:
-        self.zmanager.add_window(window)
+        self.add_window(window)
         self.qtile.manage(window)
 
     def unmanage(self, window) -> None:
-        self.zmanager.remove_window(window)
+        self.remove_window(window)
         self.qtile.unmanage(window)
 
     def on_config_load(self, initial) -> None:
@@ -295,7 +295,6 @@ class Core(base.Core):
             self.manage(win)
 
             self.update_client_lists()
-            # win.change_layer()
 
     def warp_pointer(self, x, y):
         self._root.warp_pointer(x, y)
@@ -470,9 +469,6 @@ class Core(base.Core):
     def display_name(self) -> str:
         """The name of the connected display"""
         return self._display_name
-
-    def update_client_lists(self) -> None:
-        self.zmanager.update_client_lists()
 
     def update_desktops(self, groups, index: int) -> None:
         """Set the current desktops of the window manager
@@ -784,7 +780,6 @@ class Core(base.Core):
                 return
             win.unhide()
             self.update_client_lists()
-            # win.change_layer()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
@@ -952,4 +947,4 @@ class Core(base.Core):
 
     @expose_command
     def show_stacking_order(self):
-        logger.warning("\n".join(self.zmanager.root.get_tree()))
+        logger.warning("\n".join(self.root.get_tree()))
