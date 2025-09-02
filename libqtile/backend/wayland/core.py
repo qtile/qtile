@@ -69,7 +69,7 @@ import sys
 import time
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from libqtile import hook, log_utils
 from libqtile.backend import base
@@ -184,7 +184,7 @@ def view_urgent_cb(view: ffi.CData, userdata: ffi.CData) -> None:
 
 
 @ffi.def_extern()
-def on_input_device_added_cb(userdata):
+def on_input_device_added_cb(userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_input_device_added()
 
@@ -280,7 +280,7 @@ class Core(base.Core):
             else:
                 win.hide()
 
-    def handle_input_device_added(self):
+    def handle_input_device_added(self) -> None:
         if not hasattr(self, "qtile"):
             return
         if self.qtile.config.wl_input_rules:
@@ -652,12 +652,12 @@ class Core(base.Core):
         return wids
 
     @expose_command()
-    def stacking_info(self):
+    def stacking_info(self) -> dict[str, Any]:
         tree = {}
         node_map = {}
 
         @ffi.callback("void(uintptr_t, uintptr_t, struct scene_node_info)")
-        def on_node(node_ptr, parent_ptr, info):
+        def on_node(node_ptr: ffi.CData, parent_ptr: ffi.CData, info: ffi.CData) -> None:
             node_id = int(node_ptr)
             parent_id = int(parent_ptr) if parent_ptr else None
 

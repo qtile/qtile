@@ -1,9 +1,8 @@
-from cffi import FFI
-from pathlib import Path
-
-import cairocffi
 import os
 import subprocess
+from pathlib import Path
+
+from cffi import FFI
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
