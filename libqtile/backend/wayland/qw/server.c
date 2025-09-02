@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include <libinput.h>
+#include <stdlib.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/backend/session.h>
 #include <wlr/types/wlr_output_management_v1.h>
@@ -56,10 +56,10 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->renderer_lost.link);
     wl_list_remove(&server->request_activate.link);
     wl_list_remove(&server->new_token.link);
-    #if WLR_HAS_XWAYLAND
+#if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wlr_xwayland_destroy(server->xwayland);
-    #endif
+#endif
 
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
@@ -399,8 +399,9 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
     if (node->type == WLR_SCENE_NODE_BUFFER || node->type == WLR_SCENE_NODE_RECT) {
         if (node->type == WLR_SCENE_NODE_BUFFER) {
             struct wlr_scene_buffer *scene_buffer = wlr_scene_buffer_from_node(node);
-            struct wlr_scene_surface *scene_surface = wlr_scene_surface_try_from_buffer(scene_buffer);
-            if(scene_surface != NULL) {
+            struct wlr_scene_surface *scene_surface =
+                wlr_scene_surface_try_from_buffer(scene_buffer);
+            if (scene_surface != NULL) {
                 *surface = scene_surface->surface;
             }
         }
@@ -410,9 +411,9 @@ struct qw_view *qw_server_view_at(struct qw_server *server, double lx, double ly
         while (tree && !tree->node.data) {
             tree = tree->node.parent;
         }
-		if (tree != NULL) {
-			return tree->node.data;
-		}
+        if (tree != NULL) {
+            return tree->node.data;
+        }
     }
 
     return NULL;
@@ -667,30 +668,25 @@ void qw_server_loop_input_devices(struct qw_server *server, input_device_cb_t cb
         cb(input_device, device->name, device->type, vendor, product);
     }
 }
-static char *LAYER_NAMES[] = {
-    [LAYER_BACKGROUND] = "LAYER_BACKGROUND",
-    [LAYER_BOTTOM] = "LAYER_BOTTOM",
-    [LAYER_KEEPBELOW] = "LAYER_KEEPBELOW",
-    [LAYER_LAYOUT] = "LAYER_LAYOUT",
-    [LAYER_KEEPABOVE] = "LAYER_KEEPABOVE",
-    [LAYER_MAX] = "LAYER_MAX",
-    [LAYER_FULLSCREEN] = "LAYER_FULLSCREEN",
-    [LAYER_BRINGTOFRONT] = "LAYER_BRINGTOFRONT",
-    [LAYER_TOP] = "LAYER_TOP",
-    [LAYER_OVERLAY] = "LAYER_OVERLAY"
-};
+static char *LAYER_NAMES[] = {[LAYER_BACKGROUND] = "LAYER_BACKGROUND",
+                              [LAYER_BOTTOM] = "LAYER_BOTTOM",
+                              [LAYER_KEEPBELOW] = "LAYER_KEEPBELOW",
+                              [LAYER_LAYOUT] = "LAYER_LAYOUT",
+                              [LAYER_KEEPABOVE] = "LAYER_KEEPABOVE",
+                              [LAYER_MAX] = "LAYER_MAX",
+                              [LAYER_FULLSCREEN] = "LAYER_FULLSCREEN",
+                              [LAYER_BRINGTOFRONT] = "LAYER_BRINGTOFRONT",
+                              [LAYER_TOP] = "LAYER_TOP",
+                              [LAYER_OVERLAY] = "LAYER_OVERLAY"};
 
-static char *SCENE_NODE_TYPES[] = {
-    [WLR_SCENE_NODE_TREE] = "tree",
-    [WLR_SCENE_NODE_RECT] = "rect",
-    [WLR_SCENE_NODE_BUFFER] = "buffer"
-};
+static char *SCENE_NODE_TYPES[] = {[WLR_SCENE_NODE_TREE] = "tree",
+                                   [WLR_SCENE_NODE_RECT] = "rect",
+                                   [WLR_SCENE_NODE_BUFFER] = "buffer"};
 
 // Helper function for qw_server_traverse_scene_graph()
 static void qw_server_traverse_scene_node(struct wlr_scene_node *node,
                                           struct wlr_scene_tree *scene_windows_layers[],
-                                          node_info_cb_t cb,
-                                          void *parent) {
+                                          node_info_cb_t cb, void *parent) {
     struct scene_node_info info = {
         .name = "",
         .type = SCENE_NODE_TYPES[node->type],

@@ -76,7 +76,8 @@ void qw_keyboard_set_keymap(struct qw_keyboard *keyboard, const char *layout, co
     xkb_context_unref(context);
 }
 
-void qw_keyboard_set_repeat_info(struct qw_keyboard *keyboard, int kb_repeat_rate, int kb_repeat_delay) {
+void qw_keyboard_set_repeat_info(struct qw_keyboard *keyboard, int kb_repeat_rate,
+                                 int kb_repeat_delay) {
     wlr_keyboard_set_repeat_info(keyboard->wlr_keyboard, kb_repeat_rate, kb_repeat_delay);
 }
 

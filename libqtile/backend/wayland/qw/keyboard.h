@@ -22,6 +22,7 @@ void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *d
 void qw_keyboard_set_keymap(struct qw_keyboard *keyboard, const char *layout, const char *options,
                             const char *variant);
 
-void qw_keyboard_set_repeat_info(struct qw_keyboard *keyboard, int kb_repeat_rate, int kb_repeat_delay);
+void qw_keyboard_set_repeat_info(struct qw_keyboard *keyboard, int kb_repeat_rate,
+                                 int kb_repeat_delay);
 
 #endif /* KEYBOARD_H */
