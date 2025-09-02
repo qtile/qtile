@@ -29,12 +29,14 @@ void qw_input_device_config_click_set_method(struct libinput_device *device, int
 
 /* Tap configuration */
 void qw_input_device_config_tap_set_drag_enabled(struct libinput_device *device, int drag);
-void qw_input_device_config_tap_set_drag_lock_enabled(struct libinput_device *device, int drag_lock);
+void qw_input_device_config_tap_set_drag_lock_enabled(struct libinput_device *device,
+                                                      int drag_lock);
 void qw_input_device_config_tap_set_enabled(struct libinput_device *device, int tap);
 void qw_input_device_config_tap_set_button_map(struct libinput_device *device, int tap_button_map);
 
 /* Scroll configuration */
-void qw_input_device_config_scroll_set_natural_scroll_enabled(struct libinput_device *device, int natural_scroll);
+void qw_input_device_config_scroll_set_natural_scroll_enabled(struct libinput_device *device,
+                                                              int natural_scroll);
 void qw_input_device_config_scroll_set_method(struct libinput_device *device, int scroll_method);
 void qw_input_device_config_scroll_set_button(struct libinput_device *device, int scroll_button);
 
@@ -45,6 +47,7 @@ void qw_input_device_config_dwt_set_enabled(struct libinput_device *device, int 
 void qw_input_device_config_left_handed_set(struct libinput_device *device, int left_handed);
 
 /* Middle button emulation */
-void qw_input_device_config_middle_emulation_set_enabled(struct libinput_device *device, int middle_emulation);
+void qw_input_device_config_middle_emulation_set_enabled(struct libinput_device *device,
+                                                         int middle_emulation);
 
 #endif

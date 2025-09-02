@@ -81,7 +81,8 @@ typedef void (*on_screen_reserve_space_cb_t)(struct qw_output *output, void *use
 struct qw_input_device;
 
 // Iterate input devices callback
-typedef void (*input_device_cb_t)(struct qw_input_device *input_device, const char* name, int type, int vendor, int product);
+typedef void (*input_device_cb_t)(struct qw_input_device *input_device, const char *name, int type,
+                                  int vendor, int product);
 
 // Callback for when an input device is added
 typedef void (*on_input_device_added_cb_t)(void *userdata);
@@ -110,8 +111,8 @@ enum qw_wallpaper_mode {
 };
 
 struct scene_node_info {
-    char* name;
-    char* type;
+    char *name;
+    char *type;
     bool enabled;
     int x;
     int y;
@@ -119,11 +120,8 @@ struct scene_node_info {
 };
 
 // Callback for building scene graph in python
-typedef void (*node_info_cb_t)(
-    uintptr_t node_ptr,
-    uintptr_t parent_ptr,
-    struct scene_node_info info
-);
+typedef void (*node_info_cb_t)(uintptr_t node_ptr, uintptr_t parent_ptr,
+                               struct scene_node_info info);
 
 typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
 
