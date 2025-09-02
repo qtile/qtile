@@ -40,6 +40,14 @@ XWayland windows sometimes don't receive mouse events
 
 There is currently a known bug (https://github.com/qtile/qtile/issues/3675) which causes pointer events (hover/click/scroll) to propagate to the wrong window when switching focus.
 
+Input Device Configuration
+==========================
+
+.. qtile_class:: libqtile.backend.wayland.InputConfig
+
+If you want to change keyboard configuration during runtime, you can use the
+core's `set_keymap` command (see below).
+
 Core Commands
 =============
 
