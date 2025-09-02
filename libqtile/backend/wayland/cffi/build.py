@@ -50,6 +50,39 @@ enum wlr_log_importance {
 extern "Python" void log_cb(enum wlr_log_importance importance,
                                        const char *log_str);
 
+enum wlr_input_device_type {
+    WLR_INPUT_DEVICE_KEYBOARD,
+    WLR_INPUT_DEVICE_POINTER,
+    WLR_INPUT_DEVICE_TOUCH,
+    WLR_INPUT_DEVICE_TABLET,
+    WLR_INPUT_DEVICE_TABLET_PAD,
+    WLR_INPUT_DEVICE_SWITCH,
+};
+
+enum libinput_config_accel_profile {
+    LIBINPUT_CONFIG_ACCEL_PROFILE_NONE = 0,
+    LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT = (1 << 0),
+    LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE = (1 << 1),
+    LIBINPUT_CONFIG_ACCEL_PROFILE_CUSTOM = (1 << 2),
+};
+
+enum libinput_config_click_method {
+        LIBINPUT_CONFIG_CLICK_METHOD_NONE = 0,
+        LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS = (1 << 0),
+        LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER = (1 << 1),
+};
+
+enum libinput_config_tap_button_map {
+        LIBINPUT_CONFIG_TAP_MAP_LRM,
+        LIBINPUT_CONFIG_TAP_MAP_LMR,
+};
+
+enum libinput_config_scroll_method {
+        LIBINPUT_CONFIG_SCROLL_NO_SCROLL = 0,
+        LIBINPUT_CONFIG_SCROLL_2FG = (1 << 0),
+        LIBINPUT_CONFIG_SCROLL_EDGE = (1 << 1),
+        LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN = (1 << 2),
+};
 
 struct wlr_box {
 	int x, y;
@@ -129,6 +162,19 @@ ffi.set_source(
         QW_PROTO_OUT_PATH,
     ],
 )
+
+def ffi_compile(verbose: bool = False) -> None:
+    # The ffi source of "libqtile.backend.wayland._ffi" means that we'll compile the library file
+    # at libqtile/backend/wayland/_ffi.so.
+    # This is built at the path specified in tmpdir which is "." by default. So, if we're in a
+    # virtual environment, libqtile might be at .venv/lib/python3.13/site-packages/ but if we run
+    # the builder script, we'll get a new libqtile folder in th current directory that only has that
+    # tree shown above and the libtile library won't find the `_ffi` library.
+    # We therefore set the tmpdir to be the path to the folder containing libqtile so the library
+    # is always created in the correct folder.
+    # The compile command is nested in a function to ensure that the tmpdir value is not overwritten.
+    ffi.compile(
+        tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose)
 
 ffi.cdef(CDEF)
 if __name__ == "__main__":

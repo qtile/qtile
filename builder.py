@@ -22,9 +22,9 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
 
     wayland_requested = wants_wayland(config_settings)
     try:
-        from libqtile.backend.wayland.cffi.build import ffi
+        from libqtile.backend.wayland.cffi.build import ffi_compile
 
-        ffi.compile(verbose=wayland_requested)
+        ffi_compile(verbose=wayland_requested)
     except Exception as e:
         if wayland_requested:
             sys.exit(f"Wayland backend requested but backend could not be built: {e}")

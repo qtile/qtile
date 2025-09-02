@@ -8,6 +8,7 @@
 #include <wlr/types/wlr_xdg_output_v1.h>
 
 #include "cursor.h"
+#include "input-device.h"
 #include "keyboard.h"
 #include "layer-view.h"
 #include "output.h"

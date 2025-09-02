@@ -74,7 +74,7 @@ from typing import TYPE_CHECKING
 from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs
-from libqtile.backend.wayland.window import Internal, Static, Window, WindowType
+from libqtile.backend.wayland.window import Internal, Static, Window
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
 from libqtile.images import Img
@@ -278,6 +278,8 @@ class Core(base.Core):
                 win.hide()
 
     def handle_input_device_added(self):
+        if not hasattr(self, "qtile"):
+            return
         if self.qtile.config.wl_input_rules:
             inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
 

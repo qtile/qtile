@@ -1,5 +1,5 @@
-#include <libinput.h>
-#include <wlr/backend/libinput.h>
+#include <wlr/util/log.h>
+
 #include "input-device.h"
 #include "keyboard.h"
 

@@ -19,7 +19,6 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 }
 
 static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
-
     double sx, sy;
     struct wlr_seat *seat = cursor->server->seat;
     struct wlr_surface *surface = NULL;
