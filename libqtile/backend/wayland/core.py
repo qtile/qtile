@@ -156,7 +156,9 @@ def cursor_motion_cb(x: int, y: int, userdata: ffi.CData) -> None:
 
 
 @ffi.def_extern()
-def cursor_button_cb(button: int, mask: int, pressed: bool, x: int, y: int, userdata: ffi.CData) -> int:
+def cursor_button_cb(
+    button: int, mask: int, pressed: bool, x: int, y: int, userdata: ffi.CData
+) -> int:
     core = ffi.from_handle(userdata)
     if core.handle_cursor_button(button, mask, pressed, x, y):
         return 1
@@ -179,6 +181,7 @@ def on_screen_reserve_space_cb(output: ffi.CData, userdata: ffi.CData) -> None:
 def view_urgent_cb(view: ffi.CData, userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_view_urgent(view)
+
 
 @ffi.def_extern()
 def on_input_device_added_cb(userdata):
@@ -283,7 +286,7 @@ class Core(base.Core):
         if self.qtile.config.wl_input_rules:
             inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
 
-        #TODO: Also configure devices when a new device is added
+        # TODO: Also configure devices when a new device is added
 
     def handle_screen_change(self) -> None:
         hook.fire("screen_change", None)
@@ -453,7 +456,7 @@ class Core(base.Core):
 
         if win:
             # Mark window as urgent in Qtile
-            #TODO: Fix the following line, probably supposed to be: win._urgent
+            # TODO: Fix the following line, probably supposed to be: win._urgent
             # win.urgent = True
             hook.fire("client_urgent_hint_changed", win)
 
@@ -665,7 +668,7 @@ class Core(base.Core):
                 "y": info.y,
                 "type": ffi.string(info.type).decode(),
                 "wid": getattr(info, "view_wid", None) or None,
-                "children": []
+                "children": [],
             }
 
             node_map[node_id] = node
@@ -679,6 +682,7 @@ class Core(base.Core):
         lib.qw_server_traverse_scene_graph(self.qw, on_node)
 
         return tree
+
 
 class Painter:
     """

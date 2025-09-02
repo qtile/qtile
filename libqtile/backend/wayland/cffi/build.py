@@ -114,7 +114,17 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = ["log.h", "server.h", "view.h", "util.h", "output.h", "internal-view.h", "cursor.h", "input-device.h", "keyboard.h"]
+cdef_files = [
+    "log.h",
+    "server.h",
+    "view.h",
+    "util.h",
+    "output.h",
+    "internal-view.h",
+    "cursor.h",
+    "input-device.h",
+    "keyboard.h",
+]
 
 for file in cdef_files:
     with open(QW_PATH / file) as f:
@@ -163,6 +173,7 @@ ffi.set_source(
     ],
 )
 
+
 def ffi_compile(verbose: bool = False) -> None:
     # The ffi source of "libqtile.backend.wayland._ffi" means that we'll compile the library file
     # at libqtile/backend/wayland/_ffi.so.
@@ -174,7 +185,9 @@ def ffi_compile(verbose: bool = False) -> None:
     # is always created in the correct folder.
     # The compile command is nested in a function to ensure that the tmpdir value is not overwritten.
     ffi.compile(
-        tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose)
+        tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose
+    )
+
 
 ffi.cdef(CDEF)
 if __name__ == "__main__":

@@ -29,8 +29,8 @@ class Base(base._Window):
     def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
         base._Window.__init__(self)
         self.qtile = qtile
-        self._group: _Group | None  = None
-        #TODO: why are there 2 groups here?
+        self._group: _Group | None = None
+        # TODO: why are there 2 groups here?
         self._ptr = ptr
         self._wid = wid
         self._wm_class: str | None = None
@@ -176,7 +176,7 @@ class Base(base._Window):
                     colors = bordercolor
                 else:
                     pass
-                    #TODO: Check validation logic, handle this case
+                    # TODO: Check validation logic, handle this case
             else:
                 colors = [bordercolor]
             n = len(colors)
@@ -436,7 +436,9 @@ class Window(Base, base.Window):
 
         hook.fire("client_managed", win)
 
-    def _to_static(self, x: int | None, y: int | None, width: int | None, height: int | None) -> Static:
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ) -> Static:
         return Static(
             self.qtile,
             self._ptr,
@@ -502,9 +504,7 @@ class Window(Base, base.Window):
                 return True, []
         return None
 
-    def _select(
-        self, name: str, sel: str | int | None
-    )-> CommandObject | None:
+    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
         if name == "group":
             return self.group
         elif name == "layout":
@@ -839,9 +839,7 @@ class Static(Base, base.Static):
         self._height = height
 
         n = 0
-        self._ptr.place(
-            self._ptr, x, y, width, height, ffi.NULL, n, int(above)
-        )
+        self._ptr.place(self._ptr, x, y, width, height, ffi.NULL, n, int(above))
 
     @expose_command()
     def info(self) -> dict:
@@ -851,4 +849,3 @@ class Static(Base, base.Static):
             ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
         )
         return info
-
