@@ -4,6 +4,10 @@ include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
 include .pre-commit-config.yaml
+include libqtile/backend/wayland/proto/*.xml
+include libqtile/backend/wayland/qw/*.h
+include libqtile/backend/wayland/qw/*.c
+include builder.py
 
 exclude .coveragerc
 exclude .pylintrc
@@ -18,6 +22,7 @@ exclude libqtile/backend/wayland/_libinput*.*
 exclude Makefile
 exclude .readthedocs.yaml
 exclude .git-blame-ignore-revs
+exclude .clang-format
 
 graft libqtile/resources
 graft libqtile/widget/helpers
