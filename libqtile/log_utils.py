@@ -91,7 +91,7 @@ def get_default_log() -> Path:
 def init_log(
     log_level: int = WARNING,
     log_path: Path | None = None,
-    log_size: int = 10000000,
+    log_size: int = 100_000,
     log_numbackups: int = 1,
     logger: Logger = logger,
 ) -> None:
