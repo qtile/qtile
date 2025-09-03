@@ -28,6 +28,7 @@ import os
 import traceback
 from collections import defaultdict
 from collections.abc import Sequence
+from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from random import randint
 from shutil import which
@@ -52,6 +53,11 @@ if TYPE_CHECKING:
     from typing import Any, TypeVar
 
     T = TypeVar("T")
+
+try:
+    VERSION = distribution("qtile").version
+except PackageNotFoundError:
+    VERSION = "dev"
 
 dbus_bus_connections = set()
 
