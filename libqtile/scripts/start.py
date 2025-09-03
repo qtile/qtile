@@ -25,13 +25,14 @@ from __future__ import annotations
 
 import locale
 from os import makedirs, path
+from pathlib import Path
 from sys import exit
 from typing import TYPE_CHECKING
 
 import libqtile.backend
 from libqtile import confreader, qtile
 from libqtile.log_utils import logger
-from libqtile.utils import get_config_file
+from libqtile.utils import VERSION, get_config_file
 
 if TYPE_CHECKING:
     from libqtile.core.manager import Qtile
@@ -99,6 +100,8 @@ def start(options):
     except locale.Error:
         pass
 
+    libpath = (Path(__file__).parent / ".." / "..").resolve()
+    logger.warning(f"Starting Qtile {VERSION} from {libpath}")
     rename_process()
     q = make_qtile(options)
     if q is None:

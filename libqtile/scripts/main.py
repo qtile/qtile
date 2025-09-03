@@ -15,14 +15,7 @@ from libqtile.scripts import (
     start,
     top,
 )
-
-try:
-    # Python>3.7 can get the version from importlib
-    from importlib.metadata import PackageNotFoundError, distribution
-
-    VERSION = distribution("qtile").version
-except PackageNotFoundError:
-    VERSION = "dev"
+from libqtile.utils import VERSION
 
 
 def main():
