@@ -186,7 +186,11 @@ class _Widget(CommandObject, configurable.Configurable):
     @property
     def length(self):
         if self.length_type == bar.CALCULATED:
-            return int(self.calculate_length())
+            try:
+                return int(self.calculate_length())
+            except Exception:
+                logger.exception(f"error when calculating widget {self.name} length")
+                return 0
         return self._length
 
     @length.setter
