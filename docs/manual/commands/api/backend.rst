@@ -19,6 +19,8 @@ X11 backend
 -----------
 
 .. qtile_commands:: libqtile.backend.x11.core
+    :baseclass: libqtile.backend.x11.core.Core
+    :includebase:
     :object-node: core
     :no-title:
 
@@ -28,6 +30,8 @@ Wayland backend
 ---------------
 
 .. qtile_commands:: libqtile.backend.wayland.core
+    :baseclass: libqtile.backend.wayland.core.Core
+    :includebase:
     :object-node: core
     :no-title:
 
