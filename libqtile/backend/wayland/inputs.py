@@ -82,7 +82,6 @@ class InputConfig(configurable.Configurable):
         self.add_defaults(InputConfig.defaults)
 
 
-@enum.unique
 class InputDeviceType(enum.IntEnum):
     KEYBOARD = lib.WLR_INPUT_DEVICE_KEYBOARD
     POINTER = lib.WLR_INPUT_DEVICE_POINTER
@@ -92,26 +91,22 @@ class InputDeviceType(enum.IntEnum):
     SWITCH = lib.WLR_INPUT_DEVICE_SWITCH
 
 
-@enum.unique
 class AccelProfile(enum.IntEnum):
     adaptive = lib.LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE
     flat = lib.LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT
 
 
-@enum.unique
 class ClickMethod(enum.IntEnum):
     none = lib.LIBINPUT_CONFIG_CLICK_METHOD_NONE
     button_areas = lib.LIBINPUT_CONFIG_CLICK_METHOD_BUTTON_AREAS
     clickfinger = lib.LIBINPUT_CONFIG_CLICK_METHOD_CLICKFINGER
 
 
-@enum.unique
 class TapMap(enum.IntEnum):
     lrm = lib.LIBINPUT_CONFIG_TAP_MAP_LRM
     lmr = lib.LIBINPUT_CONFIG_TAP_MAP_LMR
 
 
-@enum.unique
 class ScrollMethod(enum.IntEnum):
     none = lib.LIBINPUT_CONFIG_SCROLL_NO_SCROLL
     two_finger = lib.LIBINPUT_CONFIG_SCROLL_2FG
