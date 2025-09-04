@@ -29,6 +29,9 @@ let
       src = ./..; # use the source of the git repo
     }
     // {
+      propagatedBuildInputs =
+        (qtile-prev.propagatedBuildInputs or [ ]) ++ (with pkgs.python3Packages; [ aiohttp ]);
+
       env = build-config.resolved-env-vars;
 
       pypaBuildFlags = build-config.resolved-config-settings;
