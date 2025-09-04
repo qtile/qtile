@@ -12,6 +12,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
+    from typing import Any
+
     T = TypeVar("T")
 
 
@@ -20,6 +22,15 @@ class FFIStub:
     def def_extern() -> Callable[[T], T]:
         return lambda f: f
 
+    def __getattr__(self, name: str) -> Any:
+        return None
 
-ffi = FFIStub
-lib = None
+
+class LibStub:
+    def __getattr__(self, name: str) -> Any:
+        # Return a sentinel int so enums work.
+        return -1
+
+
+ffi = FFIStub()
+lib = LibStub()
