@@ -22,7 +22,6 @@ import sys
 from setuptools import build_meta as _orig
 from setuptools.build_meta import *  # noqa: F401,F403
 
-WAYLAND_DEPENDENCIES = ["pywlroots>=0.17.0,<0.18.0"]
 WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
 
 
@@ -33,15 +32,6 @@ def wants_wayland(config_settings):
                 return True
 
     return False
-
-
-def get_requires_for_build_wheel(config_settings=None):
-    """Inject pywlroots into build dependencies if wayland requested."""
-    reqs = _orig.get_requires_for_build_wheel(config_settings)
-    if wants_wayland(config_settings):
-        reqs += WAYLAND_DEPENDENCIES
-
-    return reqs
 
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):

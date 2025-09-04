@@ -12,9 +12,6 @@ qtile/qtile/issues?q=is%3Aissue+is%3Aopen+label%3A%22core%3A+wayland%22>`__
 and :ref:`troubleshooting <debugging-wayland>` for tips on how to debug Wayland
 problems.
 
-.. note::
-   We currently support wlroots>=0.17.0,<0.18.0 and pywlroots>=0.17.0,<0.18.0.
-
 Backend-Specific Configuration
 ==============================
 
@@ -34,7 +31,7 @@ backend in your config as follows:
 Running X11-Only Programs
 =========================
 
-Qtile supports XWayland but requires that `wlroots` and `pywlroots` were built
+Qtile supports XWayland but requires that `wlroots` were built
 with XWayland support, and that XWayland is installed on the system from
 startup. XWayland will be started the first time it is needed.
 
@@ -42,14 +39,6 @@ XWayland windows sometimes don't receive mouse events
 -----------------------------------------------------
 
 There is currently a known bug (https://github.com/qtile/qtile/issues/3675) which causes pointer events (hover/click/scroll) to propagate to the wrong window when switching focus.
-
-Input Device Configuration
-==========================
-
-.. qtile_class:: libqtile.backend.wayland.InputConfig
-
-If you want to change keyboard configuration during runtime, you can use the
-core's `set_keymap` command (see below).
 
 Core Commands
 =============

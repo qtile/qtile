@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 CORES = {
-    "wayland": ("wlroots",),
+    "wayland": (),
     "x11": ("xcffib",),
 }
 
