@@ -18,79 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import multiprocessing
-import os
-import subprocess
-import sys
-import tempfile
-import time
-
-from test.helpers import can_connect_qtile
-
-repo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-socket_path = tempfile.NamedTemporaryFile().name
-
-
-def run_qtile(backend):
-    cmd = os.path.join(repo_path, "libqtile/scripts/main.py")
-    args = [sys.executable, cmd, "start", "-s", socket_path]
-    args.extend(["-b", backend.name])
-
-    env = os.environ.copy()
-    if backend.name == "wayland":
-        env.update(backend.env)
-
-    proc = subprocess.Popen(args, env=env, stdout=subprocess.PIPE)
-    out, err = proc.communicate(timeout=10)
-    exitcode = proc.returncode
-    return exitcode
-
-
-def stop_qtile(code):
-    cmd = os.path.join(repo_path, "libqtile/scripts/main.py")
-    args = [sys.executable, cmd, "cmd-obj", "-o", "cmd", "-s", socket_path, "-f", "shutdown"]
-    if code:
-        args.extend(["-a", str(code)])
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-    proc.communicate(timeout=10)
-    exitcode = proc.returncode
-    return exitcode
-
-
-def deferred_stop(code=0):
-    # wait for qtile process to start
-    wait = 10
-    while not can_connect_qtile(socket_path):
-        time.sleep(1)
-        if not wait:
-            raise Exception("timeout waiting for qtile process")
-        wait -= 1
-
-    stop_qtile(code)
-
 
 # in these testcases there are two qtile instances
 # one started by the helpers.TestManager,
 # which is used to evaluate code coverage
 # and a second instance started by run_qtile,
 # which is used to test the actual exit code behavior
-def test_exitcode_default(backend):
-    multiprocessing.set_start_method("fork", force=True)
-    proc = multiprocessing.Process(target=deferred_stop)
-    proc.start()
-
-    exitcode = run_qtile(backend)
-    proc.join()
-    assert exitcode == 0
+def test_exitcode_default(manager):
+    manager.c.shutdown()
+    manager.proc.join()
+    assert manager.proc.exitcode == 0
 
 
-def test_exitcode_explicit(backend):
+def test_exitcode_explicit(manager):
     code = 23
-
-    multiprocessing.set_start_method("fork", force=True)
-    proc = multiprocessing.Process(target=deferred_stop, args=(code,))
-    proc.start()
-
-    exitcode = run_qtile(backend)
-    proc.join()
-    assert exitcode == code
+    manager.c.shutdown(code)
+    manager.proc.join()
+    assert manager.proc.exitcode == code
