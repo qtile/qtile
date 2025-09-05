@@ -438,71 +438,124 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self.widgets.clear()
 
     def _resize(self, length: int, widgets: list[_Widget]) -> None:
-        # We want consecutive stretch widgets to split one 'block' of space between them
-        stretches = []
+        """
+        Resize stretch widgets to fill bar:
+        1 block of spacers uses all available space
+        2 blocks of spacers centre text between blocks
+        3 or more blocks evenly space widgets between blocks.
+        """
+        # 1) Identify stretch group heads and their followers
+        stretches: list[_Widget] = []
         consecutive_stretches: defaultdict[_Widget, list[_Widget]] = defaultdict(list)
         prev_stretch: _Widget | None = None
-        for widget in widgets:
-            if widget.length_type == STRETCH:
-                if prev_stretch:
-                    consecutive_stretches[prev_stretch].append(widget)
+
+        for w in widgets:
+            if w.length_type == STRETCH:
+                if prev_stretch is None:
+                    stretches.append(w)  # start of a new stretch group
+                    prev_stretch = w
                 else:
-                    stretches.append(widget)
-                    prev_stretch = widget
+                    consecutive_stretches[prev_stretch].append(w)  # follower
             else:
                 prev_stretch = None
 
+        # 2) If there are stretch groups, allocate space to them
         if stretches:
-            stretchspace = length - sum(i.length for i in widgets if i.length_type != STRETCH)
-            stretchspace = max(stretchspace, 0)
-            num_stretches = len(stretches)
+            # Total space available to all stretch groups
+            fixed_total = sum(w.length for w in widgets if w.length_type != STRETCH)
+            stretchspace = max(length - fixed_total, 0)
 
-            if num_stretches == 1:
-                stretches[0].length = stretchspace
-            else:
-                block = 0
-                blocks = []
-                for i in widgets:
-                    if i.length_type != STRETCH:
-                        block += i.length
-                    elif i in stretches:  # False for consecutive_stretches
-                        blocks.append(block)
-                        block = 0
-                if block:
-                    blocks.append(block)
-                interval = length // num_stretches
-
-                for idx, i in enumerate(stretches):
-                    if idx == 0:
-                        i.length = interval - blocks[0] - blocks[1] // 2
-                    elif idx == num_stretches - 1:
-                        i.length = interval - blocks[-1] - blocks[-2] // 2
-                    else:
-                        i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
-                    stretchspace -= i.length
-
-                stretches[0].length += stretchspace // 2
-                stretches[-1].length += stretchspace - stretchspace // 2
-
-            for i, followers in consecutive_stretches.items():
-                length = i.length // (len(followers) + 1)
-                rem = i.length - length
-                i.length = length
+            def assign_group_allocation(head: _Widget, group_allocation: int) -> None:
+                """Distribute group_allocation among head + its followers evenly; head keeps any remainder."""
+                followers = consecutive_stretches.get(head, [])
+                count = 1 + len(followers)
+                each = group_allocation // count
+                leftover = group_allocation - each * count
+                head.length = each + leftover
                 for f in followers:
-                    f.length = length
-                    rem -= length
-                i.length += rem
+                    f.length = each
 
+            num_groups = len(stretches)
+            blocks: list[int] = []
+
+            if num_groups == 1:
+                # Single group gets all available space
+                assign_group_allocation(stretches[0], stretchspace)
+
+            elif num_groups == 2:
+                # Special centering: center the fixed content between groups within the bar.
+                acc = 0
+                for w in widgets:
+                    if w.length_type != STRETCH:
+                        acc += w.length
+                    elif w in stretches:  # only group heads
+                        blocks.append(acc)
+                        acc = 0
+                blocks.append(acc)
+
+                start = blocks[0] if blocks else 0
+                end = blocks[-1] if blocks else 0
+
+                # L + R = stretchspace, and start + L == R + end  =>  L = (stretchspace + end - start) // 2
+                left_alloc = (stretchspace + end - start) // 2
+                left_alloc = max(0, min(stretchspace, left_alloc))
+                right_alloc = stretchspace - left_alloc
+
+                assign_group_allocation(stretches[0], left_alloc)
+                assign_group_allocation(stretches[1], right_alloc)
+
+            else:
+                # 3+ groups: block-aware distribution
+                # Centres of blocks of non-stretch widgets are spaced evenly
+                # 1) Compute fixed-width blocks between group heads (and before first / after last)
+                acc = 0
+                for w in widgets:
+                    if w.length_type != STRETCH:
+                        acc += w.length
+                    elif w in stretches:  # count heads only, not followers
+                        blocks.append(acc)
+                        acc = 0
+                blocks.append(acc)  # trailing block after last head
+
+                # 2) Tentative sizes using full bar interval minus adjacent block penalties
+                interval = length // num_groups
+                group_sizes: list[int] = []
+                for idx in range(num_groups):
+                    if idx == 0:
+                        size = interval - blocks[0] - (blocks[1] // 2 if len(blocks) > 1 else 0)
+                    elif idx == num_groups - 1:
+                        size = interval - blocks[-1] - (blocks[-2] // 2 if len(blocks) > 1 else 0)
+                    else:
+                        # halves around the middle groups;
+                        left_half = blocks[idx] / 2 if idx < len(blocks) else 0
+                        right_half = blocks[idx + 1] / 2 if idx + 1 < len(blocks) else 0
+                        size = int(interval - left_half - right_half)
+
+                    group_sizes.append(max(0, size))
+
+                # 3) Remainder from integer math goes to first and last
+                remainder = stretchspace - sum(group_sizes)
+                if remainder:
+                    add_left = remainder // 2
+                    add_right = remainder - add_left
+                    group_sizes[0] += add_left
+                    group_sizes[-1] += add_right
+
+                # 4) Distribute each group to head + followers
+                for head, alloc in zip(stretches, group_sizes):
+                    assign_group_allocation(head, alloc)
+
+        # 3) Set offsets
         if self.horizontal:
             offset = self.border_width[3]
-            for i in widgets:
-                i.offsetx = offset
-                offset += i.length
+            for w in widgets:
+                w.offsetx = offset
+                offset += w.length
         else:
             offset = self.border_width[0]
-            for i in widgets:
-                i.offsety = offset
-                offset += i.length
+            for w in widgets:
+                w.offsety = offset
+                offset += w.length
 
     def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
         if self.horizontal:
