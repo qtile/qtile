@@ -177,6 +177,8 @@ struct qw_server {
     struct wl_listener new_decoration;
     struct wl_listener new_layer_surface;
     struct wl_listener request_cursor;
+    struct wl_listener request_set_selection;
+    struct wl_listener request_set_primary_selection;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;

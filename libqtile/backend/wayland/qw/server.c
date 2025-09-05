@@ -56,6 +56,8 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->renderer_lost.link);
     wl_list_remove(&server->request_activate.link);
     wl_list_remove(&server->new_token.link);
+    wl_list_remove(&server->request_set_selection.link);
+    wl_list_remove(&server->request_set_primary_selection.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wlr_xwayland_destroy(server->xwayland);
@@ -487,6 +489,22 @@ void qw_server_set_keymap(struct qw_server *server, const char *layout, const ch
         qw_keyboard_set_keymap(keyboard, layout, options, variant);
     }
 }
+
+static void qw_server_handle_request_set_selection(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, request_set_selection);
+    struct wlr_seat_request_set_selection_event *event = data;
+
+    wlr_seat_set_selection(server->seat, event->source, event->serial);
+}
+
+static void qw_server_handle_request_set_primary_selection(struct wl_listener *listener,
+                                                           void *data) {
+    struct qw_server *server = wl_container_of(listener, server, request_set_primary_selection);
+    struct wlr_seat_request_set_primary_selection_event *event = data;
+
+    wlr_seat_set_primary_selection(server->seat, event->source, event->serial);
+}
+
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     wlr_log_init(WLR_INFO, NULL);
@@ -583,6 +601,12 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
     server->renderer_lost.notify = qw_server_handle_renderer_lost;
     wl_signal_add(&server->renderer->events.lost, &server->renderer_lost);
+
+    server->request_set_selection.notify = qw_server_handle_request_set_selection;
+    wl_signal_add(&server->seat->events.request_set_selection, &server->request_set_selection);
+    server->request_set_primary_selection.notify = qw_server_handle_request_set_primary_selection;
+    wl_signal_add(&server->seat->events.request_set_primary_selection,
+                  &server->request_set_primary_selection);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
