@@ -42,6 +42,7 @@
 #if WLR_HAS_XWAYLAND
 #include <wlr/xwayland/xwayland.h>
 #endif
+#include "layer-view.h"
 
 // Callback typedefs for input and view events
 
@@ -86,6 +87,9 @@ typedef void (*input_device_cb_t)(struct qw_input_device *input_device, const ch
 
 // Callback for when an input device is added
 typedef void (*on_input_device_added_cb_t)(void *userdata);
+
+// Callback to focus current window (if available). Returns success
+typedef bool (*focus_current_window_cb_t)(void *userdata);
 
 enum {
     LAYER_BACKGROUND,   // background, layer shell
@@ -138,8 +142,10 @@ struct qw_server {
     on_screen_reserve_space_cb_t on_screen_reserve_space_cb;
     view_urgent_cb_t view_urgent_cb;
     on_input_device_added_cb_t on_input_device_added_cb;
+    focus_current_window_cb_t focus_current_window_cb;
     void *view_urgent_cb_data;
     void *cb_data;
+    struct qw_layer_view *exclusive_layer;
 
     // Private data
     struct wl_event_loop *event_loop;

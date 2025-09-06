@@ -26,4 +26,6 @@ int qw_util_get_modifier_code(const char *codestr);
 // the search is case insensitive
 xkb_keysym_t qwu_keysym_from_name(const char *name);
 
+void qw_util_deactivate_surface(struct wlr_surface *surface);
+
 #endif /* UTIL_H */

@@ -1,6 +1,7 @@
 #include "output.h"
 #include "cairo-buffer.h"
 #include "layer-view.h"
+#include "proto/wlr-layer-shell-unstable-v1-protocol.h"
 #include "server.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,15 +85,24 @@ void qw_output_arrange_layers(struct qw_output *output) {
         ZWLR_LAYER_SHELL_V1_LAYER_TOP,
     };
 
-    // TODO: topmost keyboard interactive layer
     for (i = 0; i < 2; i++) {
         struct qw_layer_view *layer_view;
         wl_list_for_each_reverse(layer_view, &output->layers[layers_above_shell[i]], link) {
             // TODO: locked
             if (!layer_view->surface->current.keyboard_interactive || !layer_view->mapped)
                 continue;
-            // TODO: focus, exclusive focus, notify enter
-            return;
+
+            if (layer_view->surface->current.keyboard_interactive ==
+                ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_EXCLUSIVE) {
+                layer_view->server->exclusive_layer = layer_view;
+                qw_layer_view_focus(layer_view);
+                return;
+            }
+
+            if (layer_view->server->exclusive_layer == layer_view) {
+                // This window previously had exclusive focus, but no longer wants it.
+                layer_view->server->exclusive_layer = NULL;
+            }
         }
     }
 }
