@@ -840,6 +840,11 @@ class InLoopPollText(_TextBox):
         text = self.poll()
         self.update(text)
 
+    @expose_command()
+    def force_update(self):
+        """Immediately poll the widget. Existing timers are unaffected."""
+        self.tick()
+
 
 class BackgroundPoll(_TextBox):
     """A common interface for wrapping blocking events which when triggered
