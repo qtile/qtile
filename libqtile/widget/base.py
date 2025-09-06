@@ -38,7 +38,7 @@ import math
 import subprocess
 from typing import TYPE_CHECKING
 
-from libqtile import bar, configurable, confreader
+from libqtile import bar, configurable, confreader, hook
 from libqtile.command import interface
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.lazy import LazyCall
@@ -243,6 +243,8 @@ class _Widget(CommandObject, configurable.Configurable):
 
             # Add these to our list of futures so they can be cancelled.
             self._futures.extend([timer, async_timer])
+            if hasattr(self, "force_update"):
+                hook.subscribe.resume(self.force_update)
 
     async def _config_async(self):
         """
