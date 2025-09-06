@@ -31,4 +31,6 @@ struct qw_layer_view {
 // Create and initialize a new qw_layer_view wrapping the given layer_surface
 void qw_server_layer_view_new(struct qw_server *server, struct wlr_layer_surface_v1 *layer_surface);
 
+void qw_layer_view_focus(struct qw_layer_view *layer_view);
+
 #endif /* LAYER_VIEW_H */

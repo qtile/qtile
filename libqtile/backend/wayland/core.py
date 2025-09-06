@@ -189,6 +189,12 @@ def on_input_device_added_cb(userdata: ffi.CData) -> None:
     core.handle_input_device_added()
 
 
+@ffi.def_extern()
+def focus_current_window_cb(userdata: ffi.CData) -> bool:
+    core = ffi.from_handle(userdata)
+    return core.handle_focus_current_window()
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -233,6 +239,7 @@ class Core(base.Core):
         self.qw.view_urgent_cb = lib.view_urgent_cb
         self.qw.view_urgent_cb_data = self._userdata
         self.qw.on_input_device_added_cb = lib.on_input_device_added_cb
+        self.qw.focus_current_window_cb = lib.focus_current_window_cb
         lib.qw_server_start(self.qw)
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
@@ -375,7 +382,19 @@ class Core(base.Core):
 
         return False
 
+    def handle_focus_current_window(self) -> bool:
+        group = self.qtile.current_screen.group
+        if group.current_window:
+            group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
+            return True
+        else:
+            return False
+
     def focus_window(self, win: base.WindowType) -> None:
+        if self.qw.exclusive_layer != ffi.NULL:
+            logger.debug("Keyboard focus withheld: focus is fixed to exclusive layer surface.")
+            return
+
         if isinstance(win, base.Internal):
             self.focused_internal = win
             lib.qw_server_keyboard_clear_focus(self.qw)
