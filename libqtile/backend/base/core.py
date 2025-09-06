@@ -102,9 +102,6 @@ class Core(CommandObject, metaclass=ABCMeta):
     def flush(self) -> None:
         """If needed, flush the backend's event queue."""
 
-    def graceful_shutdown(self):
-        """Try to close windows gracefully before exiting"""
-
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulate a keypress with given modifiers"""
 

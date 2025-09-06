@@ -24,7 +24,6 @@ import asyncio
 import contextlib
 import os
 import signal
-import time
 from collections import defaultdict
 from typing import TYPE_CHECKING, cast
 
@@ -1564,22 +1563,6 @@ class Core(base.Core, wlrq.HasListeners):
         internal = window.Internal(self, self.qtile, x, y, width, height)
         self.qtile.manage(internal)
         return internal
-
-    def graceful_shutdown(self) -> None:
-        """Try to close windows gracefully before exiting"""
-        assert self.qtile is not None
-
-        # Copy in case the dictionary changes during the loop
-        for win in self.qtile.windows_map.copy().values():
-            win.kill()
-
-        # give everyone a little time to exit and write their state. but don't
-        # sleep forever (1s).
-        end = time.time() + 1
-        while time.time() < end:
-            self._poll()
-            if not self.qtile.windows_map:
-                break
 
     @property
     def painter(self) -> Any:

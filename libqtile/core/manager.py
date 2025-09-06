@@ -32,6 +32,7 @@ import signal
 import socket
 import subprocess
 import tempfile
+import time
 from collections import defaultdict
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -114,7 +115,7 @@ class Qtile(CommandObject):
         libqtile.init(self)
         libqtile.event_loop = asyncio.new_event_loop()
 
-        self._stopped_event: asyncio.Event | None = None
+        self._stopped_event: asyncio.Event = asyncio.Event()
 
         self.server = IPCCommandServer(self)
 
@@ -220,7 +221,6 @@ class Qtile(CommandObject):
         Finalizes the Qtile instance on exit.
         """
         self._eventloop = asyncio.get_running_loop()
-        self._stopped_event = asyncio.Event()
         self.core.qtile = self
         self.load_config(initial=True)
         self.core.setup_listener()
@@ -249,6 +249,8 @@ class Qtile(CommandObject):
                 ),
             ):
                 await self._stopped_event.wait()
+                if lifecycle.behavior != lifecycle.behavior.RESTART:
+                    await self.graceful_shutdown()
         finally:
             self.finalize()
             self.core.remove_listener()
@@ -257,8 +259,26 @@ class Qtile(CommandObject):
         hook.fire("shutdown")
         lifecycle.behavior = lifecycle.behavior.TERMINATE
         lifecycle.exitcode = exitcode
-        self.core.graceful_shutdown()
         self._stop()
+
+    def normal_windows(self) -> list[base.WindowType]:
+        return list(
+            filter(lambda w: isinstance(w, base.Window), self.windows_map.copy().values())
+        )
+
+    async def graceful_shutdown(self) -> None:
+        """Try to close windows gracefully before exiting"""
+        # Copy in case the dictionary changes during the loop
+        for win in self.normal_windows():
+            win.kill()
+
+        # give everyone a little time to exit and write their state. but don't
+        # sleep forever (1s).
+        end = time.time() + 1
+        while time.time() < end:
+            await asyncio.sleep(0.1)
+            if len(self.normal_windows()) == 0:
+                break
 
     @expose_command()
     def restart(self) -> None:
@@ -285,8 +305,7 @@ class Qtile(CommandObject):
 
     def _stop(self) -> None:
         logger.debug("Stopping qtile")
-        if self._stopped_event is not None:
-            self._stopped_event.set()
+        self._stopped_event.set()
 
     def dump_state(self, buf: Any) -> None:
         try:
