@@ -40,7 +40,7 @@ from typing import TYPE_CHECKING
 
 from libqtile import bar, configurable, confreader
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 from libqtile.utils import ColorType, create_task
@@ -303,15 +303,6 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def button_release(self, x, y, button):
         pass
-
-    def get(self, q, name):
-        """
-        Utility function for quick retrieval of a widget by name.
-        """
-        w = q.widgets_map.get(name)
-        if not w:
-            raise CommandError(f"No such widget: {name}")
-        return w
 
     def _items(self, name: str) -> ItemT:
         if name == "bar":
