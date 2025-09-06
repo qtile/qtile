@@ -1,6 +1,8 @@
 #include "layer-view.h"
+#include "cursor.h"
 #include "output.h"
 #include "server.h"
+#include "util.h"
 #include "view.h"
 #include <stdlib.h>
 
@@ -23,14 +25,29 @@ static void qw_layer_view_handle_unmap(struct wl_listener *listener, void *data)
     layer_view->mapped = false;
 
     wlr_scene_node_set_enabled(&layer_view->scene->tree->node, false);
-    // TODO: exclusive focus
+
+    // Release exclusive layer lock
+    if (layer_view == layer_view->server->exclusive_layer) {
+        layer_view->server->exclusive_layer = NULL;
+    }
 
     if (layer_view->surface->output) {
         layer_view->output = layer_view->surface->output->data;
         qw_output_arrange_layers(layer_view->output);
     }
-    // TODO: focus
-    // TODO: motionnotify?
+
+    // Focus qtile's current_window if available, otherwise release focus
+    // Force a cursor motion update for follow_mouse_focus
+    if (layer_view->surface->surface == layer_view->server->seat->keyboard_state.focused_surface) {
+        bool success = layer_view->server->focus_current_window_cb(layer_view->server->cb_data);
+        if (!success) {
+            wlr_seat_keyboard_clear_focus(layer_view->server->seat);
+        }
+
+        double x = layer_view->server->cursor->cursor->x;
+        double y = layer_view->server->cursor->cursor->y;
+        qw_cursor_warp_cursor(layer_view->server->cursor, x, y);
+    }
 }
 
 // Handle commit event: called when surface commits state changes
@@ -72,6 +89,33 @@ static void qw_layer_view_handle_commit(struct wl_listener *listener, void *data
     }
 
     qw_output_arrange_layers(layer_view->output);
+}
+
+// Focus the layer_view if it is mapped (visible), calling internal focus helper
+void qw_layer_view_focus(struct qw_layer_view *layer_view) {
+    if (!layer_view->mapped) {
+        return; // Can't focus if not mapped
+    }
+
+    struct qw_server *server = layer_view->server;
+    struct wlr_seat *seat = server->seat;
+    struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+
+    if (prev_surface == layer_view->surface->surface) {
+        return;
+    }
+
+    // Deactivate previous surface if any
+    if (prev_surface) {
+        qw_util_deactivate_surface(prev_surface);
+    }
+
+    // Notify keyboard about entering this surface (for keyboard input)
+    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
+    if (keyboard) {
+        wlr_seat_keyboard_notify_enter(seat, layer_view->surface->surface, keyboard->keycodes,
+                                       keyboard->num_keycodes, &keyboard->modifiers);
+    }
 }
 
 // Create a new qw_layer_view for a given wlr_layer_surface
