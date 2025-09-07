@@ -23,7 +23,7 @@ from libqtile.command.base import expose_command
 from libqtile.widget import base
 
 
-class Load(base.BackgroundPoll):
+class Load(base.InLoopPollText):
     """
     A small widget to show the load averages of the system.
     Depends on psutil.
