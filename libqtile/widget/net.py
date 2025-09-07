@@ -28,7 +28,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class Net(base.BackgroundPoll):
+class Net(base.InLoopPollText):
     """
     Displays interface down and up speed
 
@@ -76,7 +76,7 @@ class Net(base.BackgroundPoll):
     ]
 
     def __init__(self, **config):
-        base.BackgroundPoll.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, "", **config)
         self.add_defaults(Net.defaults)
 
         self.factor = 1000.0

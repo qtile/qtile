@@ -28,7 +28,7 @@ import psutil
 from libqtile.widget import base
 
 
-class ThermalSensor(base.BackgroundPoll):
+class ThermalSensor(base.InLoopPollText):
     """Widget to display temperature sensor information
 
     For using the thermal sensor widget you need to have lm-sensors installed.
@@ -62,7 +62,7 @@ class ThermalSensor(base.BackgroundPoll):
     ]
 
     def __init__(self, **config):
-        base.BackgroundPoll.__init__(self, **config)
+        base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
         temp_values = self.get_temp_sensors()
 
@@ -77,7 +77,7 @@ class ThermalSensor(base.BackgroundPoll):
 
     def _configure(self, qtile, bar):
         self.unit = "°C" if self.metric else "°F"
-        base.BackgroundPoll._configure(self, qtile, bar)
+        base.InLoopPollText._configure(self, qtile, bar)
         self.foreground_normal = self.foreground
 
     def get_temp_sensors(self):
