@@ -26,7 +26,7 @@ from libqtile.utils import send_notification
 from libqtile.widget import base
 
 
-class Pomodoro(base.BackgroundPoll):
+class Pomodoro(base.InLoopPollText):
     """Pomodoro technique widget"""
 
     defaults = [
@@ -65,7 +65,7 @@ class Pomodoro(base.BackgroundPoll):
     pomodoros = 1
 
     def __init__(self, **config):
-        base.BackgroundPoll.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, "", **config)
         self.add_defaults(Pomodoro.defaults)
         self.prefix = {
             "inactive": self.prefix_inactive,
