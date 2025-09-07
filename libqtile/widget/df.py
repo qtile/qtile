@@ -22,7 +22,7 @@ import os
 from libqtile.widget import base
 
 
-class DF(base.BackgroundPoll):
+class DF(base.InLoopPollText):
     """Disk Free Widget
 
     By default the widget only displays if the space is less than warn_space.
@@ -46,7 +46,7 @@ class DF(base.BackgroundPoll):
     measures = {"G": 1024 * 1024 * 1024, "M": 1024 * 1024, "B": 1024}
 
     def __init__(self, **config):
-        base.BackgroundPoll.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, "", **config)
         self.add_defaults(DF.defaults)
         self.user_free = 0
         self.calc = self.measures[self.measure]
@@ -57,7 +57,7 @@ class DF(base.BackgroundPoll):
         else:
             self.layout.colour = self.foreground
 
-        base.BackgroundPoll.draw(self)
+        base.InLoopPollText.draw(self)
 
     def poll(self):
         statvfs = os.statvfs(self.partition)
