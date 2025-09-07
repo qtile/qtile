@@ -396,7 +396,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         )
 
 
-class Battery(base.BackgroundPoll):
+class Battery(base.InLoopPollText):
     """
     A text-based battery monitoring widget supporting both Linux and FreeBSD.
 
@@ -485,7 +485,7 @@ class Battery(base.BackgroundPoll):
     ]
 
     def __init__(self, **config) -> None:
-        base.BackgroundPoll.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, "", **config)
         self.add_defaults(self.defaults)
 
         self._battery = self._load_battery(**config)
@@ -497,7 +497,7 @@ class Battery(base.BackgroundPoll):
             self.low_background = self.background
         self.normal_background = self.background
 
-        base.BackgroundPoll._configure(self, qtile, bar)
+        base.InLoopPollText._configure(self, qtile, bar)
 
     @expose_command()
     def charge_to_full(self):
