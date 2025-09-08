@@ -71,8 +71,10 @@ _NET_WM_STATE_TOGGLE = 2
 
 
 def _geometry_getter(attr):
+    attr_name = "_" + attr
+
     def get_attr(self):
-        if getattr(self, "_" + attr) is None:
+        if getattr(self, attr_name) is None:
             g = self.window.get_geometry()
             # trigger the geometry setter on all these
             self.x = g.x
@@ -80,12 +82,14 @@ def _geometry_getter(attr):
             self.width = g.width
             self.height = g.height
             self.depth = g.depth
-        return getattr(self, "_" + attr)
+        return getattr(self, attr_name)
 
     return get_attr
 
 
 def _geometry_setter(attr):
+    attr_name = "_" + attr
+
     def f(self, value):
         if not isinstance(value, int):
             frame = inspect.currentframe()
@@ -93,7 +97,7 @@ def _geometry_setter(attr):
             logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
             logger.error("".join(stack_trace[:-1]))
             value = int(value)
-        setattr(self, "_" + attr, value)
+        setattr(self, attr_name, value)
 
     return f
 
