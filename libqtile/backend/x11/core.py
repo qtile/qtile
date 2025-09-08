@@ -29,6 +29,7 @@ import time
 from typing import TYPE_CHECKING
 
 import xcffib
+import xcffib.randr
 import xcffib.render
 import xcffib.xproto
 import xcffib.xtest
@@ -44,6 +45,26 @@ from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
+
+EVENT_TO_HANDLER = {
+    xcffib.xproto.ButtonPressEvent: "handle_ButtonPress",
+    xcffib.xproto.ButtonReleaseEvent: "handle_ButtonRelease",
+    xcffib.xproto.ClientMessageEvent: "handle_ClientMessage",
+    xcffib.xproto.ConfigureRequestEvent: "handle_ConfigureRequest",
+    xcffib.xproto.DestroyNotifyEvent: "handle_DestroyNotify",
+    xcffib.xproto.EnterNotifyEvent: "handle_EnterNotify",
+    xcffib.xproto.ExposeEvent: "handle_Expose",
+    xcffib.xproto.FocusOutEvent: "handle_FocusOut",
+    xcffib.xproto.KeyPressEvent: "handle_KeyPress",
+    xcffib.xproto.LeaveNotifyEvent: "handle_LeaveNotify",
+    xcffib.xproto.MappingNotifyEvent: "handle_MappingNotify",
+    xcffib.xproto.MapRequestEvent: "handle_MapRequest",
+    xcffib.xproto.MotionNotifyEvent: "handle_MotionNotify",
+    xcffib.xproto.PropertyNotifyEvent: "handle_PropertyNotify",
+    xcffib.randr.ScreenChangeNotifyEvent: "handle_ScreenChangeNotify",
+    xcffib.xproto.SelectionNotifyEvent: "handle_SelectionNotify",
+    xcffib.xproto.UnmapNotifyEvent: "handle_UnmapNotify",
+}
 
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
@@ -300,11 +321,8 @@ class Core(base.Core):
 
     def handle_event(self, event):
         """Handle an X11 event by forwarding it to the right target"""
-        event_type = event.__class__.__name__
-        if event_type.endswith("Event"):
-            event_type = event_type[:-5]
-        targets = self._get_target_chain(event_type, event)
-        logger.debug("X11 event: %s (targets: %s)", event_type, targets)
+        targets = self._get_target_chain(event)
+        logger.debug("X11 event: %s (targets: %s)", event.__class__.__name__, targets)
         for target in targets:
             ret = target(event)
             if not ret:
@@ -371,7 +389,7 @@ class Core(base.Core):
             self._motion_notify = None
         self.flush()
 
-    def _get_target_chain(self, event_type: str, event) -> list[Callable]:
+    def _get_target_chain(self, event) -> list[Callable]:
         """Returns a chain of targets that can handle this event
 
         Finds functions named `handle_X`, either on the window object itself or
@@ -384,21 +402,26 @@ class Core(base.Core):
         """
         assert self.qtile is not None
 
-        handler = f"handle_{event_type}"
+        handler = EVENT_TO_HANDLER.get(event.__class__)
+
+        # If handler is None, this event has no handler and should be ignored
+        if handler is None:
+            return []
+
         # Certain events expose the affected window id as an "event" attribute.
-        event_events = [
-            "EnterNotify",
-            "LeaveNotify",
-            "MotionNotify",
-            "ButtonPress",
-            "ButtonRelease",
-            "KeyPress",
-        ]
+        event_events = {
+            xcffib.xproto.EnterNotifyEvent,
+            xcffib.xproto.LeaveNotifyEvent,
+            xcffib.xproto.MotionNotifyEvent,
+            xcffib.xproto.ButtonPressEvent,
+            xcffib.xproto.ButtonReleaseEvent,
+            xcffib.xproto.KeyPressEvent,
+        }
         if hasattr(event, "window"):
             window = self.qtile.windows_map.get(event.window)
         elif hasattr(event, "drawable"):
             window = self.qtile.windows_map.get(event.drawable)
-        elif event_type in event_events:
+        elif event.__class__ in event_events:
             window = self.qtile.windows_map.get(event.event)
         else:
             window = None
