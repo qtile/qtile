@@ -636,16 +636,57 @@ def remove_dbus_rules() -> None:
         bus._sock.close()
 
 
+ASYNC_PIDS: set[int] = set()
+
+
+async def acall_process(command: str | list[str], shell: bool = False) -> str:
+    """
+    Like call_process, but the async version. Tracks PIDs in ASYNC_PIDS.
+    """
+    stdin = asyncio.subprocess.DEVNULL
+    stdout = asyncio.subprocess.PIPE
+    stderr = asyncio.subprocess.STDOUT
+
+    if shell:
+        if isinstance(command, list):
+            command = " ".join(command)
+        p = await asyncio.subprocess.create_subprocess_shell(
+            command, stdin=stdin, stdout=stdout, stderr=stderr
+        )
+    else:
+        if isinstance(command, str):
+            command = [command]
+        p = await asyncio.subprocess.create_subprocess_exec(
+            *command, stdin=stdin, stdout=stdout, stderr=stderr
+        )
+
+    if p.pid is not None:
+        ASYNC_PIDS.add(p.pid)
+
+    try:
+        (out, _) = await p.communicate()
+        return out.decode("utf-8")
+    finally:
+        # Remove PID from tracking list when process completes
+        if p.pid is not None:
+            ASYNC_PIDS.discard(p.pid)
+
+
 def reap_zombies() -> None:
     """
     A SIGCHLD handler that reaps all zombies until there are no more.
+    Uses WNOWAIT for processes in ASYNC_PIDS to avoid interfering with async cleanup.
     """
     try:
         # One signal might mean mulitple children have exited. Reap everything
         # that has exited, until there's nothing left.
         while True:
-            wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG)
+            wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG | os.WNOWAIT)
             if wait_result is None:
                 return
+
+            if wait_result.si_pid in ASYNC_PIDS:
+                break
+            os.waitid(os.P_PID, wait_result.si_pid, os.WEXITED)
     except ChildProcessError:
         pass
