@@ -311,6 +311,22 @@ class Internal(Base, base.Internal):
 
 
 @ffi.def_extern()
+def request_focus_cb(userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_focus():
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def request_close_cb(userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_close():
+        return 1
+    return 0
+
+
+@ffi.def_extern()
 def request_fullscreen_cb(fullscreen: bool, userdata: ffi.CData) -> int:
     win = ffi.from_handle(userdata)
     if win.handle_request_fullscreen(fullscreen):
@@ -322,6 +338,14 @@ def request_fullscreen_cb(fullscreen: bool, userdata: ffi.CData) -> int:
 def request_maximize_cb(maximize: bool, userdata: ffi.CData) -> int:
     win = ffi.from_handle(userdata)
     if win.handle_request_maximize(maximize):
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def request_minimize_cb(minimize: bool, userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_minimize(minimize):
         return 1
     return 0
 
@@ -351,10 +375,21 @@ class Window(Base, base.Window):
         # TODO: destroy?
         self._userdata = ffi.new_handle(self)
         ptr.cb_data = self._userdata
+        ptr.request_focus_cb = lib.request_focus_cb
+        ptr.request_close_cb = lib.request_close_cb
         ptr.request_maximize_cb = lib.request_maximize_cb
+        ptr.request_minimize_cb = lib.request_minimize_cb
         ptr.request_fullscreen_cb = lib.request_fullscreen_cb
         ptr.set_title_cb = lib.set_title_cb
         ptr.set_app_id_cb = lib.set_app_id_cb
+
+    def handle_request_focus(self) -> bool:
+        self.focus()
+        return True
+
+    def handle_request_close(self) -> bool:
+        self.kill()
+        return True
 
     def handle_request_fullscreen(self, fullscreen: bool) -> bool:
         if self.qtile.config.auto_fullscreen:
@@ -365,6 +400,10 @@ class Window(Base, base.Window):
 
     def handle_request_maximize(self, maximize: bool) -> bool:
         self.maximized = maximize
+        return True
+
+    def handle_request_minimize(self, minimize: bool) -> bool:
+        self.minimized = minimize
         return True
 
     def handle_set_title(self, title: str) -> None:
@@ -571,6 +610,8 @@ class Window(Base, base.Window):
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             self.reparent(lib.LAYER_LAYOUT)
             self._update_fullscreen(False)
+            self._update_maximized(False)
+            self._update_minimized(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
                 self._float_width = self.width
@@ -644,7 +685,9 @@ class Window(Base, base.Window):
                 self._restore_geometry()
                 self.floating = False
 
-        # TODO: set maximized in c backend
+    def _update_maximized(self, do_max: bool) -> None:
+        if do_max != (self._float_state == FloatStates.MAXIMIZED):
+            self._ptr.update_maximized(self._ptr, do_max)
 
     @property
     def minimized(self) -> bool:
@@ -659,7 +702,9 @@ class Window(Base, base.Window):
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
-        # TODO: set minimize in c backend
+    def _update_minimized(self, do_min: bool) -> None:
+        if do_min != (self._float_state == FloatStates.MINIMIZED):
+            self._ptr.update_minimized(self._ptr, do_min)
 
     def _reconfigure_floating(
         self,
@@ -676,6 +721,9 @@ class Window(Base, base.Window):
                 self.group.mark_floating(self, True)
             self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
             hook.fire("float_change")
+        self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
+        self._update_maximized(new_float_state == FloatStates.MAXIMIZED)
+        self._update_minimized(new_float_state == FloatStates.MINIMIZED)
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
@@ -805,7 +853,10 @@ class Static(Base, base.Static):
 
         self._userdata = ffi.new_handle(self)
         ptr.cb_data = self._userdata
+        ptr.request_focus_cb = ffi.NULL
+        ptr.request_close_cb = ffi.NULL
         ptr.request_maximize_cb = ffi.NULL
+        ptr.request_minimize_cb = ffi.NULL
         ptr.request_fullscreen_cb = ffi.NULL
         ptr.set_title_cb = lib.set_title_cb
         ptr.set_app_id_cb = lib.set_app_id_cb
