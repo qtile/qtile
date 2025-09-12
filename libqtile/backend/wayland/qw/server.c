@@ -685,6 +685,8 @@ struct qw_server *qw_server_create() {
     // Session lock setup
     qw_session_lock_init(server);
 
+    server->ftl_mgr = wlr_foreign_toplevel_manager_v1_create(server->display);
+
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;

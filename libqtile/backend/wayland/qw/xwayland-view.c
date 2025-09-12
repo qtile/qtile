@@ -31,6 +31,7 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
     }
 
     wlr_scene_node_raise_to_top(&xwayland_view->base.content_tree->node);
+    wlr_foreign_toplevel_handle_v1_set_activated(xwayland_view->base.ftl_handle, true);
 
     // Deactivate previous surface if any
     if (prev_surface != NULL) {
@@ -259,6 +260,9 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
         // For XWayland, we configure the surface position and size
         wlr_xwayland_surface_configure(qw_xsurface, x, y, width, height);
         qw_xwayland_view_clip(xwayland_view);
+
+        // Resize the foreign toplevel output tracking buffer
+        qw_view_resize_ftl_output_tracking_buffer(&xwayland_view->base, width, height);
     }
 
     // Paint borders around the view with given border colors and width
@@ -323,6 +327,27 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     // Set the view's initial dimensions based on the surface.
     xwayland_view->base.width = xwayland_surface->width;
     xwayland_view->base.height = xwayland_surface->height;
+
+    // Set properties for foreign toplevel manager
+    if (xwayland_view->base.ftl_handle != NULL) {
+        if (xwayland_view->base.title != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_title(xwayland_view->base.ftl_handle,
+                                                     xwayland_view->base.title);
+        }
+        if (xwayland_view->base.app_id != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_app_id(xwayland_view->base.ftl_handle,
+                                                      xwayland_view->base.app_id);
+        }
+        if (xwayland_surface->parent != NULL) {
+            struct qw_xwayland_view *parent_view = xwayland_surface->parent->data;
+            if (parent_view->base.ftl_handle != NULL) {
+                wlr_foreign_toplevel_handle_v1_set_parent(xwayland_view->base.ftl_handle,
+                                                          parent_view->base.ftl_handle);
+            }
+        }
+    } else {
+        wlr_log(WLR_ERROR, "Could not create foreign toplevel handle.");
+    }
 
     // Notify the server that this view is ready to be managed (added to layout/focus system).
     xwayland_view->base.server->manage_view_cb((struct qw_view *)&xwayland_view->base,
@@ -450,6 +475,10 @@ static void qw_xwayland_view_handle_set_title(struct wl_listener *listener, void
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_title);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
     xwayland_view->base.title = qw_xsurface->title;
+    if (xwayland_view->base.ftl_handle != NULL && qw_xsurface->title != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_title(xwayland_view->base.ftl_handle,
+                                                 xwayland_view->base.title);
+    }
     if (xwayland_view->base.set_title_cb && xwayland_view->base.title) {
         xwayland_view->base.set_title_cb(xwayland_view->base.title, xwayland_view->base.cb_data);
     }
@@ -459,6 +488,10 @@ static void qw_xwayland_view_handle_set_class(struct wl_listener *listener, void
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_class);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
     xwayland_view->base.app_id = qw_xsurface->class;
+    if (xwayland_view->base.ftl_handle != NULL && qw_xsurface->title != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_app_id(xwayland_view->base.ftl_handle,
+                                                  xwayland_view->base.app_id);
+    }
     if (xwayland_view->base.set_title_cb && xwayland_view->base.app_id) {
         xwayland_view->base.set_app_id_cb(xwayland_view->base.app_id, xwayland_view->base.cb_data);
     }
@@ -532,6 +565,7 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     wl_list_remove(&xwayland_view->dissociate.link);
     // wl_list_remove(&xwayland_view->override_redirect.link);
 
+    qw_view_ftl_manager_handle_destroy(&xwayland_view->base);
     wlr_scene_node_destroy(&xwayland_view->base.content_tree->node);
 
     free(xwayland_view);
@@ -617,6 +651,11 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     // Add listener for toplevel destroy event
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
     xwayland_view->destroy.notify = qw_xwayland_view_handle_destroy;
+
+    xwayland_surface->data = xwayland_view;
+
+    // Create foreign toplevel manager and listeners
+    qw_view_ftl_manager_handle_create(&xwayland_view->base);
 }
 
 struct qw_xwayland_view *create_xwayland_view(struct wlr_xwayland_surface *qw_xsurface) {
