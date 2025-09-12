@@ -901,8 +901,7 @@ class Core(base.Core):
             try:
                 if window.group.screen is not qtile.current_screen:
                     qtile.focus_screen(window.group.screen.index, warp=False)
-                qtile.current_group.focus(window, False)
-                window.focus(False)
+                qtile.current_group.focus(window, warp=False)
             except AttributeError:
                 # probably clicked an internal window
                 screen = qtile.find_screen(e.root_x, e.root_y)
