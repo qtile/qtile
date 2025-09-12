@@ -75,6 +75,12 @@ void qw_util_deactivate_surface(struct wlr_surface *surface) {
     struct wlr_xdg_toplevel *xdg_toplevel = wlr_xdg_toplevel_try_from_wlr_surface(surface);
     if (xdg_toplevel) {
         wlr_xdg_toplevel_set_activated(xdg_toplevel, false);
+
+        // Handle foreign toplevel messaging
+        struct qw_xdg_view *xdg_view = xdg_toplevel->base->data;
+        if (xdg_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_activated(xdg_view->base.ftl_handle, false);
+        }
         return;
     }
 
@@ -82,6 +88,12 @@ void qw_util_deactivate_surface(struct wlr_surface *surface) {
     struct wlr_xwayland_surface *xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(surface);
     if (xwayland_surface) {
         wlr_xwayland_surface_activate(xwayland_surface, false);
+
+        // Handle foreign toplevel messaging
+        struct qw_xwayland_view *xwayland_view = xwayland_surface->data;
+        if (xwayland_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_activated(xwayland_view->base.ftl_handle, false);
+        }
         return;
     }
     #endif

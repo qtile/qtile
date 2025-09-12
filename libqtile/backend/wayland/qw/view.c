@@ -165,3 +165,143 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
 
     wlr_scene_node_raise_to_top(tree_node);
 }
+
+// Foreign toplevel manager requests
+static void qw_handle_ftl_request_activate(struct wl_listener *listener, void *data) {
+    struct qw_view *view = wl_container_of(listener, view, ftl_request_activate);
+    if (view != NULL) {
+        int handled = view->request_focus_cb(view->cb_data);
+        if (!handled) {
+            wlr_log(WLR_ERROR, "Could not focus window from foreign toplevel manager.");
+        }
+    }
+}
+
+static void qw_handle_ftl_request_close(struct wl_listener *listener, void *data) {
+    struct qw_view *view = wl_container_of(listener, view, ftl_request_close);
+    if (view != NULL) {
+        int handled = view->request_close_cb(view->cb_data);
+        if (!handled) {
+            wlr_log(WLR_ERROR, "Could not close window from foreign toplevel manager.");
+        }
+    }
+}
+
+static void qw_handle_ftl_request_maximize(struct wl_listener *listener, void *data) {
+    struct wlr_foreign_toplevel_handle_v1_maximized_event *event = data;
+    struct qw_view *view = wl_container_of(listener, view, ftl_request_maximize);
+    if (view != NULL) {
+        int handled = view->request_maximize_cb(event->maximized, view->cb_data);
+        if (!handled) {
+            wlr_log(WLR_ERROR, "Could not maximize window from foreign toplevel manager.");
+        }
+    }
+}
+
+static void qw_handle_ftl_request_minimize(struct wl_listener *listener, void *data) {
+    struct wlr_foreign_toplevel_handle_v1_minimized_event *event = data;
+    struct qw_view *view = wl_container_of(listener, view, ftl_request_minimize);
+    if (view != NULL) {
+        int handled = view->request_minimize_cb(event->minimized, view->cb_data);
+        if (!handled) {
+            wlr_log(WLR_ERROR, "Could not minimize window from foreign toplevel manager.");
+        }
+    }
+}
+
+static void qw_handle_ftl_request_fullscreen(struct wl_listener *listener, void *data) {
+    struct wlr_foreign_toplevel_handle_v1_fullscreen_event *event = data;
+    struct qw_view *view = wl_container_of(listener, view, ftl_request_fullscreen);
+    if (view != NULL) {
+        int handled = view->request_fullscreen_cb(event->fullscreen, view->cb_data);
+        if (!handled) {
+            wlr_log(WLR_ERROR, "Could not fullscreen window from foreign toplevel manager.");
+        }
+    }
+}
+
+static void qw_handle_ftl_output_enter(struct wl_listener *listener, void *data) {
+    struct qw_view *view = wl_container_of(listener, view, ftl_output_enter);
+    struct wlr_scene_output *output = data;
+    if (view->ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_output_enter(view->ftl_handle, output->output);
+    }
+}
+
+static void qw_handle_ftl_output_leave(struct wl_listener *listener, void *data) {
+    struct qw_view *view = wl_container_of(listener, view, ftl_output_leave);
+    struct wlr_scene_output *output = data;
+    if (view->ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_output_leave(view->ftl_handle, output->output);
+    }
+}
+
+static bool qw_handle_ftl_point_accepts_input(struct wlr_scene_buffer *buffer, double *x,
+                                              double *y) {
+    return false;
+}
+
+void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, int height) {
+    if (view->ftl_output_tracking_buffer == NULL) {
+        return;
+    }
+    wlr_scene_buffer_set_dest_size(view->ftl_output_tracking_buffer, width, height);
+}
+
+void qw_view_ftl_manager_handle_create(struct qw_view *view) {
+    // Create a foreign toplevel handle and set up listeners
+    view->ftl_handle = wlr_foreign_toplevel_handle_v1_create(view->server->ftl_mgr);
+
+    view->ftl_request_activate.notify = qw_handle_ftl_request_activate;
+    wl_signal_add(&view->ftl_handle->events.request_activate, &view->ftl_request_activate);
+
+    view->ftl_request_close.notify = qw_handle_ftl_request_close;
+    wl_signal_add(&view->ftl_handle->events.request_close, &view->ftl_request_close);
+
+    view->ftl_request_maximize.notify = qw_handle_ftl_request_maximize;
+    wl_signal_add(&view->ftl_handle->events.request_maximize, &view->ftl_request_maximize);
+
+    view->ftl_request_minimize.notify = qw_handle_ftl_request_minimize;
+    wl_signal_add(&view->ftl_handle->events.request_minimize, &view->ftl_request_minimize);
+
+    view->ftl_request_fullscreen.notify = qw_handle_ftl_request_fullscreen;
+    wl_signal_add(&view->ftl_handle->events.request_fullscreen, &view->ftl_request_fullscreen);
+
+    view->ftl_output_tracking_buffer = wlr_scene_buffer_create(view->content_tree, NULL);
+    if (view->ftl_output_tracking_buffer != NULL) {
+        view->ftl_output_enter.notify = qw_handle_ftl_output_enter;
+        wl_signal_add(&view->ftl_output_tracking_buffer->events.output_enter,
+                      &view->ftl_output_enter);
+        view->ftl_output_leave.notify = qw_handle_ftl_output_leave;
+        wl_signal_add(&view->ftl_output_tracking_buffer->events.output_leave,
+                      &view->ftl_output_leave);
+        view->ftl_output_tracking_buffer->point_accepts_input = qw_handle_ftl_point_accepts_input;
+    } else {
+        wlr_log(WLR_ERROR, "Failed to create a foreign toplevel tracking buffer.");
+    }
+}
+
+void qw_view_ftl_manager_handle_destroy(struct qw_view *view) {
+    if (view->ftl_handle == NULL) {
+        return;
+    }
+
+    // Remove signal listeners
+    wl_list_remove(&view->ftl_request_activate.link);
+    wl_list_remove(&view->ftl_request_close.link);
+    wl_list_remove(&view->ftl_request_maximize.link);
+    wl_list_remove(&view->ftl_request_minimize.link);
+    wl_list_remove(&view->ftl_request_fullscreen.link);
+
+    // Remove output tracking
+    if (view->ftl_output_tracking_buffer != NULL) {
+        wl_list_remove(&view->ftl_output_enter.link);
+        wl_list_remove(&view->ftl_output_leave.link);
+        wlr_scene_node_destroy(&view->ftl_output_tracking_buffer->node);
+        view->ftl_output_tracking_buffer = NULL;
+    }
+
+    // Destroy the handle
+    wlr_foreign_toplevel_handle_v1_destroy(view->ftl_handle);
+    view->ftl_handle = NULL;
+}

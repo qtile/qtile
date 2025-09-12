@@ -4,6 +4,7 @@
 #include <cairo/cairo.h>
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_buffer.h>
+#include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_scene.h>
 
 // TODO: avoid this duplication
@@ -17,11 +18,20 @@ enum qw_view_state {
     MINIMIZED = 6,
 };
 
+// Callback type for focus request
+typedef int (*request_focus_cb_t)(void *userdata);
+
+// Callback type for close request
+typedef int (*request_close_cb_t)(void *userdata);
+
 // Callback type for fullscreen request (true = enter fullscreen, false = exit)
 typedef int (*request_fullscreen_cb_t)(bool fullscreen, void *userdata);
 
 // Callback type for maximize request (true = maximize, false = unmaximize)
 typedef int (*request_maximize_cb_t)(bool maximize, void *userdata);
+
+// Callback type for minimize request (true = minimize, false = unminimize)
+typedef int (*request_minimize_cb_t)(bool minimize, void *userdata);
 
 // Callback type for title updated
 typedef void (*set_title_cb_t)(char *title, void *userdata);
@@ -30,6 +40,12 @@ typedef void (*set_title_cb_t)(char *title, void *userdata);
 typedef void (*set_app_id_cb_t)(char *app_id, void *userdata);
 
 struct qw_server;
+
+enum qw_view_type {
+    QW_VIEW_XDG,
+    QW_VIEW_XWAYLAND,
+    QW_VIEW_INTERNAL,
+};
 
 enum qw_border_type {
     QW_BORDER_RECT,
@@ -60,13 +76,18 @@ struct qw_view {
     int height;
     int bn; // Number of border layers
     enum qw_view_state state;
+    enum qw_view_type view_type;
     char *shell; // e.g. "XdgWindow" or "XWayland"
     int wid;     // Window identifier (e.g. X11 window id or similar)
     char *title;
     char *app_id;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
+    struct wlr_foreign_toplevel_handle_v1 *ftl_handle;
 
+    request_focus_cb_t request_focus_cb;
+    request_close_cb_t request_close_cb;
     request_maximize_cb_t request_maximize_cb;
+    request_minimize_cb_t request_minimize_cb;
     request_fullscreen_cb_t request_fullscreen_cb;
     set_title_cb_t set_title_cb;
     set_app_id_cb_t set_app_id_cb;
@@ -76,6 +97,7 @@ struct qw_view {
     struct wlr_scene_node *(*get_tree_node)(void *self);
     void (*update_fullscreen)(void *self, bool fullscreen);
     void (*update_maximized)(void *self, bool maximize);
+    void (*update_minimized)(void *self, bool minimize);
     void (*place)(void *self, int x, int y, int width, int height, const struct qw_border *borders,
                   int border_count, int above);
     void (*focus)(void *self, int warp);
@@ -92,6 +114,15 @@ struct qw_view {
             struct wlr_scene_buffer *scene_bufs[4];
         };
     } *borders;
+    struct wl_listener ftl_request_activate;
+    struct wl_listener ftl_request_close;
+    struct wl_listener ftl_request_maximize;
+    struct wl_listener ftl_request_minimize;
+    struct wl_listener ftl_request_fullscreen;
+    // ftl output tracking
+    struct wlr_scene_buffer *ftl_output_tracking_buffer;
+    struct wl_listener ftl_output_enter;
+    struct wl_listener ftl_output_leave;
 };
 
 void qw_view_reparent(struct qw_view *view, int layer);
@@ -107,5 +138,10 @@ void qw_view_cleanup_borders(struct qw_view *xdg_view);
 
 // Create and paint borders with specified colors
 void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders, int border_count);
+
+// Create/destroy a foreign toplevel manager handle and listeners
+void qw_view_ftl_manager_handle_create(struct qw_view *view);
+void qw_view_ftl_manager_handle_destroy(struct qw_view *view);
+void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, int height);
 
 #endif /* VIEW_H */

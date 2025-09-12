@@ -18,6 +18,7 @@
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
+#include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_input_device.h>
@@ -185,6 +186,7 @@ struct qw_server {
     struct wl_listener request_cursor;
     struct wl_listener request_set_selection;
     struct wl_listener request_set_primary_selection;
+    struct wlr_foreign_toplevel_manager_v1 *ftl_mgr;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;
