@@ -545,6 +545,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->base.update_fullscreen = qw_xdg_view_update_fullscreen;
     xdg_view->base.update_fullscreen_background = qw_xdg_view_update_fullscreen_background;
     xdg_view->base.update_maximized = qw_xdg_view_update_maximized;
+    xdg_view->base.update_minimized = qw_xdg_view_update_minimized;
     xdg_view->base.place = qw_xdg_view_place;
     xdg_view->base.focus = qw_xdg_view_focus;
     xdg_view->base.get_pid = qw_xdg_view_get_pid;
