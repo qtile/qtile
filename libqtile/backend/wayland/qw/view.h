@@ -31,6 +31,12 @@ typedef void (*set_app_id_cb_t)(char *app_id, void *userdata);
 
 struct qw_server;
 
+enum qw_view_type {
+    QW_VIEW_XDG,
+    QW_VIEW_XWAYLAND,
+    QW_VIEW_INTERNAL,
+};
+
 enum qw_border_type {
     QW_BORDER_RECT,
     QW_BORDER_BUFFER,
@@ -60,6 +66,7 @@ struct qw_view {
     int height;
     int bn; // Number of border layers
     enum qw_view_state state;
+    enum qw_view_type view_type;
     char *shell; // e.g. "XdgWindow" or "XWayland"
     int wid;     // Window identifier (e.g. X11 window id or similar)
     char *title;
