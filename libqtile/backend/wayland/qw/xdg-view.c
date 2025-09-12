@@ -515,6 +515,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->xdg_toplevel = xdg_toplevel;
 
     xdg_view->base.shell = "XDG";
+    xdg_view->base.view_type = QW_VIEW_XDG;
     // Create a scene tree node for this view inside the main layout tree
     xdg_view->base.content_tree = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xdg_view->base.content_tree->node.data = xdg_view;
