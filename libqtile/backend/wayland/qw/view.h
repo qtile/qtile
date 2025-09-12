@@ -17,11 +17,20 @@ enum qw_view_state {
     MINIMIZED = 6,
 };
 
+// Callback type for focus request
+typedef int (*request_focus_cb_t)(void *userdata);
+
+// Callback type for close request
+typedef int (*request_close_cb_t)(void *userdata);
+
 // Callback type for fullscreen request (true = enter fullscreen, false = exit)
 typedef int (*request_fullscreen_cb_t)(bool fullscreen, void *userdata);
 
 // Callback type for maximize request (true = maximize, false = unmaximize)
 typedef int (*request_maximize_cb_t)(bool maximize, void *userdata);
+
+// Callback type for minimize request (true = minimize, false = unminimize)
+typedef int (*request_minimize_cb_t)(bool minimize, void *userdata);
 
 // Callback type for title updated
 typedef void (*set_title_cb_t)(char *title, void *userdata);
@@ -73,7 +82,10 @@ struct qw_view {
     char *app_id;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
 
+    request_focus_cb_t request_focus_cb;
+    request_close_cb_t request_close_cb;
     request_maximize_cb_t request_maximize_cb;
+    request_minimize_cb_t request_minimize_cb;
     request_fullscreen_cb_t request_fullscreen_cb;
     set_title_cb_t set_title_cb;
     set_app_id_cb_t set_app_id_cb;
@@ -83,6 +95,7 @@ struct qw_view {
     struct wlr_scene_node *(*get_tree_node)(void *self);
     void (*update_fullscreen)(void *self, bool fullscreen);
     void (*update_maximized)(void *self, bool maximize);
+    void (*update_minimized)(void *self, bool minimize);
     void (*place)(void *self, int x, int y, int width, int height, const struct qw_border *borders,
                   int border_count, int above);
     void (*focus)(void *self, int warp);
