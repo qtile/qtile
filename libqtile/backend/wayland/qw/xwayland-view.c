@@ -356,7 +356,7 @@ static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void
 }
 
 static struct qw_xwayland_view *qw_xwayland_view_from_view(struct qw_view *view) {
-    if (strcmp(view->shell, "XWayland") != 0) {
+    if (view->view_type != QW_VIEW_XWAYLAND) {
         wlr_log(WLR_ERROR, "Expected xwayland view");
         return NULL;
     }
@@ -579,6 +579,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->xwayland_surface = xwayland_surface;
 
     xwayland_view->base.shell = "Xwayland";
+    xwayland_view->base.view_type = QW_VIEW_XWAYLAND;
     // Create a scene tree node for this view inside the main layout tree
     xwayland_view->base.content_tree =
         wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
