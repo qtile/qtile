@@ -28,6 +28,9 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
     }
 
     wlr_xdg_toplevel_set_activated(xdg_view->xdg_toplevel, true);
+    if (xdg_view->base.ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_activated(xdg_view->base.ftl_handle, true);
+    }
 
     // Notify keyboard about entering this surface (for keyboard input)
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
@@ -63,9 +66,59 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&xdg_view->destroy.link);
     // TODO: Remove request_move and request_resize listeners if added
 
+    // Destroy the foreign toplevel manager and listeners
+    qw_view_ftl_manager_handle_destroy(&xdg_view->base);
+
     wlr_scene_node_destroy(&xdg_view->base.content_tree->node);
 
     free(xdg_view);
+}
+
+// Handle map event: when the xdg_view becomes visible/mapped
+static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
+    xdg_view->mapped = true;
+
+    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
+    struct wlr_box geom = surface->geometry;
+    xdg_view->base.width = geom.width;
+    xdg_view->base.height = geom.height;
+
+    // Set foreign top level attributes
+    if (xdg_view->base.ftl_handle != NULL) {
+        if (xdg_view->base.title != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_title(xdg_view->base.ftl_handle,
+                                                     xdg_view->base.title);
+        }
+        if (xdg_view->base.app_id != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_app_id(xdg_view->base.ftl_handle,
+                                                      xdg_view->base.app_id);
+        }
+        struct wlr_xdg_toplevel *toplevel = xdg_view->xdg_toplevel;
+        if (toplevel->parent != NULL) {
+            struct qw_xdg_view *parent_view = toplevel->parent->base->data;
+            if (parent_view->base.ftl_handle != NULL) {
+                wlr_foreign_toplevel_handle_v1_set_parent(xdg_view->base.ftl_handle,
+                                                          parent_view->base.ftl_handle);
+            }
+        }
+    }
+
+    xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
+                                          xdg_view->base.server->cb_data);
+
+    // Focus the view upon mapping
+    qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
+
+    // If the protocol version supports tiled state, set tiled on all edges
+    if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+        XDG_TOPLEVEL_STATE_TILED_RIGHT_SINCE_VERSION) {
+        wlr_xdg_toplevel_set_tiled(xdg_view->xdg_toplevel,
+                                   WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
+    } else {
+        // Otherwise maximize as fallback for older clients
+        wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, true);
+    }
 }
 
 // Handle commit event: called when surface commits state changes
@@ -138,6 +191,9 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
         // Resize the toplevel surface and apply clipping if needed
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, width, height);
         qw_xdg_view_clip(xdg_view);
+
+        // Resize the foreign toplevel output tracking buffer
+        qw_view_resize_ftl_output_tracking_buffer(&xdg_view->base, width, height);
     }
 
     // Paint borders around the view with given border colors and width
@@ -220,6 +276,9 @@ static void qw_xdg_view_handle_request_fullscreen(struct wl_listener *listener, 
 static void qw_xdg_view_handle_set_title(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, set_title);
     xdg_view->base.title = xdg_view->xdg_toplevel->title;
+    if (xdg_view->base.ftl_handle != NULL && xdg_view->base.title != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_title(xdg_view->base.ftl_handle, xdg_view->base.title);
+    }
     // callback is not intialised until qtile window is initialised
     if (xdg_view->base.set_title_cb && xdg_view->base.title) {
         xdg_view->base.set_title_cb(xdg_view->base.title, xdg_view->base.cb_data);
@@ -229,6 +288,9 @@ static void qw_xdg_view_handle_set_title(struct wl_listener *listener, void *dat
 static void qw_xdg_view_handle_set_app_id(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, set_app_id);
     xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
+    if (xdg_view->base.ftl_handle != NULL && xdg_view->base.app_id != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_app_id(xdg_view->base.ftl_handle, xdg_view->base.app_id);
+    }
     // callback is not intialised until qtile window is initialised
     if (xdg_view->base.set_app_id_cb && xdg_view->base.app_id) {
         xdg_view->base.set_app_id_cb(xdg_view->base.app_id, xdg_view->base.cb_data);
@@ -249,47 +311,6 @@ static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, 
 
     wl_list_remove(&xdg_view->decoration_destroy.link);
     wl_list_remove(&xdg_view->decoration_request_mode.link);
-}
-
-// Handle map event: when the xdg_view becomes visible/mapped
-static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
-    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
-    xdg_view->mapped = true;
-
-    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
-    struct wlr_box geom = surface->geometry;
-    xdg_view->base.width = geom.width;
-    xdg_view->base.height = geom.height;
-
-    xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
-                                          xdg_view->base.server->cb_data);
-
-    // Add listeners to handle various requests
-    struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
-
-    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
-    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
-    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
-    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
-
-    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
-    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
-
-    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
-    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
-
-    // Focus the view upon mapping
-    qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
-
-    // If the protocol version supports tiled state, set tiled on all edges
-    if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
-        XDG_TOPLEVEL_STATE_TILED_RIGHT_SINCE_VERSION) {
-        wlr_xdg_toplevel_set_tiled(xdg_view->xdg_toplevel,
-                                   WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
-    } else {
-        // Otherwise maximize as fallback for older clients
-        wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, true);
-    }
 }
 
 // Initialize decoration handling for a new decoration object
@@ -318,12 +339,25 @@ static struct wlr_scene_node *qw_xdg_view_get_tree_node(void *self) {
 static void qw_xdg_view_update_fullscreen(void *self, bool fullscreen) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_set_fullscreen(xdg_view->xdg_toplevel, fullscreen);
+    if (xdg_view->base.ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_fullscreen(xdg_view->base.ftl_handle, fullscreen);
+    }
 }
 
 // Update maximized state of the toplevel surface
 static void qw_xdg_view_update_maximized(void *self, bool maximized) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, maximized);
+    if (xdg_view->base.ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_maximized(xdg_view->base.ftl_handle, maximized);
+    }
+}
+
+static void qw_xdg_view_update_minimized(void *self, bool minimized) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+    if (xdg_view->base.ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_minimized(xdg_view->base.ftl_handle, minimized);
+    }
 }
 
 static void qw_xdg_activation_token_destroy(struct wl_listener *listener, void *data) {
@@ -423,4 +457,19 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     // Add listener for toplevel destroy event
     xdg_view->destroy.notify = qw_xdg_view_handle_destroy;
     wl_signal_add(&xdg_toplevel->events.destroy, &xdg_view->destroy);
+
+    // Add listeners for maximize and fullscreen requests
+    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
+    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
+    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
+    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
+
+    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
+    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
+
+    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
+    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
+
+    // Create foreign toplevel manager and listeners
+    qw_view_ftl_manager_handle_create(&xdg_view->base);
 }
