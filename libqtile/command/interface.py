@@ -10,7 +10,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
 
-from libqtile import ipc
+from libqtile import hook, ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.log_utils import logger
@@ -125,6 +125,15 @@ class QtileCommandInterface(CommandInterface):
             against.
         """
         self._command_object = command_object
+        self.locked = False
+        hook.subscribe.locked(self.lock)
+        hook.subscribe.unlocked(self.unlock)
+
+    def lock(self):
+        self.locked = True
+
+    def unlock(self):
+        self.locked = False
 
     def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
         """Execute the given call, returning the result of the execution
@@ -150,6 +159,9 @@ class QtileCommandInterface(CommandInterface):
 
         if cmd is None:
             return "No such command."
+
+        if self.locked and not getattr(cmd, "_allow_when_locked", False):
+            return "Session is locked."
 
         logger.debug("Command: %s(%s, %s)", call.name, args, kwargs)
         return cmd(self._command_object, *args, **kwargs)
@@ -406,6 +418,9 @@ class IPCCommandServer:
         # Check if method is bound, if itis, insert magic self
         if not hasattr(cmd, "__self__"):
             args = (obj,) + args
+
+        if self.qtile.locked and not getattr(cmd, "_allow_when_locked", False):
+            return ERROR, f"{name} cannot be called when session is locked."
 
         try:
             return SUCCESS, cmd(*args, **kwargs)
