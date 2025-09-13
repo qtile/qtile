@@ -1,6 +1,7 @@
 #include "xwayland-view.h"
 #include "qw/util.h"
 #include "server.h"
+#include "session-lock.h"
 #include "view.h"
 #include "wayland-server-core.h"
 #include "wayland-util.h"
@@ -20,6 +21,10 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
     struct qw_server *server = xwayland_view->base.server;
     struct wlr_seat *seat = server->seat;
     struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+
+    if (server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
+        return;
+    }
 
     if (prev_surface == surface) {
         return;

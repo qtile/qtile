@@ -13,6 +13,7 @@
 #include "layer-view.h"
 #include "output.h"
 #include "server.h"
+#include "session-lock.h"
 #include "view.h"
 #include "wayland-server-core.h"
 #include "wayland-server-protocol.h"
@@ -45,6 +46,7 @@ void qw_server_poll(struct qw_server *server) {
 // Cleanup routine to destroy the compositor and free resources.
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
+    wlr_log(WLR_INFO, "Shutting down server");
     wl_list_remove(&server->new_input.link);
     wl_list_remove(&server->new_output.link);
     wl_list_remove(&server->output_layout_change.link);
@@ -58,11 +60,11 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_token.link);
     wl_list_remove(&server->request_set_selection.link);
     wl_list_remove(&server->request_set_primary_selection.link);
+    wl_list_remove(&server->new_session_lock.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wlr_xwayland_destroy(server->xwayland);
 #endif
-
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
     qw_cursor_destroy(server->cursor);
@@ -155,10 +157,13 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         o->area = o->full_area;
 
         wlr_scene_output_set_position(o->scene, o->x, o->y);
+        wlr_log(WLR_INFO, "Updating: %d,%d (%dx%d)", o->full_area.x, o->full_area.y,
+                o->full_area.width, o->full_area.height);
 
         // TODO: fullscreen bg
 
         // TODO: lock surface
+        qw_session_lock_output_change(o);
 
         qw_output_arrange_layers(o);
 
@@ -607,6 +612,9 @@ struct qw_server *qw_server_create() {
     server->request_set_primary_selection.notify = qw_server_handle_request_set_primary_selection;
     wl_signal_add(&server->seat->events.request_set_primary_selection,
                   &server->request_set_primary_selection);
+
+    // Session lock setup
+    qw_session_lock_init(server);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
