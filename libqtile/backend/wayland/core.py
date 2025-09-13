@@ -75,7 +75,7 @@ from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.window import Internal, Static, Window
-from libqtile.command.base import expose_command
+from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import ScreenRect
 from libqtile.images import Img
 from libqtile.log_utils import logger
@@ -195,6 +195,12 @@ def focus_current_window_cb(userdata: ffi.CData) -> bool:
     return core.handle_focus_current_window()
 
 
+@ffi.def_extern()
+def on_session_lock_cb(locked: bool, userdata: ffi.CData) -> None:
+    core = ffi.from_handle(userdata)
+    core.set_locked(locked)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -240,10 +246,12 @@ class Core(base.Core):
         self.qw.view_urgent_cb_data = self._userdata
         self.qw.on_input_device_added_cb = lib.on_input_device_added_cb
         self.qw.focus_current_window_cb = lib.focus_current_window_cb
+        self.qw.on_session_lock_cb = lib.on_session_lock_cb
         lib.qw_server_start(self.qw)
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
         self.painter = Painter(self)
+        self._locked = False
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""
@@ -614,6 +622,14 @@ class Core(base.Core):
         # if self.focused_internal:
         #     self.focused_internal.process_key_press(keysym)
 
+    def set_locked(self, locked: bool) -> None:
+        if locked != self._locked:
+            if locked:
+                hook.fire("locked")
+            else:
+                hook.fire("unlocked")
+        self._locked = locked
+
     @expose_command()
     def set_keymap(
         self,
@@ -636,6 +652,7 @@ class Core(base.Core):
         )
 
     @expose_command()
+    @allow_when_locked
     def change_vt(self, vt: int) -> bool:
         """Change virtual terminal to that specified"""
         success = lib.qw_server_change_vt(self.qw, vt)
@@ -701,6 +718,12 @@ class Core(base.Core):
         lib.qw_server_traverse_scene_graph(self.qw, on_node)
 
         return tree
+
+    @expose_command()
+    @allow_when_locked
+    def session_lock_status(self) -> bool:
+        """Returns True if server is currently locked."""
+        return self._locked
 
 
 class Painter:

@@ -13,6 +13,7 @@
 #include "layer-view.h"
 #include "output.h"
 #include "server.h"
+#include "session-lock.h"
 #include "view.h"
 #include "wayland-server-core.h"
 #include "wayland-server-protocol.h"
@@ -60,11 +61,11 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->request_set_primary_selection.link);
     wl_list_remove(&server->request_start_drag.link);
     wl_list_remove(&server->start_drag.link);
+    wl_list_remove(&server->new_session_lock.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wlr_xwayland_destroy(server->xwayland);
 #endif
-
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
     qw_cursor_destroy(server->cursor);
@@ -157,6 +158,8 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         o->area = o->full_area;
 
         wlr_scene_output_set_position(o->scene, o->x, o->y);
+        wlr_log(WLR_INFO, "Updating: %d,%d (%dx%d)", o->full_area.x, o->full_area.y,
+                o->full_area.width, o->full_area.height);
 
         if (o->fullscreen_background != NULL) {
             wlr_scene_node_set_position(&o->fullscreen_background->node, o->full_area.x,
@@ -166,6 +169,7 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         }
 
         // TODO: lock surface
+        qw_session_lock_output_change(o);
 
         qw_output_arrange_layers(o);
 
@@ -345,6 +349,13 @@ static void qw_server_handle_new_input(struct wl_listener *listener, void *data)
     switch (device->type) {
     case WLR_INPUT_DEVICE_KEYBOARD:
         qw_server_keyboard_new(server, device);
+
+        // If there's still an active lock then we need to direct
+        // the keyboard to the lock surface.
+        if (server->lock != NULL) {
+            qw_session_lock_focus_first_lock_surface(server);
+        }
+
         break;
     case WLR_INPUT_DEVICE_POINTER:
         qw_server_new_pointer(server, device);
@@ -671,6 +682,9 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->seat->events.request_set_primary_selection,
                   &server->request_set_primary_selection);
 
+    // Session lock setup
+    qw_session_lock_init(server);
+
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
@@ -765,7 +779,8 @@ static char *LAYER_NAMES[] = {[LAYER_BACKGROUND] = "LAYER_BACKGROUND",
                               [LAYER_BRINGTOFRONT] = "LAYER_BRINGTOFRONT",
                               [LAYER_TOP] = "LAYER_TOP",
                               [LAYER_OVERLAY] = "LAYER_OVERLAY",
-                              [LAYER_DRAG_ICON] = "LAYER_DRAG_ICON"};
+                              [LAYER_DRAG_ICON] = "LAYER_DRAG_ICON",
+                              [LAYER_LOCK] = "LAYER_LOCK"};
 
 static char *SCENE_NODE_TYPES[] = {[WLR_SCENE_NODE_TREE] = "tree",
                                    [WLR_SCENE_NODE_RECT] = "rect",
