@@ -107,6 +107,7 @@ extern "Python" void on_screen_change_cb(void *userdata);
 extern "Python" void on_screen_reserve_space_cb(struct qw_output *output, void *userdata);
 extern "Python" void on_input_device_added_cb(void *userdata);
 extern "Python" bool focus_current_window_cb(void *userdata);
+extern "Python" void on_session_lock_cb(bool locked, void *userdata);
 
 extern "Python" int request_fullscreen_cb(bool fullscreen, void *userdata);
 extern "Python" int request_maximize_cb(bool maximize, void *userdata);
@@ -116,6 +117,7 @@ extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 
 cdef_files = [
     "log.h",
+    "session-lock.h",
     "server.h",
     "view.h",
     "util.h",

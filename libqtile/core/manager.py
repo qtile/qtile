@@ -99,6 +99,16 @@ class Qtile(CommandObject):
 
         self.server = IPCCommandServer(self)
 
+        self.locked = False
+        hook.subscribe.locked(self.lock)
+        hook.subscribe.unlocked(self.unlock)
+
+    def lock(self) -> None:
+        self.locked = True
+
+    def unlock(self) -> None:
+        self.locked = False
+
     def load_config(self, initial: bool = False) -> None:
         try:
             self.config.load()

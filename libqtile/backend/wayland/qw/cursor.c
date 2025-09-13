@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "cursor.h"
+#include "output.h"
 #include "server.h"
 #include "util.h"
 #include "wayland-util.h"
@@ -19,11 +20,37 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 }
 
 static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
-    double sx, sy;
     struct wlr_seat *seat = cursor->server->seat;
-    struct wlr_surface *surface = NULL;
 
-    // Find the view under the cursor and get surface-local coordinates
+    // Handle motion if server is in a locked state
+    if (cursor->server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
+        if (cursor->server->lock && !wl_list_empty(&cursor->server->lock->lock->surfaces)) {
+            struct wlr_session_lock_surface_v1 *lock_surface =
+                wl_container_of(cursor->server->lock->lock->surfaces.next, lock_surface, link);
+
+            // Compute surface-local coordinates
+            struct qw_output *output = lock_surface->output->data;
+            double sx = cursor->cursor->x - output->full_area.x;
+            double sy = cursor->cursor->y - output->full_area.y;
+
+            // Update pointer focus to the lock surface
+            wlr_seat_pointer_notify_enter(seat, lock_surface->surface, sx, sy);
+            wlr_seat_pointer_notify_motion(seat, time, sx, sy);
+            cursor->view = NULL; // No normal view under cursor
+        } else {
+            // No lock surface available, clear pointer focus
+            wlr_seat_pointer_clear_focus(seat);
+            cursor->view = NULL;
+        }
+
+        // Still notify the server of cursor position for UI updates
+        cursor->server->cursor_motion_cb((int)cursor->cursor->x, (int)cursor->cursor->y,
+                                         cursor->server->cb_data);
+        return;
+    }
+
+    double sx = 0.0, sy = 0.0;
+    struct wlr_surface *surface = NULL;
     struct qw_view *view =
         qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
     cursor->view = view;
@@ -36,17 +63,15 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
                                 (int)cursor->cursor->y);
 
     // Reset cursor if there's no view and we're not dragging
-    if (!view && cursor->server->seat->drag == NULL) {
+    if ((!view || !surface) && cursor->server->seat->drag == NULL) {
         wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+        wlr_seat_pointer_clear_focus(seat);
+        return;
     }
 
-    if (surface) {
-        // Notify seat pointer of entering new surface and pointer motion
-        wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
-        wlr_seat_pointer_notify_motion(seat, time, sx, sy);
-    } else {
-        wlr_seat_pointer_clear_focus(seat);
-    }
+    // Notify seat pointer of entering the new surface and motion
+    wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
+    wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 }
 
 static void qw_cursor_handle_motion(struct wl_listener *listener, void *data) {
@@ -107,8 +132,12 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
     uint32_t modifiers = wlr_keyboard_get_modifiers(kb);
 
     // Call server's button callback with button info and modifiers
-    return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
-                                            (int)cursor->cursor->y, cursor->server->cb_data) != 0;
+    if (cursor->server->lock_state == QW_SESSION_LOCK_UNLOCKED) {
+        return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
+                                                (int)cursor->cursor->y,
+                                                cursor->server->cb_data) != 0;
+    }
+    return false;
 }
 
 static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
