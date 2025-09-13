@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include "session-lock.h"
 #include <cairo.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
@@ -32,6 +33,7 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_seat.h>
+#include <wlr/types/wlr_session_lock_v1.h>
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
@@ -72,6 +74,9 @@ typedef void (*node_wid_cb_t)(int wid);
 // Callback for when screen configuration changes
 typedef void (*on_screen_change_cb_t)(void *userdata);
 
+// Callback for when session lock status changes
+typedef void (*on_session_lock_cb_t)(bool locked, void *userdata);
+
 // Forward declaration of output struct
 struct qw_output;
 
@@ -104,6 +109,7 @@ enum {
     LAYER_TOP,          // top, layer shell
     LAYER_OVERLAY,      // overlay, layer shell
     LAYER_DRAG_ICON,    // drag icon displayed above everything
+    LAYER_LOCK,         // session lock above everything
     LAYER_END           // keeping track of the end
 };
 
@@ -144,6 +150,7 @@ struct qw_server {
     view_urgent_cb_t view_urgent_cb;
     on_input_device_added_cb_t on_input_device_added_cb;
     focus_current_window_cb_t focus_current_window_cb;
+    on_session_lock_cb_t on_session_lock_cb;
     void *view_urgent_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -188,6 +195,11 @@ struct qw_server {
     struct wl_listener request_set_primary_selection;
     struct wl_listener request_start_drag;
     struct wl_listener start_drag;
+    struct wl_listener new_session_lock;
+    struct wlr_session_lock_manager_v1 *lock_manager;
+    struct qw_session_lock *lock;
+    struct wlr_scene_tree *lock_tree;
+    enum qw_session_lock_state lock_state;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;
