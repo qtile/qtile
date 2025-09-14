@@ -38,8 +38,7 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
 
     // If key is pressed, call user callback for each symbol to check if handled
     // but only do so if the session isn't locked
-    if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED &&
-        server->lock_state == QW_SESSION_LOCK_UNLOCKED) {
+    if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
         for (int i = 0; i < nsyms; ++i) {
             // TODO: for efficiency maybe let c take control of the key list?
             // If callback returns 1, event is handled; no further processing needed

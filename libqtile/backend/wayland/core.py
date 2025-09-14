@@ -75,7 +75,7 @@ from libqtile import hook, log_utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.window import Internal, Static, Window
-from libqtile.command.base import expose_command
+from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import ScreenRect
 from libqtile.images import Img
 from libqtile.log_utils import logger
@@ -651,6 +651,7 @@ class Core(base.Core):
         )
 
     @expose_command()
+    @allow_when_locked
     def change_vt(self, vt: int) -> bool:
         """Change virtual terminal to that specified"""
         success = lib.qw_server_change_vt(self.qw, vt)
