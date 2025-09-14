@@ -128,8 +128,14 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
     uint32_t modifiers = wlr_keyboard_get_modifiers(kb);
 
     // Call server's button callback with button info and modifiers
-    return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
-                                            (int)cursor->cursor->y, cursor->server->cb_data) != 0;
+    if (cursor->server->lock_state == QW_SESSION_LOCK_UNLOCKED) {
+        return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
+                                                (int)cursor->cursor->y,
+                                                cursor->server->cb_data) != 0;
+    } else {
+        // Session is locked so we're not handling button presses
+        return false;
+    }
 }
 
 static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
