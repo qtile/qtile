@@ -23,9 +23,9 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
 
     // Handle motion if server is in a locked state
     if (cursor->server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
-        if (cursor->server->lock && !wl_list_empty(&cursor->server->lock->surfaces)) {
+        if (cursor->server->lock && !wl_list_empty(&cursor->server->lock->lock->surfaces)) {
             struct wlr_session_lock_surface_v1 *lock_surface =
-                wl_container_of(cursor->server->lock->surfaces.next, lock_surface, link);
+                wl_container_of(cursor->server->lock->lock->surfaces.next, lock_surface, link);
 
             // Compute surface-local coordinates
             struct qw_output *output = lock_surface->output->data;

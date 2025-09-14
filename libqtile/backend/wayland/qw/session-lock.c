@@ -102,7 +102,7 @@ void qw_session_lock_focus_first_lock_surface(struct qw_server *server) {
     struct wlr_seat *seat = server->seat;
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
     struct wlr_session_lock_surface_v1 *surface;
-    surface = wl_container_of(server->lock->surfaces.next, surface, link);
+    surface = wl_container_of(server->lock->lock->surfaces.next, surface, link);
 
     if (keyboard != NULL) {
         // Redirect keyboard input to the chosen lock surface
@@ -168,7 +168,7 @@ void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *
     wl_list_remove(&output->destroy_lock_surface.link);
 
     if (server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
-        if (server->lock != NULL && wl_list_length(&server->lock->surfaces) > 1) {
+        if (server->lock != NULL && wl_list_length(&server->lock->lock->surfaces) > 1) {
             // One lock surface gone, but others still exist → shift focus
             qw_session_lock_focus_first_lock_surface(server);
         } else {
@@ -212,8 +212,10 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
 
 void qw_session_lock_handle_unlock(struct wl_listener *listener, void *data) {
     struct qw_session_lock *lock = wl_container_of(listener, lock, unlock);
+    struct qw_server *server = lock->server;
     // Unlock event from client → destroy lock with unlock=true
     qw_session_lock_destroy(lock, true);
+    server->on_session_lock_cb(false, server->cb_data);
 }
 
 void qw_session_lock_handle_destroy(struct wl_listener *listener, void *data) {
@@ -279,7 +281,7 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     lock->scene = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LOCK]);
     lock->server = server;
     lock->lock = session_lock;
-    server->lock = session_lock;
+    server->lock = lock;
     server->lock_state = QW_SESSION_LOCK_LOCKED;
 
     // Hook up listeners for session lock lifecycle
@@ -294,6 +296,8 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
 
     // Inform client it is now locked
     wlr_session_lock_v1_send_locked(session_lock);
+
+    server->on_session_lock_cb(true, server->cb_data);
 }
 
 void qw_session_lock_init(struct qw_server *server) {
