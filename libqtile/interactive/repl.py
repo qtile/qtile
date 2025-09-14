@@ -134,6 +134,7 @@ class QtileREPLServer:
 
     async def handle_client(self, reader, writer):
         """Method for sending data to REPL client."""
+        q = self.locals.get("qtile", None)
 
         async def send(message, end=True):
             """Wrapper to send data to client."""
@@ -182,9 +183,13 @@ class QtileREPLServer:
             # Ready to execute
             output = ""
 
-            # Evaluate code in a thread so blocking calls don't block the eventloop
-            loop = asyncio.get_running_loop()
-            output = await loop.run_in_executor(None, self.evaluate_code, buffer)
+            # Block interaction if session is locked
+            if q is not None and q.locked:
+                output = "Server is locked."
+            else:
+                # Evaluate code in a thread so blocking calls don't block the eventloop
+                loop = asyncio.get_running_loop()
+                output = await loop.run_in_executor(None, self.evaluate_code, buffer)
 
             # Send output to client
             await send(output.strip())
