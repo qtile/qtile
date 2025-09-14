@@ -44,6 +44,54 @@ class Base(base._Window):
             return
         lib.qw_view_reparent(self._ptr, layer)
 
+    @property
+    def layer(self) -> int:
+        return self._ptr.layer
+
+    @expose_command()
+    def keep_above(self, enable: bool | None = None) -> None:
+        is_enabled = self.layer == lib.LAYER_KEEPABOVE
+        if enable is None:
+            enable = not is_enabled
+
+        if enable:
+            self.reparent(lib.LAYER_KEEPABOVE)
+        else:
+            self.reparent(lib.LAYER_LAYOUT)
+
+    @expose_command()
+    def keep_below(self, enable: bool | None = None) -> None:
+        is_enabled = self.layer == lib.LAYER_KEEPBELOW
+        if enable is None:
+            enable = not is_enabled
+
+        if enable:
+            self.reparent(lib.LAYER_KEEPBELOW)
+        else:
+            self.reparent(lib.LAYER_LAYOUT)
+
+    @expose_command()
+    def move_to_top(self) -> None:
+        lib.qw_view_raise_to_top(self._ptr)
+
+    @expose_command()
+    def move_up(self, force: bool = False) -> None:
+        if force and self.layer == lib.LAYER_KEEPBELOW:
+            new_layer = self.get_new_layer(self._float_state)
+            self.reparent(new_layer)
+        lib.qw_view_move_up(self._ptr)
+
+    @expose_command()
+    def move_down(self, force: bool = False) -> None:
+        if force and self.layer == lib.LAYER_KEEPAOVE:
+            new_layer = self.get_new_layer(self._float_state)
+            self.reparent(new_layer)
+        lib.qw_view_move_down(self._ptr)
+
+    @expose_command()
+    def move_to_bottom(self) -> None:
+        lib.qw_view_lower_to_bottom(self._ptr)
+
     @expose_command()
     def bring_to_front(self) -> None:
         self.reparent(lib.LAYER_BRINGTOFRONT)
@@ -307,54 +355,6 @@ class Window(Base, base.Window):
         ptr.request_fullscreen_cb = lib.request_fullscreen_cb
         ptr.set_title_cb = lib.set_title_cb
         ptr.set_app_id_cb = lib.set_app_id_cb
-
-    @property
-    def layer(self) -> int:
-        return self._ptr.layer
-
-    @expose_command()
-    def keep_above(self, enable: bool | None = None) -> None:
-        is_enabled = self.layer == lib.LAYER_KEEPABOVE
-        if enable is None:
-            enable = not is_enabled
-
-        if enable:
-            self.reparent(lib.LAYER_KEEPABOVE)
-        else:
-            self.reparent(lib.LAYER_LAYOUT)
-
-    @expose_command()
-    def keep_below(self, enable: bool | None = None) -> None:
-        is_enabled = self.layer == lib.LAYER_KEEPBELOW
-        if enable is None:
-            enable = not is_enabled
-
-        if enable:
-            self.reparent(lib.LAYER_KEEPBELOW)
-        else:
-            self.reparent(lib.LAYER_LAYOUT)
-
-    @expose_command()
-    def move_to_top(self) -> None:
-        lib.qw_view_raise_to_top(self._ptr)
-
-    @expose_command()
-    def move_up(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPBELOW:
-            new_layer = self.get_new_layer(self._float_state)
-            self.reparent(new_layer)
-        lib.qw_view_move_up(self._ptr)
-
-    @expose_command()
-    def move_down(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPAOVE:
-            new_layer = self.get_new_layer(self._float_state)
-            self.reparent(new_layer)
-        lib.qw_view_move_down(self._ptr)
-
-    @expose_command()
-    def move_to_bottom(self) -> None:
-        lib.qw_view_lower_to_bottom(self._ptr)
 
     def handle_request_fullscreen(self, fullscreen: bool) -> bool:
         if self.qtile.config.auto_fullscreen:
