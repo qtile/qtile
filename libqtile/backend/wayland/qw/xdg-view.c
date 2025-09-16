@@ -351,6 +351,14 @@ void qw_xdg_activation_new_token(struct wl_listener *listener, void *data) {
     wl_signal_add(&token->events.destroy, &token_data->destroy);
 }
 
+static bool qw_xdg_view_has_fixed_size(void *self) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+    struct wlr_xdg_toplevel_state state = xdg_view->xdg_toplevel->current;
+
+    return state.min_width > 0 && state.min_height > 0 && state.min_width == state.max_width &&
+           state.min_height == state.max_height;
+}
+
 // Create a new qw_xdg_view for a given wlr_xdg_toplevel, setting up scene tree, listeners, and
 // callbacks
 void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *xdg_toplevel) {
@@ -400,6 +408,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->base.kill = qw_xdg_view_kill;
     xdg_view->base.hide = qw_xdg_view_hide;
     xdg_view->base.unhide = qw_xdg_view_unhide;
+    xdg_view->base.has_fixed_size = qw_xdg_view_has_fixed_size;
 
     // Add listeners for surface lifecycle events (map, unmap, commit)
     xdg_view->map.notify = qw_xdg_view_handle_map;
