@@ -46,6 +46,11 @@ static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
     qw_view_cleanup_borders((struct qw_view *)xdg_view);
     xdg_view->base.server->unmanage_view_cb((struct qw_view *)&xdg_view->base,
                                             xdg_view->base.server->cb_data);
+
+    wl_list_remove(&xdg_view->request_maximize.link);
+    wl_list_remove(&xdg_view->request_fullscreen.link);
+    wl_list_remove(&xdg_view->set_title.link);
+    wl_list_remove(&xdg_view->set_app_id.link);
 }
 
 // Handle the destroy event of the xdg_view (cleanup and free memory)
@@ -56,42 +61,11 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&xdg_view->unmap.link);
     wl_list_remove(&xdg_view->commit.link);
     wl_list_remove(&xdg_view->destroy.link);
-    wl_list_remove(&xdg_view->request_maximize.link);
-    wl_list_remove(&xdg_view->request_fullscreen.link);
-    wl_list_remove(&xdg_view->set_title.link);
-    wl_list_remove(&xdg_view->set_app_id.link);
     // TODO: Remove request_move and request_resize listeners if added
 
     wlr_scene_node_destroy(&xdg_view->base.content_tree->node);
 
     free(xdg_view);
-}
-
-// Handle map event: when the xdg_view becomes visible/mapped
-static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
-    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
-    xdg_view->mapped = true;
-
-    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
-    struct wlr_box geom = surface->geometry;
-    xdg_view->base.width = geom.width;
-    xdg_view->base.height = geom.height;
-
-    xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
-                                          xdg_view->base.server->cb_data);
-
-    // Focus the view upon mapping
-    qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
-
-    // If the protocol version supports tiled state, set tiled on all edges
-    if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
-        XDG_TOPLEVEL_STATE_TILED_RIGHT_SINCE_VERSION) {
-        wlr_xdg_toplevel_set_tiled(xdg_view->xdg_toplevel,
-                                   WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
-    } else {
-        // Otherwise maximize as fallback for older clients
-        wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, true);
-    }
 }
 
 // Handle commit event: called when surface commits state changes
@@ -277,6 +251,47 @@ static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, 
     wl_list_remove(&xdg_view->decoration_request_mode.link);
 }
 
+// Handle map event: when the xdg_view becomes visible/mapped
+static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
+    xdg_view->mapped = true;
+
+    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
+    struct wlr_box geom = surface->geometry;
+    xdg_view->base.width = geom.width;
+    xdg_view->base.height = geom.height;
+
+    xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
+                                          xdg_view->base.server->cb_data);
+
+    // Add listeners to handle various requests
+    struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
+
+    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
+    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
+    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
+    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
+
+    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
+    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
+
+    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
+    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
+
+    // Focus the view upon mapping
+    qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
+
+    // If the protocol version supports tiled state, set tiled on all edges
+    if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+        XDG_TOPLEVEL_STATE_TILED_RIGHT_SINCE_VERSION) {
+        wlr_xdg_toplevel_set_tiled(xdg_view->xdg_toplevel,
+                                   WLR_EDGE_TOP | WLR_EDGE_BOTTOM | WLR_EDGE_LEFT | WLR_EDGE_RIGHT);
+    } else {
+        // Otherwise maximize as fallback for older clients
+        wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, true);
+    }
+}
+
 // Initialize decoration handling for a new decoration object
 void qw_xdg_view_decoration_new(struct qw_xdg_view *xdg_view,
                                 struct wlr_xdg_toplevel_decoration_v1 *decoration) {
@@ -397,16 +412,4 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     // Add listener for toplevel destroy event
     xdg_view->destroy.notify = qw_xdg_view_handle_destroy;
     wl_signal_add(&xdg_toplevel->events.destroy, &xdg_view->destroy);
-
-    // Add listeners for maximize and fullscreen requests
-    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
-    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
-    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
-    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
-
-    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
-    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
-
-    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
-    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
 }
