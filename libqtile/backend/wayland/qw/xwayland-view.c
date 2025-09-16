@@ -537,6 +537,11 @@ static void qw_xwayland_view_focus(void *self, int above) {
     qw_xwayland_view_do_focus(xwayland_view, xwayland_view->xwayland_surface->surface);
 }
 
+static bool qw_xwayland_view_has_fixed_size(void *self) {
+    // TODO: See xwindow.py from old backend
+    return false;
+}
+
 void qw_server_xwayland_view_new(struct qw_server *server,
                                  struct wlr_xwayland_surface *xwayland_surface) {
     struct qw_xwayland_view *xwayland_view = calloc(1, sizeof(*xwayland_view));
@@ -577,6 +582,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.hide = qw_xwayland_view_hide;
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
+    xwayland_view->base.has_fixed_size = qw_xwayland_view_has_fixed_size;
 
     // Add listener for toplevel destroy event
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
