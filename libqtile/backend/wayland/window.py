@@ -532,6 +532,9 @@ class Window(Base, base.Window):
     def get_size(self) -> tuple[int, int]:
         return int(self._ptr.width), int(self._ptr.height)
 
+    def has_fixed_size(self) -> bool:
+        return self._ptr.has_fixed_size(self._ptr)
+
     def get_pid(self) -> int:
         return int(self._ptr.get_pid(self._ptr))
 
