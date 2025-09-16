@@ -53,7 +53,6 @@ def generate_widget_screenshots():
 
 
 def setup(app):
-    run(["make", "-C", base_dir, "run-ffibuild"])
     generate_keybinding_images()
     # screenshots will be skipped unless QTILE_BUILD_SCREENSHOTS environment variable is set
     # Variable is set for ReadTheDocs at https://readthedocs.org/dashboard/qtile/environmentvariables/
