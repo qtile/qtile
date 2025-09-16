@@ -54,12 +54,10 @@ def generate_widget_screenshots():
 
 def setup(app):
     generate_keybinding_images()
-    # screenshots will be skipped unless QTILE_BUILD_SCREENSHOTS environment variable is set
-    # Variable is set for ReadTheDocs at https://readthedocs.org/dashboard/qtile/environmentvariables/
-    if os.getenv("QTILE_BUILD_SCREENSHOTS", False):
-        generate_widget_screenshots()
-    else:
+    if os.getenv("QTILE_NO_BUILD_SCREENSHOTS", False):
         print("Skipping screenshot builds...")
+    else:
+        generate_widget_screenshots()
 
     app.add_directive("qtile_class", QtileClass)
     app.add_directive("qtile_hooks", QtileHooks)
