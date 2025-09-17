@@ -335,6 +335,7 @@ static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *da
     qw_view_cleanup_borders((struct qw_view *)xwayland_view);
     xwayland_view->base.server->unmanage_view_cb((struct qw_view *)&xwayland_view->base,
                                                  xwayland_view->base.server->cb_data);
+    wl_list_remove(&xwayland_view->commit.link);
 }
 
 // Called when an override-redirect surface is being converted to a managed view.
@@ -492,6 +493,9 @@ static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, voi
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L783
+    struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, dissociate);
+    wl_list_remove(&xwayland_view->map.link);
+    wl_list_remove(&xwayland_view->unmap.link);
 }
 
 static void qw_xwayland_view_handle_override_redirect(struct wl_listener *listener, void *data) {
@@ -506,9 +510,6 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     // wl_list_remove(&xwayland_view->commit.link);
     // xwayland_view->xwayland_surface = NULL;
 
-    wl_list_remove(&xwayland_view->map.link);
-    wl_list_remove(&xwayland_view->unmap.link);
-    wl_list_remove(&xwayland_view->commit.link);
     wl_list_remove(&xwayland_view->destroy.link);
     wl_list_remove(&xwayland_view->request_configure.link);
     // wl_list_remove(&xwayland_view->request_fullscreen.link);
@@ -523,8 +524,10 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     // wl_list_remove(&xwayland_view->set_hints.link);
     // wl_list_remove(&xwayland_view->set_decorations.link);
     wl_list_remove(&xwayland_view->associate.link);
-    // wl_list_remove(&xwayland_view->dissociate.link);
+    wl_list_remove(&xwayland_view->dissociate.link);
     // wl_list_remove(&xwayland_view->override_redirect.link);
+
+    wlr_scene_node_destroy(&xwayland_view->base.content_tree->node);
 
     free(xwayland_view);
 }
@@ -559,6 +562,9 @@ void qw_server_xwayland_view_new(struct qw_server *server,
 
     wl_signal_add(&xwayland_surface->events.associate, &xwayland_view->associate);
     xwayland_view->associate.notify = qw_xwayland_view_handle_associate;
+
+    wl_signal_add(&xwayland_surface->events.dissociate, &xwayland_view->dissociate);
+    xwayland_view->dissociate.notify = qw_xwayland_view_handle_dissociate;
 
     wl_signal_add(&xwayland_surface->events.set_title, &xwayland_view->set_title);
     xwayland_view->set_title.notify = qw_xwayland_view_handle_set_title;
