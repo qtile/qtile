@@ -17,6 +17,14 @@ enum qw_session_lock_state {
     QW_SESSION_LOCK_CRASHED
 };
 
+struct qw_lock_surface_listener {
+    struct qw_server *server;
+    struct wlr_session_lock_surface_v1 *lock_surface;
+
+    // Private data
+    struct wl_listener destroy;
+};
+
 // Session lock
 struct qw_session_lock {
     struct qw_server *server;

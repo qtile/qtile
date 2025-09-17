@@ -161,24 +161,32 @@ void qw_session_lock_crashed_update_rects(struct qw_server *server) {
 }
 
 void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *data) {
-    struct qw_output *output = wl_container_of(listener, output, destroy_lock_surface);
-    struct qw_server *server = output->server;
+    wlr_log(WLR_ERROR, "In surface destroy");
+    struct qw_lock_surface_listener *lsl = wl_container_of(listener, lsl, destroy);
 
-    output->lock_surface = NULL;
-    wl_list_remove(&output->destroy_lock_surface.link);
+    struct qw_server *server = lsl->server;
+    struct wlr_session_lock_surface_v1 *lock_surface = lsl->lock_surface;
 
-    if (server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
-        if (server->lock != NULL && wl_list_length(&server->lock->lock->surfaces) > 1) {
-            // One lock surface gone, but others still exist → shift focus
-            qw_session_lock_focus_first_lock_surface(server);
-        } else {
-            // No lock surfaces left while still locked → treat as crash
-            server->lock_state = QW_SESSION_LOCK_CRASHED;
-            qw_session_lock_crashed_update_rects(server);
-            struct wlr_seat *seat = server->seat;
-            wlr_seat_keyboard_clear_focus(seat);
-            wlr_seat_pointer_clear_focus(seat);
-        }
+    // Remove the listener from the destroy signal
+    wl_list_remove(&lsl->destroy.link);
+    free(lsl);
+
+    // Remove surface from the session lock if lock still exists
+    if (!server->lock || !server->lock->lock) {
+        // Lock destroyed first → nothing more to do
+        return;
+    }
+
+    // At this point, server->lock and server->lock->lock are valid
+    // Focus shifts if any surfaces remain
+    if (!wl_list_empty(&server->lock->lock->surfaces)) {
+        qw_session_lock_focus_first_lock_surface(server);
+    } else {
+        // No surfaces left → session lock considered crashed
+        server->lock_state = QW_SESSION_LOCK_CRASHED;
+        qw_session_lock_crashed_update_rects(server);
+        wlr_seat_keyboard_clear_focus(server->seat);
+        wlr_seat_pointer_clear_focus(server->seat);
     }
     // If unlocked, do nothing here (cleanup already handled in qw_session_lock_destroy).
 }
@@ -252,8 +260,14 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
     }
 
     // Listen for destroy events on this lock surface
-    output->destroy_lock_surface.notify = qw_session_lock_surface_handle_destroy;
-    wl_signal_add(&lock_surface->events.destroy, &output->destroy_lock_surface);
+    // output->destroy_lock_surface.notify = qw_session_lock_surface_handle_destroy;
+    // wl_signal_add(&lock_surface->events.destroy, &output->destroy_lock_surface);
+    // Allocate a listener tied to this surface
+    struct qw_lock_surface_listener *lsl = calloc(1, sizeof(*lsl));
+    lsl->server = lock->server;
+    lsl->lock_surface = lock_surface;
+    lsl->destroy.notify = qw_session_lock_surface_handle_destroy;
+    wl_signal_add(&lock_surface->events.destroy, &lsl->destroy);
 }
 
 void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
