@@ -343,6 +343,13 @@ static void qw_server_handle_new_input(struct wl_listener *listener, void *data)
     switch (device->type) {
     case WLR_INPUT_DEVICE_KEYBOARD:
         qw_server_keyboard_new(server, device);
+
+        // If there's still an active lock then we need to direct
+        // the keyboard to the lock surface.
+        if (server->lock != NULL) {
+            qw_session_lock_focus_first_lock_surface(server);
+        }
+
         break;
     case WLR_INPUT_DEVICE_POINTER:
         qw_server_new_pointer(server, device);

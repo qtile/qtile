@@ -127,7 +127,7 @@ class Qtile(CommandObject):
         self.locked = True
 
     def unlock(self) -> None:
-        self.unlocked = False
+        self.locked = False
 
     def load_config(self, initial: bool = False) -> None:
         try:

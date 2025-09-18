@@ -150,16 +150,7 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
     for (int i = 0; i < 4; i++)
         wl_list_init(&output->layers[i]);
 
-    // Create blanking rect for session lock
-    int o_width, o_height;
-    wlr_output_effective_resolution(output->wlr_output, &o_width, &o_height);
-    const float *rect_color = (server->lock_state != QW_SESSION_LOCK_CRASHED)
-                                  ? QW_SESSION_LOCK_BLANKING_RECT_LOCKED
-                                  : QW_SESSION_LOCK_BLANKING_RECT_CRASHED;
-    struct wlr_scene_rect *blanking_rect = wlr_scene_rect_create(
-        server->scene_windows_layers[LAYER_LOCK], o_width, o_height, rect_color);
-    wlr_scene_node_set_position(&blanking_rect->node, output->x, output->y);
-    output->blanking_rect = blanking_rect;
+    qw_session_lock_output_create_blanking_rects(output);
 
     // Setup listeners for frame, request_state, and destroy events
     output->frame.notify = qw_output_handle_frame;

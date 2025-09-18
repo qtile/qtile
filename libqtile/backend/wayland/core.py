@@ -122,11 +122,11 @@ def log_cb(importance: int, formatted_str: ffi.CData) -> None:
     """Callback that logs the string at the given level"""
     log_str = ffi.string(formatted_str).decode()
     if importance == lib.WLR_ERROR:
-        qw_logger.error(log_str)
+        logger.error(log_str)
     elif importance == lib.WLR_INFO:
-        qw_logger.info(log_str)
+        logger.info(log_str)
     elif importance == lib.WLR_DEBUG:
-        qw_logger.debug(log_str)
+        logger.debug(log_str)
 
 
 @ffi.def_extern()
@@ -623,11 +623,12 @@ class Core(base.Core):
         #     self.focused_internal.process_key_press(keysym)
 
     def set_locked(self, locked: bool) -> None:
+        if locked != self._locked:
+            if locked:
+                hook.fire("locked")
+            else:
+                hook.fire("unlocked")
         self._locked = locked
-        if locked:
-            hook.fire("locked")
-        else:
-            hook.fire("unlocked")
 
     @expose_command()
     def set_keymap(
@@ -717,6 +718,12 @@ class Core(base.Core):
         lib.qw_server_traverse_scene_graph(self.qw, on_node)
 
         return tree
+
+    @expose_command()
+    @allow_when_locked
+    def session_lock_status(self) -> bool:
+        """Returns True if server is currently locked."""
+        return self._locked
 
 
 class Painter:
