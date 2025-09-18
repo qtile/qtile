@@ -90,9 +90,22 @@
 #include <wlr/types/wlr_session_lock_v1.h>
 
 void qw_session_lock_restore_focus(struct qw_server *server) {
-    // Called after unlock to restore focus back to the "real" client surfaces.
-    // Currently a placeholder: needs to restore keyboard + pointer focus.
-    // qw_cursor_process_motion(server->cursor, 0);
+    struct wlr_seat *seat = server->seat;
+    struct qw_session_lock *lock = server->lock;
+
+    if (lock->prev_keyboard_focus != NULL && seat->keyboard_state.keyboard != NULL) {
+        struct wlr_keyboard *kbd = seat->keyboard_state.keyboard;
+
+        wlr_seat_keyboard_notify_enter(seat, lock->prev_keyboard_focus, kbd->keycodes,
+                                       kbd->num_keycodes, &kbd->modifiers);
+
+        lock->prev_keyboard_focus = NULL;
+    }
+
+    if (lock->prev_pointer_focus != NULL) {
+        wlr_seat_pointer_notify_enter(seat, lock->prev_pointer_focus, 0, 0);
+        lock->prev_pointer_focus = NULL;
+    }
 }
 
 // Focus the first available lock surface
@@ -315,14 +328,16 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     // Enable the LOCK layer to show blanking rects
     wlr_scene_node_set_enabled(&server->scene_windows_layers[LAYER_LOCK]->node, true);
 
-    // TODO: Explicitly block focus/input for normal windows here.
-
     // Allocate compositor-side lock tracking struct
     struct qw_session_lock *lock = calloc(1, sizeof(*lock));
     if (lock == NULL) {
         wlr_session_lock_v1_destroy(session_lock);
         return;
     }
+
+    struct wlr_seat *seat = server->seat;
+    lock->prev_keyboard_focus = seat->keyboard_state.focused_surface;
+    lock->prev_pointer_focus = seat->pointer_state.focused_surface;
 
     lock->scene = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LOCK]);
     lock->server = server;

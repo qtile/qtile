@@ -32,6 +32,8 @@ struct qw_session_lock {
     struct qw_server *server;
     struct wlr_scene_tree *scene;
     struct wlr_session_lock_v1 *lock;
+    struct wlr_surface *prev_keyboard_focus;
+    struct wlr_surface *prev_pointer_focus;
 
     // Private data
     struct wl_listener new_surface;
