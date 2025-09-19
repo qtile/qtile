@@ -27,6 +27,10 @@ check: ## Run the test suite on the latest python
 	uv run ./libqtile/backend/wayland/cffi/build.py
 	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
 
+.PHONY: docs
+docs:
+	uv run $(UV_PYTHON_ARG) python3 -m sphinx -T -b html -d _build/doctrees -D language=en ./docs docs/_build
+
 .PHONY: check-packaging
 check-packaging:  ## Check that the packaging is sane
 	uv run $(UV_PYTHON_ARG) check-manifest

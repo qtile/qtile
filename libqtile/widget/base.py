@@ -38,9 +38,9 @@ import math
 import subprocess
 from typing import TYPE_CHECKING
 
-from libqtile import bar, configurable, confreader
+from libqtile import bar, configurable, confreader, hook
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 from libqtile.utils import ColorType, create_task
@@ -243,6 +243,8 @@ class _Widget(CommandObject, configurable.Configurable):
 
             # Add these to our list of futures so they can be cancelled.
             self._futures.extend([timer, async_timer])
+            if hasattr(self, "force_update"):
+                hook.subscribe.resume(self.force_update)
 
     async def _config_async(self):
         """
@@ -303,15 +305,6 @@ class _Widget(CommandObject, configurable.Configurable):
 
     def button_release(self, x, y, button):
         pass
-
-    def get(self, q, name):
-        """
-        Utility function for quick retrieval of a widget by name.
-        """
-        w = q.widgets_map.get(name)
-        if not w:
-            raise CommandError(f"No such widget: {name}")
-        return w
 
     def _items(self, name: str) -> ItemT:
         if name == "bar":
@@ -388,26 +381,6 @@ class _Widget(CommandObject, configurable.Configurable):
         Python 3.
         """
         return subprocess.check_output(command, **kwargs, encoding="utf-8")
-
-    async def acall_process(self, command, shell=False) -> str:
-        """
-        Like call_process, but the async version
-        """
-        stdin = asyncio.subprocess.DEVNULL
-        stdout = asyncio.subprocess.PIPE
-        stderr = asyncio.subprocess.STDOUT
-
-        if shell:
-            p = await asyncio.subprocess.create_subprocess_shell(
-                command, stdin=stdin, stdout=stdout, stderr=stderr
-            )
-        else:
-            p = await asyncio.subprocess.create_subprocess_exec(
-                *command, stdin=stdin, stdout=stdout, stderr=stderr
-            )
-
-        (out, _) = await p.communicate()
-        return out.decode("utf-8")
 
     def _remove_dead_timers(self):
         """Remove completed and cancelled timers from the list."""
@@ -848,6 +821,11 @@ class InLoopPollText(_TextBox):
     def tick(self):
         text = self.poll()
         self.update(text)
+
+    @expose_command()
+    def force_update(self):
+        """Immediately poll the widget. Existing timers are unaffected."""
+        self.tick()
 
 
 class BackgroundPoll(_TextBox):

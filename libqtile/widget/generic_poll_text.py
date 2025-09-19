@@ -7,6 +7,7 @@ except ImportError:
     aiohttp = None
 
 from libqtile.log_utils import logger
+from libqtile.utils import acall_process
 from libqtile.widget import base
 
 try:
@@ -110,7 +111,7 @@ class GenPollCommand(base.BackgroundPoll):
         self.add_callbacks({"Button1": self.force_update})
 
     async def apoll(self):
-        out = await self.acall_process(self.cmd, self.shell)
+        out = await acall_process(self.cmd, self.shell)
         if self.parse:
             return self.parse(out)
 

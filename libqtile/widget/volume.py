@@ -37,7 +37,7 @@ import subprocess
 from libqtile import bar
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
-from libqtile.utils import create_task
+from libqtile.utils import acall_process, create_task
 from libqtile.widget import base
 
 __all__ = [
@@ -223,13 +223,13 @@ class Volume(base._TextBox):
             else:
                 get_volume_cmd = self.create_amixer_command("sget", self.channel)
 
-            mixer_out = await self.acall_process(get_volume_cmd, shell=True)
+            mixer_out = await acall_process(get_volume_cmd, shell=True)
         except subprocess.CalledProcessError:
             return -1, False
 
         check_mute = mixer_out
         if self.check_mute_command:
-            check_mute = await self.acall_process(self.check_mute_command, shell=True)
+            check_mute = await acall_process(self.check_mute_command, shell=True)
 
         muted = self.check_mute_string in check_mute
 
