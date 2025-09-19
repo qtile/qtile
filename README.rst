@@ -60,7 +60,7 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
 .. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
     :alt: PyPI
     :target: https://pypi.org/project/qtile/
-.. |ci| image:: https://github.com/qtile/qtile/workflows/ci/badge.svg?branch=master
+.. |ci| image:: https://github.com/qtile/qtile/actions/workflows/ci.yml/badge.svg?branch=master
     :alt: CI status
     :target: https://github.com/qtile/qtile/actions
 .. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
