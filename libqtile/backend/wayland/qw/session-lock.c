@@ -315,9 +315,24 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
     wl_signal_add(&lock_surface->surface->events.destroy, &sls->surface_destroy);
 }
 
+void qw_session_lock_keyboard_focus_surface_handle_destroy(struct wl_listener *listener,
+                                                           void *data) {
+    struct qw_session_lock *lock = wl_container_of(listener, lock, prev_keyboard_focus_destroy);
+    lock->prev_keyboard_focus = NULL;
+    wl_list_remove(&lock->prev_keyboard_focus_destroy.link);
+}
+
+void qw_session_lock_pointer_focus_surface_handle_destroy(struct wl_listener *listener,
+                                                          void *data) {
+    struct qw_session_lock *lock = wl_container_of(listener, lock, prev_pointer_focus_destroy);
+    lock->prev_pointer_focus = NULL;
+    wl_list_remove(&lock->prev_pointer_focus_destroy.link);
+}
+
 void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_session_lock);
     struct wlr_session_lock_v1 *session_lock = data;
+    struct wlr_seat *seat = server->seat;
 
     // Reject any incoming lock request if already locked or crashed
     if (server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
@@ -335,9 +350,35 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
         return;
     }
 
-    struct wlr_seat *seat = server->seat;
+    // Store references to focused surface
+    // First... get rid of any old references
+    if (lock->prev_keyboard_focus) {
+        wl_list_remove(&lock->prev_keyboard_focus_destroy.link);
+        lock->prev_keyboard_focus = NULL;
+    }
+    if (lock->prev_pointer_focus) {
+        wl_list_remove(&lock->prev_pointer_focus_destroy.link);
+        lock->prev_pointer_focus = NULL;
+    }
+
+    // Second... get new references
     lock->prev_keyboard_focus = seat->keyboard_state.focused_surface;
     lock->prev_pointer_focus = seat->pointer_state.focused_surface;
+
+    // Third... attach listeners so we can clear references if surface is destroyed while
+    // session is locked
+    if (lock->prev_keyboard_focus != NULL) {
+
+        lock->prev_keyboard_focus_destroy.notify =
+            qw_session_lock_keyboard_focus_surface_handle_destroy;
+        wl_signal_add(&lock->prev_keyboard_focus->events.destroy,
+                      &lock->prev_keyboard_focus_destroy);
+    }
+    if (lock->prev_pointer_focus != NULL) {
+        lock->prev_pointer_focus_destroy.notify =
+            qw_session_lock_pointer_focus_surface_handle_destroy;
+        wl_signal_add(&lock->prev_pointer_focus->events.destroy, &lock->prev_pointer_focus_destroy);
+    }
 
     lock->scene = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LOCK]);
     lock->server = server;

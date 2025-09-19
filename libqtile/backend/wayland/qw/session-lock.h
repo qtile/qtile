@@ -39,6 +39,8 @@ struct qw_session_lock {
     struct wl_listener new_surface;
     struct wl_listener unlock;
     struct wl_listener destroy;
+    struct wl_listener prev_keyboard_focus_destroy;
+    struct wl_listener prev_pointer_focus_destroy;
 };
 
 void qw_session_lock_init(struct qw_server *server);
