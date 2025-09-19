@@ -1214,6 +1214,11 @@ class DropDown(configurable.Configurable):
             "some programs that may not be caught by the window's PID if it does "
             "not match the PID of the spawned process.",
         ),
+        (
+            "bring_to_front",
+            True,
+            "DropDown will be brought to the front of the screen when shown.",
+        ),
     )
 
     def __init__(self, name: str, cmd: str, **config: Any) -> None:
