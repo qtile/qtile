@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <stdint.h>
+#include <wlr/types/wlr_compositor.h>
 #include <xkbcommon/xkbcommon.h>
 
 // Enum defining button codes for scroll events.
