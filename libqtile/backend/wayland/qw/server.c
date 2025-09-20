@@ -158,7 +158,12 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
 
         wlr_scene_output_set_position(o->scene, o->x, o->y);
 
-        // TODO: fullscreen bg
+        if (o->fullscreen_background != NULL) {
+            wlr_scene_node_set_position(&o->fullscreen_background->node, o->full_area.x,
+                                        o->full_area.y);
+            wlr_scene_rect_set_size(o->fullscreen_background, o->full_area.width,
+                                    o->full_area.height);
+        }
 
         // TODO: lock surface
 
