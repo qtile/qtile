@@ -46,12 +46,15 @@ struct qw_output {
     struct wl_listener request_state;
     struct wl_listener destroy;
     struct wl_list layers[4];
+    struct wlr_scene_rect *fullscreen_background;
     struct qw_output_background background;
 };
 
 void qw_output_arrange_layers(struct qw_output *output);
 
 void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_output);
+
+void qw_output_toggle_fullscreen_background(struct qw_output *output, bool enabled);
 
 void qw_output_paint_wallpaper(struct qw_output *output, cairo_surface_t *source,
                                enum qw_wallpaper_mode mode);

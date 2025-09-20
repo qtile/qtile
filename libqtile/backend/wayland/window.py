@@ -605,10 +605,17 @@ class Window(Base, base.Window):
         elif self._float_state == FloatStates.FULLSCREEN:
             self._restore_geometry()
             self.floating = False
+            self._update_fullscreen(False)
 
     def _update_fullscreen(self, do_full: bool) -> None:
         if do_full != (self._float_state == FloatStates.FULLSCREEN):
             self._ptr.update_fullscreen(self._ptr, do_full)
+
+        screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
+            self.x, self.y
+        )
+        enabled = any(w.fullscreen for w in screen.group.windows)
+        self._ptr.update_fullscreen_background(self._ptr, enabled)
 
     @property
     def maximized(self) -> bool:
@@ -662,19 +669,19 @@ class Window(Base, base.Window):
         h: int | None = None,
         new_float_state: FloatStates = FloatStates.FLOATING,
     ) -> None:
-        self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
+        if self._float_state != new_float_state:
+            self._float_state = new_float_state
+            self.reparent(self.get_new_layer(new_float_state))
+            if self.group:  # may be not, if it's called from hook
+                self.group.mark_floating(self, True)
+            self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
+            hook.fire("float_change")
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:
             self.place(
                 x, y, w, h, self._borderwidth, self.bordercolor, above=True, respect_hints=True
             )
-        if self._float_state != new_float_state:
-            self._float_state = new_float_state
-            self.reparent(self.get_new_layer(new_float_state))
-            if self.group:  # may be not, if it's called from hook
-                self.group.mark_floating(self, True)
-            hook.fire("float_change")
 
     def _tweak_float(
         self,
