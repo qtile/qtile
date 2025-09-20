@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <xkbcommon/xkbcommon.h>
+#include <wlr/types/wlr_compositor.h>
+
 
 // Enum defining button codes for scroll events.
 // These values start from 0x300 and correspond to Linux input-event-codes.h.
