@@ -37,7 +37,6 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
 
     // If key is pressed, call user callback for each symbol to check if handled
-    // but only do so if the session isn't locked
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
         for (int i = 0; i < nsyms; ++i) {
             // TODO: for efficiency maybe let c take control of the key list?

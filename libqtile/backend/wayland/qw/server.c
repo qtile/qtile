@@ -46,7 +46,6 @@ void qw_server_poll(struct qw_server *server) {
 // Cleanup routine to destroy the compositor and free resources.
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
-    wlr_log(WLR_INFO, "Shutting down server");
     wl_list_remove(&server->new_input.link);
     wl_list_remove(&server->new_output.link);
     wl_list_remove(&server->output_layout_change.link);
