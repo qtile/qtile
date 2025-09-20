@@ -537,6 +537,21 @@ static void qw_xwayland_view_focus(void *self, int above) {
     qw_xwayland_view_do_focus(xwayland_view, xwayland_view->xwayland_surface->surface);
 }
 
+static void qw_xwayland_view_update_fullscreen(void *self, bool fullscreen) {
+    // Placeholder
+}
+
+static void qw_xwayland_view_update_fullscreen_background(void *self, bool enabled) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    struct wlr_output *wout;
+    wout = wlr_output_layout_output_at(xwayland_view->base.server->output_layout,
+                                       xwayland_view->base.x, xwayland_view->base.y);
+    if (wout != NULL) {
+        struct qw_output *output = wout->data;
+        qw_output_toggle_fullscreen_background(output, enabled);
+    }
+}
+
 void qw_server_xwayland_view_new(struct qw_server *server,
                                  struct wlr_xwayland_surface *xwayland_surface) {
     struct qw_xwayland_view *xwayland_view = calloc(1, sizeof(*xwayland_view));
@@ -577,6 +592,9 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.hide = qw_xwayland_view_hide;
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
+    xwayland_view->base.update_fullscreen = qw_xwayland_view_update_fullscreen;
+    xwayland_view->base.update_fullscreen_background =
+        qw_xwayland_view_update_fullscreen_background;
 
     // Add listener for toplevel destroy event
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
