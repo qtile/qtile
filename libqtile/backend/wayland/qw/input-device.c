@@ -1,3 +1,4 @@
+#include <server.h>
 #include <wlr/util/log.h>
 
 #include "input-device.h"
