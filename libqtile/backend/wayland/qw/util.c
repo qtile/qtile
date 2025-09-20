@@ -1,6 +1,7 @@
 #include "util.h"
 #include <string.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_xdg_shell.h>
 
 int qw_util_get_button_code(uint32_t button) {
     // Array of Linux input event button codes (from linux/input-event-codes.h)
@@ -79,10 +80,10 @@ void qw_util_deactivate_surface(struct wlr_surface *surface) {
     }
 
     #if WLR_HAS_XWAYLAND
-    struct wlr_xwayland_surface *xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(surface);
-    if (xwayland_surface) {
-        wlr_xwayland_surface_activate(xwayland_surface, false);
-        return;
-    }
+        struct wlr_xwayland_surface *xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(surface);
+        if (xwayland_surface) {
+            wlr_xwayland_surface_activate(xwayland_surface, false);
+            return;
+        }
     #endif
 }

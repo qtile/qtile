@@ -242,6 +242,9 @@ void qw_output_paint_wallpaper(struct qw_output *output, cairo_surface_t *source
     cairo_rectangle(cr, 0, 0, o_width, o_height);
     cairo_clip(cr);
 
+    int t_x;
+    int t_y;
+
     switch (mode) {
 
     // We don't touch the image and draw it at 0, 0
@@ -267,8 +270,8 @@ void qw_output_paint_wallpaper(struct qw_output *output, cairo_surface_t *source
 
     // Center image on screen but don't scale image
     case WALLPAPER_MODE_CENTER:
-        int t_x = (o_width - img_width) / 2;
-        int t_y = (o_height - img_height) / 2;
+        t_x = (o_width - img_width) / 2;
+        t_y = (o_height - img_height) / 2;
         cairo_translate(cr, t_x, t_y);
         break;
 
