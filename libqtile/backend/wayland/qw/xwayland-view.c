@@ -1,12 +1,12 @@
 #include "xwayland-view.h"
-#include "qw/util.h"
 #include "server.h"
+#include "util.h"
 #include "view.h"
 #include "wayland-server-core.h"
 #include "wayland-util.h"
-#include "wlr/types/wlr_xdg_decoration_v1.h"
 #include "wlr/util/log.h"
 #include "xdg-view.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <wlr/xwayland.h>
