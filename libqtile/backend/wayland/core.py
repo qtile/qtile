@@ -122,11 +122,11 @@ def log_cb(importance: int, formatted_str: ffi.CData) -> None:
     """Callback that logs the string at the given level"""
     log_str = ffi.string(formatted_str).decode()
     if importance == lib.WLR_ERROR:
-        qw_logger.error(log_str)
+        logger.error(log_str)
     elif importance == lib.WLR_INFO:
-        qw_logger.info(log_str)
+        logger.info(log_str)
     elif importance == lib.WLR_DEBUG:
-        qw_logger.debug(log_str)
+        logger.debug(log_str)
 
 
 @ffi.def_extern()
