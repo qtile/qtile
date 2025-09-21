@@ -58,6 +58,8 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_token.link);
     wl_list_remove(&server->request_set_selection.link);
     wl_list_remove(&server->request_set_primary_selection.link);
+    wl_list_remove(&server->request_start_drag.link);
+    wl_list_remove(&server->start_drag.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wlr_xwayland_destroy(server->xwayland);
@@ -505,6 +507,56 @@ static void qw_server_handle_request_set_primary_selection(struct wl_listener *l
     wlr_seat_set_primary_selection(server->seat, event->source, event->serial);
 }
 
+static void qw_server_handle_drag_icon_destroy(struct wl_listener *listener, void *data) {
+    struct qw_drag_icon *drag_icon = wl_container_of(listener, drag_icon, destroy);
+    struct qw_server *server = drag_icon->server;
+
+    // Restore window focus
+    server->focus_current_window_cb(server->cb_data);
+
+    // Restore pointer focus
+    double sx, sy;
+    struct wlr_surface *surface = NULL;
+    // We call this just to set sx and sy. We don't need the view.
+    qw_server_view_at(server, server->cursor->cursor->x, server->cursor->cursor->y, &surface, &sx,
+                      &sy);
+
+    if (surface != NULL) {
+        wlr_seat_pointer_notify_enter(server->seat, surface, sx, sy);
+    } else {
+        wlr_seat_pointer_clear_focus(server->seat);
+    }
+
+    // Tidy up
+    wl_list_remove(&listener->link);
+    free(drag_icon);
+}
+
+static void qw_server_handle_request_start_drag(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, request_start_drag);
+    struct wlr_seat_request_start_drag_event *event = data;
+
+    if (wlr_seat_validate_pointer_grab_serial(server->seat, event->origin, event->serial)) {
+        wlr_seat_start_pointer_drag(server->seat, event->drag, event->serial);
+    } else {
+        wlr_data_source_destroy(event->drag->source);
+    }
+}
+
+static void qw_server_handle_start_drag(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, start_drag);
+    struct wlr_drag *drag = data;
+    if (drag->icon == NULL) {
+        return;
+    }
+
+    struct qw_drag_icon *drag_icon = calloc(1, sizeof(*drag_icon));
+    drag_icon->server = server;
+    drag_icon->scene_icon = wlr_scene_drag_icon_create(server->drag_icon, drag->icon);
+    drag_icon->destroy.notify = qw_server_handle_drag_icon_destroy;
+    wl_signal_add(&drag->events.destroy, &drag_icon->destroy);
+}
+
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     wlr_log_init(WLR_INFO, NULL);
@@ -558,7 +610,6 @@ struct qw_server *qw_server_create() {
     for (int i = 0; i < LAYER_END; ++i) {
         server->scene_windows_layers[i] = wlr_scene_tree_create(server->scene_windows_tree);
     }
-    // TODO: drag icon
 
     wl_list_init(&server->outputs);
     server->output_layout = wlr_output_layout_create(server->display);
@@ -576,6 +627,13 @@ struct qw_server *qw_server_create() {
         // already logged in the create if failed
         return NULL;
     }
+
+    server->drag_icon = wlr_scene_tree_create(server->scene_windows_layers[LAYER_DRAG_ICON]);
+    server->request_start_drag.notify = qw_server_handle_request_start_drag;
+    wl_signal_add(&server->seat->events.request_start_drag, &server->request_start_drag);
+    server->start_drag.notify = qw_server_handle_start_drag;
+    wl_signal_add(&server->seat->events.start_drag, &server->start_drag);
+
     server->output_mgr = wlr_output_manager_v1_create(server->display);
     server->output_manager_apply.notify = qw_server_handle_output_manager_apply;
     wl_signal_add(&server->output_mgr->events.apply, &server->output_manager_apply);
