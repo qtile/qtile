@@ -32,7 +32,11 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     cursor->server->cursor_motion_cb((int)cursor->cursor->x, (int)cursor->cursor->y,
                                      cursor->server->cb_data);
 
-    if (!view) {
+    wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
+                                (int)cursor->cursor->y);
+
+    // Reset cursor if there's no view and we're not dragging
+    if (!view && cursor->server->seat->drag == NULL) {
         wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
     }
 

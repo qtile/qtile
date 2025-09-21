@@ -103,6 +103,7 @@ enum {
     LAYER_BRINGTOFRONT, // windows that are marked bring to front
     LAYER_TOP,          // top, layer shell
     LAYER_OVERLAY,      // overlay, layer shell
+    LAYER_DRAG_ICON,    // drag icon displayed above everything
     LAYER_END           // keeping track of the end
 };
 
@@ -159,7 +160,7 @@ struct qw_server {
     struct wlr_scene_tree *scene_wallpaper_tree;
     struct wlr_scene_tree *scene_windows_tree;
     struct wlr_scene_tree *scene_windows_layers[LAYER_END];
-    // TODO: drag icon tree
+    struct wlr_scene_tree *drag_icon;
     struct wlr_scene_output_layout *scene_layout;
     struct wlr_output_layout *output_layout;
     struct wl_list outputs;
@@ -185,12 +186,21 @@ struct qw_server {
     struct wl_listener request_cursor;
     struct wl_listener request_set_selection;
     struct wl_listener request_set_primary_selection;
+    struct wl_listener request_start_drag;
+    struct wl_listener start_drag;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;
 #endif
     struct wl_listener request_activate;
     struct wl_listener new_token;
+};
+
+struct qw_drag_icon {
+    struct qw_server *server;
+    // Private data
+    struct wlr_scene_tree *scene_icon;
+    struct wl_listener destroy;
 };
 
 // Utility functions exposed by the server API
