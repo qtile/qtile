@@ -56,6 +56,7 @@ static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
     wl_list_remove(&xdg_view->request_fullscreen.link);
     wl_list_remove(&xdg_view->set_title.link);
     wl_list_remove(&xdg_view->set_app_id.link);
+    wl_list_remove(&xdg_view->new_popup.link);
 }
 
 // Handle the destroy event of the xdg_view (cleanup and free memory)
@@ -256,6 +257,84 @@ static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, 
     wl_list_remove(&xdg_view->decoration_request_mode.link);
 }
 
+static void qw_xdg_popup_handle_destroy(struct wl_listener *listener, void *data) {
+    struct qw_xdg_popup *popup = wl_container_of(listener, popup, destroy);
+
+    wl_list_remove(&popup->new_popup.link);
+    wl_list_remove(&popup->destroy.link);
+    wl_list_remove(&popup->surface_commit.link);
+    wl_list_remove(&popup->reposition.link);
+    wlr_scene_node_destroy(&popup->scene_tree->node);
+    free(popup);
+}
+
+static void qw_xdg_popup_unconstrain(struct qw_xdg_popup *popup) {
+    struct qw_view *view = popup->view;
+    struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
+
+    struct qw_output *output = view->server->current_output->data;
+
+    int width, height;
+    wlr_output_effective_resolution(view->server->current_output, &width, &height);
+
+    // the output box expressed in the coordinate system of the toplevel parent
+    // of the popup
+    struct wlr_box output_toplevel_sx_box = {
+        .x = output->x - view->x,
+        .y = output->y - view->y,
+        .width = width,
+        .height = height,
+    };
+
+    wlr_xdg_popup_unconstrain_from_box(wlr_popup, &output_toplevel_sx_box);
+}
+
+static void qw_xdg_popup_handle_surface_commit(struct wl_listener *listener, void *data) {
+    struct qw_xdg_popup *popup = wl_container_of(listener, popup, surface_commit);
+    if (popup->wlr_popup->base->initial_commit) {
+        qw_xdg_popup_unconstrain(popup);
+    }
+}
+
+static void qw_xdg_popup_handle_reposition(struct wl_listener *listener, void *data) {
+    struct qw_xdg_popup *popup = wl_container_of(listener, popup, reposition);
+    qw_xdg_popup_unconstrain(popup);
+}
+
+// Forward declaration
+static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_popup,
+                                                    struct qw_view *view,
+                                                    struct wlr_scene_tree *parent);
+
+static void qw_xdg_popup_handle_new_popup(struct wl_listener *listener, void *data) {
+    struct qw_xdg_popup *popup = wl_container_of(listener, popup, new_popup);
+    struct wlr_xdg_popup *wlr_popup = data;
+    qw_server_xdg_popup_new(wlr_popup, popup->view, popup->xdg_surface_tree);
+}
+
+static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *data) {
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, new_popup);
+    struct qw_server *server = xdg_view->base.server;
+    struct wlr_xdg_popup *wlr_popup = data;
+
+    struct qw_xdg_popup *popup = qw_server_xdg_popup_new(
+        wlr_popup, &xdg_view->base, server->scene_windows_layers[LAYER_BRINGTOFRONT]);
+    if (popup == NULL) {
+        return;
+    }
+
+    int total_border_width = 0;
+    for (int i = 0; i < xdg_view->base.bn; i++) {
+        total_border_width += xdg_view->base.borders[i].width;
+    }
+
+    int lx, ly;
+    wlr_scene_node_coords(&popup->view->content_tree->node, &lx, &ly);
+    wlr_scene_node_set_position(&popup->scene_tree->node, lx + total_border_width,
+                                ly + total_border_width);
+    // TODO: do we need to be concerned about the width/height of other window decorations?
+}
+
 // Handle map event: when the xdg_view becomes visible/mapped
 static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
@@ -271,6 +350,9 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
 
     // Add listeners to handle various requests
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
+
+    xdg_view->new_popup.notify = qw_xdg_view_handle_new_popup;
+    wl_signal_add(&xdg_toplevel->base->events.new_popup, &xdg_view->new_popup);
 
     xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
     wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
@@ -373,6 +455,49 @@ static bool qw_xdg_view_has_fixed_size(void *self) {
 
     return state.min_width > 0 && state.min_height > 0 && state.min_width == state.max_width &&
            state.min_height == state.max_height;
+}
+
+static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_popup,
+                                                    struct qw_view *view,
+                                                    struct wlr_scene_tree *parent) {
+    struct wlr_xdg_surface *surface = wlr_popup->base;
+
+    struct qw_xdg_popup *popup = calloc(1, sizeof(struct qw_xdg_popup));
+    if (wlr_popup == NULL) {
+        wlr_log(WLR_ERROR, "failed to create qw_xdg_popup struct");
+        return NULL;
+    }
+
+    popup->wlr_popup = wlr_popup;
+    popup->view = view;
+
+    popup->scene_tree = wlr_scene_tree_create(parent);
+    if (popup->scene_tree == NULL) {
+        free(popup);
+        return NULL;
+    }
+
+    popup->xdg_surface_tree = wlr_scene_xdg_surface_create(popup->scene_tree, surface);
+    if (popup->xdg_surface_tree == NULL) {
+        wlr_scene_node_destroy(&popup->scene_tree->node);
+        free(popup);
+        return NULL;
+    }
+
+    popup->wlr_popup = surface->popup;
+    struct qw_xdg_view *xdg_view = wl_container_of(view, xdg_view, base);
+    surface->data = xdg_view;
+
+    wl_signal_add(&surface->surface->events.commit, &popup->surface_commit);
+    popup->surface_commit.notify = qw_xdg_popup_handle_surface_commit;
+    wl_signal_add(&surface->events.new_popup, &popup->new_popup);
+    popup->new_popup.notify = qw_xdg_popup_handle_new_popup;
+    wl_signal_add(&wlr_popup->events.reposition, &popup->reposition);
+    popup->reposition.notify = qw_xdg_popup_handle_reposition;
+    wl_signal_add(&wlr_popup->events.destroy, &popup->destroy);
+    popup->destroy.notify = qw_xdg_popup_handle_destroy;
+
+    return popup;
 }
 
 // Create a new qw_xdg_view for a given wlr_xdg_toplevel, setting up scene tree, listeners, and
