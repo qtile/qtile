@@ -303,7 +303,7 @@ static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *d
     // or handling surface state changes after the view is already managed
 
     // Update clipping if geometry changed
-    // qw_xwayland_view_clip(xwayland_view);
+    qw_xwayland_view_clip(xwayland_view);
 }
 
 // Called when the XWayland surface is mapped (i.e., ready to be shown).
@@ -601,8 +601,9 @@ struct qw_xwayland_view *create_xwayland_view(struct wlr_xwayland_surface *qw_xs
 
     struct qw_xwayland_view *xwayland_view = calloc(1, sizeof(*xwayland_view));
 
-    if (!xwayland_view) {
+    if (xwayland_view == NULL) {
         wlr_log(WLR_INFO, "Failed to allocate memory to xwayland_view");
+        return NULL;
     }
 
     // Check if we can initilaze xwayland view
