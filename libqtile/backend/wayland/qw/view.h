@@ -89,6 +89,7 @@ struct qw_view {
     // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
     struct {
         enum qw_border_type type;
+        uint32_t width;
         union {
             struct wlr_scene_rect *rects[4];
             struct wlr_scene_buffer *scene_bufs[4];
