@@ -35,6 +35,7 @@ struct qw_xdg_view {
     struct wl_listener request_fullscreen;
     struct wl_listener set_title;
     struct wl_listener set_app_id;
+    struct wl_listener new_popup;
     // TODO: add listeners for move and resize requests
 
     // Listeners for client decoration protocol events
@@ -44,6 +45,18 @@ struct qw_xdg_view {
 
     bool is_urgent;
     bool mapped; // Is the view currently mapped (visible)?
+};
+
+struct qw_xdg_popup {
+    struct qw_view *view;
+    struct wlr_xdg_popup *wlr_popup;
+    struct wlr_scene_tree *scene_tree;
+    struct wlr_scene_tree *xdg_surface_tree;
+
+    struct wl_listener surface_commit;
+    struct wl_listener new_popup;
+    struct wl_listener reposition;
+    struct wl_listener destroy;
 };
 
 // Initialize decoration handling for a new decoration object associated with this view
