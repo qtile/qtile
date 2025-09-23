@@ -26,6 +26,17 @@ struct qw_layer_view {
     struct wl_listener commit;
     struct wl_listener destroy;
     struct wl_listener unmap;
+    struct wl_listener new_popup;
+};
+
+struct qw_layer_popup {
+    struct qw_layer_view *toplevel;
+    struct wlr_xdg_popup *wlr_popup;
+    struct wlr_scene_tree *xdg_surface_tree;
+
+    struct wl_listener surface_commit;
+    struct wl_listener new_popup;
+    struct wl_listener destroy;
 };
 
 // Create and initialize a new qw_layer_view wrapping the given layer_surface
