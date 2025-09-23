@@ -759,7 +759,8 @@ static char *LAYER_NAMES[] = {[LAYER_BACKGROUND] = "LAYER_BACKGROUND",
                               [LAYER_FULLSCREEN] = "LAYER_FULLSCREEN",
                               [LAYER_BRINGTOFRONT] = "LAYER_BRINGTOFRONT",
                               [LAYER_TOP] = "LAYER_TOP",
-                              [LAYER_OVERLAY] = "LAYER_OVERLAY"};
+                              [LAYER_OVERLAY] = "LAYER_OVERLAY",
+                              [LAYER_DRAG_ICON] = "LAYER_DRAG_ICON"};
 
 static char *SCENE_NODE_TYPES[] = {[WLR_SCENE_NODE_TREE] = "tree",
                                    [WLR_SCENE_NODE_RECT] = "rect",
