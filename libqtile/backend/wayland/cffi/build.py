@@ -145,25 +145,21 @@ for file in cdef_files:
             CDEF += line
 
 SOURCE = ""
+for header in cdef_files:
+    SOURCE += f'#include "{header}"\n'
 
-for root, dirs, files in os.walk(QW_PATH):
-    for file in files:
-        if file.endswith(".c"):
-            with open(QW_PATH / file) as f:
-                SOURCE += f.read()
-
-
+#TODO: Is this used/needed?
 def get_include_path(lib: str) -> str:
     return subprocess.run(
         ["pkg-config", "--variable=includedir", lib], text=True, stdout=subprocess.PIPE
     ).stdout.strip()
 
+LIBWAYC = QW_PATH / ".." / "libmyffi.so"
 
 ffi = FFI()
 ffi.set_source(
     "libqtile.backend.wayland._ffi",
     SOURCE,
-    libraries=["wlroots-0.19", "wayland-server", "input", "cairo"],
     define_macros=[("WLR_USE_UNSTABLE", None)],
     include_dirs=[
         os.getenv("QTILE_CAIRO_PATH", "/usr/include/cairo"),
@@ -173,8 +169,11 @@ ffi.set_source(
         QW_PATH,
         QW_PROTO_OUT_PATH,
     ],
+    extra_link_args=[LIBWAYC],
 )
 
+def build_library():
+    subprocess.run(["make", "-C", ".", "rebuild"], check=True)
 
 def ffi_compile(verbose: bool = False) -> None:
     # The ffi source of "libqtile.backend.wayland._ffi" means that we'll compile the library file
@@ -193,4 +192,6 @@ def ffi_compile(verbose: bool = False) -> None:
 
 ffi.cdef(CDEF)
 if __name__ == "__main__":
+
+    build_library()
     ffi_compile()
