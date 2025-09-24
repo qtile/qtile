@@ -4,7 +4,7 @@ License
 
 This project is distributed under the MIT license.
 
-Copyright (c) 2008, Aldo Cortesi
+Copyright (c) 2008-2025, the Qtile contributors.
 All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
