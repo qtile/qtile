@@ -87,3 +87,20 @@ void qw_util_deactivate_surface(struct wlr_surface *surface) {
         }
     #endif
 }
+
+bool qw_surfaces_on_same_output(struct wlr_surface *surface_a, struct wlr_surface *surface_b) {
+    if (surface_a == NULL || surface_b == NULL) {
+        return false;
+    }
+
+    struct wlr_surface_output *output_a;
+    wl_list_for_each(output_a, &surface_a->current_outputs, link) {
+        struct wlr_surface_output *output_b;
+        wl_list_for_each(output_b, &surface_b->current_outputs, link) {
+            if (output_a->output == output_b->output) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
