@@ -409,6 +409,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->base.hide = qw_xdg_view_hide;
     xdg_view->base.unhide = qw_xdg_view_unhide;
     xdg_view->base.has_fixed_size = qw_xdg_view_has_fixed_size;
+    xdg_view->base.set_current_output = qw_view_set_current_output;
 
     // Add listeners for surface lifecycle events (map, unmap, commit)
     xdg_view->map.notify = qw_xdg_view_handle_map;

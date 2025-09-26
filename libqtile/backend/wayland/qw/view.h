@@ -65,6 +65,7 @@ struct qw_view {
     char *title;
     char *app_id;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
+    struct wlr_output *current_output;   // used for stacking order with views on same output
 
     request_maximize_cb_t request_maximize_cb;
     request_fullscreen_cb_t request_fullscreen_cb;
@@ -84,6 +85,7 @@ struct qw_view {
     void (*unhide)(void *self);
     int (*get_pid)(void *self);
     bool (*has_fixed_size)(void *self);
+    void (*set_current_output)(struct qw_view *view, int x, int y);
 
     // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
     struct {
@@ -95,6 +97,7 @@ struct qw_view {
     } *borders;
 };
 
+void qw_view_set_current_output(struct qw_view *view, int x, int y);
 void qw_view_reparent(struct qw_view *view, int layer);
 void qw_view_move_up(struct qw_view *view);
 void qw_view_move_down(struct qw_view *view);
