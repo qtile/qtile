@@ -29,4 +29,6 @@ xkb_keysym_t qwu_keysym_from_name(const char *name);
 
 void qw_util_deactivate_surface(struct wlr_surface *surface);
 
+bool qw_surfaces_on_same_output(struct wlr_surface *surface_a, struct wlr_surface *surface_b);
+
 #endif /* UTIL_H */
