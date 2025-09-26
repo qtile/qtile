@@ -1,6 +1,7 @@
 #include "view.h"
 #include "cairo-buffer.h"
 #include "server.h"
+#include "util.h"
 #include <stdlib.h>
 #include <wlr/util/log.h>
 
@@ -36,6 +37,42 @@ void qw_view_cleanup_borders(struct qw_view *view) {
     free(view->borders);
 }
 
+// Recursively search through a view's tree until we find a wlr_surface
+static struct wlr_surface *qw_view_get_surface_from_tree(struct wlr_scene_node *node) {
+    if (node == NULL) {
+        return NULL;
+    }
+
+    switch (node->type) {
+    case WLR_SCENE_NODE_BUFFER: {
+        struct wlr_scene_buffer *scene_buffer = wlr_scene_buffer_from_node(node);
+        if (scene_buffer == NULL) {
+            return NULL;
+        }
+        struct wlr_scene_surface *scene_surface = wlr_scene_surface_try_from_buffer(scene_buffer);
+        if (scene_surface) {
+            return scene_surface->surface;
+        }
+        return NULL;
+    }
+
+    case WLR_SCENE_NODE_TREE: {
+        struct wlr_scene_tree *tree = wlr_scene_tree_from_node(node);
+        struct wlr_scene_node *child;
+        wl_list_for_each(child, &tree->children, link) {
+            struct wlr_surface *view_surface = qw_view_get_surface_from_tree(child);
+            if (view_surface != NULL) {
+                return view_surface;
+            }
+        }
+        return NULL;
+    }
+
+    default:
+        return NULL;
+    }
+}
+
 void qw_view_reparent(struct qw_view *view, int layer) {
     wlr_scene_node_reparent(&view->content_tree->node, view->server->scene_windows_layers[layer]);
     view->layer = layer;
@@ -56,10 +93,30 @@ void qw_view_move_up(struct qw_view *view) {
     struct wlr_scene_node *next_sibling = NULL;
     bool found_child = false;
     struct wlr_scene_node *child;
-    wl_list_for_each(child, &view->server->scene_windows_tree[view->layer].children, link) {
+
+    struct wlr_surface *view_surface = qw_view_get_surface_from_tree(&view->content_tree->node);
+
+    if (view_surface == NULL) {
+        return;
+    }
+
+    wl_list_for_each(child, &view->server->scene_windows_layers[view->layer]->children, link) {
         if (child == &view->content_tree->node) {
             found_child = true;
         } else if (found_child) {
+            if (!child->enabled) {
+                continue;
+            }
+            struct wlr_surface *other_surface = qw_view_get_surface_from_tree(child);
+
+            if (other_surface == NULL) {
+                continue;
+            }
+
+            if (!qw_surfaces_on_same_output(view_surface, other_surface)) {
+                continue;
+            }
+
             next_sibling = child;
             break;
         }
@@ -76,14 +133,34 @@ void qw_view_move_down(struct qw_view *view) {
     // of this window and place this window below x
     struct wlr_scene_node *prev_sibling = NULL;
     struct wlr_scene_node *child;
-    wl_list_for_each(child, &view->server->scene_windows_tree[view->layer].children, link) {
+
+    struct wlr_surface *view_surface = qw_view_get_surface_from_tree(&view->content_tree->node);
+
+    if (view_surface == NULL) {
+        return;
+    }
+
+    wl_list_for_each(child, &view->server->scene_windows_layers[view->layer]->children, link) {
+        if (!child->enabled) {
+            continue;
+        }
+
+        struct wlr_surface *other_surface = qw_view_get_surface_from_tree(child);
+        if (other_surface == NULL) {
+            continue;
+        }
+
+        if (!qw_surfaces_on_same_output(view_surface, other_surface)) {
+            continue;
+        }
+
         if (child == &view->content_tree->node) {
             break;
         }
         prev_sibling = child;
     }
     if (prev_sibling) {
-        wlr_scene_node_place_above(&view->content_tree->node, prev_sibling);
+        wlr_scene_node_place_below(&view->content_tree->node, prev_sibling);
     }
 }
 
