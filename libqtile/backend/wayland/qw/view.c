@@ -48,6 +48,14 @@ void qw_view_lower_to_bottom(struct qw_view *view) {
     wlr_scene_node_lower_to_bottom(&view->content_tree->node);
 }
 
+void qw_view_set_current_output(struct qw_view *view, int x, int y) {
+    struct wlr_output *output = wlr_output_layout_output_at(view->server->output_layout, x, y);
+    if (output == NULL) {
+        wlr_log(WLR_ERROR, "Couldn't find an output at %d, %d", x, y);
+    }
+    view->current_output = output;
+}
+
 void qw_view_move_up(struct qw_view *view) {
     // the rightmost sibling in the tree
     // is the upper one
@@ -56,10 +64,21 @@ void qw_view_move_up(struct qw_view *view) {
     struct wlr_scene_node *next_sibling = NULL;
     bool found_child = false;
     struct wlr_scene_node *child;
-    wl_list_for_each(child, &view->server->scene_windows_tree[view->layer].children, link) {
+
+    wl_list_for_each(child, &view->server->scene_windows_layers[view->layer]->children, link) {
         if (child == &view->content_tree->node) {
             found_child = true;
         } else if (found_child) {
+            // Keep looking for next view that isn't hidden and
+            // is on same output
+            if (!child->enabled) {
+                continue;
+            }
+            struct qw_view *other = child->data;
+            if (other->current_output != view->current_output) {
+                continue;
+            }
+
             next_sibling = child;
             break;
         }
@@ -76,14 +95,23 @@ void qw_view_move_down(struct qw_view *view) {
     // of this window and place this window below x
     struct wlr_scene_node *prev_sibling = NULL;
     struct wlr_scene_node *child;
-    wl_list_for_each(child, &view->server->scene_windows_tree[view->layer].children, link) {
+
+    wl_list_for_each(child, &view->server->scene_windows_layers[view->layer]->children, link) {
+        // ignore hidden views and views on different outputs
+        if (!child->enabled) {
+            continue;
+        }
+        struct qw_view *other = child->data;
+        if (other->current_output != view->current_output) {
+            continue;
+        }
         if (child == &view->content_tree->node) {
             break;
         }
         prev_sibling = child;
     }
     if (prev_sibling) {
-        wlr_scene_node_place_above(&view->content_tree->node, prev_sibling);
+        wlr_scene_node_place_below(&view->content_tree->node, prev_sibling);
     }
 }
 

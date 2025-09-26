@@ -129,6 +129,7 @@ struct qw_internal_view *qw_server_internal_view_new(struct qw_server *server, i
         .kill = qw_internal_view_kill,
         .hide = qw_internal_view_hide,
         .unhide = qw_internal_view_unhide,
+        .set_current_output = qw_view_set_current_output,
     };
     view->base = base;
     view->base.content_tree->node.data = view;

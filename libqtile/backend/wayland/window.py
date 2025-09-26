@@ -172,7 +172,17 @@ class Base(base._Window):
         self._ptr.hide(self._ptr)
 
     def unhide(self) -> None:
+        self.set_current_output()
         self._ptr.unhide(self._ptr)
+
+    def set_current_output(self) -> None:
+        if self.group and self.group.screen:
+            x = self.group.screen.x
+            y = self.group.screen.y
+        else:
+            x = self.x
+            y = self.y
+        self._ptr.set_current_output(self._ptr, x, y)
 
     @expose_command()
     def place(

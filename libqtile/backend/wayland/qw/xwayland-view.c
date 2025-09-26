@@ -589,6 +589,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
     xwayland_view->base.has_fixed_size = qw_xwayland_view_has_fixed_size;
+    xwayland_view->base.set_current_output = qw_view_set_current_output;
 
     // Add listener for toplevel destroy event
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
