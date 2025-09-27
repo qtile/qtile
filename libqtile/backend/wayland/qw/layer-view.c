@@ -14,6 +14,7 @@ static void qw_layer_view_handle_destroy(struct wl_listener *listener, void *dat
     wl_list_remove(&layer_view->destroy.link);
     wl_list_remove(&layer_view->unmap.link);
     wl_list_remove(&layer_view->commit.link);
+    wl_list_remove(&layer_view->new_popup.link);
     wlr_scene_node_destroy(&layer_view->scene->tree->node);
     wlr_scene_node_destroy(&layer_view->popups->node);
     free(layer_view);
@@ -118,6 +119,95 @@ void qw_layer_view_focus(struct qw_layer_view *layer_view) {
     }
 }
 
+static void qw_layer_popup_handle_destroy(struct wl_listener *listener, void *data) {
+    struct qw_layer_popup *popup = wl_container_of(listener, popup, destroy);
+
+    wl_list_remove(&popup->new_popup.link);
+    wl_list_remove(&popup->destroy.link);
+    wl_list_remove(&popup->surface_commit.link);
+    free(popup);
+}
+
+static void qw_layer_popup_unconstrain(struct qw_layer_popup *popup) {
+    struct qw_server *server = popup->toplevel->server;
+    struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
+
+    struct qw_output *output = server->current_output->data;
+
+    // if a client tries to create a popup while we are in the process of destroying
+    // its output, don't crash.
+    if (output == NULL) {
+        return;
+    }
+
+    int width, height;
+    wlr_output_effective_resolution(server->current_output, &width, &height);
+
+    int lx, ly;
+    wlr_scene_node_coords(&popup->toplevel->scene->tree->node, &lx, &ly);
+
+    // the output box expressed in the coordinate system of the toplevel parent
+    // of the popup
+    struct wlr_box output_toplevel_sx_box = {
+        .x = output->x - lx,
+        .y = output->y - ly,
+        .width = width,
+        .height = height,
+    };
+
+    wlr_xdg_popup_unconstrain_from_box(wlr_popup, &output_toplevel_sx_box);
+}
+
+static void qw_layer_popup_handle_surface_commit(struct wl_listener *listener, void *data) {
+    struct qw_layer_popup *popup = wl_container_of(listener, popup, surface_commit);
+    if (popup->wlr_popup->base->initial_commit) {
+        qw_layer_popup_unconstrain(popup);
+    }
+}
+
+// Forward declaration
+static void qw_layer_popup_handle_new_popup(struct wl_listener *listener, void *data);
+
+static struct qw_layer_popup *qw_layer_popup_new(struct wlr_xdg_popup *wlr_popup,
+                                                 struct qw_layer_view *toplevel,
+                                                 struct wlr_scene_tree *parent) {
+    struct qw_layer_popup *popup = calloc(1, sizeof(struct qw_layer_popup));
+    if (wlr_popup == NULL) {
+        wlr_log(WLR_ERROR, "failed to create qw_layer_popup struct");
+        return NULL;
+    }
+
+    popup->toplevel = toplevel;
+    popup->wlr_popup = wlr_popup;
+
+    popup->xdg_surface_tree = wlr_scene_xdg_surface_create(parent, wlr_popup->base);
+    if (popup->xdg_surface_tree == NULL) {
+        free(popup);
+        return NULL;
+    }
+
+    wl_signal_add(&wlr_popup->base->surface->events.commit, &popup->surface_commit);
+    popup->surface_commit.notify = qw_layer_popup_handle_surface_commit;
+    wl_signal_add(&wlr_popup->base->events.new_popup, &popup->new_popup);
+    popup->new_popup.notify = qw_layer_popup_handle_new_popup;
+    wl_signal_add(&wlr_popup->base->events.destroy, &popup->destroy);
+    popup->destroy.notify = qw_layer_popup_handle_destroy;
+
+    return popup;
+}
+
+static void qw_layer_popup_handle_new_popup(struct wl_listener *listener, void *data) {
+    struct qw_layer_popup *popup = wl_container_of(listener, popup, new_popup);
+    struct wlr_xdg_popup *wlr_popup = data;
+    qw_layer_popup_new(wlr_popup, popup->toplevel, popup->xdg_surface_tree);
+}
+
+static void qw_layer_view_handle_new_popup(struct wl_listener *listener, void *data) {
+    struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, new_popup);
+    struct wlr_xdg_popup *wlr_popup = data;
+    qw_layer_popup_new(wlr_popup, layer_view, layer_view->popups);
+}
+
 // Create a new qw_layer_view for a given wlr_layer_surface
 void qw_server_layer_view_new(struct qw_server *server,
                               struct wlr_layer_surface_v1 *layer_surface) {
@@ -152,6 +242,8 @@ void qw_server_layer_view_new(struct qw_server *server,
     wl_signal_add(&layer_surface->surface->events.unmap, &layer_view->unmap);
     layer_view->destroy.notify = qw_layer_view_handle_destroy;
     wl_signal_add(&layer_surface->events.destroy, &layer_view->destroy);
+    layer_view->new_popup.notify = qw_layer_view_handle_new_popup;
+    wl_signal_add(&layer_surface->events.new_popup, &layer_view->new_popup);
 
     int layer = zlayer_to_layer[layer_surface->pending.layer];
     struct wlr_scene_tree *layer_tree = layer_view->server->scene_windows_layers[layer];

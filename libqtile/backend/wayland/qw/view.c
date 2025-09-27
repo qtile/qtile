@@ -124,6 +124,7 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
         view->borders[i].type = src->type;
 
         int bw = src->width;
+        view->borders[i].width = bw;
 
         // clang-format off
         struct wlr_box sides[4] = {
