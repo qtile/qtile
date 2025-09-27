@@ -1,29 +1,22 @@
-# Paths
-QW_PATH      := ../qw
-QW_PROTO_OUT := ../qw/proto
+.POSIX:
 
-# Compiler/linker
-CC := gcc
-CFLAGS := -O2 -fPIC \
-          -DWLR_USE_UNSTABLE \
-          -I$(QW_PATH) \
-          -I$(QW_PROTO_OUT) \
-          $(shell pkg-config --cflags wlroots-0.19 wayland-server cairo pixman-1 libdrm)
+include libconfig.mk
 
-LDFLAGS := -shared $(shell pkg-config --libs wlroots-0.19 wayland-server cairo pixman-1 libdrm)
-
-TARGET := ../libwayc.so
+BUILD_DIR := .build
+SRC := $(wildcard $(QW_PATH)/*.c)
+OBJS := $(patsubst $(QW_PATH)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 
 .PHONY: all
 all: $(TARGET)
 
-$(TARGET): $(wildcard $(QW_PATH)/*.c)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(BUILD_DIR)/%.o: $(QW_PATH)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -O2 -fPIC -DWLR_USE_UNSTABLE -Wall -Wextra $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(TARGET): $(OBJS)
+	$(LINK.c) -shared $(LDFLAGS) -shared -o $@ $^ $(LDLIBS)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJECTS) $(TARGET)
-
-.PHONY: rebuild
-rebuild: clean all
+	$(RM) $(OBJS) $(TARGET)
 
