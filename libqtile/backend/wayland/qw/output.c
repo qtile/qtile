@@ -162,6 +162,12 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
     // Insert output at end of list
     wl_list_insert(server->outputs.prev, &output->link);
 
+    // Create black background for FULLSCREEN layer and disable it
+    float black[4] = {0, 0, 0, 1.0};
+    output->fullscreen_background =
+        wlr_scene_rect_create(server->scene_windows_layers[LAYER_FULLSCREEN], 0, 0, black);
+    wlr_scene_node_set_enabled(&output->fullscreen_background->node, false);
+
     // Add the output to the output layout automatically and to the scene layout
     struct wlr_output_layout_output *l_output =
         wlr_output_layout_add_auto(server->output_layout, wlr_output);
@@ -200,6 +206,13 @@ void qw_output_background_destroy(struct qw_output *output) {
 
     // Reset type to indicate no background
     output->background.type = QW_BACKGROUND_DESTROYED;
+}
+
+void qw_output_toggle_fullscreen_background(struct qw_output *output, bool enabled) {
+    if (output->fullscreen_background != NULL) {
+        wlr_scene_node_set_enabled(&output->fullscreen_background->node, enabled);
+        wlr_scene_node_lower_to_bottom(&output->fullscreen_background->node);
+    }
 }
 
 void qw_output_paint_wallpaper(struct qw_output *output, cairo_surface_t *source,
