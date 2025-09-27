@@ -72,7 +72,7 @@ def stop_x11(proc, display, display_file):
 
     # clean up the lock file for the display we allocated
     try:
-        display_file.close()
+        os.close(display_file)
         os.remove(xcffib.testing.lock_path(int(display[1:])))
     except OSError:
         pass
