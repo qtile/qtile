@@ -44,6 +44,15 @@ if TYPE_CHECKING:
     ItemT = tuple[bool, list[str | int]] | None
 
 
+def allow_when_locked(func: Callable) -> Callable:
+    """
+    Decorator to expose methods which can be run when the
+    session is locked.
+    """
+    setattr(func, "_allow_when_locked", True)
+    return func
+
+
 def expose_command(name: Callable | str | list[str] | None = None) -> Callable:
     """
     Decorator to expose methods to the command interface.

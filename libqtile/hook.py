@@ -1080,6 +1080,40 @@ hooks: list[Hook] = [
         """,
         _user_hook_func,
     ),
+    Hook(
+        "locked",
+        """
+        Called when the user session is locked.
+
+        Currently only available on Wayland.
+
+        .. code::
+
+          from libqtile import hook, qtile
+
+          @hook.subscribe.locked
+          def stop_media():
+              qtile.spawn("playerctl --all-players pause")
+
+        """,
+    ),
+    Hook(
+        "unlocked",
+        """
+        Called when the user session is unlocked.
+
+        Currently only available on Wayland.
+
+        .. code::
+
+          from libqtile import hook, qtile
+
+          @hook.subscribe.unlocked
+          def play_resume_sound():
+              qtile.spawn("ffplay resume.wav")
+
+        """,
+    ),
 ]
 
 
