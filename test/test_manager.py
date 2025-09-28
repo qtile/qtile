@@ -428,7 +428,10 @@ def test_spawn_list(manager):
 
 
 @manager_config
-def test_spawn_in_group(manager):
+def test_spawn_in_group(manager, backend_name):
+    if backend_name == "wayland":
+        pytest.skip("TODO: X11 only for now.")
+
     @Retry(ignore_exceptions=(AssertionError,))
     def wait_for_window(empty=False):
         assert (len(manager.c.windows()) > 0) is not empty
