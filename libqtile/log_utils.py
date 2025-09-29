@@ -98,35 +98,34 @@ def init_log(
     for handler in logger.handlers:
         logger.removeHandler(handler)
 
-    if log_path is None or os.getenv("QTILE_XEPHYR"):
-        # During tests or interactive xephyr development, log to stdout.
-        handler = StreamHandler(sys.stdout)
-        formatter: Formatter = ColorFormatter(
-            "$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s "
-            "%(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s"
-        )
+    stream_handler = StreamHandler(sys.stdout)
+    stream_formatter = ColorFormatter(
+        "$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s "
+        "%(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s"
+    )
+    stream_handler.setFormatter(stream_formatter)
+    logger.addHandler(stream_handler)
 
-    else:
-        # Otherwise during normal usage, log to file.
+    if log_path is not None:
         try:
             log_path.parent.mkdir(parents=True, exist_ok=True)
         except PermissionError as e:
-            # ok, only one place to write: stderr
             print(f"couldn't mkdir {log_path.parent}: {e}", file=sys.stderr)
             os._exit(1)
 
-        handler = RotatingFileHandler(
+        file_handler = RotatingFileHandler(
             log_path,
             maxBytes=log_size,
             backupCount=log_numbackups,
         )
-        formatter = Formatter(
+        file_formatter = Formatter(
             "%(asctime)s %(levelname)s %(name)s "
             "%(filename)s:%(funcName)s():L%(lineno)d %(message)s"
         )
 
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
+
     logger.setLevel(log_level)
     # Capture everything from the warnings module.
     captureWarnings(True)
