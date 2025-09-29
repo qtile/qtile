@@ -64,3 +64,6 @@ docs/_static/screenshots/
 uv.lock
 # ccls
 .ccls-cache/
+
+# dynamically built files for wayland backend build
+libconfig.mk
