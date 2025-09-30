@@ -48,7 +48,9 @@ struct qw_xdg_view {
 };
 
 struct qw_xdg_popup {
-    struct qw_view *view;
+    struct qw_view base;
+    // parent xdg-view
+    struct qw_xdg_view *xdg_view;
     struct wlr_xdg_popup *wlr_popup;
     struct wlr_scene_tree *scene_tree;
     struct wlr_scene_tree *xdg_surface_tree;
