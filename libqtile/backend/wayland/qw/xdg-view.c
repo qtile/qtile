@@ -288,7 +288,7 @@ static void qw_xdg_popup_handle_destroy(struct wl_listener *listener, void *data
 }
 
 static void qw_xdg_popup_unconstrain(struct qw_xdg_popup *popup) {
-    struct qw_view *view = popup->view;
+    struct qw_view *view = &popup->xdg_view->base;
     struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
 
     struct qw_output *output = view->server->current_output->data;
@@ -322,13 +322,13 @@ static void qw_xdg_popup_handle_reposition(struct wl_listener *listener, void *d
 
 // Forward declaration
 static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_popup,
-                                                    struct qw_view *view,
+                                                    struct qw_xdg_view *xdg_view,
                                                     struct wlr_scene_tree *parent);
 
 static void qw_xdg_popup_handle_new_popup(struct wl_listener *listener, void *data) {
     struct qw_xdg_popup *popup = wl_container_of(listener, popup, new_popup);
     struct wlr_xdg_popup *wlr_popup = data;
-    qw_server_xdg_popup_new(wlr_popup, popup->view, popup->xdg_surface_tree);
+    qw_server_xdg_popup_new(wlr_popup, popup->xdg_view, popup->xdg_surface_tree);
 }
 
 static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *data) {
@@ -337,7 +337,7 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
     struct wlr_xdg_popup *wlr_popup = data;
 
     struct qw_xdg_popup *popup = qw_server_xdg_popup_new(
-        wlr_popup, &xdg_view->base, server->scene_windows_layers[LAYER_BRINGTOFRONT]);
+        wlr_popup, xdg_view, server->scene_windows_layers[LAYER_BRINGTOFRONT]);
     if (popup == NULL) {
         return;
     }
@@ -348,7 +348,7 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
     }
 
     int lx, ly;
-    wlr_scene_node_coords(&popup->view->content_tree->node, &lx, &ly);
+    wlr_scene_node_coords(&popup->xdg_view->base.content_tree->node, &lx, &ly);
     wlr_scene_node_set_position(&popup->scene_tree->node, lx + total_border_width,
                                 ly + total_border_width);
     // TODO: do we need to be concerned about the width/height of other window decorations?
@@ -509,24 +509,25 @@ static bool qw_xdg_view_has_fixed_size(void *self) {
 }
 
 static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_popup,
-                                                    struct qw_view *view,
+                                                    struct qw_xdg_view *xdg_view,
                                                     struct wlr_scene_tree *parent) {
     struct wlr_xdg_surface *surface = wlr_popup->base;
 
     struct qw_xdg_popup *popup = calloc(1, sizeof(struct qw_xdg_popup));
-    if (wlr_popup == NULL) {
+    if (popup == NULL) {
         wlr_log(WLR_ERROR, "failed to create qw_xdg_popup struct");
         return NULL;
     }
 
     popup->wlr_popup = wlr_popup;
-    popup->view = view;
+    popup->xdg_view = xdg_view;
 
     popup->scene_tree = wlr_scene_tree_create(parent);
     if (popup->scene_tree == NULL) {
         free(popup);
         return NULL;
     }
+    popup->scene_tree->node.data = popup;
 
     popup->xdg_surface_tree = wlr_scene_xdg_surface_create(popup->scene_tree, surface);
     if (popup->xdg_surface_tree == NULL) {
@@ -534,10 +535,6 @@ static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_po
         free(popup);
         return NULL;
     }
-
-    popup->wlr_popup = surface->popup;
-    struct qw_xdg_view *xdg_view = wl_container_of(view, xdg_view, base);
-    surface->data = xdg_view;
 
     wl_signal_add(&surface->surface->events.commit, &popup->surface_commit);
     popup->surface_commit.notify = qw_xdg_popup_handle_surface_commit;
