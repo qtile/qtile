@@ -367,41 +367,16 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
 
     // Set foreign top level attributes
-    if (xdg_view->base.ftl_handle != NULL) {
-        if (xdg_view->base.title != NULL) {
-            wlr_foreign_toplevel_handle_v1_set_title(xdg_view->base.ftl_handle,
-                                                     xdg_view->base.title);
-        }
-        if (xdg_view->base.app_id != NULL) {
-            wlr_foreign_toplevel_handle_v1_set_app_id(xdg_view->base.ftl_handle,
-                                                      xdg_view->base.app_id);
-        }
-        if (xdg_toplevel->parent != NULL) {
-            struct qw_xdg_view *parent_view = xdg_toplevel->parent->base->data;
-            if (parent_view->base.ftl_handle != NULL) {
-                wlr_foreign_toplevel_handle_v1_set_parent(xdg_view->base.ftl_handle,
-                                                          parent_view->base.ftl_handle);
-            }
+    if (xdg_view->base.ftl_handle != NULL && xdg_toplevel->parent != NULL) {
+        struct qw_xdg_view *parent_view = xdg_toplevel->parent->base->data;
+        if (parent_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_parent(xdg_view->base.ftl_handle,
+                                                      parent_view->base.ftl_handle);
         }
     }
 
     xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
                                           xdg_view->base.server->cb_data);
-
-    // Add listeners to handle various requests
-    xdg_view->new_popup.notify = qw_xdg_view_handle_new_popup;
-    wl_signal_add(&xdg_toplevel->base->events.new_popup, &xdg_view->new_popup);
-
-    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
-    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
-    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
-    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
-
-    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
-    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
-
-    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
-    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
 
     // Focus the view upon mapping
     qw_xdg_view_do_focus(xdg_view, xdg_toplevel->base->surface);
@@ -588,6 +563,9 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
         wlr_scene_xdg_surface_create(xdg_view->base.content_tree, xdg_toplevel->base);
     xdg_toplevel->base->data = xdg_view;
 
+    // Create foreign toplevel manager and listeners
+    qw_view_ftl_manager_handle_create(&xdg_view->base);
+
     // Assign function pointers for base view operations
     xdg_view->base.get_tree_node = qw_xdg_view_get_tree_node;
     xdg_view->base.update_fullscreen = qw_xdg_view_update_fullscreen;
@@ -614,6 +592,18 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->destroy.notify = qw_xdg_view_handle_destroy;
     wl_signal_add(&xdg_toplevel->events.destroy, &xdg_view->destroy);
 
-    // Create foreign toplevel manager and listeners
-    qw_view_ftl_manager_handle_create(&xdg_view->base);
+    // Add listeners to handle various requests
+    xdg_view->new_popup.notify = qw_xdg_view_handle_new_popup;
+    wl_signal_add(&xdg_toplevel->base->events.new_popup, &xdg_view->new_popup);
+
+    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
+    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
+    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
+    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
+
+    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
+    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
+
+    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
+    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
 }
