@@ -9,6 +9,22 @@
 #include "xdg-shell-protocol.h"
 #include <stdlib.h>
 
+// Handle client decoration mode requests, enforce server-side decorations
+static void qw_xdg_view_handle_decoration_request_mode(struct wl_listener *listener, void *data) {
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_request_mode);
+    if (xdg_view->xdg_toplevel->base->initialized)
+        wlr_xdg_toplevel_decoration_v1_set_mode(xdg_view->decoration,
+                                                WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+}
+
+// Cleanup listeners when decoration is destroyed to avoid dangling pointers
+static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, void *data) {
+    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_destroy);
+
+    wl_list_remove(&xdg_view->decoration_destroy.link);
+    wl_list_remove(&xdg_view->decoration_request_mode.link);
+}
+
 // Focus the given xdg_view's surface, managing activation and keyboard focus
 static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surface *surface) {
     if (!xdg_view) {
@@ -89,6 +105,10 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
         xdg_view->base.title = xdg_view->xdg_toplevel->title;
         xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
+        if (xdg_view->decoration != NULL) {
+            qw_xdg_view_handle_decoration_request_mode(&xdg_view->decoration_request_mode,
+                                                       xdg_view->decoration);
+        }
     }
 }
 
@@ -254,22 +274,6 @@ static void qw_xdg_view_handle_set_app_id(struct wl_listener *listener, void *da
     if (xdg_view->base.set_app_id_cb && xdg_view->base.app_id) {
         xdg_view->base.set_app_id_cb(xdg_view->base.app_id, xdg_view->base.cb_data);
     }
-}
-
-// Handle client decoration mode requests, enforce server-side decorations
-static void qw_xdg_view_handle_decoration_request_mode(struct wl_listener *listener, void *data) {
-    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_request_mode);
-    if (xdg_view->xdg_toplevel->base->initialized)
-        wlr_xdg_toplevel_decoration_v1_set_mode(xdg_view->decoration,
-                                                WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
-}
-
-// Cleanup listeners when decoration is destroyed to avoid dangling pointers
-static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, void *data) {
-    struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_destroy);
-
-    wl_list_remove(&xdg_view->decoration_destroy.link);
-    wl_list_remove(&xdg_view->decoration_request_mode.link);
 }
 
 static void qw_xdg_popup_handle_destroy(struct wl_listener *listener, void *data) {
