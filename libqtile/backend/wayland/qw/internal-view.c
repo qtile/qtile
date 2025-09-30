@@ -93,7 +93,13 @@ static void qw_internal_view_unhide(void *self) {
     wlr_scene_node_set_enabled(&view->base.content_tree->node, true);
 }
 
-static void qw_internal_view_kill(void *self) { qw_internal_view_hide(self); }
+static void qw_internal_view_kill(void *self) {
+    struct qw_internal_view *view = (struct qw_internal_view *)self;
+    cairo_surface_destroy(view->image_surface);
+    wlr_buffer_drop(view->buffer);
+    wlr_scene_node_destroy(&view->base.content_tree->node);
+    free(view);
+}
 
 // Internal views don't have a PID, so return 0
 static int qw_internal_view_get_pid(void *self) { return 0; }
