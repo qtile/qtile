@@ -329,24 +329,12 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->base.height = xwayland_surface->height;
 
     // Set properties for foreign toplevel manager
-    if (xwayland_view->base.ftl_handle != NULL) {
-        if (xwayland_view->base.title != NULL) {
-            wlr_foreign_toplevel_handle_v1_set_title(xwayland_view->base.ftl_handle,
-                                                     xwayland_view->base.title);
+    if (xwayland_view->base.ftl_handle != NULL && xwayland_surface->parent != NULL) {
+        struct qw_xwayland_view *parent_view = xwayland_surface->parent->data;
+        if (parent_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_parent(xwayland_view->base.ftl_handle,
+                                                      parent_view->base.ftl_handle);
         }
-        if (xwayland_view->base.app_id != NULL) {
-            wlr_foreign_toplevel_handle_v1_set_app_id(xwayland_view->base.ftl_handle,
-                                                      xwayland_view->base.app_id);
-        }
-        if (xwayland_surface->parent != NULL) {
-            struct qw_xwayland_view *parent_view = xwayland_surface->parent->data;
-            if (parent_view->base.ftl_handle != NULL) {
-                wlr_foreign_toplevel_handle_v1_set_parent(xwayland_view->base.ftl_handle,
-                                                          parent_view->base.ftl_handle);
-            }
-        }
-    } else {
-        wlr_log(WLR_ERROR, "Could not create foreign toplevel handle.");
     }
 
     // Notify the server that this view is ready to be managed (added to layout/focus system).
@@ -620,6 +608,10 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.content_tree->node.data = xwayland_view;
     xwayland_view->base.layer = LAYER_LAYOUT;
 
+    // Create foreign toplevel manager and listeners
+    // Needs to be after content tree is created as we create an output tracking scene buffer
+    qw_view_ftl_manager_handle_create(&xwayland_view->base);
+
     wl_signal_add(&xwayland_surface->events.associate, &xwayland_view->associate);
     xwayland_view->associate.notify = qw_xwayland_view_handle_associate;
 
@@ -653,9 +645,6 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->destroy.notify = qw_xwayland_view_handle_destroy;
 
     xwayland_surface->data = xwayland_view;
-
-    // Create foreign toplevel manager and listeners
-    qw_view_ftl_manager_handle_create(&xwayland_view->base);
 }
 
 struct qw_xwayland_view *create_xwayland_view(struct wlr_xwayland_surface *qw_xsurface) {
