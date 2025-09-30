@@ -172,7 +172,7 @@ static struct qw_layer_popup *qw_layer_popup_new(struct wlr_xdg_popup *wlr_popup
                                                  struct qw_layer_view *toplevel,
                                                  struct wlr_scene_tree *parent) {
     struct qw_layer_popup *popup = calloc(1, sizeof(struct qw_layer_popup));
-    if (wlr_popup == NULL) {
+    if (popup == NULL) {
         wlr_log(WLR_ERROR, "failed to create qw_layer_popup struct");
         return NULL;
     }
