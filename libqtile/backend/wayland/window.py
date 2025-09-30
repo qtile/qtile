@@ -38,6 +38,7 @@ class Base(base._Window):
         # TODO: what is this?
         self.defunct = False
         self.group: _Group | None = None
+        self._killed = False
 
     def reparent(self, layer: int) -> None:
         if self.layer == layer:
@@ -166,7 +167,9 @@ class Base(base._Window):
         )
 
     def kill(self) -> None:
-        self._ptr.kill(self._ptr)
+        if not self._killed:
+            self._ptr.kill(self._ptr)
+            self._killed = True
 
     def hide(self) -> None:
         self._ptr.hide(self._ptr)
