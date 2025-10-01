@@ -655,11 +655,12 @@ class Window(Base, base.Window):
         if do_full != (self._float_state == FloatStates.FULLSCREEN):
             self._ptr.update_fullscreen(self._ptr, do_full)
 
-        screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
-            self.x, self.y
-        )
-        enabled = any(w.fullscreen for w in screen.group.windows)
-        self._ptr.update_fullscreen_background(self._ptr, enabled)
+        if self.group and self.group.screen:
+            screen = self.group.screen
+        else:
+            screen = None
+
+        self.qtile.core.check_screen_fullscreen_background(screen)
 
     @property
     def maximized(self) -> bool:

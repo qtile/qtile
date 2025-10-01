@@ -122,6 +122,16 @@ static void qw_server_handle_new_output(struct wl_listener *listener, void *data
     qw_server_output_new(server, output);
 }
 
+void qw_server_set_output_fullscreen_background(struct qw_server *server, int x, int y,
+                                                bool enabled) {
+    struct wlr_output *wout;
+    wout = wlr_output_layout_output_at(server->output_layout, x, y);
+    if (wout != NULL) {
+        struct qw_output *output = wout->data;
+        qw_output_toggle_fullscreen_background(output, enabled);
+    }
+}
+
 // Handle changes in the output layout (like monitor arrangement).
 // Updates output configuration accordingly.
 static void qw_server_handle_output_layout_change(struct wl_listener *listener, void *data) {
