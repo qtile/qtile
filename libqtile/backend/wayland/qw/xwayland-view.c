@@ -550,7 +550,7 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
 
     wl_list_remove(&xwayland_view->destroy.link);
     wl_list_remove(&xwayland_view->request_configure.link);
-    // wl_list_remove(&xwayland_view->request_fullscreen.link);
+    wl_list_remove(&xwayland_view->request_fullscreen.link);
     // wl_list_remove(&xwayland_view->request_move.link);
     // wl_list_remove(&xwayland_view->request_resize.link);
     // wl_list_remove(&xwayland_view->request_activate.link);
