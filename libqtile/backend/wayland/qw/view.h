@@ -96,7 +96,6 @@ struct qw_view {
     // Methods, implemented as function pointers
     struct wlr_scene_node *(*get_tree_node)(void *self);
     void (*update_fullscreen)(void *self, bool fullscreen);
-    void (*update_fullscreen_background)(void *self, bool enabled);
     void (*update_maximized)(void *self, bool maximize);
     void (*update_minimized)(void *self, bool minimize);
     void (*place)(void *self, int x, int y, int width, int height, const struct qw_border *borders,

@@ -266,4 +266,7 @@ void qw_server_paint_background_color(struct qw_server *server, int x, int y, fl
 void qw_server_loop_input_devices(struct qw_server *server, input_device_cb_t cb);
 void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb);
 
+void qw_server_set_output_fullscreen_background(struct qw_server *server, int x, int y,
+                                                bool enabled);
+
 #endif /* SERVER_H */
