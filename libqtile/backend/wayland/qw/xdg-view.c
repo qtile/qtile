@@ -233,9 +233,11 @@ static int qw_xdg_view_get_pid(void *self) {
 // Handle a request from the client to maximize the window
 static void qw_xdg_view_handle_request_maximize(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, request_maximize);
-    int handled = xdg_view->base.request_maximize_cb(xdg_view->xdg_toplevel->requested.maximized,
-                                                     xdg_view->base.cb_data);
-    if (!handled) {
+    bool maximized = xdg_view->xdg_toplevel->requested.maximized;
+    int handled = xdg_view->base.request_maximize_cb(maximized, xdg_view->base.cb_data);
+    if (handled) {
+        wlr_xdg_toplevel_set_maximized(xdg_view->xdg_toplevel, maximized);
+    } else {
         // If not handled, fallback to scheduling configure to apply maximize
         wlr_xdg_surface_schedule_configure(xdg_view->xdg_toplevel->base);
     }
@@ -244,9 +246,11 @@ static void qw_xdg_view_handle_request_maximize(struct wl_listener *listener, vo
 // Handle a request from the client to fullscreen the window
 static void qw_xdg_view_handle_request_fullscreen(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, request_fullscreen);
-    int handled = xdg_view->base.request_fullscreen_cb(xdg_view->xdg_toplevel->requested.fullscreen,
-                                                       xdg_view->base.cb_data);
-    if (!handled) {
+    bool fullscreen = xdg_view->xdg_toplevel->requested.fullscreen;
+    int handled = xdg_view->base.request_fullscreen_cb(fullscreen, xdg_view->base.cb_data);
+    if (handled) {
+        wlr_xdg_toplevel_set_fullscreen(xdg_view->xdg_toplevel, fullscreen);
+    } else {
         // Fallback configure if request not handled
         wlr_xdg_surface_schedule_configure(xdg_view->xdg_toplevel->base);
     }
