@@ -35,6 +35,7 @@ class Base(base._Window):
         self._wid = wid
         self._wm_class: str | None = None
         self.bordercolor: ColorsType | None = None
+        self.borderwidth = 0
         # TODO: what is this?
         self.defunct = False
         self.group: _Group | None = None
@@ -134,10 +135,6 @@ class Base(base._Window):
     def height(self, height: int) -> None:
         self._ptr.height = height
 
-    @property
-    def _borderwidth(self) -> int:
-        return self._ptr.bn
-
     @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
@@ -200,7 +197,7 @@ class Base(base._Window):
         if bordercolor is None:
             bordercolor = self.bordercolor
         if borderwidth is None:
-            borderwidth = self._borderwidth
+            borderwidth = borderwidth or 0
         if width is None:
             width = self.width
         if height is None:
@@ -255,6 +252,7 @@ class Base(base._Window):
                         c_layers[i].rect.color[side][j] = rgba[j]
 
         self.bordercolor = bordercolor
+        self.borderwidth = borderwidth
         self._ptr.place(self._ptr, x, y, width, height, c_layers, n, int(above))
 
     @expose_command()
@@ -732,7 +730,7 @@ class Window(Base, base.Window):
             self.hide()
         else:
             self.place(
-                x, y, w, h, self._borderwidth, self.bordercolor, above=True, respect_hints=True
+                x, y, w, h, self.borderwidth, self.bordercolor, above=True, respect_hints=True
             )
 
     def _tweak_float(
