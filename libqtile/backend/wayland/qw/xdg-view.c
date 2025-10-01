@@ -427,17 +427,6 @@ static void qw_xdg_view_update_fullscreen(void *self, bool fullscreen) {
     }
 }
 
-static void qw_xdg_view_update_fullscreen_background(void *self, bool enabled) {
-    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
-    struct wlr_output *wout;
-    wout = wlr_output_layout_output_at(xdg_view->base.server->output_layout, xdg_view->base.x,
-                                       xdg_view->base.y);
-    if (wout != NULL) {
-        struct qw_output *output = wout->data;
-        qw_output_toggle_fullscreen_background(output, enabled);
-    }
-}
-
 // Update maximized state of the toplevel surface
 static void qw_xdg_view_update_maximized(void *self, bool maximized) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
@@ -573,7 +562,6 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     // Assign function pointers for base view operations
     xdg_view->base.get_tree_node = qw_xdg_view_get_tree_node;
     xdg_view->base.update_fullscreen = qw_xdg_view_update_fullscreen;
-    xdg_view->base.update_fullscreen_background = qw_xdg_view_update_fullscreen_background;
     xdg_view->base.update_maximized = qw_xdg_view_update_maximized;
     xdg_view->base.update_minimized = qw_xdg_view_update_minimized;
     xdg_view->base.place = qw_xdg_view_place;
