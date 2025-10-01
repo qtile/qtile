@@ -530,9 +530,6 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
     xwayland_view->base.has_fixed_size = qw_xwayland_view_has_fixed_size;
-    xwayland_view->base.update_fullscreen = qw_xwayland_view_update_fullscreen;
-    xwayland_view->base.update_fullscreen_background =
-        qw_xwayland_view_update_fullscreen_background;
     xwayland_view->base.update_minimized = qw_xwayland_view_update_minimized;
     xwayland_view->base.update_maximized = qw_xwayland_view_update_maximized;
 

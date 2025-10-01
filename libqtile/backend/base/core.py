@@ -5,7 +5,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile.command.base import CommandObject, expose_command
-from libqtile.config import ScreenRect
+from libqtile.config import Screen, ScreenRect
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -118,5 +118,6 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Get basic information about the running backend."""
         return {"backend": self.name, "display_name": self.display_name}
 
-    def clear_focus(self):
-        """Do any WM spec things if e.g. an empty group is focused"""
+    def check_screen_fullscreen_background(self, screen: Screen | None = None) -> None:
+        """Toggles fullscreen background if any window on the screen is fullscreen."""
+        # Wayland only
