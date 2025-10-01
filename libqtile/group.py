@@ -393,6 +393,8 @@ class _Group(CommandObject):
         else:
             screen.set_group(self)
 
+        self.qtile.core.check_screen_fullscreen_background(screen)
+
     def _get_group(self, direction, skip_empty=False, skip_managed=False):
         """Find a group walking the groups list in the specified direction
 

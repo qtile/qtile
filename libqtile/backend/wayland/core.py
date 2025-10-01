@@ -371,10 +371,13 @@ class Core(base.Core):
         win._float_height = win.height
 
         self.qtile.manage(win)
+        if win.group and win.group.screen:
+            self.check_screen_fullscreen_background(win.group.screen)
 
     def handle_unmanage_view(self, view: ffi.CData) -> None:
         assert self.qtile is not None
         self.qtile.unmanage(view.wid)
+        self.check_screen_fullscreen_background()
 
     def handle_keyboard_key(self, keysym: int, mask: int) -> bool:
         if self.focused_internal:
@@ -724,6 +727,19 @@ class Core(base.Core):
     def session_lock_status(self) -> bool:
         """Returns True if server is currently locked."""
         return self._locked
+
+    def check_screen_fullscreen_background(self, screen: Screen | None = None) -> None:
+        """Toggles fullscreen background if any window on the screen is fullscreen."""
+        if screen is None:
+            screens = self.qtile.screens
+        else:
+            screens = [screen]
+
+        for s in screens:
+            if not s.group:
+                continue
+            enabled = any(w.fullscreen for w in s.group.windows)
+            lib.qw_server_set_output_fullscreen_background(self.qw, s.x, s.y, enabled)
 
 
 class Painter:
