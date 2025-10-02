@@ -74,7 +74,7 @@ struct qw_view {
     int y;
     int width;
     int height;
-    int bn; // Number of border layers
+    int border_count; // Number of border layers
     enum qw_view_state state;
     enum qw_view_type view_type;
     char *shell; // e.g. "XdgWindow" or "XWayland"
