@@ -347,7 +347,7 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
     }
 
     int total_border_width = 0;
-    for (int i = 0; i < xdg_view->base.bn; i++) {
+    for (int i = 0; i < xdg_view->base.border_count; i++) {
         total_border_width += xdg_view->base.borders[i].width;
     }
 
