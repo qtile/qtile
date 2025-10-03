@@ -286,6 +286,10 @@ class Core(base.Core):
         self._root.set_input_focus()
         self._root.set_property("_NET_ACTIVE_WINDOW", self._root.wid)
 
+    def clear_focus(self):
+        """Clear _NET_ACTIVE_WINDOW so that there is no focused window"""
+        self._root.set_property("_NET_ACTIVE_WINDOW", 0)
+
     def convert_selection(self, selection_atom, _type="UTF8_STRING") -> None:
         type_atom = self.conn.atoms[_type]
         self.conn.conn.core.ConvertSelection(
