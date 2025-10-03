@@ -5,6 +5,8 @@
 #include <wlr/types/wlr_compositor.h>
 #include <xkbcommon/xkbcommon.h>
 
+#define UNUSED(x) ((void)(x))
+
 // Enum defining button codes for scroll events.
 // These values start from 0x300 and correspond to Linux input-event-codes.h.
 // They represent scroll wheel directions for mouse input.

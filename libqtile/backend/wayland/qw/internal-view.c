@@ -2,6 +2,7 @@
 #include "cairo-buffer.h"
 #include "pixman.h"
 #include "server.h"
+#include "util.h"
 #include "view.h"
 #include <stdlib.h>
 #include <wlr/util/log.h>
@@ -60,6 +61,9 @@ static struct wlr_scene_node *qw_internal_view_get_tree_node(void *self) {
 // If 'above' is nonzero, bring the view to the front
 static void qw_internal_view_place(void *self, int x, int y, int width, int height,
                                    const struct qw_border *borders, int border_count, int above) {
+    UNUSED(borders);
+    UNUSED(border_count);
+
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     if (above != 0) {
         qw_view_reparent(&view->base, LAYER_BRINGTOFRONT);
@@ -78,7 +82,8 @@ static void qw_internal_view_place(void *self, int x, int y, int width, int heig
 
 // TODO: Focus logic for internal views (empty for now)
 void qw_internal_view_focus(void *self, int above) {
-    // TODO
+    UNUSED(self);
+    UNUSED(above);
 }
 
 // Hide this internal view by disabling its scene node
@@ -102,7 +107,10 @@ static void qw_internal_view_kill(void *self) {
 }
 
 // Internal views don't have a PID, so return 0
-static int qw_internal_view_get_pid(void *self) { return 0; }
+static int qw_internal_view_get_pid(void *self) {
+    UNUSED(self);
+    return 0;
+}
 
 // Get pointer to the base view struct inside the internal view
 struct qw_view *qw_internal_view_get_base(struct qw_internal_view *view) { return &view->base; }
