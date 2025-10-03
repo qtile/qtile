@@ -80,16 +80,22 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
 Maintainers
 ===========
 
-| `@tych0`_ GPG: ``3CCA B226 289D E016 0C61 BDB4 18D1 8F1B C464 DCA3``
-| `@ramnes`_ GPG: ``99CC A84E 2C8C 74F3 2E12  AD53 8C17 0207 0803 487A``
-| `@m-col`_ GPG: ``35D9 2E7C C735 7A81 173E  A1C9 74F9 FDD2 0984 FBEC``
-| `@flacjacket`_ GPG: ``58B5 F350 8339 BFE5 CA93  AC9F 439D 9701 E7EA C588``
+| `@tych0`_ GPG: ``3CCA B226 289D E016 0C61  BDB4 18D1 8F1B C464 DCA3``
 | `@elParaguayo`_ GPG: ``A6BA A1E1 7D26 64AD B97B  2C6F 58A9 AA7C 8672 7DF7``
 | `@jwijenbergh`_ GPG: ``B1C8 1CF3 063B 5836 4946  3687 4827 061B D417 C233``
 
 .. _`@tych0`: https://github.com/tych0
+.. _`@elParaguayo`: https://github.com/elparaguayo
+.. _`@jwijenbergh`: https://github.com/jwijenbergh
+
+Maintainers Emeritus
+====================
+| `@cortesi`_
+| `@ramnes`_ GPG: ``99CC A84E 2C8C 74F3 2E12  AD53 8C17 0207 0803 487A``
+| `@m-col`_ GPG: ``35D9 2E7C C735 7A81 173E  A1C9 74F9 FDD2 0984 FBEC``
+| `@flacjacket`_ GPG: ``58B5 F350 8339 BFE5 CA93  AC9F 439D 9701 E7EA C588``
+
+.. _`@cortesi`: https://github.com/cortesi
 .. _`@ramnes`: https://github.com/ramnes
 .. _`@m-col`: https://github.com/m-col
 .. _`@flacjacket`: https://github.com/flacjacket
-.. _`@elParaguayo`: https://github.com/elparaguayo
-.. _`@jwijenbergh`: https://github.com/jwijenbergh
