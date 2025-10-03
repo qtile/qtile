@@ -4,10 +4,13 @@
 #include "proto/wlr-layer-shell-unstable-v1-protocol.h"
 #include "server.h"
 #include "session-lock.h"
+#include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 static void qw_output_handle_frame(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     // Called when the output is ready to display a new frame
     struct qw_output *output = wl_container_of(listener, output, frame);
     struct wlr_scene *scene = output->server->scene;
@@ -23,6 +26,7 @@ static void qw_output_handle_frame(struct wl_listener *listener, void *data) {
 }
 
 static void qw_output_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_output *output = wl_container_of(listener, output, destroy);
 
     wl_list_remove(&output->frame.link);
