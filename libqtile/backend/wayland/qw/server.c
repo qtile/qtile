@@ -14,6 +14,7 @@
 #include "output.h"
 #include "server.h"
 #include "session-lock.h"
+#include "util.h"
 #include "view.h"
 #include "wayland-server-core.h"
 #include "wayland-server-protocol.h"
@@ -106,7 +107,11 @@ void qw_server_start(struct qw_server *server) {
 }
 
 // Stub function – maybe used for keymap introspection in the future
-const char *qw_server_get_sym_from_code(struct qw_server *server, int code) { return NULL; }
+const char *qw_server_get_sym_from_code(struct qw_server *server, int code) {
+    UNUSED(server);
+    UNUSED(code);
+    return NULL;
+}
 
 void qw_server_keyboard_clear_focus(struct qw_server *server) {
     struct wlr_seat *seat = server->seat;
@@ -135,6 +140,8 @@ void qw_server_set_output_fullscreen_background(struct qw_server *server, int x,
 // Handle changes in the output layout (like monitor arrangement).
 // Updates output configuration accordingly.
 static void qw_server_handle_output_layout_change(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_server *server = wl_container_of(listener, server, output_layout_change);
     struct wlr_output_configuration_v1 *config = wlr_output_configuration_v1_create();
     struct wlr_output_configuration_head_v1 *config_head;
@@ -265,6 +272,7 @@ static void qw_server_handle_output_manager_test(struct wl_listener *listener, v
 // Handle wlr_renderer lost event caused by GPU resets or driver crashes.
 // Recreates renderer/allocator and reinitializes outputs to restore functionality.
 static void qw_server_handle_renderer_lost(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_server *server = wl_container_of(listener, server, renderer_lost);
 
     wlr_log(WLR_INFO, "Re-generating renderer after GPU reset");
@@ -393,6 +401,7 @@ static void qw_server_handle_new_xdg_toplevel(struct wl_listener *listener, void
 
 // Handle new window decoration requests for XDG toplevels
 static void qw_server_handle_new_decoration(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
     struct wlr_xdg_toplevel_decoration_v1 *decoration = data;
     qw_xdg_view_decoration_new(decoration->toplevel->base->data, decoration);
 }
@@ -534,6 +543,7 @@ static void qw_server_handle_request_set_primary_selection(struct wl_listener *l
 }
 
 static void qw_server_handle_drag_icon_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_drag_icon *drag_icon = wl_container_of(listener, drag_icon, destroy);
     struct qw_server *server = drag_icon->server;
 
@@ -727,6 +737,8 @@ bool qw_server_change_vt(struct qw_server *server, int vt) {
 }
 
 static void qw_server_query_iterator(struct wlr_scene_buffer *buffer, int sx, int sy, void *data) {
+    UNUSED(sx);
+    UNUSED(sy);
     node_wid_cb_t cb = data;
     // Walk back up tree until we find a window or run out of parents
     struct wlr_scene_node *node = &buffer->node;
