@@ -9,6 +9,8 @@
 static const int zlayer_to_layer[] = {LAYER_BACKGROUND, LAYER_BOTTOM, LAYER_TOP, LAYER_OVERLAY};
 
 static void qw_layer_view_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, destroy);
     wl_list_remove(&layer_view->link);
     wl_list_remove(&layer_view->destroy.link);
@@ -21,6 +23,8 @@ static void qw_layer_view_handle_destroy(struct wl_listener *listener, void *dat
 }
 
 static void qw_layer_view_handle_unmap(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, unmap);
 
     layer_view->mapped = false;
@@ -53,6 +57,8 @@ static void qw_layer_view_handle_unmap(struct wl_listener *listener, void *data)
 
 // Handle commit event: called when surface commits state changes
 static void qw_layer_view_handle_commit(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, commit);
 
     if (layer_view->surface->initial_commit) {
@@ -120,6 +126,8 @@ void qw_layer_view_focus(struct qw_layer_view *layer_view) {
 }
 
 static void qw_layer_popup_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_layer_popup *popup = wl_container_of(listener, popup, destroy);
 
     wl_list_remove(&popup->new_popup.link);
@@ -159,6 +167,8 @@ static void qw_layer_popup_unconstrain(struct qw_layer_popup *popup) {
 }
 
 static void qw_layer_popup_handle_surface_commit(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_layer_popup *popup = wl_container_of(listener, popup, surface_commit);
     if (popup->wlr_popup->base->initial_commit) {
         qw_layer_popup_unconstrain(popup);

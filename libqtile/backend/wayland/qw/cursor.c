@@ -190,6 +190,7 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
 }
 
 static void qw_cursor_handle_frame(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     // Handle frame event (batch end for pointer events)
     struct qw_cursor *cursor = wl_container_of(listener, cursor, frame);
     wlr_seat_pointer_notify_frame(cursor->server->seat);

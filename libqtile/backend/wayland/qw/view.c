@@ -246,6 +246,7 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
 
 // Foreign toplevel manager requests
 static void qw_handle_ftl_request_activate(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_view *view = wl_container_of(listener, view, ftl_request_activate);
     if (view == NULL) {
         return;
@@ -257,6 +258,7 @@ static void qw_handle_ftl_request_activate(struct wl_listener *listener, void *d
 }
 
 static void qw_handle_ftl_request_close(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_view *view = wl_container_of(listener, view, ftl_request_close);
     if (view == NULL) {
         return;
@@ -321,6 +323,9 @@ static void qw_handle_ftl_output_leave(struct wl_listener *listener, void *data)
 
 static bool qw_handle_ftl_point_accepts_input(struct wlr_scene_buffer *buffer, double *x,
                                               double *y) {
+    UNUSED(buffer);
+    UNUSED(x);
+    UNUSED(y);
     return false;
 }
 

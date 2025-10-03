@@ -3,6 +3,8 @@
 #include <drm_fourcc.h>
 #include <wlr/interfaces/wlr_buffer.h>
 
+#include "util.h"
+
 struct cairo_buffer {
     struct wlr_buffer base;
     void *data;
@@ -19,6 +21,8 @@ static void handle_destroy(struct wlr_buffer *wlr_buffer) {
 // Provides pointer, stride, and pixel format
 static bool handle_begin_data_ptr_access(struct wlr_buffer *wlr_buffer, uint32_t flags, void **data,
                                          uint32_t *format, size_t *stride) {
+    UNUSED(flags);
+
     struct cairo_buffer *buffer = wl_container_of(wlr_buffer, buffer, base);
     *data = buffer->data;
     *stride = buffer->stride;
@@ -28,6 +32,7 @@ static bool handle_begin_data_ptr_access(struct wlr_buffer *wlr_buffer, uint32_t
 
 // Called after data access is done, no action needed here
 static void handle_end_data_ptr_access(struct wlr_buffer *wlr_buffer) {
+    UNUSED(wlr_buffer);
     // This space is intentionally left blank
 }
 

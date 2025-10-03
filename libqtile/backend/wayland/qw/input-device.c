@@ -3,9 +3,12 @@
 
 #include "input-device.h"
 #include "keyboard.h"
+#include "util.h"
 
 // Called when the device is destroyed
 static void qw_input_device_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_input_device *input_device = wl_container_of(listener, input_device, destroy);
     wl_list_remove(&input_device->destroy.link);
     wl_list_remove(&input_device->link);

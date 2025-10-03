@@ -1,5 +1,6 @@
 #include "keyboard.h"
 #include "server.h"
+#include "util.h"
 #include <stdlib.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/util/log.h>
@@ -7,6 +8,8 @@
 
 // Called when the keyboard device is destroyed
 static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, destroy);
     wl_list_remove(&keyboard->modifiers.link);
     wl_list_remove(&keyboard->key.link);
@@ -57,6 +60,8 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
 
 // Called when keyboard modifiers change (shift, ctrl, etc.)
 static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, modifiers);
     wlr_seat_set_keyboard(keyboard->server->seat, keyboard->wlr_keyboard);
     wlr_seat_keyboard_notify_modifiers(keyboard->server->seat, &keyboard->wlr_keyboard->modifiers);
