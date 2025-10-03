@@ -170,6 +170,9 @@ class _Group(CommandObject):
                         # Screen has lost focus so we reset record of focused window so
                         # focus will warp when screen is focused again
                         self.last_focused = None
+        elif self.screen and not self.windows and self.screen == self.qtile.current_screen:
+            # Clear active window when switching to an empty group on the current screen
+            self.qtile.core.clear_focus()
 
     def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
