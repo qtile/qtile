@@ -1,3 +1,5 @@
+import argparse
+import hashlib
 import os
 import subprocess
 import sysconfig
@@ -188,11 +190,23 @@ with open(QW_PATH / ".." / "cffi" / "libconfig.mk", "w") as f:
     f.write(f"TARGET := {LIBWAYC}\n")
 
 
-def build_library() -> None:
+def hash_headers(files: list[str]) -> str:
+    h = hashlib.sha256()
+    for file in files:
+        path = QW_PATH / file
+        with open(path, "rb") as f:
+            h.update(f.read())
+    return h.hexdigest()
+
+
+def build_library(clean: bool = False) -> None:
+    if clean:
+        subprocess.run(["make", "-C", QW_PATH / ".." / "cffi", "clean"], check=True)
+
     subprocess.run(["make", "-C", QW_PATH / ".." / "cffi"], check=True)
 
 
-def ffi_compile(verbose: bool = False) -> None:
+def ffi_compile(verbose: bool = False, force: bool = False) -> None:
     # The ffi source of "libqtile.backend.wayland._ffi" means that we'll compile the library file
     # at libqtile/backend/wayland/_ffi.so.
     # This is built at the path specified in tmpdir which is "." by default. So, if we're in a
@@ -202,7 +216,26 @@ def ffi_compile(verbose: bool = False) -> None:
     # We therefore set the tmpdir to be the path to the folder containing libqtile so the library
     # is always created in the correct folder.
     # The compile command is nested in a function to ensure that the tmpdir value is not overwritten.
-    build_library()
+
+    # Compute current hash of all headers
+    current_hash = hash_headers(cdef_files)
+
+    # Read old hash if present
+    hashfile = Path(__file__).parent / ".ffi.hash"
+    old_hash = None
+    if hashfile.exists():
+        old_hash = hashfile.read_text().strip()
+
+    clean_build = old_hash != current_hash or force
+
+    build_library(clean_build)
+
+    if clean_build:
+        outdir = Path(__file__).parent.parent
+        for f in outdir.glob("_ffi.*"):
+            f.unlink()
+        hashfile.write_text(current_hash)
+
     ffi.compile(
         tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose
     )
@@ -210,4 +243,8 @@ def ffi_compile(verbose: bool = False) -> None:
 
 ffi.cdef(CDEF)
 if __name__ == "__main__":
-    ffi_compile()
+    parser = argparse.ArgumentParser(description="Qtile wayland backend builder.")
+    parser.add_argument("--force", action="store_true", help="Force rebuild.")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output.")
+    args = parser.parse_args()
+    ffi_compile(args.verbose, args.force)

@@ -45,3 +45,10 @@ clean: ## Clean generated files
 update-flake: ## Update the Nix flake.lock file, requires Nix installed with flake support, see: https://nixos.wiki/wiki/Flakes
 	nix flake update
 
+.PHONY: wayland
+wayland:  ## Build the wayland backend
+	@python libqtile/backend/wayland/cffi/build.py
+
+.PHONY: wayland-force
+wayland-force:  ## Force complete rebuild of the wayland backend
+	@python libqtile/backend/wayland/cffi/build.py --force

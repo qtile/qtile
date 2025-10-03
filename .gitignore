@@ -67,3 +67,4 @@ uv.lock
 
 # dynamically built files for wayland backend build
 libconfig.mk
+.ffi.hash
