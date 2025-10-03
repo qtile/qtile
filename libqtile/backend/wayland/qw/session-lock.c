@@ -5,6 +5,7 @@
 #include "session-lock.h"
 #include "output.h"
 #include "server.h"
+#include "util.h"
 #include <wayland-util.h>
 #include <wlr/types/wlr_session_lock_v1.h>
 
@@ -102,6 +103,7 @@ void qw_session_lock_crashed_update_rects(struct qw_server *server) {
 }
 
 void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_session_lock_surface *sls = wl_container_of(listener, sls, surface_destroy);
     struct qw_server *server = sls->server;
 
@@ -155,6 +157,7 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
 }
 
 void qw_session_lock_handle_unlock(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_session_lock *lock = wl_container_of(listener, lock, unlock);
     struct qw_server *server = lock->server;
     // Unlock event from client → destroy lock with unlock=true
@@ -163,6 +166,7 @@ void qw_session_lock_handle_unlock(struct wl_listener *listener, void *data) {
 }
 
 void qw_session_lock_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_session_lock *lock = wl_container_of(listener, lock, destroy);
     // Lock object destroyed without unlock → destroy lock with unlock=false
     // This leaves the compositor in a "crashed lock" state.
