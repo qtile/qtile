@@ -8,6 +8,7 @@
 #include "wlr/types/wlr_xdg_decoration_v1.h"
 #include "xdg-shell-protocol.h"
 #include <stdlib.h>
+#include <string.h>
 
 // Handle client decoration mode requests, enforce server-side decorations
 static void qw_xdg_view_handle_decoration_request_mode(struct wl_listener *listener, void *data) {
@@ -103,8 +104,12 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
     // On initial commit, set size and notify server to manage this view
     if (xdg_view->xdg_toplevel->base->initial_commit) {
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
-        xdg_view->base.title = xdg_view->xdg_toplevel->title;
-        xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
+        if (xdg_view->xdg_toplevel->title != NULL) {
+            xdg_view->base.title = strdup(xdg_view->xdg_toplevel->title);
+        }
+        if (xdg_view->xdg_toplevel->app_id != NULL) {
+            xdg_view->base.app_id = strdup(xdg_view->xdg_toplevel->app_id);
+        }
         if (xdg_view->decoration != NULL) {
             qw_xdg_view_handle_decoration_request_mode(&xdg_view->decoration_request_mode,
                                                        xdg_view->decoration);
@@ -254,25 +259,37 @@ static void qw_xdg_view_handle_request_fullscreen(struct wl_listener *listener, 
 
 static void qw_xdg_view_handle_set_title(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, set_title);
-    xdg_view->base.title = xdg_view->xdg_toplevel->title;
-    if (xdg_view->base.ftl_handle != NULL && xdg_view->base.title != NULL) {
-        wlr_foreign_toplevel_handle_v1_set_title(xdg_view->base.ftl_handle, xdg_view->base.title);
+    if (xdg_view->xdg_toplevel->title == NULL) {
+        return;
     }
-    // callback is not intialised until qtile window is initialised
-    if (xdg_view->base.set_title_cb && xdg_view->base.title) {
-        xdg_view->base.set_title_cb(xdg_view->base.title, xdg_view->base.cb_data);
+    xdg_view->base.title = strdup(xdg_view->xdg_toplevel->title);
+    if (xdg_view->base.title != NULL) {
+        if (xdg_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_title(xdg_view->base.ftl_handle,
+                                                     xdg_view->base.title);
+        }
+        // callback is not intialised until qtile window is initialised
+        if (xdg_view->base.set_title_cb != NULL) {
+            xdg_view->base.set_title_cb(xdg_view->base.title, xdg_view->base.cb_data);
+        }
     }
 }
 
 static void qw_xdg_view_handle_set_app_id(struct wl_listener *listener, void *data) {
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, set_app_id);
-    xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
-    if (xdg_view->base.ftl_handle != NULL && xdg_view->base.app_id != NULL) {
-        wlr_foreign_toplevel_handle_v1_set_app_id(xdg_view->base.ftl_handle, xdg_view->base.app_id);
+    if (xdg_view->xdg_toplevel->app_id == NULL) {
+        return;
     }
-    // callback is not intialised until qtile window is initialised
-    if (xdg_view->base.set_app_id_cb && xdg_view->base.app_id) {
-        xdg_view->base.set_app_id_cb(xdg_view->base.app_id, xdg_view->base.cb_data);
+    xdg_view->base.app_id = strdup(xdg_view->xdg_toplevel->app_id);
+    if (xdg_view->xdg_toplevel->app_id != NULL) {
+        if (xdg_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_app_id(xdg_view->base.ftl_handle,
+                                                      xdg_view->base.app_id);
+        }
+        // callback is not intialised until qtile window is initialised
+        if (xdg_view->base.set_app_id_cb != NULL) {
+            xdg_view->base.set_app_id_cb(xdg_view->base.app_id, xdg_view->base.cb_data);
+        }
     }
 }
 
