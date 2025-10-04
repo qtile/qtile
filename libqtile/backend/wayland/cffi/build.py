@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from cffi import FFI
-from setuptools._distutils.ccompiler import new_compiler
-from setuptools._distutils.sysconfig import customize_compiler
+from setuptools import Distribution
+from setuptools.command.build_ext import build_ext
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
@@ -197,10 +197,11 @@ def chdir(path: Path) -> Iterator[None]:
 def build_objects() -> None:
     # We have to use relative paths here for output_dir to work as expected
     with chdir(QW_PATH):
-        compiler = new_compiler()
-        customize_compiler(compiler)
+        dist = Distribution()
+        cmd = build_ext(dist)
+        cmd.setup_shlib_compiler()
 
-        compiler.compile(
+        cmd.shlib_compiler.compile(
             [os.path.basename(path) for path in SOURCE_FILES],
             output_dir="build",
             macros=[("WLR_USE_UNSTABLE", None)],
