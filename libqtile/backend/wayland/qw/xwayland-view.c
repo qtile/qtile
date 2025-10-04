@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <wlr/xwayland.h>
 
 static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
@@ -462,26 +463,38 @@ static void qw_xwayland_view_handle_request_resize(struct wl_listener *listener,
 static void qw_xwayland_view_handle_set_title(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_title);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
-    xwayland_view->base.title = qw_xsurface->title;
-    if (xwayland_view->base.ftl_handle != NULL && qw_xsurface->title != NULL) {
-        wlr_foreign_toplevel_handle_v1_set_title(xwayland_view->base.ftl_handle,
-                                                 xwayland_view->base.title);
+    if (qw_xsurface->title == NULL) {
+        return;
     }
-    if (xwayland_view->base.set_title_cb && xwayland_view->base.title) {
-        xwayland_view->base.set_title_cb(xwayland_view->base.title, xwayland_view->base.cb_data);
+    xwayland_view->base.title = strdup(qw_xsurface->title);
+    if (xwayland_view->base.title != NULL) {
+        if (xwayland_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_title(xwayland_view->base.ftl_handle,
+                                                     xwayland_view->base.title);
+        }
+        if (xwayland_view->base.set_title_cb != NULL) {
+            xwayland_view->base.set_title_cb(xwayland_view->base.title,
+                                             xwayland_view->base.cb_data);
+        }
     }
 }
 
 static void qw_xwayland_view_handle_set_class(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_class);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
-    xwayland_view->base.app_id = qw_xsurface->class;
-    if (xwayland_view->base.ftl_handle != NULL && qw_xsurface->title != NULL) {
-        wlr_foreign_toplevel_handle_v1_set_app_id(xwayland_view->base.ftl_handle,
-                                                  xwayland_view->base.app_id);
+    if (qw_xsurface->class == NULL) {
+        return;
     }
-    if (xwayland_view->base.set_title_cb && xwayland_view->base.app_id) {
-        xwayland_view->base.set_app_id_cb(xwayland_view->base.app_id, xwayland_view->base.cb_data);
+    xwayland_view->base.app_id = strdup(qw_xsurface->class);
+    if (xwayland_view->base.app_id != NULL) {
+        if (xwayland_view->base.ftl_handle != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_app_id(xwayland_view->base.ftl_handle,
+                                                      xwayland_view->base.app_id);
+        }
+        if (xwayland_view->base.set_title_cb != NULL) {
+            xwayland_view->base.set_app_id_cb(xwayland_view->base.app_id,
+                                              xwayland_view->base.cb_data);
+        }
     }
 }
 
