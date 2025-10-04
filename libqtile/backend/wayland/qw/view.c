@@ -13,7 +13,7 @@ void qw_view_cleanup_borders(struct qw_view *view) {
         return;
     }
 
-    for (int i = 0; i < view->bn; i++) {
+    for (int i = 0; i < view->border_count; i++) {
         switch (view->borders[i].type) {
         case QW_BORDER_RECT:
             for (int j = 0; j < 4; j++) {
@@ -183,7 +183,7 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
         wlr_log(WLR_ERROR, "Failed to allocate border layer tracking");
         return;
     }
-    view->bn = border_count;
+    view->border_count = border_count;
 
     int total_width = 0;
     for (int i = 0; i < border_count; i++) {
