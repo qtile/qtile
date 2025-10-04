@@ -1,6 +1,8 @@
 import glob
 import os
 import subprocess
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 from cffi import FFI
@@ -182,20 +184,29 @@ ffi.set_source(
 )
 
 
+@contextmanager
+def chdir(path: Path) -> Iterator[None]:
+    prev_cwd = os.getcwd()
+    try:
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(prev_cwd)
+
+
 def build_objects() -> None:
     # We have to use relative paths here for output_dir to work as expected
-    os.chdir(QW_PATH)
+    with chdir(QW_PATH):
+        compiler = new_compiler()
+        customize_compiler(compiler)
 
-    compiler = new_compiler()
-    customize_compiler(compiler)
-
-    compiler.compile(
-        [os.path.basename(path) for path in SOURCE_FILES],
-        output_dir="build",
-        macros=[("WLR_USE_UNSTABLE", None)],
-        include_dirs=INCLUDE_DIRS,
-        extra_preargs=["-O2", "-fPIC", "-Wall", "-Wextra"],
-    )
+        compiler.compile(
+            [os.path.basename(path) for path in SOURCE_FILES],
+            output_dir="build",
+            macros=[("WLR_USE_UNSTABLE", None)],
+            include_dirs=INCLUDE_DIRS,
+            extra_preargs=["-O2", "-fPIC", "-Wall", "-Wextra"],
+        )
 
 
 def ffi_compile(verbose: bool = False) -> None:
