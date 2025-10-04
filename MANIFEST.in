@@ -8,7 +8,6 @@ include libqtile/backend/wayland/proto/*.xml
 include libqtile/backend/wayland/qw/*.h
 include libqtile/backend/wayland/qw/*.c
 include builder.py
-include libqtile/backend/wayland/cffi/Makefile
 
 exclude .coveragerc
 exclude .pylintrc
@@ -20,7 +19,6 @@ exclude libqtile/_ffi*.py
 exclude libqtile/backend/x11/_ffi*.py
 exclude libqtile/backend/wayland/_ffi*.*
 exclude libqtile/backend/wayland/_libinput*.*
-exclude libqtile/backend/wayland/libwayc.so
 exclude Makefile
 exclude .readthedocs.yaml
 exclude .git-blame-ignore-revs
