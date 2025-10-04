@@ -72,7 +72,10 @@ def test_dgroup_nonpersist(manager):
 
 
 @dgroups_spawn_config
-def test_dgroup_spawn_in_group(manager):
+def test_dgroup_spawn_in_group(manager, backend_name):
+    if backend_name == "wayland":
+        pytest.skip("TODO: X11 only for now.")
+
     @Retry(ignore_exceptions=(AssertionError,), tmax=10)
     def wait_for_window():
         assert len(manager.c.windows()) > 0
