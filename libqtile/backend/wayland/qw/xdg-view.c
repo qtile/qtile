@@ -11,6 +11,7 @@
 
 // Handle client decoration mode requests, enforce server-side decorations
 static void qw_xdg_view_handle_decoration_request_mode(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_request_mode);
     if (xdg_view->xdg_toplevel->base->initialized)
         wlr_xdg_toplevel_decoration_v1_set_mode(xdg_view->decoration,
@@ -19,6 +20,8 @@ static void qw_xdg_view_handle_decoration_request_mode(struct wl_listener *liste
 
 // Cleanup listeners when decoration is destroyed to avoid dangling pointers
 static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, decoration_destroy);
 
     wl_list_remove(&xdg_view->decoration_destroy.link);
@@ -66,6 +69,8 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
 static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, unmap);
     qw_view_cleanup_borders((struct qw_view *)xdg_view);
     xdg_view->base.server->unmanage_view_cb((struct qw_view *)&xdg_view->base,
@@ -80,6 +85,8 @@ static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
 
 // Handle the destroy event of the xdg_view (cleanup and free memory)
 static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, destroy);
 
     wl_list_remove(&xdg_view->map.link);
@@ -98,6 +105,8 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
 
 // Handle commit event: called when surface commits state changes
 static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, commit);
 
     // On initial commit, set size and notify server to manage this view
@@ -212,6 +221,8 @@ static void qw_xdg_view_unhide(void *self) {
 
 // Focus the xdg_view if it is mapped (visible), calling internal focus helper
 void qw_xdg_view_focus(void *self, int above) {
+    UNUSED(above);
+
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     if (!xdg_view->mapped) {
         return; // Can't focus if not mapped
@@ -232,6 +243,8 @@ static int qw_xdg_view_get_pid(void *self) {
 
 // Handle a request from the client to maximize the window
 static void qw_xdg_view_handle_request_maximize(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, request_maximize);
     int handled = xdg_view->base.request_maximize_cb(xdg_view->xdg_toplevel->requested.maximized,
                                                      xdg_view->base.cb_data);
@@ -243,6 +256,8 @@ static void qw_xdg_view_handle_request_maximize(struct wl_listener *listener, vo
 
 // Handle a request from the client to fullscreen the window
 static void qw_xdg_view_handle_request_fullscreen(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, request_fullscreen);
     int handled = xdg_view->base.request_fullscreen_cb(xdg_view->xdg_toplevel->requested.fullscreen,
                                                        xdg_view->base.cb_data);
@@ -253,6 +268,8 @@ static void qw_xdg_view_handle_request_fullscreen(struct wl_listener *listener, 
 }
 
 static void qw_xdg_view_handle_set_title(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, set_title);
     xdg_view->base.title = xdg_view->xdg_toplevel->title;
     if (xdg_view->base.ftl_handle != NULL && xdg_view->base.title != NULL) {
@@ -265,6 +282,8 @@ static void qw_xdg_view_handle_set_title(struct wl_listener *listener, void *dat
 }
 
 static void qw_xdg_view_handle_set_app_id(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, set_app_id);
     xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
     if (xdg_view->base.ftl_handle != NULL && xdg_view->base.app_id != NULL) {
@@ -277,6 +296,8 @@ static void qw_xdg_view_handle_set_app_id(struct wl_listener *listener, void *da
 }
 
 static void qw_xdg_popup_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_popup *popup = wl_container_of(listener, popup, destroy);
 
     wl_list_remove(&popup->new_popup.link);
@@ -309,6 +330,8 @@ static void qw_xdg_popup_unconstrain(struct qw_xdg_popup *popup) {
 }
 
 static void qw_xdg_popup_handle_surface_commit(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_popup *popup = wl_container_of(listener, popup, surface_commit);
     if (popup->wlr_popup->base->initial_commit) {
         qw_xdg_popup_unconstrain(popup);
@@ -316,6 +339,8 @@ static void qw_xdg_popup_handle_surface_commit(struct wl_listener *listener, voi
 }
 
 static void qw_xdg_popup_handle_reposition(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_popup *popup = wl_container_of(listener, popup, reposition);
     qw_xdg_popup_unconstrain(popup);
 }
@@ -356,6 +381,8 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
 
 // Handle map event: when the xdg_view becomes visible/mapped
 static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
     xdg_view->mapped = true;
 
@@ -451,12 +478,17 @@ static void qw_xdg_view_update_minimized(void *self, bool minimized) {
 }
 
 static void qw_xdg_activation_token_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
     struct qw_xdg_activation_token *token_data = wl_container_of(listener, token_data, destroy);
     wl_list_remove(&token_data->destroy.link);
     free(token_data);
 }
 
 void qw_xdg_activation_new_token(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
+
     struct wlr_xdg_activation_token_v1 *token = data;
     struct qw_xdg_activation_token *token_data = calloc(1, sizeof(struct qw_xdg_activation_token));
 

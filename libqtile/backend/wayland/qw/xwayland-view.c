@@ -305,6 +305,7 @@ static int qw_xwayland_view_get_pid(void *self) {
 
 // Handle commit event: called when XWayland surface commits state changes
 static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, commit);
     // For XWayland, we don't need to check for initial_commit or manage the view here
     // The view is already managed when it's mapped (see qw_xwayland_view_map)
@@ -317,6 +318,7 @@ static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *d
 
 // Called when the XWayland surface is mapped (i.e., ready to be shown).
 static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, map);
     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
@@ -349,6 +351,7 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
 
 // Called when the XWayland surface is unmapped (i.e., hidden or destroyed).
 static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, unmap);
     qw_view_cleanup_borders((struct qw_view *)xwayland_view);
     xwayland_view->base.server->unmanage_view_cb((struct qw_view *)&xwayland_view->base,
@@ -358,6 +361,7 @@ static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *da
 
 // Called when an override-redirect surface is being converted to a managed view.
 static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, associate);
     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
@@ -418,6 +422,7 @@ static void qw_xwayland_view_handle_request_configure(struct wl_listener *listen
 }
 
 static void qw_xwayland_view_handle_request_fullscreen(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view =
         wl_container_of(listener, xwayland_view, request_fullscreen);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
@@ -435,12 +440,16 @@ static void qw_xwayland_view_handle_request_fullscreen(struct wl_listener *liste
 }
 
 static void qw_xwayland_view_handle_request_minimize(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L622C37-L622C77
 }
 
 static void qw_xwayland_view_handle_request_activate(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement after Activation PR is merged:
     // https://github.com/qtile/qtile/pull/5329
     // Reference:
@@ -448,18 +457,23 @@ static void qw_xwayland_view_handle_request_activate(struct wl_listener *listene
 }
 
 static void qw_xwayland_view_handle_request_move(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L637
 }
 
 static void qw_xwayland_view_handle_request_resize(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L653
 }
 
 static void qw_xwayland_view_handle_set_title(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_title);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
     xwayland_view->base.title = qw_xsurface->title;
@@ -473,6 +487,7 @@ static void qw_xwayland_view_handle_set_title(struct wl_listener *listener, void
 }
 
 static void qw_xwayland_view_handle_set_class(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_class);
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
     xwayland_view->base.app_id = qw_xsurface->class;
@@ -486,36 +501,47 @@ static void qw_xwayland_view_handle_set_class(struct wl_listener *listener, void
 }
 
 static void qw_xwayland_view_handle_set_role(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L705
 }
 
 static void qw_xwayland_view_handle_set_startup_id(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L716
 }
 
 static void qw_xwayland_view_handle_set_window_type(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L741
 }
 
 static void qw_xwayland_view_handle_set_hints(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L752
 }
 
 static void qw_xwayland_view_handle_set_decorations(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L342
 }
 
 static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L783
@@ -525,12 +551,15 @@ static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, voi
 }
 
 static void qw_xwayland_view_handle_override_redirect(struct wl_listener *listener, void *data) {
+    UNUSED(listener);
+    UNUSED(data);
     // TODO: implement
     // reference:
     // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L551
 }
 
 static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, destroy);
 
     // wl_list_remove(&xwayland_view->commit.link);
@@ -560,6 +589,7 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
 }
 
 static void qw_xwayland_view_focus(void *self, int above) {
+    UNUSED(above);
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
     if (!xwayland_view->xwayland_surface->surface->mapped) {
         return; // Can't focus if not mapped
@@ -569,10 +599,13 @@ static void qw_xwayland_view_focus(void *self, int above) {
 
 static bool qw_xwayland_view_has_fixed_size(void *self) {
     // TODO: See xwindow.py from old backend
+    UNUSED(self);
     return false;
 }
 
 static void qw_xwayland_view_update_fullscreen(void *self, bool fullscreen) {
+    UNUSED(self);
+    UNUSED(fullscreen);
     // Placeholder
 }
 
