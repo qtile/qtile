@@ -103,8 +103,6 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
     // On initial commit, set size and notify server to manage this view
     if (xdg_view->xdg_toplevel->base->initial_commit) {
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
-        xdg_view->base.title = xdg_view->xdg_toplevel->title;
-        xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
         if (xdg_view->decoration != NULL) {
             qw_xdg_view_handle_decoration_request_mode(&xdg_view->decoration_request_mode,
                                                        xdg_view->decoration);
@@ -367,6 +365,8 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     struct wlr_box geom = surface->geometry;
     xdg_view->base.width = geom.width;
     xdg_view->base.height = geom.height;
+    xdg_view->base.title = xdg_view->xdg_toplevel->title;
+    xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
 
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
 
