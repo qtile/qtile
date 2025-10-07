@@ -75,7 +75,6 @@ static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
     wl_list_remove(&xdg_view->request_fullscreen.link);
     wl_list_remove(&xdg_view->set_title.link);
     wl_list_remove(&xdg_view->set_app_id.link);
-    wl_list_remove(&xdg_view->new_popup.link);
 }
 
 // Handle the destroy event of the xdg_view (cleanup and free memory)
@@ -86,6 +85,7 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&xdg_view->unmap.link);
     wl_list_remove(&xdg_view->commit.link);
     wl_list_remove(&xdg_view->destroy.link);
+    wl_list_remove(&xdg_view->new_popup.link);
     // TODO: Remove request_move and request_resize listeners if added
 
     // Destroy the foreign toplevel manager and listeners
@@ -382,6 +382,18 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
                                           xdg_view->base.server->cb_data);
 
+    // Add listeners with Python callbacks after the view has been managed
+    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
+    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
+    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
+    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
+
+    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
+    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
+
+    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
+    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
+
     // Focus the view upon mapping
     qw_xdg_view_do_focus(xdg_view, xdg_toplevel->base->surface);
 
@@ -584,18 +596,6 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->destroy.notify = qw_xdg_view_handle_destroy;
     wl_signal_add(&xdg_toplevel->events.destroy, &xdg_view->destroy);
 
-    // Add listeners to handle various requests
     xdg_view->new_popup.notify = qw_xdg_view_handle_new_popup;
     wl_signal_add(&xdg_toplevel->base->events.new_popup, &xdg_view->new_popup);
-
-    xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
-    wl_signal_add(&xdg_toplevel->events.request_maximize, &xdg_view->request_maximize);
-    xdg_view->request_fullscreen.notify = qw_xdg_view_handle_request_fullscreen;
-    wl_signal_add(&xdg_toplevel->events.request_fullscreen, &xdg_view->request_fullscreen);
-
-    xdg_view->set_title.notify = qw_xdg_view_handle_set_title;
-    wl_signal_add(&xdg_toplevel->events.set_title, &xdg_view->set_title);
-
-    xdg_view->set_app_id.notify = qw_xdg_view_handle_set_app_id;
-    wl_signal_add(&xdg_toplevel->events.set_app_id, &xdg_view->set_app_id);
 }
