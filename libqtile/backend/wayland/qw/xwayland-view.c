@@ -304,6 +304,7 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     wl_signal_add(&xwayland_surface->surface->events.commit, &xwayland_view->commit);
     xwayland_view->commit.notify = qw_xwayland_view_handle_commit;
 
+    // Add listeners with Python callbacks after the view has been managed
     wl_signal_add(&xwayland_surface->events.request_fullscreen, &xwayland_view->request_fullscreen);
     xwayland_view->request_fullscreen.notify = qw_xwayland_view_handle_request_fullscreen;
 
