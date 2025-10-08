@@ -287,11 +287,21 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->base.height = xwayland_surface->height;
 
     // Set properties for foreign toplevel manager
-    if (xwayland_view->base.ftl_handle != NULL && xwayland_surface->parent != NULL) {
-        struct qw_xwayland_view *parent_view = xwayland_surface->parent->data;
-        if (parent_view->base.ftl_handle != NULL) {
-            wlr_foreign_toplevel_handle_v1_set_parent(xwayland_view->base.ftl_handle,
-                                                      parent_view->base.ftl_handle);
+    if (xwayland_view->base.ftl_handle != NULL) {
+        if (xwayland_view->base.title != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_title(xwayland_view->base.ftl_handle,
+                                                     xwayland_view->base.title);
+        }
+        if (xwayland_view->base.app_id != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_app_id(xwayland_view->base.ftl_handle,
+                                                      xwayland_view->base.app_id);
+        }
+        if (xwayland_surface->parent != NULL) {
+            struct qw_xwayland_view *parent_view = xwayland_surface->parent->data;
+            if (parent_view != NULL && parent_view->base.ftl_handle != NULL) {
+                wlr_foreign_toplevel_handle_v1_set_parent(xwayland_view->base.ftl_handle,
+                                                          parent_view->base.ftl_handle);
+            }
         }
     }
 
