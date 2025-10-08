@@ -454,17 +454,6 @@ static void qw_xwayland_view_update_fullscreen(void *self, bool fullscreen) {
     }
 }
 
-static void qw_xwayland_view_update_fullscreen_background(void *self, bool enabled) {
-    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
-    struct wlr_output *wout;
-    wout = wlr_output_layout_output_at(xwayland_view->base.server->output_layout,
-                                       xwayland_view->base.x, xwayland_view->base.y);
-    if (wout != NULL) {
-        struct qw_output *output = wout->data;
-        qw_output_toggle_fullscreen_background(output, enabled);
-    }
-}
-
 static void qw_xwayland_view_update_minimized(void *self, bool minimized) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
     wlr_xwayland_surface_set_minimized(xwayland_view->xwayland_surface, minimized);
