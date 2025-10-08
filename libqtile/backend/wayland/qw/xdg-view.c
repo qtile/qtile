@@ -371,11 +371,21 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
 
     // Set foreign top level attributes
-    if (xdg_view->base.ftl_handle != NULL && xdg_toplevel->parent != NULL) {
-        struct qw_xdg_view *parent_view = xdg_toplevel->parent->base->data;
-        if (parent_view->base.ftl_handle != NULL) {
-            wlr_foreign_toplevel_handle_v1_set_parent(xdg_view->base.ftl_handle,
-                                                      parent_view->base.ftl_handle);
+    if (xdg_view->base.ftl_handle != NULL) {
+        if (xdg_view->base.title != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_title(xdg_view->base.ftl_handle,
+                                                     xdg_view->base.title);
+        }
+        if (xdg_view->base.app_id != NULL) {
+            wlr_foreign_toplevel_handle_v1_set_app_id(xdg_view->base.ftl_handle,
+                                                      xdg_view->base.app_id);
+        }
+        if (xdg_toplevel->parent != NULL) {
+            struct qw_xdg_view *parent_view = xdg_toplevel->parent->base->data;
+            if (parent_view != NULL && parent_view->base.ftl_handle != NULL) {
+                wlr_foreign_toplevel_handle_v1_set_parent(xdg_view->base.ftl_handle,
+                                                          parent_view->base.ftl_handle);
+            }
         }
     }
 
