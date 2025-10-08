@@ -116,7 +116,7 @@ static void qw_xdg_view_clip(struct qw_xdg_view *xdg_view) {
     if (!xdg_view->scene_tree) {
         return;
     }
-    if (xdg_view->scene_tree->node.enabled) {
+    if (!xdg_view->scene_tree->node.enabled) {
         return;
     }
     if (!xdg_view->scene_tree->node.link.next) {
