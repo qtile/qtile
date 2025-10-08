@@ -521,6 +521,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.has_fixed_size = qw_xwayland_view_has_fixed_size;
     xwayland_view->base.update_minimized = qw_xwayland_view_update_minimized;
     xwayland_view->base.update_maximized = qw_xwayland_view_update_maximized;
+    xwayland_view->base.update_fullscreen = qw_xwayland_view_update_fullscreen;
 
     xwayland_surface->data = xwayland_view;
 }
