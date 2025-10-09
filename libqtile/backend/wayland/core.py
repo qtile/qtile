@@ -337,7 +337,7 @@ class Core(base.Core):
 
     def handle_cursor_motion(self, x: int, y: int) -> None:
         assert self.qtile is not None
-        self._focus_pointer(x, y)
+        self._focus_pointer(x, y, motion=True)
         self.qtile.process_button_motion(x, y)
 
     def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
@@ -448,7 +448,7 @@ class Core(base.Core):
 
         return view
 
-    def _focus_pointer(self, cx: int, cy: int) -> None:
+    def _focus_pointer(self, cx: int, cy: int, motion: bool | None = None) -> None:
         assert self.qtile is not None
         view = self.qw_cursor.view
 
@@ -463,7 +463,7 @@ class Core(base.Core):
             hook.fire("client_mouse_enter", win)
 
         if win is not self.qtile.current_window:
-            if self.qtile.config.follow_mouse_focus is True:
+            if motion is not None and self.qtile.config.follow_mouse_focus is True:
                 if isinstance(win, Static):
                     self.qtile.focus_screen(win.screen.index, False)
                 elif win is not None:
