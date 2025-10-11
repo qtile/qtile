@@ -6,6 +6,7 @@ from operator import or_
 from typing import TYPE_CHECKING
 
 from pywayland.protocol.wayland import WlKeyboard
+from wlroots.wlr_types.keyboard import ModifiersMask
 from xkbcommon import xkb
 
 from libqtile import configurable
@@ -125,6 +126,8 @@ class InputConfig(configurable.Configurable):
         ("kb_variant", None, "Keyboard variant i.e. ``XKB_DEFAULT_VARIANT``"),
         ("kb_repeat_rate", 25, "Keyboard key repeats made per second"),
         ("kb_repeat_delay", 600, "Keyboard delay in milliseconds before repeating"),
+        ("kb_numlock", False, "``True`` or ``False`` Enable numlock on startup"),
+        ("kb_capslock", False, "``True`` or ``False`` Enable capslock on startup"),
     ]
 
     def __init__(self, **config: Any) -> None:
@@ -291,6 +294,15 @@ class Keyboard(_Device):
 
         self.seat.keyboard_notify_key(event)
 
+    def _set_num_caps_lock(self, numlock: bool | None, capslock: bool | None) -> None:
+        """Set the initial num/caps lock state of the keyboard."""
+        mask = ModifiersMask(self.keyboard)
+        if numlock:
+            mask.add("Mod2")
+        if capslock:
+            mask.add("Lock")
+        self.keyboard.notify_modifiers(mask)
+
     def configure(self, configs: dict[str, InputConfig]) -> None:
         """Applies ``InputConfig`` rules to this keyboard device."""
         config = self._match_config(configs)
@@ -298,6 +310,7 @@ class Keyboard(_Device):
         if config:
             self.keyboard.set_repeat_info(config.kb_repeat_rate, config.kb_repeat_delay)
             self.set_keymap(config.kb_layout, config.kb_options, config.kb_variant)
+            self._set_num_caps_lock(config.kb_numlock, config.kb_capslock)
 
 
 class Pointer(_Device):

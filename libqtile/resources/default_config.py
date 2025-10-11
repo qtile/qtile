@@ -192,7 +192,14 @@ reconfigure_screens = True
 auto_minimize = True
 
 # When using the Wayland backend, this can be used to configure input devices.
+# By default the numlock is on by default.
 wl_input_rules = None
+if qtile.core.name == "wayland":
+    from libqtile.backend.wayland.inputs import InputConfig
+
+    wl_input_rules = {
+        "type:keyboard": InputConfig(kb_numlock=True),
+    }
 
 # xcursor theme (string or None) and size (integer) for Wayland backend
 wl_xcursor_theme = None
