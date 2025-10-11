@@ -293,6 +293,10 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->base.width = xwayland_surface->width;
     xwayland_view->base.height = xwayland_surface->height;
 
+    xwayland_view->base.title = xwayland_surface->title;
+    ;
+    xwayland_view->base.app_id = xwayland_surface->class;
+
     // Set properties for foreign toplevel manager
     if (xwayland_view->base.ftl_handle != NULL) {
         if (xwayland_view->base.title != NULL) {
