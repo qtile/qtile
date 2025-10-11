@@ -202,7 +202,13 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
     }
 
     wlr_output_manager_v1_set_configuration(server->output_mgr, config);
-    server->on_screen_change_cb(server->cb_data);
+
+    // Only trigger screen change callback if the session is active
+    // or if session is NULL (i.e. in a nested or headless session)
+    // This prevents the hook firing on VT changes
+    if (server->session == NULL || server->session->active) {
+        server->on_screen_change_cb(server->cb_data);
+    }
 }
 
 // Reconfigure output(s) according to the provided configuration.
