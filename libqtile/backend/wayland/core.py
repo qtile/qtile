@@ -89,7 +89,7 @@ except ModuleNotFoundError:
 
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
-from libqtile.backend.wayland import wayland_backend
+from . import wayland_backend
 
 if TYPE_CHECKING:
     from libqtile import config

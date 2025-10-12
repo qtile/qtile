@@ -132,17 +132,18 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     from setuptools.command.build_ext import build_ext
 
     generate_build_config(config_settings or {})
-    build_cff_lib(config_settings.get("backend") == "wayland")
 
-    dist = Distribution()
-    dist.ext_modules = prepare_extensions()
+    wayland_needed = config_settings.get("backend") == "wayland"
+    build_cff_lib(wayland_needed)
 
-    print("Building Wayland backend extension")
+    if wayland_needed:
+        dist = Distribution()
+        dist.ext_modules = prepare_extensions()
 
-    cmd = build_ext(dist)
-    cmd.build_lib = WAYLAND_DIR
-    cmd.ensure_finalized()
-    cmd.run()
+        cmd = build_ext(dist)
+        cmd.build_lib = WAYLAND_DIR
+        cmd.ensure_finalized()
+        cmd.run()
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
 

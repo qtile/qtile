@@ -30,5 +30,14 @@ try:
 
 except Exception as e:
     print("Fail to import Wayland Backend:", e)
+    from types import ModuleType
+    from typing import Any
+
+    class WaylandBackendStub(ModuleType):
+        def __getattr__(self, name: str) -> Any:
+            print("[wayland_backend stub] Called '%s' (no-op)", name)
+
+    wayland_backend = WaylandBackendStub("wayland_backend")
+
 else:
     wayland_backend.hello()
