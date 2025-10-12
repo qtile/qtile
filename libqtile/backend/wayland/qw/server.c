@@ -709,6 +709,7 @@ struct qw_server *qw_server_create() {
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
+    wlr_xwayland_set_seat(server->xwayland, server->seat);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
 #endif
