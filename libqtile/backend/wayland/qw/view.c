@@ -9,7 +9,7 @@
 // Checks if borders exist, then destroys each of the 4 border scene nodes per border set.
 // Finally frees the allocated borders array.
 void qw_view_cleanup_borders(struct qw_view *view) {
-    if (!view->borders) {
+    if (view->borders != NULL) {
         return;
     }
 
@@ -35,6 +35,8 @@ void qw_view_cleanup_borders(struct qw_view *view) {
     }
 
     free(view->borders);
+    view->borders = NULL;
+    view->border_count = 0;
 }
 
 // Recursively search through a view's tree until we find a wlr_surface
