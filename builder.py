@@ -145,3 +145,7 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     cmd.run()
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
+
+
+def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
+    return build_wheel(wheel_directory, config_settings, metadata_directory)
