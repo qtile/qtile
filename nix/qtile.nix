@@ -17,7 +17,7 @@ let
         head
       ];
     in
-    "${symver}+${flakever}-wayc.flake";
+    "${symver}+${flakever}.wayc.flake";
 
   removeOldDeps =
     dep:
