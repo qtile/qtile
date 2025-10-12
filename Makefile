@@ -49,3 +49,17 @@ clean: ## Clean generated files
 update-flake: ## Update the Nix flake.lock file, requires Nix installed with flake support, see: https://nixos.wiki/wiki/Flakes
 	nix flake update
 
+.PHONY: build-wayland
+build-wayland: ## Build wayland backend
+	python libqtile/backend/wayland/cffi/build.py
+
+.PHONY: build-wayland-debug
+build-wayland-debug: ## Build wayland backend with debug symbols
+	@echo "Building wayland backend with debug symbols."
+	@python libqtile/backend/wayland/cffi/build.py --debug
+
+.PHONY: build-wayland-asan
+build-wayland-asan: ## Build wayland backend with address sanitisation support.
+	@echo "Building wayland backend with address sanitisation support."
+	@echo "When starting qtile, you'll need to set 'LD_PRELOAD=$(gcc -print-file-name=libasan.so)' first."
+	@python libqtile/backend/wayland/cffi/build.py --asan
