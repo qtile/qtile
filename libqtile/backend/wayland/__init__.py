@@ -23,4 +23,21 @@ try:
 except ModuleNotFoundError:
     print("InputConfig couldn't be imported from libqtile.backend.wayland")
     print("If this happened during setup.py installation, ignore this message.")
-    print("Otherwise, make sure to run ./scripts/ffibuild.")
+
+
+try:
+    from libqtile.backend.wayland import wayland_backend
+
+except Exception as e:
+    print("Fail to import Wayland Backend:", e)
+    from types import ModuleType
+    from typing import Any
+
+    class WaylandBackendStub(ModuleType):
+        def __getattr__(self, name: str) -> Any:
+            print("[wayland_backend stub] Called '%s' (no-op)", name)
+
+    wayland_backend = WaylandBackendStub("wayland_backend")
+
+else:
+    wayland_backend.hello()

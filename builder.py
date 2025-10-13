@@ -17,47 +17,136 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import sys
 
+import subprocess
+from pathlib import Path
+
+from setuptools import Distribution, Extension
 from setuptools import build_meta as _orig
-from setuptools.build_meta import *  # noqa: F401,F403
 
-WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
+WAYLAND_DIR = Path("libqtile/backend/wayland")
 
+WAYLAND_BACKEND_DIR = WAYLAND_DIR / "qw"
+WAYLAND_EXT_DIR = WAYLAND_DIR / "ext"
 
-def wants_wayland(config_settings):
-    if config_settings:
-        for key in ["Backend", "backend"]:
-            if config_settings.get(key, "").lower() == "wayland":
-                return True
-
-    return False
+QW_PROTO_OUT_PATH = WAYLAND_BACKEND_DIR / "proto"
+WAYLAND_FFI_BUILD = WAYLAND_DIR / "cffi/build.py"
 
 
-def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
-    """If wayland backend is requested, build it!"""
-    if config_settings is None:
-        config_settings = {}
+def generate_build_config(config_settings: dict[str, str]) -> None:
+    with open("libqtile/_build_config.py", "w") as f:
+        f.write("# This file is generated at build time by builder.py\n")
+        for lib in ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]:
+            p = lib + "_PATH"
+            f.write(f"{p} = {config_settings.get(p)!r}\n")
 
-    wayland_requested = wants_wayland(config_settings)
+
+def pkg_config_lookup_var(lib, varname) -> str:
+    full_cmd = ["pkg-config", lib, f"--variable={varname}"]
+    # print the command for transparency
+    print(" ".join(full_cmd))
+    return subprocess.check_output(full_cmd).decode().strip()
+
+
+def pkg_config_flags(*libraries: str):
+    include_dirs = []
+    library_dirs = []
+
+    for libname in libraries:
+        library_dirs.append(pkg_config_lookup_var(libname, "libdir"))
+
+        inc_dir = pkg_config_lookup_var(libname, "includedir")
+
+        if (subdir := Path(inc_dir) / libname).exists():
+            inc_dir = subdir
+
+        include_dirs.append(inc_dir)
+
+    libs = [lib.removeprefix("lib") for lib in libraries]
+    return include_dirs, library_dirs, libs
+
+
+def prepare_extensions():
+    includes, libdirs, libs = pkg_config_flags(
+        "wlroots-0.19", "wayland-server", "cairo", "pixman-1", "libdrm"
+    )
+
+    wayland_backend = Extension(
+        "wayland_backend",
+        sources=[
+            str(filepath)
+            for source_dirs in (WAYLAND_BACKEND_DIR, WAYLAND_EXT_DIR)
+            for filepath in source_dirs.rglob("*.c")
+        ],
+        language="c",
+        library_dirs=libdirs,
+        libraries=list(libs),
+        include_dirs=[str(WAYLAND_BACKEND_DIR), str(QW_PROTO_OUT_PATH)] + includes,
+        extra_compile_args=["-DWLR_USE_UNSTABLE"],
+    )
+
+    return [wayland_backend]
+
+
+def build_cff_lib(wayland_requested: bool) -> bool:
     try:
         from libqtile.backend.wayland.cffi.build import ffi_compile
 
         ffi_compile(verbose=wayland_requested)
     except Exception as e:
-        if wayland_requested:
-            sys.exit(f"Wayland backend requested but backend could not be built: {e}")
-        else:
-            print("Wayland backend was not built.")
+        print("Wayland backend was not built:", e)
+        return False
 
-    # Write library paths to file, if they are specified at build time via
-    # --config-settings=PANGO_PATH=...
-    libs = ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]
-    if set(libs).intersection(config_settings.keys()):
-        with open("libqtile/_build_config.py", "w") as f:
-            f.write("# This file is generated at build time by builder.py\n")
-            for lib in ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]:
-                p = lib + "_PATH"
-                f.write(f"{p} = {config_settings.get(lib)!r}\n")
+    return True
+
+
+def build_wayland_backend_extension() -> bool:
+    dist = Distribution()
+    dist.verbose = True
+    try:
+        dist.ext_modules = prepare_extensions()
+    except Exception as e:
+        print("Wayland backend extension cannot be build:", e)
+
+    print("Building Wayland backend extension")
+
+    try:
+        from setuptools.command.build_ext import build_ext
+
+        cmd = build_ext(dist)
+        cmd.build_lib = WAYLAND_DIR
+        cmd.ensure_finalized()
+        cmd.run()
+
+    except Exception as e:
+        print("Wayland backend extension failed to build:", e)
+        return False
+
+    return True
+
+
+def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
+    if config_settings is None:
+        config_settings = {}
+
+    from setuptools.command.build_ext import build_ext
+
+    generate_build_config(config_settings or {})
+
+    wayland_needed = config_settings.get("backend") == "wayland"
+    build_cff_lib(wayland_needed)
+
+    if wayland_needed:
+        dist = Distribution()
+        dist.ext_modules = prepare_extensions()
+
+        cmd = build_ext(dist)
+        cmd.build_lib = WAYLAND_DIR
+        cmd.ensure_finalized()
+        cmd.run()
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
+
+
+def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
+    return build_wheel(wheel_directory, config_settings, metadata_directory)

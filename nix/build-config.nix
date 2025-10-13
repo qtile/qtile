@@ -52,6 +52,8 @@ let
   inherit (pkgs) lib;
 in
 {
+  libs = map (x: x.pkg) headers-location;
+
   resolved-config-settings = map (
     {
       varname,
