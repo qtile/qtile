@@ -466,8 +466,17 @@ static void qw_xwayland_view_focus(void *self, int above) {
 }
 
 static bool qw_xwayland_view_has_fixed_size(void *self) {
-    // TODO: See xwindow.py from old backend
-    UNUSED(self);
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    xcb_size_hints_t *size_hints = xwayland_view->xwayland_surface->size_hints;
+
+    // TODO: Maybe consider these flags too:
+    // "PMinSize" in size_hints->flags and "PMaxSize" in size_hints->flags
+    if (size_hints != NULL) {
+        return size_hints->min_width > 0 && size_hints->min_height > 0 &&
+               size_hints->min_width == size_hints->max_width &&
+               size_hints->min_height == size_hints->max_height;
+    }
+
     return false;
 }
 
