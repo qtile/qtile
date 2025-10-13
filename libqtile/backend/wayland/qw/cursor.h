@@ -34,6 +34,9 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *cursor);
 
 void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y);
 
+void qw_cursor_update_focus(struct qw_cursor *cursor, struct wlr_surface **surface, double *sx,
+                            double *sy);
+
 // Functions for hiding and showing the cursor
 void qw_cursor_hide(struct qw_cursor *cursor);
 void qw_cursor_show(struct qw_cursor *cursor);

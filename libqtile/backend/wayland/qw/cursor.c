@@ -19,6 +19,34 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     free(cursor);
 }
 
+void qw_cursor_update_focus(struct qw_cursor *cursor, struct wlr_surface **surface, double *sx,
+                            double *sy) {
+    struct wlr_seat *seat = cursor->server->seat;
+
+    struct wlr_surface *tmp_surface = NULL;
+    double tmp_sx = 0.0, tmp_sy = 0.0;
+
+    cursor->view = qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y,
+                                     &tmp_surface, &tmp_sx, &tmp_sy);
+
+    // Reset cursor if there's no view and we're not dragging
+    if ((!cursor->view || !tmp_surface) && cursor->server->seat->drag == NULL) {
+        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+        wlr_seat_pointer_clear_focus(seat);
+    } else {
+        // TODO: May be a performance benefit by only calling notify_enter when the surface changes
+        wlr_seat_pointer_notify_enter(seat, tmp_surface, tmp_sx, tmp_sy);
+    }
+
+    // Return via output parameters, if provided
+    if (surface)
+        *surface = tmp_surface;
+    if (sx)
+        *sx = tmp_sx;
+    if (sy)
+        *sy = tmp_sy;
+}
+
 static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     struct wlr_seat *seat = cursor->server->seat;
 
@@ -51,9 +79,7 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
 
     double sx = 0.0, sy = 0.0;
     struct wlr_surface *surface = NULL;
-    struct qw_view *view =
-        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
-    cursor->view = view;
+    qw_cursor_update_focus(cursor, &surface, &sx, &sy);
 
     // Notify server callback with current cursor position
     cursor->server->cursor_motion_cb((int)cursor->cursor->x, (int)cursor->cursor->y,
@@ -62,15 +88,11 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);
 
-    // Reset cursor if there's no view and we're not dragging
-    if ((!view || !surface) && cursor->server->seat->drag == NULL) {
-        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
-        wlr_seat_pointer_clear_focus(seat);
+    // Return early if there's no view and we're not dragging
+    if ((!cursor->view || !surface) && cursor->server->seat->drag == NULL) {
         return;
     }
 
-    // Notify seat pointer of entering the new surface and motion
-    wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
     wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 }
 

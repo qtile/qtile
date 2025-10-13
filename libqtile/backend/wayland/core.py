@@ -448,7 +448,7 @@ class Core(base.Core):
 
         return view
 
-    def _focus_pointer(self, cx: int, cy: int, motion: bool | None = None) -> None:
+    def _focus_pointer(self, cx: int, cy: int, motion: bool) -> None:
         assert self.qtile is not None
         view = self.qw_cursor.view
 
@@ -463,7 +463,7 @@ class Core(base.Core):
             hook.fire("client_mouse_enter", win)
 
         if win is not self.qtile.current_window:
-            if motion is not None and self.qtile.config.follow_mouse_focus is True:
+            if motion and self.qtile.config.follow_mouse_focus:
                 if isinstance(win, Static):
                     self.qtile.focus_screen(win.screen.index, False)
                 elif win is not None:
@@ -558,7 +558,11 @@ class Core(base.Core):
     @contextlib.contextmanager
     def masked(self) -> Generator:
         yield
-        self._focus_pointer(int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y))
+        # Update pointer focus without cursor motion
+        lib.qw_cursor_update_focus(self.qw_cursor, ffi.NULL, ffi.NULL, ffi.NULL)
+        self._focus_pointer(
+            int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y), motion=False
+        )
 
     @property
     def name(self) -> str:
