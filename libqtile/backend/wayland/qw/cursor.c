@@ -72,8 +72,7 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
         }
 
         // Still notify the server of cursor position for UI updates
-        cursor->server->cursor_motion_cb((int)cursor->cursor->x, (int)cursor->cursor->y,
-                                         cursor->server->cb_data);
+        cursor->server->cursor_motion_cb(cursor->server->cb_data);
         return;
     }
 
@@ -82,8 +81,7 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     qw_cursor_update_focus(cursor, &surface, &sx, &sy);
 
     // Notify server callback with current cursor position
-    cursor->server->cursor_motion_cb((int)cursor->cursor->x, (int)cursor->cursor->y,
-                                     cursor->server->cb_data);
+    cursor->server->cursor_motion_cb(cursor->server->cb_data);
 
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);

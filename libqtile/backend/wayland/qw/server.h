@@ -59,8 +59,8 @@ struct qw_view;
 typedef void (*unmanage_view_cb_t)(struct qw_view *view, void *userdata);
 typedef void (*manage_view_cb_t)(struct qw_view *view, void *userdata);
 
-// Cursor motion event callback: relative x, y and user data
-typedef void (*cursor_motion_cb_t)(int x, int y, void *userdata);
+// Cursor motion event callback: user data
+typedef void (*cursor_motion_cb_t)(void *userdata);
 
 // Cursor button event callback: button, modifiers, pressed state, position, user data
 typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x, int y,
