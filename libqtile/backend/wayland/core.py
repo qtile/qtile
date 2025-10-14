@@ -563,7 +563,7 @@ class Core(base.Core):
     def masked(self) -> Generator:
         yield
         # Update pointer focus without cursor motion
-        lib.qw_cursor_update_focus(self.qw_cursor, ffi.NULL, ffi.NULL, ffi.NULL)
+        lib.qw_cursor_update_focus(self.qw_cursor, ffi.NULL, ffi.NULL)
         self._focus_pointer(motion=False)
 
     @property
