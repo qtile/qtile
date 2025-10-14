@@ -34,8 +34,10 @@ void qw_cursor_update_focus(struct qw_cursor *cursor, struct wlr_surface **surfa
         wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
         wlr_seat_pointer_clear_focus(seat);
     } else {
-        // TODO: May be a performance benefit by only calling notify_enter when the surface changes
-        wlr_seat_pointer_notify_enter(seat, tmp_surface, tmp_sx, tmp_sy);
+        struct wlr_surface *prev_surface = seat->pointer_state.focused_surface;
+        if (tmp_surface != prev_surface) {
+            wlr_seat_pointer_notify_enter(seat, tmp_surface, tmp_sx, tmp_sy);
+        }
     }
 
     // Return via output parameters, if provided
