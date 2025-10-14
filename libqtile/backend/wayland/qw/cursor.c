@@ -19,30 +19,29 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     free(cursor);
 }
 
-void qw_cursor_update_focus(struct qw_cursor *cursor, struct wlr_surface **surface, double *sx,
-                            double *sy) {
+void qw_cursor_update_focus(struct qw_cursor *cursor, double *sx, double *sy) {
     struct wlr_seat *seat = cursor->server->seat;
 
-    struct wlr_surface *tmp_surface = NULL;
+    struct wlr_surface *surface = NULL;
     double tmp_sx = 0.0, tmp_sy = 0.0;
 
-    cursor->view = qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y,
-                                     &tmp_surface, &tmp_sx, &tmp_sy);
+    cursor->view = qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface,
+                                     &tmp_sx, &tmp_sy);
 
-    // Reset cursor if there's no view and we're not dragging
-    if ((!cursor->view || !tmp_surface) && cursor->server->seat->drag == NULL) {
-        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+    if (surface == NULL) {
         wlr_seat_pointer_clear_focus(seat);
+        // Reset cursor if we're not over a surface and we're not dragging
+        if (cursor->server->seat->drag == NULL) {
+            wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+        }
     } else {
         struct wlr_surface *prev_surface = seat->pointer_state.focused_surface;
-        if (tmp_surface != prev_surface) {
-            wlr_seat_pointer_notify_enter(seat, tmp_surface, tmp_sx, tmp_sy);
+        if (surface != prev_surface) {
+            wlr_seat_pointer_notify_enter(seat, surface, tmp_sx, tmp_sy);
         }
     }
 
-    // Return via output parameters, if provided
-    if (surface)
-        *surface = tmp_surface;
+    // Return surface-local position via output parameters, if provided
     if (sx)
         *sx = tmp_sx;
     if (sy)
@@ -79,8 +78,7 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     }
 
     double sx = 0.0, sy = 0.0;
-    struct wlr_surface *surface = NULL;
-    qw_cursor_update_focus(cursor, &surface, &sx, &sy);
+    qw_cursor_update_focus(cursor, &sx, &sy);
 
     // Notify server callback with current cursor position
     cursor->server->cursor_motion_cb(cursor->server->cb_data);
@@ -88,12 +86,9 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);
 
-    // Return early if there's no view and we're not dragging
-    if ((!cursor->view || !surface) && cursor->server->seat->drag == NULL) {
-        return;
+    if (seat->pointer_state.focused_surface != NULL) {
+        wlr_seat_pointer_notify_motion(seat, time, sx, sy);
     }
-
-    wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 }
 
 static void qw_cursor_implicit_grab_motion(struct qw_cursor *cursor, uint32_t time) {
