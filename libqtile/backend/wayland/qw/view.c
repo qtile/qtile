@@ -9,7 +9,7 @@
 // Checks if borders exist, then destroys each of the 4 border scene nodes per border set.
 // Finally frees the allocated borders array.
 void qw_view_cleanup_borders(struct qw_view *view) {
-    if (view->borders != NULL) {
+    if (view->borders == NULL) {
         return;
     }
 
