@@ -150,9 +150,9 @@ def unmanage_view_cb(view: ffi.CData, userdata: ffi.CData) -> None:
 
 
 @ffi.def_extern()
-def cursor_motion_cb(x: int, y: int, userdata: ffi.CData) -> None:
+def cursor_motion_cb(userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
-    core.handle_cursor_motion(x, y)
+    core.handle_cursor_motion()
 
 
 @ffi.def_extern()
@@ -335,10 +335,12 @@ class Core(base.Core):
             self.qtile.reserve_space(delta, screen)
             self._output_reserved_space[screen] = new_reserved_space
 
-    def handle_cursor_motion(self, x: int, y: int) -> None:
+    def handle_cursor_motion(self) -> None:
         assert self.qtile is not None
-        self._focus_pointer(x, y, motion=True)
-        self.qtile.process_button_motion(x, y)
+        self._focus_pointer(motion=True)
+        self.qtile.process_button_motion(
+            int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
+        )
 
     def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
         assert self.qtile is not None
@@ -448,7 +450,7 @@ class Core(base.Core):
 
         return view
 
-    def _focus_pointer(self, cx: int, cy: int, motion: bool) -> None:
+    def _focus_pointer(self, motion: bool) -> None:
         assert self.qtile is not None
         view = self.qw_cursor.view
 
@@ -560,9 +562,7 @@ class Core(base.Core):
         yield
         # Update pointer focus without cursor motion
         lib.qw_cursor_update_focus(self.qw_cursor, ffi.NULL, ffi.NULL, ffi.NULL)
-        self._focus_pointer(
-            int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y), motion=False
-        )
+        self._focus_pointer(motion=False)
 
     @property
     def name(self) -> str:
