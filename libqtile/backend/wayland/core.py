@@ -345,7 +345,8 @@ class Core(base.Core):
     def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
         assert self.qtile is not None
         if pressed:
-            self._focus_by_click()
+            if not self.qw_cursor.implicit_grab.live:
+                self._focus_by_click()
 
             handled = self.qtile.process_button_click(int(button), int(mask), x, y)
 
