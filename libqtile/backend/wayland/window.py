@@ -35,6 +35,8 @@ class Base(base._Window):
         self._ptr = ptr
         self._wid = wid
         self._wm_class: str | None = None
+        self._wm_instance: str | None = None
+        self._wm_role: str | None = None
         self.bordercolor: ColorsType | None = None
         self.borderwidth = 0
         # TODO: what is this?
@@ -432,9 +434,16 @@ class Window(Base, base.Window):
         # TODO: Handle foreign-toplevel-management?
 
     def get_wm_class(self) -> list | None:
+        wm_class = []
+        if self._wm_instance:
+            wm_class.append(self._wm_instance)
         if self._wm_class:
-            return [self._wm_class]
-        return None
+            wm_class.append(self._wm_class)
+
+        return wm_class or None
+
+    def get_wm_role(self) -> str | None:
+        return self._wm_role or None
 
     @expose_command()
     def is_visible(self) -> bool:
