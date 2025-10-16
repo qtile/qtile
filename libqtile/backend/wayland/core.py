@@ -353,6 +353,10 @@ class Core(base.Core):
             win.name = ffi.string(view.title).decode()
         if view.app_id != ffi.NULL:
             win._wm_class = ffi.string(view.app_id).decode()
+        if view.instance != ffi.NULL:
+            win._wm_instance = ffi.string(view.instance).decode()
+        if view.role != ffi.NULL:
+            win._wm_role = ffi.string(view.role).decode()
         win._float_width = win.width  # todo: should we be using getter/setter for _float_width
         win._float_height = win.height
 
