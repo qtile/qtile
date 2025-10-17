@@ -248,6 +248,7 @@ class Core(base.Core):
         self.qw.focus_current_window_cb = lib.focus_current_window_cb
         self.qw.on_session_lock_cb = lib.on_session_lock_cb
         lib.qw_server_start(self.qw)
+        os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
         self.painter = Painter(self)
@@ -574,7 +575,6 @@ class Core(base.Core):
         self.fd = lib.qw_server_get_event_loop_fd(self.qw)
         if self.fd:
             asyncio.get_running_loop().add_reader(self.fd, self._poll)
-            os.environ["WAYLAND_DISPLAY"] = self.display_name
             asyncio.get_running_loop().add_signal_handler(signal.SIGCHLD, reap_zombies)
         else:
             raise RuntimeError("Failed to get Wayland event loop file descriptor.")
