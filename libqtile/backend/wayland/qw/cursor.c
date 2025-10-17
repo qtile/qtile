@@ -188,19 +188,35 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, axis);
     struct wlr_pointer_axis_event *event = data;
 
+    static uint32_t last_scroll_time = 0;
+    static int last_scroll_dir = 0;
+    static enum wl_pointer_axis last_scroll_axis;
+
     bool handled = false;
     // TODO: exclusive client and implicit grab
 
     if (event->delta != 0) {
-        // Convert scroll delta to synthetic button events for handling
-        uint32_t button = 0;
-        if (event->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-            button = (0 < event->delta) ? BUTTON_SCROLL_DOWN : BUTTON_SCROLL_UP;
-        } else {
-            button = (0 < event->delta) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
+        int dir = (event->delta > 0) ? 1 : -1;
+        enum wl_pointer_axis axis = event->orientation;
+        uint32_t elapsed = event->time_msec - last_scroll_time;
+
+        // Trigger callback if enough time has passed or direction/axis changed
+        if (elapsed >= QW_SCROLL_CALLBACK_INTERVAL_MS || dir != last_scroll_dir ||
+            axis != last_scroll_axis) {
+            last_scroll_time = event->time_msec;
+            last_scroll_dir = dir;
+            last_scroll_axis = axis;
+
+            uint32_t button = 0;
+            if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+                button = (dir > 0) ? BUTTON_SCROLL_DOWN : BUTTON_SCROLL_UP;
+            } else {
+                button = (dir > 0) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
+            }
+
+            uint32_t button_mapped = qw_util_get_button_code(button);
+            handled = qw_cursor_process_button(cursor, button_mapped, true);
         }
-        uint32_t button_mapped = qw_util_get_button_code(button);
-        handled = qw_cursor_process_button(cursor, button_mapped, true);
     }
 
     if (!handled) {

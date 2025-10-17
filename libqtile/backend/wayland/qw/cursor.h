@@ -4,6 +4,9 @@
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
+// Limit callbacks to qtile when scrollinh
+static const uint32_t QW_SCROLL_CALLBACK_INTERVAL_MS = 50;
+
 struct qw_server; // Forward declaration to avoid circular dependency
 
 // Cursor structure that holds cursor state and event listeners
