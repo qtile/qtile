@@ -195,27 +195,33 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     bool handled = false;
     // TODO: exclusive client and implicit grab
 
-    if (event->delta != 0) {
-        int dir = (event->delta > 0) ? 1 : -1;
-        enum wl_pointer_axis axis = event->orientation;
-        uint32_t elapsed = event->time_msec - last_scroll_time;
+    // Determine which button this corresponds to
+    uint32_t button = 0;
+    if (event->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        button = (event->delta > 0) ? BUTTON_SCROLL_DOWN : BUTTON_SCROLL_UP;
+    } else if (event->orientation == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
+        button = (event->delta > 0) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
+    }
 
-        // Trigger callback if enough time has passed or direction/axis changed
-        if (elapsed >= QW_SCROLL_CALLBACK_INTERVAL_MS || dir != last_scroll_dir ||
-            axis != last_scroll_axis) {
-            last_scroll_time = event->time_msec;
-            last_scroll_dir = dir;
-            last_scroll_axis = axis;
+    uint32_t button_mapped = qw_util_get_button_code(button);
 
-            uint32_t button = 0;
-            if (axis == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-                button = (dir > 0) ? BUTTON_SCROLL_DOWN : BUTTON_SCROLL_UP;
-            } else {
-                button = (dir > 0) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
-            }
+    // If it's a physical wheel fire callbacl immediately if there is a discrete delta
+    if (event->source == WL_POINTER_AXIS_SOURCE_WHEEL && event->delta_discrete != 0.0) {
+        handled = qw_cursor_process_button(cursor, button_mapped, true);
+        // for anything else, we're using rate limiting
+    } else if (event->source != WL_POINTER_AXIS_SOURCE_WHEEL) {
+        // Touchpad or smooth scroll: throttle events to 50ms
+        int dir = (event->delta > 0) ? +1 : -1;
+        uint32_t now = event->time_msec;
 
-            uint32_t button_mapped = qw_util_get_button_code(button);
+        if ((now - last_scroll_time >= QW_SCROLL_CALLBACK_INTERVAL_MS) ||
+            (dir != last_scroll_dir) || (event->orientation != last_scroll_axis)) {
+
             handled = qw_cursor_process_button(cursor, button_mapped, true);
+
+            last_scroll_time = now;
+            last_scroll_dir = dir;
+            last_scroll_axis = event->orientation;
         }
     }
 
