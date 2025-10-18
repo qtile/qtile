@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any, Literal
 
-    from libqtile.config import Group, Key, Mouse, Rule, Screen
+    from libqtile.config import Gesture, Group, Key, Mouse, Rule, Screen
     from libqtile.layout.base import Layout
 
 
@@ -30,6 +30,7 @@ class Config:
     # All configuration options
     keys: list[Key]
     mouse: list[Mouse]
+    gestures: list[Gesture]
     groups: list[Group]
     dgroups_key_binder: Any
     dgroups_app_rules: list[Rule]
@@ -138,3 +139,7 @@ class Config:
             for m in ms.modifiers:
                 if m.lower() not in valid_mods:
                     raise ConfigError(f"No such modifier: {m}")
+        for g in self.gestures:
+            for m in g.modifiers:
+                if m.lower() not in valid_mods:
+                    raise ConfigError(f"{m!r}: No such modifier: {m}")

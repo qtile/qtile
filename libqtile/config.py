@@ -202,6 +202,94 @@ class Click(Mouse):
         return f"<Click ({self.modifiers}, {self.button})>"
 
 
+class Gesture:
+    def __init__(self, modifiers: list[str], *commands: LazyCall) -> None:
+        self.modifiers = modifiers
+        self.commands = commands
+        self.modmask = 0
+
+
+class Swipe(Gesture):
+    """
+    Bind commands to a swipe gesture.
+
+    The commands are executed at the end of the swipe gesture (i.e. when the fingers are
+    removed from the pointer device).
+
+    Parameters
+    ==========
+    modifiers:
+        A list of modifier specifications. Modifier specifications are one of:
+        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
+        ``"mod4"``, ``"mod5"``.
+    sequence:
+        A string to describe the swipe direction (``"L"``, ``"R"``, ``"U"``, ``D``).
+        more complex gestures can be created by using a sequence of directions e.g.
+        ``"UDUDLRLR"``.
+    commands:
+        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
+
+    """
+
+    def __init__(self, modifiers: list[str], sequence: str, *commands: LazyCall) -> None:
+        super().__init__(modifiers, *commands)
+        self.sequence = sequence.upper()
+
+    def __repr__(self) -> str:
+        return f"<Swipe ({self.modifiers}, {self.sequence})"
+
+
+class Pinch(Gesture):
+    """
+    Bind commands to a pinch gesture.
+
+    The commands are executed at the end of the pinch gesture (i.e. when the fingers are
+    removed from the pointer device).
+
+    As well as passing the parameters to the Pinch object, it must be further configured by calling the
+    ``.pinch()`` or ``.grow()`` methods and/or then ``.clockwise()`` and ``.anticlockwise()`` methods.
+
+    Parameters
+    ==========
+    modifiers:
+        A list of modifier specifications. Modifier specifications are one of:
+        ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
+        ``"mod4"``, ``"mod5"``.
+    commands:
+        A list :class:`LazyCall` objects to evaluate in sequence upon drag.
+
+    """
+
+    def __init__(self, modifiers: list[str], *commands: LazyCall) -> None:
+        super().__init__(modifiers, *commands)
+        self._shrink: bool | None = None
+        self._clockwise: bool | None = None
+
+    def shrink(self) -> Pinch:
+        self._shrink = True
+        return self
+
+    def grow(self) -> Pinch:
+        self._shrink = False
+        return self
+
+    def clockwise(self) -> Pinch:
+        self._clockwise = True
+        return self
+
+    def anticlockwise(self) -> Pinch:
+        self._clockwise = False
+        return self
+
+    def __repr__(self) -> str:
+        attrs = [f"{self.modifiers}"]
+        if self._shrink is not None:
+            attrs.append(f"shrink={self._shrink}")
+        if self._clockwise is not None:
+            attrs.append(f"clockwise={self._clockwise}")
+        return f"<Pinch ({' '.join(attrs)})"
+
+
 class EzConfig:
     """
     Helper class for defining key and button bindings in an Emacs-like format.
