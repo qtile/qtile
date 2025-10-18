@@ -56,6 +56,7 @@ mix!)
     keys
     layouts
     mouse
+    gestures
     screens
     hooks
     match

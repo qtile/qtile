@@ -75,25 +75,6 @@ if TYPE_CHECKING:
     from libqtile.utils import ColorType
 
 
-def translate_masks(modifiers: list[str]) -> int:
-    """
-    Translate a modifier mask specified as a list of strings into an or-ed
-    bit representation.
-    """
-    masks = []
-    assert ffi is not None
-    assert lib is not None
-    for i in modifiers:
-        code = int(lib.qw_util_get_modifier_code(i.lower().encode()))
-        if code == -1:
-            raise QtileError(f"unknown modifier: {i}")
-        masks.append(code)
-    if masks:
-        return functools.reduce(operator.or_, masks)
-    else:
-        return 0
-
-
 @ffi.def_extern()
 def log_cb(importance: int, formatted_str: ffi.CData) -> None:
     """Callback that logs the string at the given level"""
@@ -138,6 +119,23 @@ def cursor_button_cb(
 ) -> int:
     core = ffi.from_handle(userdata)
     if core.handle_cursor_button(button, mask, pressed, x, y):
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def pointer_swipe_cb(mask: int, sequence: ffi.CData, userdata: ffi.CData) -> int:
+    core = ffi.from_handle(userdata)
+    gesture = ffi.string(sequence).decode()
+    if core.handle_pointer_swipe(mask, gesture):
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def pointer_pinch_cb(mask: int, shrink: bool, clockwise: bool, userdata: ffi.CData) -> int:
+    core = ffi.from_handle(userdata)
+    if core.handle_pointer_pinch(mask, shrink, clockwise):
         return 1
     return 0
 
@@ -256,6 +254,8 @@ class Core(base.Core):
         self.qw.unmanage_view_cb = lib.unmanage_view_cb
         self.qw.cursor_motion_cb = lib.cursor_motion_cb
         self.qw.cursor_button_cb = lib.cursor_button_cb
+        self.qw.pointer_swipe_cb = lib.pointer_swipe_cb
+        self.qw.pointer_pinch_cb = lib.pointer_pinch_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
         self.qw.view_activation_cb = lib.view_activation_cb
@@ -284,6 +284,25 @@ class Core(base.Core):
     def clear_focus(self) -> None:
         """Clear TODO so that there is no focused window"""
         # TODO
+
+    @staticmethod
+    def translate_masks(modifiers: list[str]) -> int:
+        """
+        Translate a modifier mask specified as a list of strings into an or-ed
+        bit representation.
+        """
+        masks = []
+        assert ffi is not None
+        assert lib is not None
+        for i in modifiers:
+            code = int(lib.qw_util_get_modifier_code(i.lower().encode()))
+            if code == -1:
+                raise QtileError(f"unknown modifier: {i}")
+            masks.append(code)
+        if masks:
+            return functools.reduce(operator.or_, masks)
+        else:
+            return 0
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""
@@ -419,6 +438,14 @@ class Core(base.Core):
             return handled
         else:
             return self.qtile.process_button_release(button, mask)
+
+    def handle_pointer_swipe(self, mask: int, sequence: str) -> bool:
+        assert self.qtile is not None
+        return self.qtile.process_pointer_swipe(mask, sequence)
+
+    def handle_pointer_pinch(self, mask: int, shrink: bool, clockwise: bool) -> bool:
+        assert self.qtile is not None
+        return self.qtile.process_pointer_pinch(mask, shrink, clockwise)
 
     def handle_manage_view(self, view: ffi.CData) -> None:
         wid = self.new_wid()
@@ -601,7 +628,7 @@ class Core(base.Core):
             keysym = lib.qwu_keysym_from_name(key.key.encode())
         else:
             keysym = self._get_sym_from_code(key.key)
-        mask_key = translate_masks(key.modifiers)
+        mask_key = self.translate_masks(key.modifiers)
         self.grabbed_keys.append((keysym, mask_key))
         return keysym, mask_key
 
@@ -610,7 +637,7 @@ class Core(base.Core):
             keysym = lib.qwu_keysym_from_name(key.key.encode())
         else:
             keysym = self._get_sym_from_code(key.key)
-        mask_key = translate_masks(key.modifiers)
+        mask_key = self.translate_masks(key.modifiers)
         self.grabbed_keys.remove((keysym, mask_key))
         return keysym, mask_key
 
@@ -618,7 +645,7 @@ class Core(base.Core):
         self.grabbed_keys.clear()
 
     def grab_button(self, mouse: config.Mouse) -> int:
-        return translate_masks(mouse.modifiers)
+        return self.translate_masks(mouse.modifiers)
 
     def warp_pointer(self, x: float, y: float) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
@@ -682,7 +709,7 @@ class Core(base.Core):
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulates a keypress on the focused window."""
         keysym = lib.qwu_keysym_from_name(key.encode())
-        mods = translate_masks(modifiers)
+        mods = self.translate_masks(modifiers)
 
         if (keysym, mods) in self.grabbed_keys:
             assert self.qtile is not None
