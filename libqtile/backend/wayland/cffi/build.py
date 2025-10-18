@@ -108,6 +108,8 @@ extern "Python" void manage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void unmanage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void cursor_motion_cb(void *userdata);
 extern "Python" int cursor_button_cb(int button, uint32_t mask, bool pressed, int x, int y, void *userdata);
+extern "Python" int pointer_swipe_cb(uint32_t mask, const char *sequence, void *userdata);
+extern "Python" int pointer_pinch_cb(uint32_t mask, bool shrink, bool clockwise, void *userdata);
 extern "Python" void on_screen_change_cb(void *userdata);
 extern "Python" void on_screen_reserve_space_cb(struct qw_output *output, void *userdata);
 extern "Python" void on_input_device_added_cb(void *userdata);
@@ -134,6 +136,7 @@ cdef_files = [
     "cursor.h",
     "input-device.h",
     "keyboard.h",
+    "pointer.h",
 ]
 
 for file in cdef_files:
