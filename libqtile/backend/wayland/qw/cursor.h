@@ -6,10 +6,17 @@
 
 struct qw_server; // Forward declaration to avoid circular dependency
 
+struct qw_implicit_grab {
+    double start_dx;
+    double start_dy;
+    bool live;
+};
+
 // Cursor structure that holds cursor state and event listeners
 struct qw_cursor {
     struct wlr_cursor *cursor;
     struct qw_view *view;
+    struct qw_implicit_grab implicit_grab;
 
     // private data
     struct qw_server *server;
@@ -40,5 +47,7 @@ void qw_cursor_update_focus(struct qw_cursor *cursor, struct wlr_surface **surfa
 // Functions for hiding and showing the cursor
 void qw_cursor_hide(struct qw_cursor *cursor);
 void qw_cursor_show(struct qw_cursor *cursor);
+
+void qw_cursor_release_implicit_grab(struct qw_cursor *cursor, uint32_t time);
 
 #endif /* CURSOR_H */

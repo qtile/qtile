@@ -588,6 +588,7 @@ static void qw_server_handle_request_start_drag(struct wl_listener *listener, vo
 static void qw_server_handle_start_drag(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, start_drag);
     struct wlr_drag *drag = data;
+    qw_cursor_release_implicit_grab(server->cursor, 0);
     if (drag->icon == NULL) {
         return;
     }

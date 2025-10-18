@@ -96,13 +96,26 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 }
 
+static void qw_cursor_implicit_grab_motion(struct qw_cursor *cursor, uint32_t time) {
+    struct wlr_seat *seat = cursor->server->seat;
+
+    double sx = cursor->cursor->x + cursor->implicit_grab.start_dx;
+    double sy = cursor->cursor->y + cursor->implicit_grab.start_dy;
+    wlr_seat_pointer_notify_motion(seat, time, sx, sy);
+}
+
 static void qw_cursor_handle_motion(struct wl_listener *listener, void *data) {
     // Handle relative pointer motion event
     struct qw_cursor *cursor = wl_container_of(listener, cursor, motion);
     struct wlr_pointer_motion_event *event = data;
 
     wlr_cursor_move(cursor->cursor, &event->pointer->base, event->delta_x, event->delta_y);
-    qw_cursor_process_motion(cursor, event->time_msec);
+
+    if (cursor->implicit_grab.live) {
+        qw_cursor_implicit_grab_motion(cursor, event->time_msec);
+    } else {
+        qw_cursor_process_motion(cursor, event->time_msec);
+    }
 }
 
 static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void *data) {
@@ -111,7 +124,12 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
     struct wlr_pointer_motion_absolute_event *event = data;
 
     wlr_cursor_warp_absolute(cursor->cursor, &event->pointer->base, event->x, event->y);
-    qw_cursor_process_motion(cursor, event->time_msec);
+
+    if (cursor->implicit_grab.live) {
+        qw_cursor_implicit_grab_motion(cursor, event->time_msec);
+    } else {
+        qw_cursor_process_motion(cursor, event->time_msec);
+    }
 }
 
 void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y) {
@@ -143,6 +161,29 @@ static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void
     wlr_cursor_set_surface(cursor->cursor, event->surface, event->hotspot_x, event->hotspot_y);
 }
 
+void qw_cursor_release_implicit_grab(struct qw_cursor *cursor, uint32_t time) {
+    if (cursor->implicit_grab.live) {
+        wlr_log(WLR_DEBUG, "Releasing implicit grab.");
+        cursor->implicit_grab.live = false;
+        // Pretend the cursor just appeared where it is.
+        qw_cursor_process_motion(cursor, time);
+    }
+}
+
+static void qw_cursor_create_implicit_grab(struct qw_cursor *cursor, uint32_t time) {
+    struct wlr_seat *seat = cursor->server->seat;
+    double x = cursor->cursor->x;
+    double y = cursor->cursor->y;
+    double sx = seat->pointer_state.sx;
+    double sy = seat->pointer_state.sy;
+    qw_cursor_release_implicit_grab(cursor, time);
+    wlr_log(WLR_DEBUG, "Creating implicit grab.");
+
+    cursor->implicit_grab.start_dx = sx - x;
+    cursor->implicit_grab.start_dy = sy - y;
+    cursor->implicit_grab.live = true;
+}
+
 static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool pressed) {
     // Get current keyboard modifiers (shift, ctrl, etc)
     struct wlr_keyboard *kb = wlr_seat_get_keyboard(cursor->server->seat);
@@ -169,15 +210,37 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
 
     // Translate event button to internal code (e.g. BTN_LEFT)
     uint32_t button = qw_util_get_button_code(event->button);
+    bool pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED;
     bool handled = false;
-    // TODO: exclusive client and implicit grab
+    static int pressed_button_count = 0;
+    // TODO: exclusive client
 
     if (button != 0) {
-        bool pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED;
+        if (pressed) {
+            pressed_button_count++;
+        } else {
+            pressed_button_count--;
+        }
+
+        if (cursor->implicit_grab.live) {
+            wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
+                                           event->state);
+            qw_cursor_release_implicit_grab(cursor, event->time_msec);
+            return;
+        }
+
         handled = qw_cursor_process_button(cursor, button, pressed);
     }
 
     if (!handled) {
+        struct wlr_seat *seat = cursor->server->seat;
+        struct wlr_surface *surface = seat->pointer_state.focused_surface;
+        struct wlr_drag *drag = cursor->server->seat->drag;
+
+        if (pressed_button_count == 1 && surface != NULL && drag == NULL) {
+            qw_cursor_create_implicit_grab(cursor, event->time_msec);
+        }
+
         wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                        event->state);
     }
@@ -189,9 +252,9 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     struct wlr_pointer_axis_event *event = data;
 
     bool handled = false;
-    // TODO: exclusive client and implicit grab
+    // TODO: exclusive client
 
-    if (event->delta != 0) {
+    if (event->delta != 0 && !cursor->implicit_grab.live) {
         // Convert scroll delta to synthetic button events for handling
         uint32_t button = 0;
         if (event->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL) {
