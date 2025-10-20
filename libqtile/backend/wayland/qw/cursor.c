@@ -153,6 +153,41 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
 
     uint32_t modifiers = wlr_keyboard_get_modifiers(kb);
 
+    // wlr_log(WLR_ERROR, "button_mapped: %i %i", button, modifiers);
+    bool callback_required = false;
+    for (int i = 0; i < cursor->server->grab_buttons->count; i++) {
+        struct mouse_button mb = cursor->server->grab_buttons->button[0];
+        if (mb.button_code == button && mb.modmask == modifiers) {
+            callback_required = true;
+            wlr_log(WLR_ERROR, "callback required, reason: binding");
+            break;
+        }
+    }
+
+    if (cursor->view != NULL) {
+        // wlr_log(WLR_ERROR, "view type: %i", cursor->view->view_type);
+        if (cursor->view->view_type == QW_VIEW_INTERNAL) {
+            callback_required = true;
+            wlr_log(WLR_ERROR, "callback required, reason: internal window");
+        }
+    }
+    // also need to _focus_by_click()
+    // *not needed if view is already focused
+    struct wlr_surface *surface = NULL;
+    double sx = 0.0, sy = 0.0;
+    qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+    struct wlr_seat *seat = cursor->server->seat;
+    struct wlr_surface *prev_surface = seat->keyboard_state.focused_surface;
+    if (surface != prev_surface) {
+        callback_required = true;
+        wlr_log(WLR_ERROR, "callback required, reason: focus view");
+    }
+
+    if (!callback_required) {
+        return false;
+    }
+
+
     // Call server's button callback with button info and modifiers
     if (cursor->server->lock_state == QW_SESSION_LOCK_UNLOCKED) {
         return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,

@@ -552,7 +552,14 @@ class Core(base.Core):
         self.grabbed_keys.clear()
 
     def grab_button(self, mouse: config.Mouse) -> int:
-        return translate_masks(mouse.modifiers)
+        mask = translate_masks(mouse.modifiers)
+        # logger.warning(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        # logger.warning(mask)
+        lib.qw_server_grab_button(self.qw, mouse.button_code, mask)
+        return mask
+
+    def ungrab_buttons(self) -> None:
+        lib.qw_server_ungrab_buttons(self.qw)
 
     def warp_pointer(self, x: float, y: float) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""

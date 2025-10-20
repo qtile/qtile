@@ -137,6 +137,17 @@ typedef void (*node_info_cb_t)(uintptr_t node_ptr, uintptr_t parent_ptr,
 
 typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
 
+struct mouse_button {
+    int button_code;
+    int modmask;
+};
+
+struct mouse_button_array {
+    int count;
+    int capacity;
+    struct mouse_button button[];
+};
+
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
     // Public API
@@ -208,6 +219,7 @@ struct qw_server {
 #endif
     struct wl_listener request_activate;
     struct wl_listener new_token;
+    struct mouse_button_array *grab_buttons;
 };
 
 struct qw_drag_icon {
@@ -268,5 +280,8 @@ void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb)
 
 void qw_server_set_output_fullscreen_background(struct qw_server *server, int x, int y,
                                                 bool enabled);
+
+void qw_server_grab_button(struct qw_server *server, int button_code, int modmask);
+void qw_server_ungrab_buttons(struct qw_server *server);
 
 #endif /* SERVER_H */
