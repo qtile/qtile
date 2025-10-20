@@ -24,6 +24,7 @@ struct qw_cursor {
     uint32_t saved_hotspot_x;
     uint32_t saved_hotspot_y;
     bool hidden;
+    struct wlr_surface *view_surface;
 };
 
 // Destroy the cursor and free its resources

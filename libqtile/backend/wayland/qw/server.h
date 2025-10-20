@@ -139,13 +139,7 @@ typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
 
 struct mouse_button {
     int button_code;
-    int modmask;
-};
-
-struct mouse_button_array {
-    int count;
-    int capacity;
-    struct mouse_button button[];
+    uint32_t modmask;
 };
 
 // Main server struct containing Wayland and wlroots state and user callbacks
@@ -219,7 +213,7 @@ struct qw_server {
 #endif
     struct wl_listener request_activate;
     struct wl_listener new_token;
-    struct mouse_button_array *grab_buttons;
+    struct wl_array grab_buttons;
 };
 
 struct qw_drag_icon {
