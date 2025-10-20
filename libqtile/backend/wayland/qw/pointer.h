@@ -4,6 +4,7 @@
 #include "server.h"
 
 struct qw_swipe_sequence {
+    uint32_t fingers;
     char sequence[32];
     size_t length;
 };
@@ -11,6 +12,7 @@ struct qw_swipe_sequence {
 struct qw_pinch {
     double scale;
     double rotation;
+    uint32_t fingers;
 };
 
 // Pointer device for handling gestures

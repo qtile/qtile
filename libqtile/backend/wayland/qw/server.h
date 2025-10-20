@@ -67,11 +67,13 @@ typedef void (*cursor_motion_cb_t)(void *userdata);
 typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x, int y,
                                   void *userdata);
 
-// Pointer swipe event callback: modifiers, swipe sequence, user data
-typedef int (*pointer_swipe_cb_t)(uint32_t mask, const char *sequence, void *userdata);
+// Pointer swipe event callback: modifiers, swipe sequence, fingers, user data
+typedef int (*pointer_swipe_cb_t)(uint32_t mask, const char *sequence, uint32_t fingers,
+                                  void *userdata);
 
-// Pointer swipe event callback: modifiers, shrink, clockwise, user data
-typedef int (*pointer_pinch_cb_t)(uint32_t mask, bool shrink, bool clockwise, void *userdata);
+// Pointer swipe event callback: modifiers, shrink, clockwise, fingers, user data
+typedef int (*pointer_pinch_cb_t)(uint32_t mask, bool shrink, bool clockwise, uint32_t fingers,
+                                  void *userdata);
 
 // Output dimensions callback: x, y, width, height of output
 typedef void (*output_dims_cb_t)(int x, int y, int width, int height);

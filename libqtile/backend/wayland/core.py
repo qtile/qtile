@@ -124,18 +124,20 @@ def cursor_button_cb(
 
 
 @ffi.def_extern()
-def pointer_swipe_cb(mask: int, sequence: ffi.CData, userdata: ffi.CData) -> int:
+def pointer_swipe_cb(mask: int, sequence: ffi.CData, fingers: int, userdata: ffi.CData) -> int:
     core = ffi.from_handle(userdata)
     gesture = ffi.string(sequence).decode()
-    if core.handle_pointer_swipe(mask, gesture):
+    if core.handle_pointer_swipe(mask, gesture, fingers):
         return 1
     return 0
 
 
 @ffi.def_extern()
-def pointer_pinch_cb(mask: int, shrink: bool, clockwise: bool, userdata: ffi.CData) -> int:
+def pointer_pinch_cb(
+    mask: int, shrink: bool, clockwise: bool, fingers: int, userdata: ffi.CData
+) -> int:
     core = ffi.from_handle(userdata)
-    if core.handle_pointer_pinch(mask, shrink, clockwise):
+    if core.handle_pointer_pinch(mask, shrink, clockwise, fingers):
         return 1
     return 0
 
@@ -362,13 +364,15 @@ class Core(base.Core):
         else:
             return self.qtile.process_button_release(button, mask)
 
-    def handle_pointer_swipe(self, mask: int, sequence: str) -> bool:
+    def handle_pointer_swipe(self, mask: int, sequence: str, fingers: int) -> bool:
         assert self.qtile is not None
-        return self.qtile.process_pointer_swipe(mask, sequence)
+        return self.qtile.process_pointer_swipe(mask, sequence, fingers)
 
-    def handle_pointer_pinch(self, mask: int, shrink: bool, clockwise: bool) -> bool:
+    def handle_pointer_pinch(
+        self, mask: int, shrink: bool, clockwise: bool, fingers: int
+    ) -> bool:
         assert self.qtile is not None
-        return self.qtile.process_pointer_pinch(mask, shrink, clockwise)
+        return self.qtile.process_pointer_pinch(mask, shrink, clockwise, fingers)
 
     def handle_manage_view(self, view: ffi.CData) -> None:
         wid = self.new_wid()
