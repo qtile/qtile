@@ -7,12 +7,16 @@ struct qw_swipe_sequence {
     uint32_t fingers;
     char sequence[32];
     size_t length;
+    bool checked;
+    bool bound;
 };
 
 struct qw_pinch {
     double scale;
     double rotation;
     uint32_t fingers;
+    bool checked;
+    bool bound;
 };
 
 // Pointer device for handling gestures
