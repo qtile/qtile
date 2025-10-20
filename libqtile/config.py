@@ -13,7 +13,7 @@ from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
-    from typing import Any, Literal
+    from typing import Any, Literal, Self
 
     from libqtile.backend import base
     from libqtile.bar import BarType
@@ -207,6 +207,11 @@ class Gesture:
         self.modifiers = modifiers
         self.commands = commands
         self.modmask = 0
+        self._fingers: int | None = None
+
+    def fingers(self, number: int) -> Self:
+        self._fingers = number
+        return self
 
 
 class Swipe(Gesture):
@@ -223,8 +228,8 @@ class Swipe(Gesture):
         ``"shift"``, ``"lock"``, ``"control"``, ``"mod1"``, ``"mod2"``, ``"mod3"``,
         ``"mod4"``, ``"mod5"``.
     sequence:
-        A string to describe the swipe direction (``"L"``, ``"R"``, ``"U"``, ``D``).
-        more complex gestures can be created by using a sequence of directions e.g.
+        A string to describe the swipe direction (``"L"``, ``"R"``, ``"U"``, ``"D"``).
+        More complex gestures can be created by using a sequence of directions e.g.
         ``"UDUDLRLR"``.
     commands:
         A list :class:`LazyCall` objects to evaluate in sequence upon drag.

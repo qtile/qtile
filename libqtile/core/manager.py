@@ -981,13 +981,15 @@ class Qtile(CommandObject):
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse command error %s: %s", i.name, val)
 
-    def process_pointer_swipe(self, modmask: int, sequence: str) -> bool:
+    def process_pointer_swipe(self, modmask: int, sequence: str, fingers: int) -> bool:
         handled = False
 
         for g in self.config.gestures:
             if not isinstance(g, Swipe):
                 continue
             if not all((g.modmask == modmask, g.sequence == sequence)):
+                continue
+            if g._fingers is not None and g._fingers != fingers:
                 continue
             for i in g.commands:
                 if i.check(self):
@@ -1000,7 +1002,7 @@ class Qtile(CommandObject):
         return handled
 
     def process_pointer_pinch(
-        self, modmask: int, shrink: bool | None, clockwise: bool | None
+        self, modmask: int, shrink: bool, clockwise: bool, fingers: int
     ) -> bool:
         handled = False
 
@@ -1011,7 +1013,9 @@ class Qtile(CommandObject):
                 continue
             if g._shrink is not None and g._shrink != shrink:
                 continue
-            if g._clockwise and g._clockwise != clockwise:
+            if g._clockwise is not None and g._clockwise != clockwise:
+                continue
+            if g._fingers is not None and g._fingers != fingers:
                 continue
 
             for i in g.commands:
