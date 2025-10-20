@@ -10,6 +10,10 @@ objects, which define what to do when a pointer gesture is detected.
 is detected. :class:`~libqtile.config.Pinch` gestures trigger commands when a pinching and/or rotating movement
 is detected.
 
+All gestures have a ``.fingers()`` method for finer control (e.g. you can specify a ``Swipe`` must have 4 fingers).
+However, please note that you may find the server cannot always correctly identify the number of fingers, particularly
+on a small touchpad. By default, finger count is therefore ignored.
+
 Example
 =======
 

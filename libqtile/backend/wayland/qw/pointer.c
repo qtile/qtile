@@ -15,9 +15,10 @@ static uint32_t qw_pointer_get_keyboard_modifiers(struct qw_server *server) {
 }
 
 static void qw_pointer_handle_swipe_begin(struct wl_listener *listener, void *data) {
-    UNUSED(data);
     struct qw_pointer *pointer = wl_container_of(listener, pointer, swipe_begin);
+    struct wlr_pointer_swipe_begin_event *event = data;
     pointer->swipe_sequence = calloc(1, sizeof(struct qw_swipe_sequence));
+    pointer->swipe_sequence->fingers = event->fingers;
 }
 
 static void qw_pointer_handle_swipe_update(struct wl_listener *listener, void *data) {
@@ -58,7 +59,8 @@ static void qw_pointer_handle_swipe_end(struct wl_listener *listener, void *data
 
     if (swipe_sequence->length > 0) {
         uint32_t mask = qw_pointer_get_keyboard_modifiers(server);
-        server->pointer_swipe_cb(mask, swipe_sequence->sequence, server->cb_data);
+        server->pointer_swipe_cb(mask, swipe_sequence->sequence, swipe_sequence->fingers,
+                                 server->cb_data);
     }
 
     free(swipe_sequence);
@@ -66,11 +68,12 @@ static void qw_pointer_handle_swipe_end(struct wl_listener *listener, void *data
 }
 
 static void qw_pointer_handle_pinch_begin(struct wl_listener *listener, void *data) {
-    UNUSED(data);
     struct qw_pointer *pointer = wl_container_of(listener, pointer, pinch_begin);
+    struct wlr_pointer_pinch_begin_event *event = data;
     pointer->pinch = calloc(1, sizeof(struct qw_pinch));
     pointer->pinch->rotation = 0;
     pointer->pinch->scale = 1;
+    pointer->pinch->fingers = event->fingers;
 }
 
 static void qw_pointer_handle_pinch_update(struct wl_listener *listener, void *data) {
@@ -99,7 +102,7 @@ static void qw_pointer_handle_pinch_end(struct wl_listener *listener, void *data
     uint32_t mask = qw_pointer_get_keyboard_modifiers(server);
     bool shrink = (pinch->scale < 1);
     bool clockwise = (pinch->rotation > 0);
-    server->pointer_pinch_cb(mask, shrink, clockwise, server->cb_data);
+    server->pointer_pinch_cb(mask, shrink, clockwise, pinch->fingers, server->cb_data);
 
     free(pinch);
     pointer->pinch = NULL;
