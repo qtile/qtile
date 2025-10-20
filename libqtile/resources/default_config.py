@@ -168,7 +168,7 @@ mouse = [
 gestures: list[Swipe | Pinch] = [
     # Swipe([], "L", lazy.screen.prev_group()),
     # Swipe([], "R", lazy.screen.next_group()),
-    # Pinch([mod], lazy.screen.next_group()).shrink(),
+    # Pinch([], lazy.screen.next_group()).shrink(),
     # Pinch([mod], lazy.screen.prev_group()).grow(),
 ]
 

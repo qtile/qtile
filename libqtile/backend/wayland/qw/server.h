@@ -106,13 +106,13 @@ struct wlr_output;
 typedef void (*output_dims_cb_t)(int x, int y, int width, int height,
                                  struct wlr_output *wlr_output);
 
-// Pointer swipe event callback: modifiers, swipe sequence, fingers, user data
+// Pointer swipe event callback: modifiers, swipe sequence, fingers, check_only, user data
 typedef int (*pointer_swipe_cb_t)(uint32_t mask, const char *sequence, uint32_t fingers,
-                                  void *userdata);
+                                  bool check_only, void *userdata);
 
-// Pointer swipe event callback: modifiers, shrink, clockwise, fingers, user data
+// Pointer swipe event callback: modifiers, shrink, clockwise, fingers, check_only, user data
 typedef int (*pointer_pinch_cb_t)(uint32_t mask, bool shrink, bool clockwise, uint32_t fingers,
-                                  void *userdata);
+                                  bool check_only, void *userdata);
 
 // Query tree node wid callback
 typedef void (*node_wid_cb_t)(int wid);
