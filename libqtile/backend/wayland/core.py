@@ -124,20 +124,22 @@ def cursor_button_cb(
 
 
 @ffi.def_extern()
-def pointer_swipe_cb(mask: int, sequence: ffi.CData, fingers: int, userdata: ffi.CData) -> int:
+def pointer_swipe_cb(
+    mask: int, sequence: ffi.CData, fingers: int, check_only: bool, userdata: ffi.CData
+) -> int:
     core = ffi.from_handle(userdata)
     gesture = ffi.string(sequence).decode()
-    if core.handle_pointer_swipe(mask, gesture, fingers):
+    if core.handle_pointer_swipe(mask, gesture, fingers, check_only):
         return 1
     return 0
 
 
 @ffi.def_extern()
 def pointer_pinch_cb(
-    mask: int, shrink: bool, clockwise: bool, fingers: int, userdata: ffi.CData
+    mask: int, shrink: bool, clockwise: bool, fingers: int, check_only: bool, userdata: ffi.CData
 ) -> int:
     core = ffi.from_handle(userdata)
-    if core.handle_pointer_pinch(mask, shrink, clockwise, fingers):
+    if core.handle_pointer_pinch(mask, shrink, clockwise, fingers, check_only):
         return 1
     return 0
 
@@ -364,15 +366,18 @@ class Core(base.Core):
         else:
             return self.qtile.process_button_release(button, mask)
 
-    def handle_pointer_swipe(self, mask: int, sequence: str, fingers: int) -> bool:
-        assert self.qtile is not None
-        return self.qtile.process_pointer_swipe(mask, sequence, fingers)
-
-    def handle_pointer_pinch(
-        self, mask: int, shrink: bool, clockwise: bool, fingers: int
+    def handle_pointer_swipe(
+        self, mask: int, sequence: str, fingers: int, check_only: bool = False
     ) -> bool:
         assert self.qtile is not None
-        return self.qtile.process_pointer_pinch(mask, shrink, clockwise, fingers)
+        return self.qtile.process_pointer_swipe(mask, sequence, fingers, check_only)
+
+    def handle_pointer_pinch(
+        self, mask: int, shrink: bool, clockwise: bool, fingers: int, check_only: bool = False
+    ) -> bool:
+        assert self.qtile is not None
+        val = self.qtile.process_pointer_pinch(mask, shrink, clockwise, fingers, check_only)
+        return val
 
     def handle_manage_view(self, view: ffi.CData) -> None:
         wid = self.new_wid()
