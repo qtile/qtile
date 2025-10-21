@@ -3,6 +3,7 @@
  * see: https://wayland.app/protocols/ext-session-lock-v1
  */
 #include "session-lock.h"
+#include "cursor.h"
 #include "output.h"
 #include "server.h"
 #include "util.h"
@@ -220,6 +221,8 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
         wlr_session_lock_v1_destroy(session_lock);
         return;
     }
+
+    qw_cursor_release_implicit_grab(server->cursor, 0);
 
     // Enable the LOCK layer to show blanking rects
     wlr_scene_node_set_enabled(&server->scene_windows_layers[LAYER_LOCK]->node, true);
