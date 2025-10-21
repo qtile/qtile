@@ -553,8 +553,6 @@ class Core(base.Core):
 
     def grab_button(self, mouse: config.Mouse) -> int:
         mask = translate_masks(mouse.modifiers)
-        # logger.warning(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        # logger.warning(mask)
         lib.qw_server_grab_button(self.qw, mouse.button_code, mask)
         return mask
 

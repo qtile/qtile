@@ -47,7 +47,7 @@ void qw_server_poll(struct qw_server *server) {
 // Cleanup routine to destroy the compositor and free resources.
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
-    wl_array_release(&server->grab_buttons);
+    wl_array_release(&server->mouse_map);
     wl_list_remove(&server->new_input.link);
     wl_list_remove(&server->new_output.link);
     wl_list_remove(&server->output_layout_change.link);
@@ -731,9 +731,7 @@ struct qw_server *qw_server_create() {
     wlr_scene_set_gamma_control_manager_v1(server->scene,
                                            wlr_gamma_control_manager_v1_create(server->display));
 
-    wl_array_init(&server->grab_buttons);
-    // server->grab_buttons = malloc(sizeof(*server->grab_buttons) + 4 * sizeof(struct
-    // mouse_button)); server->grab_buttons->count = 0; server->grab_buttons->capacity = 4;
+    wl_array_init(&server->mouse_map);
 
     // TODO: power manager
     // TODO: setup listeners
@@ -873,12 +871,12 @@ void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb)
 
 void qw_server_grab_button(struct qw_server *server, int button_code, int modmask) {
     struct mouse_button *button;
-    button = wl_array_add(&server->grab_buttons, sizeof(*button));
+    button = wl_array_add(&server->mouse_map, sizeof(*button));
     button->button_code = button_code;
     button->modmask = modmask;
 }
 
 void qw_server_ungrab_buttons(struct qw_server *server) {
-    wl_array_release(&server->grab_buttons);
-    wl_array_init(&server->grab_buttons);
+    wl_array_release(&server->mouse_map);
+    wl_array_init(&server->mouse_map);
 }

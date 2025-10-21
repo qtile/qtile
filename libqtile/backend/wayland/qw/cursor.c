@@ -159,7 +159,7 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button_code, 
 
     // Check for matching grab button binding
     struct mouse_button *button;
-    wl_array_for_each(button, &cursor->server->grab_buttons) {
+    wl_array_for_each(button, &cursor->server->mouse_map) {
         if (button->button_code == button_code && button->modmask == modifiers) {
             wlr_log(WLR_DEBUG, "cursor button callback required: binding");
             goto invoke_callback;

@@ -213,7 +213,7 @@ struct qw_server {
 #endif
     struct wl_listener request_activate;
     struct wl_listener new_token;
-    struct wl_array grab_buttons;
+    struct wl_array mouse_map;
 };
 
 struct qw_drag_icon {
