@@ -41,6 +41,7 @@
 #include <wlr/types/wlr_session_lock_v1.h>
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
+#include <wlr/types/wlr_touch.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include <wlr/types/wlr_virtual_pointer_v1.h>
@@ -245,6 +246,7 @@ struct qw_server {
     struct wl_list keyboards;
     struct wl_list input_devices;
     struct wl_list pointers;
+    struct wl_list touches;
     struct wlr_seat *seat;
     struct qw_cursor *cursor;
     struct wlr_pointer_gestures_v1 *pointer_gestures;
