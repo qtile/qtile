@@ -38,9 +38,6 @@ let
       src = ./..; # use the source of the git repo
     }
     // {
-      propagatedBuildInputs =
-        (qtile-prev.propagatedBuildInputs or [ ]) ++ (with pkgs.python3Packages; [ aiohttp ]);
-
       env = build-config.resolved-env-vars;
 
       propagatedBuildInputs =
@@ -49,6 +46,7 @@ let
           wayland-protocols
           python3Packages.cffi
           python3Packages.xcffib
+          python3Packages.aiohttp
         ])
         ++ (lib.filter removeOldDeps qtile-prev.propagatedBuildInputs);
 
