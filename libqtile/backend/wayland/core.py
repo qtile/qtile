@@ -254,6 +254,10 @@ class Core(base.Core):
         self.painter = Painter(self)
         self._locked = False
 
+    def clear_focus(self) -> None:
+        """Clear TODO so that there is no focused window"""
+        # TODO
+
     def new_wid(self) -> int:
         """Get a new unique window ID"""
         assert self.qtile is not None
