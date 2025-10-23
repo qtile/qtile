@@ -1,6 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     !!! Breaking changes !!!
-    - Switched to new Wayland backend (WayC)
+    - The Wayland backend has been completely rewritten in C.
       The old backend based on `pywlroots` has been removed.
       Wayland-related dependencies have changed:
         - Removed: pywlroots, pywayland, xkbcommon
