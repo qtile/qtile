@@ -701,10 +701,13 @@ class _TextBox(_Widget):
         font: str | None = None,
         fontsize: int = 0,
         fontshadow: ColorType = "",
+        foreground: ColorType = "",
+        markup: bool | None = None,
     ):
         """
-        Change the font used by this widget. If font is None, the current
-        font is used.
+        Change the text layout properties and redraw the widget.
+        This method may also be used sync attributes from the current
+        widget with the text layout.
         """
         if font is not None:
             self.font = font
@@ -712,10 +715,17 @@ class _TextBox(_Widget):
             self.fontsize = fontsize
         if fontshadow != "":
             self.fontshadow = fontshadow
+        if foreground != "":
+            self.foreground = foreground
+        if markup is not None:
+            self.markup = markup
+        # Sync text layout properties
         if self.layout:
             self.layout.font_family = self.font
             self.layout.font_size = self.fontsize
             self.layout.font_shadow = self.fontshadow
+            self.layout.colour = self.foreground
+            self.layout.markup = self.markup
         self.bar.draw()
 
     @expose_command()
