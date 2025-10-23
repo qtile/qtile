@@ -211,24 +211,46 @@ Text is displayed by using a ``drawer.TextLayout`` object. If all you are doing 
 displaying text then it's highly recommended that you use the ``base._TextBox``
 superclass as this simplifies adding and updating text.
 
-If you wish to implement this manually then you can create a your own ``drawer.TextLayout``
-by using the ``self.drawer.textlayout`` method of the widget (only available after
-the `_configure` method has been run). object to include in your widget.
+If you wish to implement this manually, you can create your own ``drawer.TextLayout``
+by calling the ``self.drawer.textlayout`` method of the widget (only available after
+the `_configure` method has been run).
 
 Some additional formatting of Text can be displayed using pango markup and ensuring
 the ``markup`` parameter is set to ``True``.
 
 .. code:: python
 
-    self.textlayout = self.drawer.textlayout(
-                         "Text",
-                         "fffff",       # Font colour
-                         "sans",        # Font family
-                         12,            # Font size
-                         None,          # Font shadow
-                         markup=False,  # Pango markup (False by default)
-                         wrap=True      # Wrap long lines (True by default)
-                         )
+    self.layout = self.drawer.textlayout(
+        "Text",
+        "ffffff",      # Font colour
+        "sans",        # Font family
+        12,            # Font size
+        None,          # Font shadow
+        markup=False,  # Pango markup (False by default)
+        wrap=True,     # Wrap long lines (True by default)
+    )
+
+.. note::
+
+    In ``base._TextBox`` inherited widgets, after `_configure` has been run,
+    modifications to the widget's ``font``, ``fontsize``, ``fontshadow``,
+    ``foreground`` and ``markup`` parameters will not be automatically applied
+    to the text layout. You will need to modify these values directly on the
+    ``self.layout.*`` attributes. Since these attributes have different names
+    to the widget parameters, you may use the `set_font` method, available in
+    these widgets, to update the text layout attributes with the advantage of
+    using the same parameter names as with the widget parameters:
+
+    .. code:: python
+
+        # All parameters are optional
+        self.set_font(
+            font="mono",
+            fontsize=14,
+            fontshadow="000000",
+            foreground="ff0000",
+            markup=True
+        )
 
 Displaying icons and images
 ---------------------------
