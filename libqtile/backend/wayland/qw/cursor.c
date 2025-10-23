@@ -246,19 +246,41 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, axis);
     struct wlr_pointer_axis_event *event = data;
 
+    static double displacement = 0;
+    static const uint32_t DISPLACEMENT_PER_STEP = 15; // could be configurable
     bool handled = false;
     // TODO: exclusive client
 
-    if (event->delta != 0 && !cursor->implicit_grab.live) {
-        // Convert scroll delta to synthetic button events for handling
-        uint32_t button = 0;
-        if (event->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL) {
-            button = (0 < event->delta) ? BUTTON_SCROLL_DOWN : BUTTON_SCROLL_UP;
-        } else {
-            button = (0 < event->delta) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
+    // Determine which button this corresponds to
+    uint32_t button = 0;
+    if (event->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL) {
+        button = (event->delta > 0) ? BUTTON_SCROLL_DOWN : BUTTON_SCROLL_UP;
+    } else if (event->orientation == WL_POINTER_AXIS_HORIZONTAL_SCROLL) {
+        button = (event->delta > 0) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
+    }
+
+    uint32_t button_mapped = qw_util_get_button_code(button);
+
+    if (!cursor->implicit_grab.live) {
+        // If it's a physical wheel fire callback immediately if there is a discrete delta
+        if (event->source == WL_POINTER_AXIS_SOURCE_WHEEL && event->delta_discrete != 0) {
+            handled = qw_cursor_process_button(cursor, button_mapped, true);
+            // for anything else, we're using rate limiting
+        } else if (event->source != WL_POINTER_AXIS_SOURCE_WHEEL) {
+            // Touchpad or smooth scroll: integrate displacement
+            displacement += event->delta;
+            wlr_log(WLR_ERROR, "scroll displacement: %f", displacement);
+
+            double abs_displacement = fabs(displacement);
+            if (abs_displacement >= DISPLACEMENT_PER_STEP) {
+                int steps = (int)(abs_displacement / DISPLACEMENT_PER_STEP);
+                displacement = fmod(displacement, DISPLACEMENT_PER_STEP);
+                wlr_log(WLR_ERROR, "steps: %i", steps);
+                for (int step = 0; step < steps; step++) {
+                    handled = qw_cursor_process_button(cursor, button_mapped, true);
+                }
+            }
         }
-        uint32_t button_mapped = qw_util_get_button_code(button);
-        handled = qw_cursor_process_button(cursor, button_mapped, true);
     }
 
     if (!handled) {
