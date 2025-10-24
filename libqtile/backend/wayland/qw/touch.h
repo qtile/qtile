@@ -9,6 +9,13 @@ static const double PINCH_THRESHOLD = 0.05;
 static const double ROTATE_THRESHOLD = (M_PI / 12.0);
 static const double SWIPE_MIN_DISTANCE = 0.05;
 
+enum qw_swipe_dir {
+    QW_SWIPE_LEFT,
+    QW_SWIPE_RIGHT,
+    QW_SWIPE_UP,
+    QW_SWIPE_DOWN,
+};
+
 struct qw_touch_point {
     int32_t id;
     double x, y;
@@ -36,6 +43,8 @@ struct qw_touch {
     // Private data
     struct wlr_touch *wtouch;
     struct wlr_input_device *device;
+    struct wlr_surface *touched_surface;
+    double origin_sx, origin_sy;
 
     struct wl_listener down;
     struct wl_listener up;
