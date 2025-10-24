@@ -77,9 +77,6 @@ widgets = [
     "xmltodict",
     "aiohttp",
 ]
-wayland = [
-    "xkbcommon >= 0.3",
-]
 docs = [
     "funcparserlib==1.0.0a0",
     "numpydoc",

@@ -104,7 +104,6 @@ Or with sets of dependencies:
 
 .. code-block:: bash
 
-   uv tool install qtile[wayland]  # for Wayland dependencies
    uv tool install qtile[widgets]  # for all widget dependencies
    uv tool install qtile[all]      # for all dependencies
 
@@ -115,7 +114,6 @@ Or install qtile-git with:
     git clone https://github.com/qtile/qtile.git
     cd qtile
     uv tool install .
-    uv tool install --reinstall .[wayland]  # reinstall with wayland deps
 
 .. _starting-qtile:
 
