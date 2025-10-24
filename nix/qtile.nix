@@ -1,4 +1,7 @@
-{ pkgs, self }:
+{
+  pkgs,
+  self,
+}:
 let
   inherit (pkgs) lib;
 
@@ -17,7 +20,7 @@ let
         head
       ];
     in
-    "${symver}+${flakever}.wayc.flake";
+    "${symver}+${flakever}.flake";
 
   removeOldDeps =
     dep:
