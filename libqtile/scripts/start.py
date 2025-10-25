@@ -15,6 +15,9 @@ if TYPE_CHECKING:
     from libqtile.core.manager import Qtile
 
 
+LIBQTILE_PATH = Path(__file__).parent.parent
+
+
 def rename_process():
     """
     Try to rename the qtile process if py-setproctitle is installed:
@@ -30,6 +33,11 @@ def rename_process():
         setproctitle.setproctitle("qtile")
     except ImportError:
         pass
+
+
+def get_default_config():
+    config = LIBQTILE_PATH / "resources" / "default_config.py"
+    return config.resolve().as_posix()
 
 
 def make_qtile(options) -> Qtile | None:
@@ -77,7 +85,7 @@ def start(options):
     except locale.Error:
         pass
 
-    libpath = (Path(__file__).parent / ".." / "..").resolve()
+    libpath = (LIBQTILE_PATH / "..").resolve()
     logger.warning(f"Starting Qtile {VERSION} from {libpath}")
     rename_process()
     q = make_qtile(options)
@@ -95,13 +103,22 @@ def start(options):
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser("start", parents=parents, help="Start a Qtile session.")
-    parser.add_argument(
+    configs = parser.add_mutually_exclusive_group()
+    configs.add_argument(
         "-c",
         "--config",
         action="store",
         default=get_config_file(),
         dest="configfile",
         help="Use the specified configuration file.",
+    )
+    configs.add_argument(
+        "-d",
+        "--use-default-config",
+        action="store_const",
+        const=get_default_config(),
+        dest="configfile",
+        help="Use qtile's default configuration file.",
     )
     parser.add_argument(
         "-s",
