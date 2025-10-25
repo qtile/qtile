@@ -398,6 +398,26 @@ static const char *qw_xwayland_view_get_window_type(void *self) {
     return "normal";
 }
 
+// Retrieve the WID of the parent window (return 0 if none)
+static int qw_xwayland_get_parent(void *self) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    if (xwayland_view == NULL || xwayland_view->xwayland_surface == NULL) {
+        return 0;
+    }
+
+    struct wlr_xwayland_surface *parent_surface = xwayland_view->xwayland_surface->parent;
+    if (parent_surface == NULL) {
+        return 0;
+    }
+
+    struct qw_xwayland_view *parent_view = parent_surface->data;
+    if (parent_view == NULL) {
+        return 0;
+    }
+
+    return parent_view->base.wid;
+}
+
 // Handle commit event: called when XWayland surface commits state changes
 static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -821,6 +841,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
     xwayland_view->base.get_wm_type = qw_xwayland_view_get_window_type;
+    xwayland_view->base.get_parent = qw_xwayland_get_parent;
     xwayland_view->base.has_fixed_size = qw_xwayland_view_has_fixed_size;
     xwayland_view->base.update_minimized = qw_xwayland_view_update_minimized;
     xwayland_view->base.update_maximized = qw_xwayland_view_update_maximized;

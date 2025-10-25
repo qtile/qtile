@@ -243,6 +243,18 @@ static const char *qw_xdg_view_get_window_type(void *self) {
     return "normal";
 }
 
+// Retrieve the WID of the parent window (return 0 if none)
+static int qw_xdg_view_get_parent(void *self) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+
+    if (xdg_view->xdg_toplevel->parent == NULL) {
+        return 0;
+    }
+
+    struct qw_xdg_view *parent_view = xdg_view->xdg_toplevel->parent->base->data;
+    return parent_view->base.wid;
+}
+
 // Handle a request from the client to maximize the window
 static void qw_xdg_view_handle_request_maximize(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -627,6 +639,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->base.focus = qw_xdg_view_focus;
     xdg_view->base.get_pid = qw_xdg_view_get_pid;
     xdg_view->base.get_wm_type = qw_xdg_view_get_window_type;
+    xdg_view->base.get_parent = qw_xdg_view_get_parent;
     xdg_view->base.kill = qw_xdg_view_kill;
     xdg_view->base.hide = qw_xdg_view_hide;
     xdg_view->base.unhide = qw_xdg_view_unhide;
