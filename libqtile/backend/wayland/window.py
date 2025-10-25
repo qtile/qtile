@@ -5,6 +5,7 @@ import typing
 import libqtile.backend.base.window as base
 from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
+from libqtile.backend.base.window import WindowType
 from libqtile.backend.wayland.drawer import Drawer
 from libqtile.command.base import CommandError, expose_command
 from libqtile.core.manager import Qtile
@@ -592,6 +593,10 @@ class Window(Base, base.Window):
 
     def get_wm_type(self) -> str:
         return ffi.string(self._ptr.get_wm_type(self._ptr)).decode()
+
+    def is_transient_for(self) -> WindowType | None:
+        wid = int(self._ptr.get_parent(self._ptr))
+        return self.qtile.windows_map.get(wid, None)
 
     def get_new_layer(self, state: FloatStates) -> int:
         if self.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
