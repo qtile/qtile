@@ -422,7 +422,11 @@ static void qw_server_handle_new_layer_surface(struct wl_listener *listener, voi
 static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_xwayland_surface);
     struct wlr_xwayland_surface *xwayland_surface = data;
-    qw_server_xwayland_view_new(server, xwayland_surface);
+    if (xwayland_surface->override_redirect) {
+        qw_server_xwayland_static_view_new(server, xwayland_surface);
+    } else {
+        qw_server_xwayland_view_new(server, xwayland_surface);
+    }
 }
 
 const char *qw_server_xwayland_display_name(struct qw_server *server) {
