@@ -49,7 +49,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from libqtile import hook, log_utils
+from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.window import Internal, Static, Window
@@ -92,19 +92,16 @@ def translate_masks(modifiers: list[str]) -> int:
         return 0
 
 
-qw_logger = logging.getLogger("qw")
-
-
 @ffi.def_extern()
 def log_cb(importance: int, formatted_str: ffi.CData) -> None:
     """Callback that logs the string at the given level"""
     log_str = ffi.string(formatted_str).decode()
     if importance == lib.WLR_ERROR:
-        qw_logger.error(log_str)
+        logger.error(log_str)
     elif importance == lib.WLR_INFO:
-        qw_logger.info(log_str)
+        logger.info(log_str)
     elif importance == lib.WLR_DEBUG:
-        qw_logger.debug(log_str)
+        logger.debug(log_str)
 
 
 @ffi.def_extern()
@@ -199,7 +196,6 @@ class Core(base.Core):
         self.focused_internal: base.Internal | None = None
 
         """Setup the Wayland core backend"""
-        log_utils.init_log(logger.level, log_path=log_utils.get_default_log(), logger=qw_logger)
         lib.qw_log_init(get_wlr_log_level(), lib.log_cb)
         self.qw = lib.qw_server_create()
         if not self.qw:
