@@ -25,6 +25,8 @@ struct qw_xwayland_view {
     struct wl_listener request_fullscreen;
     struct wl_listener request_activate;
     struct wl_listener request_close;
+    struct wl_listener request_above;
+    struct wl_listener request_below;
     struct wl_listener set_title;
     struct wl_listener set_class;
     struct wl_listener set_hints;
