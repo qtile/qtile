@@ -105,6 +105,7 @@ struct qw_view {
     void (*hide)(void *self);
     void (*unhide)(void *self);
     int (*get_pid)(void *self);
+    const char *(*get_wm_type)(void *self);
     bool (*has_fixed_size)(void *self);
 
     // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
