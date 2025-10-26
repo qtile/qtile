@@ -135,6 +135,14 @@ class Base(base._Window):
     def height(self, height: int) -> None:
         self._ptr.height = height
 
+    @property
+    def urgent(self) -> bool:
+        return self._ptr.urgent
+
+    @urgent.setter
+    def urgent(self, urgent: bool) -> None:
+        self._ptr.urgent = urgent
+
     @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
@@ -261,6 +269,9 @@ class Base(base._Window):
 
         # TODO
         # Call core.warp_pointer() previously here
+
+        if self.urgent:
+            self.urgent = False
 
         if self.group and self.group.current_window is not self:
             self.group.focus(self)
@@ -485,6 +496,7 @@ class Window(Base, base.Window):
             self._wid,
         )
 
+    @expose_command()
     def togroup(
         self, group_name: str | None = None, switch_group: bool = False, toggle: bool = False
     ) -> None:
@@ -850,7 +862,6 @@ class Static(Base, base.Static):
         self.y = 0
         self._width = 0
         self._height = 0
-        self._urgent = False
         # TODO: opacity, idle_inhibitors, ftm
 
         self._userdata = ffi.new_handle(self)

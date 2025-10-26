@@ -467,13 +467,7 @@ class Core(base.Core):
         win = self.qtile.windows_map.get(wid)
 
         if win:
-            # Mark window as urgent in Qtile
-            # TODO: Fix the following line, probably supposed to be: win._urgent
-            # win.urgent = True
-            hook.fire("client_urgent_hint_changed", win)
-
-            if self.qtile.config.focus_on_window_activation == "smart":
-                win.focus(False)
+            win.handle_window_activation()
 
     def finalize(self) -> None:
         lib.qw_server_finalize(self.qw)
