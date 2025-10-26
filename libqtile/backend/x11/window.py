@@ -5,7 +5,6 @@ import contextlib
 import inspect
 import traceback
 from itertools import islice
-from types import FunctionType
 from typing import TYPE_CHECKING
 
 import xcffib
@@ -2148,53 +2147,7 @@ class Window(_Window, base.Window):
                 self.group.focus(self)
                 self.bring_to_front()
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
-                focus_behavior = self.qtile.config.focus_on_window_activation
-                if (
-                    focus_behavior == "focus"
-                    or type(focus_behavior) is FunctionType
-                    and focus_behavior(self)
-                ):
-                    logger.debug("Focusing window")
-                    # Windows belonging to a scratchpad need to be toggled properly
-                    if isinstance(self.group, ScratchPad):
-                        for dropdown in self.group.dropdowns.values():
-                            if dropdown.window is self:
-                                dropdown.show()
-                                break
-                    else:
-                        self.qtile.current_screen.set_group(self.group)
-                        self.group.focus(self)
-                elif focus_behavior == "smart":
-                    if not self.group.screen:
-                        logger.debug(
-                            "Ignoring focus request (focus_on_window_activation='smart')"
-                        )
-                        return
-                    if self.group.screen == self.qtile.current_screen:
-                        logger.debug("Focusing window")
-                        # Windows belonging to a scratchpad need to be toggled properly
-                        if isinstance(self.group, ScratchPad):
-                            for dropdown in self.group.dropdowns.values():
-                                if dropdown.window is self:
-                                    dropdown.show()
-                                    break
-                        else:
-                            self.qtile.current_screen.set_group(self.group)
-                            self.group.focus(self)
-                    else:  # self.group.screen != self.qtile.current_screen:
-                        logger.debug("Setting urgent flag for window")
-                        self.urgent = True
-                        hook.fire("client_urgent_hint_changed", self)
-                elif focus_behavior == "urgent":
-                    logger.debug("Setting urgent flag for window")
-                    self.urgent = True
-                    hook.fire("client_urgent_hint_changed", self)
-                elif focus_behavior == "never":
-                    logger.debug("Ignoring focus request (focus_on_window_activation='never')")
-                else:
-                    logger.debug(
-                        "Invalid value for focus_on_window_activation: %s", focus_behavior
-                    )
+                self.handle_window_activation()
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()
         elif atoms["WM_CHANGE_STATE"] == opcode:

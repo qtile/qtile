@@ -502,7 +502,6 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
         return;
     }
 
-    // Mark as urgent if not focused
     struct wlr_surface *focused = server->seat->keyboard_state.focused_surface;
 
     if (focused == NULL) {
@@ -513,9 +512,6 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
         wlr_log(WLR_INFO, "Activation token invalid for surface");
         return;
     }
-
-    view->is_urgent = true;
-    wlr_log(WLR_INFO, "View marked urgent: %p", view);
 
     if (server->view_urgent_cb != NULL) {
         server->view_urgent_cb((struct qw_view *)view, server->view_urgent_cb_data);
