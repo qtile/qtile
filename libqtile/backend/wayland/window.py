@@ -590,6 +590,9 @@ class Window(Base, base.Window):
     def get_pid(self) -> int:
         return int(self._ptr.get_pid(self._ptr))
 
+    def get_wm_type(self) -> str:
+        return ffi.string(self._ptr.get_wm_type(self._ptr)).decode()
+
     def get_new_layer(self, state: FloatStates) -> int:
         if self.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
             return lib.LAYER_KEEPABOVE
