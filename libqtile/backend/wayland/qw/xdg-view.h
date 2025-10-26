@@ -43,7 +43,6 @@ struct qw_xdg_view {
     struct wl_listener decoration_destroy;
     struct wlr_xdg_toplevel_decoration_v1 *decoration;
 
-    bool is_urgent;
     bool mapped; // Is the view currently mapped (visible)?
 };
 

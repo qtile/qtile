@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-import enum
 import typing
 from abc import ABCMeta, abstractmethod
+from types import FunctionType
 
+from libqtile import hook
 from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile.log_utils import logger
+from libqtile.scratchpad import ScratchPad
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -15,16 +18,6 @@ if typing.TYPE_CHECKING:
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
     from libqtile.utils import ColorsType
-
-
-@enum.unique
-class FloatStates(enum.Enum):
-    NOT_FLOATING = 1
-    FLOATING = 2
-    MAXIMIZED = 3
-    FULLSCREEN = 4
-    TOP = 5
-    MINIMIZED = 6
 
 
 class _Window(CommandObject, metaclass=ABCMeta):
@@ -96,9 +89,13 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return False
 
     @property
-    def urgent(self):
+    def urgent(self) -> bool:
         """Whether this window urgently wants focus"""
         return False
+
+    @urgent.setter
+    def urgent(self, urgent: bool) -> None:
+        raise NotImplementedError
 
     @property
     def opacity(self) -> float:
@@ -421,10 +418,7 @@ class Window(_Window, metaclass=ABCMeta):
     @abstractmethod
     @expose_command()
     def togroup(
-        self,
-        group_name: str | None = None,
-        switch_group: bool = False,
-        toggle: bool = False,
+        self, group_name: str | None = None, switch_group: bool = False, toggle: bool = False
     ) -> None:
         """Move window to a specified group
 
@@ -536,6 +530,48 @@ class Window(_Window, metaclass=ABCMeta):
             above=True,
             respect_hints=True,
         )
+
+    def handle_window_activation(self):
+        focus_behavior = self.qtile.config.focus_on_window_activation
+        if (
+            focus_behavior == "focus"
+            or type(focus_behavior) is FunctionType
+            and focus_behavior(self)
+        ):
+            logger.debug("Focusing window (focus_on_window_activation='focus')")
+            # Windows belonging to a scratchpad need to be toggled properly
+            if isinstance(self.group, ScratchPad):
+                for dropdown in self.group.dropdowns.values():
+                    if dropdown.window is self:
+                        dropdown.show()
+                        break
+            else:
+                self.qtile.current_screen.set_group(self.group)
+                self.group.focus(self)
+        elif focus_behavior == "smart":
+            if self.group.screen == self.qtile.current_screen:
+                logger.debug("Focusing window (focus_on_window_activation='smart')")
+                # Windows belonging to a scratchpad need to be toggled properly
+                if isinstance(self.group, ScratchPad):
+                    for dropdown in self.group.dropdowns.values():
+                        if dropdown.window is self:
+                            dropdown.show()
+                            break
+                else:
+                    self.qtile.current_screen.set_group(self.group)
+                    self.group.focus(self)
+            else:
+                logger.debug("Setting urgent window (focus_on_window_activation='smart')")
+                self.urgent = True
+                hook.fire("client_urgent_hint_changed", self)
+        elif focus_behavior == "urgent":
+            logger.debug("Setting urgent window (focus_on_window_activation='urgent')")
+            self.urgent = True
+            hook.fire("client_urgent_hint_changed", self)
+        elif focus_behavior == "never":
+            logger.debug("Ignoring focus request (focus_on_window_activation='never')")
+        else:
+            logger.debug("Invalid value for focus_on_window_activation: %s", focus_behavior)
 
 
 class Internal(_Window, metaclass=ABCMeta):

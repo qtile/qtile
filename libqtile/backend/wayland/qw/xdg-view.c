@@ -63,8 +63,6 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
-
-    xdg_view->is_urgent = false;
 }
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
@@ -226,9 +224,6 @@ void qw_xdg_view_focus(void *self, int above) {
         return; // Can't focus if not mapped
     }
     qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
-    if (xdg_view->is_urgent) {
-        xdg_view->is_urgent = false;
-    }
 }
 
 // Retrieve the PID of the client owning this xdg_view

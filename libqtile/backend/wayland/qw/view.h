@@ -81,6 +81,7 @@ struct qw_view {
     int wid;     // Window identifier (e.g. X11 window id or similar)
     char *title;
     char *app_id;
+    bool urgent;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
     struct wlr_foreign_toplevel_handle_v1 *ftl_handle;
 
