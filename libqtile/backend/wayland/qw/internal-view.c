@@ -135,6 +135,7 @@ struct qw_internal_view *qw_server_internal_view_new(struct qw_server *server, i
         .border_count = 0,
         .state = NOT_FLOATING,
         .wid = -1, // Window ID, to be set by compositor
+        .skip_taskbar = true,
         .content_tree = wlr_scene_tree_create(&server->scene->tree),
         .get_tree_node = qw_internal_view_get_tree_node,
         .place = qw_internal_view_place,
