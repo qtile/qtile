@@ -43,6 +43,7 @@ struct qw_server;
 
 enum qw_view_type {
     QW_VIEW_XDG,
+    QW_VIEW_XDG_POPUP,
     QW_VIEW_XWAYLAND,
     QW_VIEW_INTERNAL,
 };

@@ -235,7 +235,11 @@ static int qw_xdg_view_get_pid(void *self) {
 }
 
 static const char *qw_xdg_view_get_window_type(void *self) {
-    UNUSED(self);
+    struct qw_view *view = (struct qw_view *)self;
+    if (view->view_type == QW_VIEW_XDG_POPUP) {
+        return "dialog";
+    }
+
     return "normal";
 }
 
@@ -543,6 +547,7 @@ static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_po
 
     popup->wlr_popup = wlr_popup;
     popup->xdg_view = xdg_view;
+    popup->base.view_type = QW_VIEW_XDG_POPUP;
 
     popup->scene_tree = wlr_scene_tree_create(parent);
     if (popup->scene_tree == NULL) {
