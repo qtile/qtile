@@ -44,8 +44,30 @@
 #include <xkbcommon/xkbcommon.h>
 #if WLR_HAS_XWAYLAND
 #include <wlr/xwayland/xwayland.h>
+#include <xcb/xcb.h>
 #endif
 #include "layer-view.h"
+
+#if WLR_HAS_XWAYLAND
+// _NET_WM_WINDOW_TYPE atoms
+enum {
+    NET_WM_WINDOW_TYPE_DIALOG,
+    NET_WM_WINDOW_TYPE_UTILITY,
+    NET_WM_WINDOW_TYPE_TOOLBAR,
+    NET_WM_WINDOW_TYPE_MENU,
+    NET_WM_WINDOW_TYPE_SPLASH,
+    NET_WM_WINDOW_TYPE_DOCK,
+    NET_WM_WINDOW_TYPE_TOOLTIP,
+    NET_WM_WINDOW_TYPE_NOTIFICATION,
+    NET_WM_WINDOW_TYPE_DESKTOP,
+    NET_WM_WINDOW_TYPE_DROPDOWN_MENU,
+    NET_WM_WINDOW_TYPE_POPUP_MENU,
+    NET_WM_WINDOW_TYPE_COMBO,
+    NET_WM_WINDOW_TYPE_DND,
+    NET_WM_WINDOW_TYPE_NORMAL,
+    ATOM_LAST,
+};
+#endif
 
 // Callback typedefs for input and view events
 
@@ -205,6 +227,7 @@ struct qw_server {
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener new_xwayland_surface;
+    xcb_atom_t xwayland_atoms[ATOM_LAST];
 #endif
     struct wl_listener request_activate;
     struct wl_listener new_token;

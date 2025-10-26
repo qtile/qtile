@@ -356,6 +356,48 @@ static int qw_xwayland_view_get_pid(void *self) {
     return xwayland_view->xwayland_surface->pid;
 }
 
+// Returns a string containing the window type
+// Uses the same string names as the x11 backend
+static const char *qw_xwayland_view_get_window_type(void *self) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    struct qw_server *server = xwayland_view->base.server;
+    xcb_atom_t *atoms = server->xwayland_atoms;
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+
+    for (size_t i = 0; i < xwayland_surface->window_type_len; i++) {
+        xcb_atom_t t = xwayland_surface->window_type[i];
+        if (t == atoms[NET_WM_WINDOW_TYPE_DIALOG])
+            return "dialog";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_UTILITY])
+            return "utility";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_TOOLBAR])
+            return "toolbar";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_MENU] || t == atoms[NET_WM_WINDOW_TYPE_POPUP_MENU])
+            return "menu";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_SPLASH])
+            return "splash";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DOCK])
+            return "dock";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_TOOLTIP])
+            return "tooltip";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_NOTIFICATION])
+            return "notification";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DESKTOP])
+            return "desktop";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DROPDOWN_MENU])
+            return "dropdown";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_COMBO])
+            return "combo";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DND])
+            return "dnd";
+        if (t == atoms[NET_WM_WINDOW_TYPE_NORMAL])
+            return "normal";
+    }
+
+    // Fallback if no known type found
+    return "normal";
+}
+
 // Handle commit event: called when XWayland surface commits state changes
 static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -778,6 +820,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.hide = qw_xwayland_view_hide;
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
+    xwayland_view->base.get_wm_type = qw_xwayland_view_get_window_type;
     xwayland_view->base.has_fixed_size = qw_xwayland_view_has_fixed_size;
     xwayland_view->base.update_minimized = qw_xwayland_view_update_minimized;
     xwayland_view->base.update_maximized = qw_xwayland_view_update_maximized;
