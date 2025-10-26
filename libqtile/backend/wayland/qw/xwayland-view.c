@@ -547,6 +547,8 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->base.instance = xwayland_surface->instance;
     xwayland_view->base.role = xwayland_surface->role;
 
+    xwayland_view->base.skip_taskbar = xwayland_surface->skip_taskbar;
+
     // Set properties for foreign toplevel manager
     if (xwayland_view->base.ftl_handle != NULL) {
         if (xwayland_view->base.title != NULL) {
@@ -725,6 +727,13 @@ static void qw_xwayland_view_handle_set_hints(struct wl_listener *listener, void
                                                    xwayland_view->base.server->cb_data);
 }
 
+static void qw_xwayland_view_handle_request_skip_taskbar(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *xwayland_view =
+        wl_container_of(listener, xwayland_view, request_activate);
+    xwayland_view->base.skip_taskbar = xwayland_view->xwayland_surface->skip_taskbar;
+}
+
 static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, dissociate);
@@ -745,6 +754,7 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     wl_list_remove(&xwayland_view->override_redirect.link);
     wl_list_remove(&xwayland_view->request_above.link);
     wl_list_remove(&xwayland_view->request_below.link);
+    wl_list_remove(&xwayland_view->request_skip_taskbar.link);
     qw_view_ftl_manager_handle_destroy(&xwayland_view->base);
     wlr_scene_node_destroy(&xwayland_view->base.content_tree->node);
 
@@ -872,6 +882,10 @@ void qw_server_xwayland_view_new(struct qw_server *server,
 
     wl_signal_add(&xwayland_surface->events.request_below, &xwayland_view->request_below);
     xwayland_view->request_below.notify = qw_xwayland_view_handle_request_below;
+
+    wl_signal_add(&xwayland_surface->events.request_skip_taskbar,
+                  &xwayland_view->request_skip_taskbar);
+    xwayland_view->request_activate.notify = qw_xwayland_view_handle_request_skip_taskbar;
 
     // Assign function pointers for base view operations
     xwayland_view->base.get_tree_node = qw_xwayland_view_get_tree_node;

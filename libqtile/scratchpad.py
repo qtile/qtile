@@ -170,6 +170,8 @@ class DropDownToggler(WindowVisibilityToggler):
             else:
                 net_wm_state = [skip_taskbar]
             window.window.set_property("_NET_WM_STATE", net_wm_state)
+        else:
+            window.skip_taskbar = True
 
         # Let's add the window to the scratchpad group.
         window.togroup(scratchpad_name)

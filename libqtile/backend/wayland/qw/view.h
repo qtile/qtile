@@ -83,8 +83,9 @@ struct qw_view {
     char *title;
     char *app_id;
     bool urgent;
-    char *instance;                      // XWayland only
-    char *role;                          // XWayland only
+    char *instance; // XWayland only
+    char *role;     // XWayland only
+    bool skip_taskbar;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
     struct wlr_foreign_toplevel_handle_v1 *ftl_handle;
 
