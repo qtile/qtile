@@ -586,6 +586,14 @@ class Window(Base, base.Window):
     def group(self, group: _Group | None) -> None:
         self._group = group
 
+    @property
+    def skip_taskbar(self) -> bool:
+        return bool(self._ptr.skip_taskbar)
+
+    @skip_taskbar.setter
+    def skip_taskbar(self, value: bool) -> None:
+        self._ptr.skip_taskbar = value
+
     @expose_command()
     def get_position(self) -> tuple[int, int]:
         return int(self._ptr.x), int(self._ptr.y)
