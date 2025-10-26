@@ -531,6 +531,13 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->scene_tree = wlr_scene_subsurface_tree_create(xwayland_view->base.content_tree,
                                                                  xwayland_surface->surface);
 
+    // Reparent layer if view has keep_above or keep_below set
+    if (xwayland_surface->above) {
+        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPABOVE);
+    } else if (xwayland_surface->below) {
+        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPBELOW);
+    }
+
     // Set the view's initial dimensions based on the surface.
     xwayland_view->base.width = xwayland_surface->width;
     xwayland_view->base.height = xwayland_surface->height;
@@ -666,6 +673,30 @@ static void qw_xwayland_view_handle_request_configure(struct wl_listener *listen
     }
 }
 
+static void qw_xwayland_view_handle_request_above(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *xwayland_view =
+        wl_container_of(listener, xwayland_view, request_above);
+
+    if (xwayland_view->xwayland_surface->above) {
+        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPABOVE);
+    } else {
+        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_LAYOUT);
+    }
+}
+
+static void qw_xwayland_view_handle_request_below(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *xwayland_view =
+        wl_container_of(listener, xwayland_view, request_below);
+
+    if (xwayland_view->xwayland_surface->below) {
+        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPBELOW);
+    } else {
+        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_LAYOUT);
+    }
+}
+
 static void qw_xwayland_view_handle_request_activate(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view =
@@ -712,6 +743,8 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     wl_list_remove(&xwayland_view->request_activate.link);
     wl_list_remove(&xwayland_view->set_hints.link);
     wl_list_remove(&xwayland_view->override_redirect.link);
+    wl_list_remove(&xwayland_view->request_above.link);
+    wl_list_remove(&xwayland_view->request_below.link);
     qw_view_ftl_manager_handle_destroy(&xwayland_view->base);
     wlr_scene_node_destroy(&xwayland_view->base.content_tree->node);
 
@@ -833,6 +866,12 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     wl_signal_add(&xwayland_surface->events.set_override_redirect,
                   &xwayland_view->override_redirect);
     xwayland_view->override_redirect.notify = qw_xwayland_view_handle_request_override_redirect;
+
+    wl_signal_add(&xwayland_surface->events.request_above, &xwayland_view->request_above);
+    xwayland_view->request_above.notify = qw_xwayland_view_handle_request_above;
+
+    wl_signal_add(&xwayland_surface->events.request_below, &xwayland_view->request_below);
+    xwayland_view->request_below.notify = qw_xwayland_view_handle_request_below;
 
     // Assign function pointers for base view operations
     xwayland_view->base.get_tree_node = qw_xwayland_view_get_tree_node;
