@@ -168,6 +168,10 @@ class Core(base.Core):
 
         self.last_focused: base.Window | None = None
 
+    @staticmethod
+    def translate_masks(modifiers: list[str]) -> int:
+        return xcbq.translate_masks(modifiers)
+
     @property
     def name(self):
         return "x11"
@@ -501,7 +505,7 @@ class Core(base.Core):
             if not keysym:
                 raise utils.QtileError(f"Unknown keycode: {key.key}")
 
-        modmask = xcbq.translate_masks(key.modifiers)
+        modmask = self.translate_masks(key.modifiers)
 
         return keysym, modmask
 
@@ -561,7 +565,7 @@ class Core(base.Core):
 
     def grab_button(self, mouse: config.Mouse) -> int:
         """Grab the given mouse button for events"""
-        modmask = xcbq.translate_masks(mouse.modifiers)
+        modmask = self.translate_masks(mouse.modifiers)
 
         eventmask = EventMask.ButtonPress
         if isinstance(mouse, config.Drag):
@@ -850,7 +854,7 @@ class Core(base.Core):
 
     def simulate_keypress(self, modifiers, key):
         """Simulates a keypress on the focused window."""
-        modmasks = xcbq.translate_masks(modifiers)
+        modmasks = self.translate_masks(modifiers)
         keysym = xcbq.keysyms.get(key.lower())
 
         class DummyEv:
