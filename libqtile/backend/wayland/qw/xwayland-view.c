@@ -77,7 +77,7 @@ static void static_view_handle_destroy(struct wl_listener *listener, void *data)
 
 static void static_view_handle_set_geometry(struct wl_listener *listener, void *data) {
     UNUSED(data);
-    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, map);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, set_geometry);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
 
     wlr_scene_node_set_position(&static_view->scene_surface->buffer->node, xwayland_surface->x,
@@ -175,7 +175,8 @@ static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void
 
 static void static_view_handle_override_redirect(struct wl_listener *listener, void *data) {
     UNUSED(data);
-    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, request_activate);
+    struct qw_xwayland_view *static_view =
+        wl_container_of(listener, static_view, override_redirect);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
 
     bool associated = xwayland_surface->surface != NULL;
@@ -419,7 +420,7 @@ static void qw_xwayland_view_handle_request_maximize(struct wl_listener *listene
 static void qw_xwayland_view_handle_request_close(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view =
-        wl_container_of(listener, xwayland_view, request_maximize);
+        wl_container_of(listener, xwayland_view, request_close);
     struct wlr_xwayland_surface *surface = xwayland_view->xwayland_surface;
 
     wlr_xwayland_surface_close(surface);
@@ -656,7 +657,8 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
 static void qw_xwayland_view_handle_request_override_redirect(struct wl_listener *listener,
                                                               void *data) {
     UNUSED(data);
-    struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, destroy);
+    struct qw_xwayland_view *xwayland_view =
+        wl_container_of(listener, xwayland_view, override_redirect);
 
     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
