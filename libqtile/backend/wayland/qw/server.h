@@ -226,6 +226,7 @@ struct qw_server {
     struct wlr_foreign_toplevel_manager_v1 *ftl_mgr;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
+    struct wl_listener xwayland_ready;
     struct wl_listener new_xwayland_surface;
     xcb_atom_t xwayland_atoms[ATOM_LAST];
 #endif
