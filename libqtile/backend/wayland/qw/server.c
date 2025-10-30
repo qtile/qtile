@@ -65,6 +65,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_session_lock.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
+    wl_list_remove(&server->xwayland_ready.link);
     wlr_xwayland_destroy(server->xwayland);
 #endif
     wl_display_destroy_clients(server->display);
@@ -431,9 +432,9 @@ static xcb_atom_t qw_intern_atom(xcb_connection_t *conn, const char *name) {
 }
 
 // Store details of window type atoms so we can determine a windows _NET_WM_WINDOW_TYPE
-void qw_xwayland_atoms_init(xcb_atom_t *atoms) {
+void qw_xwayland_atoms_init(struct wlr_xwayland *xwayland, xcb_atom_t *atoms) {
     int screen = 0;
-    xcb_connection_t *conn = xcb_connect(NULL, &screen);
+    xcb_connection_t *conn = xcb_connect(xwayland->display_name, &screen);
     if (xcb_connection_has_error(conn)) {
         wlr_log(WLR_ERROR, "Couldn't connect to X server to retrieve atoms.");
         return;
@@ -473,6 +474,11 @@ const char *qw_server_xwayland_display_name(struct qw_server *server) {
 #else
 const char *qw_server_xwayland_display_name(struct qw_server *server) { return NULL; }
 #endif
+
+static void qw_server_handle_xwayland_ready(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, xwayland_ready);
+    qw_xwayland_atoms_init(server->xwayland, server->xwayland_atoms);
+}
 
 // Return the view at the given layout coordinates, if any.
 // Also fills out surface and surface-local coords if found.
@@ -757,7 +763,8 @@ struct qw_server *qw_server_create() {
     wlr_xwayland_set_seat(server->xwayland, server->seat);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
-    qw_xwayland_atoms_init(server->xwayland_atoms);
+    server->xwayland_ready.notify = qw_server_handle_xwayland_ready;
+    wl_signal_add(&server->xwayland->events.ready, &server->xwayland_ready);
 #endif
 
     // Initializes the interface used to implement urgency hints
