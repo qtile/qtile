@@ -221,9 +221,7 @@ def ffi_compile(verbose: bool = False) -> None:
     # is always created in the correct folder.
     # The compile command is nested in a function to ensure that the tmpdir value is not overwritten.
     build_objects()
-    ffi.compile(
-        tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose
-    )
+    ffi.compile(tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=True)
 
 
 ffi.cdef(CDEF)

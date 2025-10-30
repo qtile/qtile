@@ -20,7 +20,7 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     if config_settings is None:
         config_settings = {}
 
-    wayland_requested = wants_wayland(config_settings)
+    wayland_requested = True
     try:
         from libqtile.backend.wayland.cffi.build import ffi_compile
 
@@ -29,6 +29,7 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
         if wayland_requested:
             sys.exit(f"Wayland backend requested but backend could not be built: {e}")
         else:
+            print(e)
             print("Wayland backend was not built.")
 
     # Write library paths to file, if they are specified at build time via

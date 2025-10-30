@@ -17,7 +17,7 @@ jobs:
                 # TODO: Add back pypy here and in release.yml once:
                 # https://github.com/pypy/pypy/issues/4956 is resolved
                 python-version: ['3.12', '3.13', '3.14']
-                backend: ['x11', 'wayland']
+                backend: ['wayland']
         steps:
             - uses: actions/checkout@v4
             - name: Start httpbin container
