@@ -1345,8 +1345,8 @@ class Qtile(CommandObject):
         with open("/dev/null") as null:
             file_actions: list[tuple] = [
                 (os.POSIX_SPAWN_DUP2, null.fileno(), 0),
-                (os.POSIX_SPAWN_DUP2, null.fileno(), 1),
-                (os.POSIX_SPAWN_DUP2, null.fileno(), 2),
+                (os.POSIX_SPAWN_DUP2, 1, null.fileno()),
+                (os.POSIX_SPAWN_DUP2, 2, null.fileno()),
             ]
 
             # To create a rule to move process to a specific group and manage race conditions
