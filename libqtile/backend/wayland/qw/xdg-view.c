@@ -575,6 +575,8 @@ static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_po
         return NULL;
     }
 
+    popup->base.skip_taskbar = true;
+
     wl_signal_add(&surface->surface->events.commit, &popup->surface_commit);
     popup->surface_commit.notify = qw_xdg_popup_handle_surface_commit;
     wl_signal_add(&surface->events.new_popup, &popup->new_popup);
