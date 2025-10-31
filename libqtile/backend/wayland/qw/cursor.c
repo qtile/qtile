@@ -86,7 +86,8 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);
 
-    if (seat->pointer_state.focused_surface != NULL) {
+    // Notify motion for focus or drag
+    if (seat->pointer_state.focused_surface != NULL || seat->pointer_state.button_count > 0) {
         wlr_seat_pointer_notify_motion(seat, time, sx, sy);
     }
 }
