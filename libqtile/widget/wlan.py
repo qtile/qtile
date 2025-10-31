@@ -56,20 +56,21 @@ def _get_status_from_iw(interface_name: str):
         line = line.strip()
 
         if line.startswith("SSID:"):
-            essid = line.split("SSID:")[1].strip()
+            essid_match = re.search(r"SSID:\s*(.*)", line)
+            if essid_match:
+                essid = essid_match.group(1)
 
         elif line.startswith("signal:"):
-            quality = int(line.split()[1])
+            signal_match = re.search(r"signal:\s*(-?\d+)", line)
+            if signal_match:
+                quality = int(signal_match.group(1))
+                quality *= -1 if quality < 0 else 1
 
-            match = re.search(r"signal:\s*(-?\d+)", line)
-            if match:
-                quality = int(match.group(1))
+    if essid is None:
+        logger.exception(f"SSID could not be determined from `iw dev {interface_name}` link")
 
-            if quality < 0:
-                quality *= -1
-
-    if essid is None or quality is None:
-        return None, None
+    if quality is None:
+        logger.exception(f"signal could not be determined from `iw dev {interface_name}` link")
 
     return essid, quality
 

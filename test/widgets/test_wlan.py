@@ -1,5 +1,6 @@
 import builtins
 import sys
+import textwrap
 from importlib import reload
 from types import ModuleType
 
@@ -108,3 +109,73 @@ def test_ethernet(
     monkeypatch.setattr(builtins, "open", mock_open(state))
     widget = patched_wlan.Wlan(**kwargs)
     assert widget.poll() == expected
+
+
+# IW testing
+
+
+class MockIWSubprocessRun:
+    def __call__(self, *args, **kwargs):
+        assert len(args) == 1
+        cmd = args[0]
+        if "wlan0" in cmd:
+            _stdout = textwrap.dedent("""
+            Connected to 12:34:56:78:90:AB (on wlan0)
+                SSID: QtileNet
+                freq: 5180.0
+                RX: 100109613 bytes (77173 packets)
+                TX: 3595242 bytes (19864 packets)
+                signal: -49 dBm
+                rx bitrate: 780.0 MBit/s VHT-MCS 8 80MHz short GI VHT-NSS 2
+                tx bitrate: 650.0 MBit/s VHT-MCS 7 80MHz short GI VHT-NSS 2
+                bss flags: short-slot-time
+                dtim period: 1
+                beacon int: 100""")
+
+        elif "wlan1" in cmd:
+            _stdout = "command failed: No such device (-19)"
+
+        else:
+            print("--------------------------------------------------")
+            print(args)
+            print("--------------------------------------------------")
+            raise Exception("MockIWSubprocessRun is busted.")
+
+        class MockIwResult:
+            @property
+            def stdout(self):
+                return _stdout
+
+        return MockIwResult()
+
+
+@pytest.fixture
+def patched_wlan_iw(monkeypatch):
+    _ = sys.modules.pop("iwlib", None)
+    import importlib
+
+    from libqtile.widget import wlan
+
+    importlib.reload(wlan)
+    monkeypatch.setattr(wlan, "_IW_BACKEND", "iw")
+    monkeypatch.setattr(wlan.subprocess, "run", MockIWSubprocessRun())
+    yield wlan
+
+
+@pytest.mark.parametrize(
+    "kwargs,expected",
+    [
+        ({}, "QtileNet 49/70"),
+        ({"format": "{essid} {percent:2.0%}"}, "QtileNet 70%"),
+        ({"interface": "wlan1"}, "Disconnected"),
+    ],
+)
+def test_wlan_display_iw(
+    minimal_conf_noscreen, manager_nospawn, patched_wlan_iw, monkeypatch, kwargs, expected
+):
+    widget = patched_wlan_iw.Wlan(**kwargs)
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
+    manager_nospawn.start(config)
+    text = manager_nospawn.c.bar["top"].info()["widgets"][0]["text"]
+    assert text == expected
