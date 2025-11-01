@@ -1,3 +1,4 @@
+import argparse
 import glob
 import os
 import subprocess
@@ -173,16 +174,6 @@ LIBRARIES = ["wlroots-0.19", "wayland-server", "input", "cairo"]
 SOURCE_FILES = glob.glob(f"{QW_PATH}/*.c")
 OBJECTS = [Path(src).parent / "build" / Path(src).with_suffix(".o").name for src in SOURCE_FILES]
 
-ffi = FFI()
-ffi.set_source(
-    "libqtile.backend.wayland._ffi",
-    SOURCE,
-    define_macros=[("WLR_USE_UNSTABLE", None)],
-    include_dirs=INCLUDE_DIRS,
-    extra_objects=OBJECTS,
-    libraries=LIBRARIES,
-)
-
 
 @contextmanager
 def chdir(path: Path) -> Iterator[None]:
@@ -194,23 +185,30 @@ def chdir(path: Path) -> Iterator[None]:
         os.chdir(prev_cwd)
 
 
-def build_objects() -> None:
+def build_objects(debug: bool = False, asan: bool = False) -> None:
     # We have to use relative paths here for output_dir to work as expected
     with chdir(QW_PATH):
         dist = Distribution()
         cmd = build_ext(dist)
         cmd.setup_shlib_compiler()
 
+        extra_preargs = []
+        if debug or asan:
+            extra_preargs = ["-g3", "-Og"]
+        else:
+            extra_preargs = ["-O2"]
+        extra_preargs.extend(["-fPIC", "-Wall", "-Wextra"])
+
         cmd.shlib_compiler.compile(
             [os.path.basename(path) for path in SOURCE_FILES],
             output_dir="build",
             macros=[("WLR_USE_UNSTABLE", None)],
             include_dirs=INCLUDE_DIRS,
-            extra_preargs=["-O2", "-fPIC", "-Wall", "-Wextra"],
+            extra_preargs=extra_preargs,
         )
 
 
-def ffi_compile(verbose: bool = False) -> None:
+def ffi_compile(verbose: bool = False, debug: bool = False, asan: bool = False) -> None:
     # The ffi source of "libqtile.backend.wayland._ffi" means that we'll compile the library file
     # at libqtile/backend/wayland/_ffi.so.
     # This is built at the path specified in tmpdir which is "." by default. So, if we're in a
@@ -220,12 +218,40 @@ def ffi_compile(verbose: bool = False) -> None:
     # We therefore set the tmpdir to be the path to the folder containing libqtile so the library
     # is always created in the correct folder.
     # The compile command is nested in a function to ensure that the tmpdir value is not overwritten.
-    build_objects()
+    build_objects(debug=debug, asan=asan)
+
+    extra_compile_args = []
+    extra_link_args = []
+    if debug or asan:
+        extra_compile_args.extend(["-g3", "-Og"])
+    if asan:
+        extra_compile_args.extend(
+            ["-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer"]
+        )
+        extra_link_args.extend(["-fsanitize=address,undefined"])
+
+    ffi = FFI()
+    ffi.set_source(
+        "libqtile.backend.wayland._ffi",
+        SOURCE,
+        define_macros=[("WLR_USE_UNSTABLE", None)],
+        include_dirs=INCLUDE_DIRS,
+        extra_objects=OBJECTS,
+        libraries=LIBRARIES,
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+    )
+    ffi.cdef(CDEF)
     ffi.compile(
         tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose
     )
 
 
-ffi.cdef(CDEF)
 if __name__ == "__main__":
-    ffi_compile()
+    parser = argparse.ArgumentParser(description="Qtile wayland backend build script.")
+    parser.add_argument("--debug", action="store_true", help="Add debugging symbols.")
+    parser.add_argument(
+        "--asan", action="store_true", help="Compile with address sanitisation support."
+    )
+    args = parser.parse_args()
+    ffi_compile(debug=args.debug, asan=args.asan)
