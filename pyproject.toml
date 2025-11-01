@@ -16,7 +16,7 @@ dynamic = ["version", "readme"]
 dependencies = [
     "cairocffi >= 1.7.0",
     "cffi >= 1.1.0",
-    "xcffib >= 1.4.0",
+    "xcffib >= 1.11.0",
 ]
 license = "MIT"
 license-files = [ "LICENSE" ]
@@ -73,7 +73,7 @@ widgets = [
     "pulsectl_asyncio",
     "python-mpd2",
     "pytz",
-    "xdg",
+    "pyxdg",
     "xmltodict",
     "aiohttp",
 ]
