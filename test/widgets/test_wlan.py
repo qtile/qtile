@@ -52,68 +52,6 @@ class MockIwlib(ModuleType):
         return cls.DATA.get(interface, dict())
 
 
-# Patch the widget with our mock iwlib module.
-@pytest.fixture
-def patched_wlan(monkeypatch):
-    monkeypatch.setitem(sys.modules, "iwlib", MockIwlib("iwlib"))
-    from libqtile.widget import wlan
-
-    # Reload fixes cases where psutil may have been imported previously
-    reload(wlan)
-
-    yield wlan
-
-
-@pytest.mark.parametrize(
-    "kwargs,expected",
-    [
-        ({}, "QtileNet 49/70"),
-        ({"format": "{essid} {percent:2.0%}"}, "QtileNet 70%"),
-        ({"interface": "wlan1"}, "Disconnected"),
-    ],
-)
-def test_wlan_display(minimal_conf_noscreen, manager_nospawn, patched_wlan, kwargs, expected):
-    widget = patched_wlan.Wlan(**kwargs)
-    config = minimal_conf_noscreen
-    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
-    manager_nospawn.start(config)
-
-    text = manager_nospawn.c.bar["top"].info()["widgets"][0]["text"]
-    assert text == expected
-
-
-def test_wlan_display_escape_essid(
-    minimal_conf_noscreen, manager_nospawn, patched_wlan, monkeypatch
-):
-    """Test escaping of pango markup in ESSID"""
-    monkeypatch.setitem(MockIwlib.DATA["wlan0"], "ESSID", b"A&B")
-    widget = patched_wlan.Wlan(format="{essid}")
-    assert widget.poll() == "A&amp;B"
-
-
-@pytest.mark.parametrize(
-    "kwargs,state,expected",
-    [
-        ({"interface": "wlan1", "use_ethernet": True}, "up", "eth"),
-        ({"interface": "wlan1", "use_ethernet": True}, "down", "Disconnected"),
-        (
-            {"interface": "wlan1", "use_ethernet": True, "ethernet_message_format": "Wired"},
-            "up",
-            "Wired",
-        ),
-    ],
-)
-def test_ethernet(
-    minimal_conf_noscreen, manager_nospawn, patched_wlan, kwargs, state, expected, monkeypatch
-):
-    monkeypatch.setattr(builtins, "open", mock_open(state))
-    widget = patched_wlan.Wlan(**kwargs)
-    assert widget.poll() == expected
-
-
-# IW testing
-
-
 class MockIWSubprocessRun:
     def __call__(self, *args, **kwargs):
         assert len(args) == 1
@@ -149,6 +87,37 @@ class MockIWSubprocessRun:
         return MockIwResult()
 
 
+# Patch the widget with our mock iwlib module.
+@pytest.fixture
+def patched_wlan(monkeypatch):
+    monkeypatch.setitem(sys.modules, "iwlib", MockIwlib("iwlib"))
+    from libqtile.widget import wlan
+
+    # Reload fixes cases where psutil may have been imported previously
+    reload(wlan)
+
+    yield wlan
+
+
+@pytest.mark.parametrize(
+    "kwargs,expected",
+    [
+        ({}, "QtileNet 49/70"),
+        ({"format": "{essid} {percent:2.0%}"}, "QtileNet 70%"),
+        ({"interface": "wlan1"}, "Disconnected"),
+    ],
+)
+def test_wlan_display(minimal_conf_noscreen, manager_nospawn, patched_wlan, kwargs, expected):
+    widget = patched_wlan.Wlan(**kwargs)
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=Bar([widget], 10))]
+    manager_nospawn.start(config)
+
+    text = manager_nospawn.c.bar["top"].info()["widgets"][0]["text"]
+    assert text == expected
+
+
+# Patch the widget with our mock iw subprocess call.
 @pytest.fixture
 def patched_wlan_iw(monkeypatch):
     _ = sys.modules.pop("iwlib", None)
@@ -179,3 +148,32 @@ def test_wlan_display_iw(
     manager_nospawn.start(config)
     text = manager_nospawn.c.bar["top"].info()["widgets"][0]["text"]
     assert text == expected
+
+
+def test_wlan_display_escape_essid(
+    minimal_conf_noscreen, manager_nospawn, patched_wlan, monkeypatch
+):
+    """Test escaping of pango markup in ESSID"""
+    monkeypatch.setitem(MockIwlib.DATA["wlan0"], "ESSID", b"A&B")
+    widget = patched_wlan.Wlan(format="{essid}")
+    assert widget.poll() == "A&amp;B"
+
+
+@pytest.mark.parametrize(
+    "kwargs,state,expected",
+    [
+        ({"interface": "wlan1", "use_ethernet": True}, "up", "eth"),
+        ({"interface": "wlan1", "use_ethernet": True}, "down", "Disconnected"),
+        (
+            {"interface": "wlan1", "use_ethernet": True, "ethernet_message_format": "Wired"},
+            "up",
+            "Wired",
+        ),
+    ],
+)
+def test_ethernet(
+    minimal_conf_noscreen, manager_nospawn, patched_wlan, kwargs, state, expected, monkeypatch
+):
+    monkeypatch.setattr(builtins, "open", mock_open(state))
+    widget = patched_wlan.Wlan(**kwargs)
+    assert widget.poll() == expected
