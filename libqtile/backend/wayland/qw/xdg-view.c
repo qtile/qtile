@@ -63,8 +63,6 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
-
-    xdg_view->is_urgent = false;
 }
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
@@ -226,9 +224,6 @@ void qw_xdg_view_focus(void *self, int above) {
         return; // Can't focus if not mapped
     }
     qw_xdg_view_do_focus(xdg_view, xdg_view->xdg_toplevel->base->surface);
-    if (xdg_view->is_urgent) {
-        xdg_view->is_urgent = false;
-    }
 }
 
 // Retrieve the PID of the client owning this xdg_view
@@ -237,6 +232,27 @@ static int qw_xdg_view_get_pid(void *self) {
     int pid;
     wl_client_get_credentials(xdg_view->xdg_toplevel->base->client->client, &pid, NULL, NULL);
     return pid;
+}
+
+static const char *qw_xdg_view_get_window_type(void *self) {
+    struct qw_view *view = (struct qw_view *)self;
+    if (view->view_type == QW_VIEW_XDG_POPUP) {
+        return "dialog";
+    }
+
+    return "normal";
+}
+
+// Retrieve the WID of the parent window (return 0 if none)
+static int qw_xdg_view_get_parent(void *self) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+
+    if (xdg_view->xdg_toplevel->parent == NULL) {
+        return 0;
+    }
+
+    struct qw_xdg_view *parent_view = xdg_view->xdg_toplevel->parent->base->data;
+    return parent_view->base.wid;
 }
 
 // Handle a request from the client to maximize the window
@@ -543,6 +559,7 @@ static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_po
 
     popup->wlr_popup = wlr_popup;
     popup->xdg_view = xdg_view;
+    popup->base.view_type = QW_VIEW_XDG_POPUP;
 
     popup->scene_tree = wlr_scene_tree_create(parent);
     if (popup->scene_tree == NULL) {
@@ -621,6 +638,8 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->base.place = qw_xdg_view_place;
     xdg_view->base.focus = qw_xdg_view_focus;
     xdg_view->base.get_pid = qw_xdg_view_get_pid;
+    xdg_view->base.get_wm_type = qw_xdg_view_get_window_type;
+    xdg_view->base.get_parent = qw_xdg_view_get_parent;
     xdg_view->base.kill = qw_xdg_view_kill;
     xdg_view->base.hide = qw_xdg_view_hide;
     xdg_view->base.unhide = qw_xdg_view_unhide;

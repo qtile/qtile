@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <wlr/xwayland.h>
+#include <xcb/xcb_icccm.h>
 
 static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
                                       struct wlr_surface *surface) {
@@ -49,6 +50,185 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
+}
+
+static void qw_xwayland_view_focus(void *self, int above) {
+    UNUSED(above);
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    if (!xwayland_view->xwayland_surface->surface->mapped) {
+        return; // Can't focus if not mapped
+    }
+    qw_xwayland_view_do_focus(xwayland_view, xwayland_view->xwayland_surface->surface);
+}
+
+static void static_view_handle_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, destroy);
+
+    wl_list_remove(&static_view->destroy.link);
+    wl_list_remove(&static_view->associate.link);
+    wl_list_remove(&static_view->dissociate.link);
+    wl_list_remove(&static_view->request_configure.link);
+    wl_list_remove(&static_view->request_activate.link);
+    wl_list_remove(&static_view->override_redirect.link);
+
+    free(static_view);
+}
+
+static void static_view_handle_set_geometry(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, set_geometry);
+    struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
+
+    wlr_scene_node_set_position(&static_view->scene_surface->buffer->node, xwayland_surface->x,
+                                xwayland_surface->y);
+}
+
+static void static_view_handle_map(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, map);
+    struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
+
+    static_view->scene_surface =
+        wlr_scene_surface_create(static_view->base.server->scene_windows_layers[LAYER_BRINGTOFRONT],
+                                 xwayland_surface->surface);
+    if (static_view->scene_surface != NULL) {
+        wlr_scene_node_set_position(&static_view->scene_surface->buffer->node, xwayland_surface->x,
+                                    xwayland_surface->y);
+        wl_signal_add(&xwayland_surface->events.set_geometry, &static_view->set_geometry);
+        static_view->set_geometry.notify = static_view_handle_set_geometry;
+    }
+
+    if (wlr_xwayland_surface_override_redirect_wants_focus(xwayland_surface)) {
+        qw_xwayland_view_focus(static_view->scene_surface, true);
+    }
+}
+
+static void static_view_handle_unmap(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, unmap);
+    struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
+
+    if (static_view->scene_surface != NULL) {
+        wl_list_remove(&static_view->set_geometry.link);
+        wlr_scene_node_destroy(&static_view->scene_surface->buffer->node);
+        static_view->scene_surface = NULL;
+    }
+
+    struct wlr_seat *seat = static_view->base.server->seat;
+    if (seat->keyboard_state.focused_surface == xwayland_surface->surface) {
+        // This simply returns focus to the parent surface if there's one available.
+        // This seems to handle JetBrains issues.
+        if (xwayland_surface->parent && xwayland_surface->parent->surface &&
+            wlr_xwayland_surface_override_redirect_wants_focus(xwayland_surface->parent)) {
+            qw_xwayland_view_focus(xwayland_surface->parent, true);
+            return;
+        }
+
+        // Restore focus
+        static_view->base.server->focus_current_window_cb(static_view->base.server->cb_data);
+    }
+}
+
+static void static_view_handle_associate(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, associate);
+    struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
+
+    // Attach map and unmap listeners to the new surface events.
+    wl_signal_add(&xwayland_surface->surface->events.unmap, &static_view->unmap);
+    static_view->unmap.notify = static_view_handle_unmap;
+    wl_signal_add(&xwayland_surface->surface->events.map, &static_view->map);
+    static_view->map.notify = static_view_handle_map;
+}
+
+static void static_view_handle_dissociate(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, dissociate);
+    wl_list_remove(&static_view->map.link);
+    wl_list_remove(&static_view->unmap.link);
+}
+
+static void static_view_handle_request_configure(struct wl_listener *listener, void *data) {
+    struct qw_xwayland_view *static_view =
+        wl_container_of(listener, static_view, request_configure);
+    struct wlr_xwayland_surface_configure_event *event = data;
+    struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
+
+    wlr_xwayland_surface_configure(xwayland_surface, event->x, event->y, event->width,
+                                   event->height);
+}
+
+static void static_view_handle_request_activate(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, request_activate);
+    struct wlr_xwayland_surface *surface = static_view->xwayland_surface;
+
+    wlr_xwayland_surface_activate(surface, true);
+}
+
+// forward declarations
+void qw_server_xwayland_view_new(struct qw_server *server,
+                                 struct wlr_xwayland_surface *xwayland_surface);
+static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data);
+static void qw_xwayland_view_handle_associate(struct wl_listener *listener, void *data);
+
+static void static_view_handle_override_redirect(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *static_view =
+        wl_container_of(listener, static_view, override_redirect);
+    struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
+
+    bool associated = xwayland_surface->surface != NULL;
+    bool mapped = associated && xwayland_surface->surface->mapped;
+    if (mapped) {
+        static_view_handle_unmap(&static_view->unmap, NULL);
+    }
+    if (associated) {
+        static_view_handle_dissociate(&static_view->dissociate, NULL);
+    }
+
+    static_view_handle_destroy(&static_view->destroy, NULL);
+    xwayland_surface->data = NULL;
+
+    qw_server_xwayland_view_new(static_view->base.server, xwayland_surface);
+    struct qw_xwayland_view *xwayland_view = xwayland_surface->data;
+    if (associated) {
+        qw_xwayland_view_handle_associate(&xwayland_view->associate, NULL);
+    }
+    if (mapped) {
+        qw_xwayland_view_handle_map(&xwayland_view->map, xwayland_surface);
+    }
+}
+
+void qw_server_xwayland_static_view_new(struct qw_server *server,
+                                        struct wlr_xwayland_surface *xwayland_surface) {
+    struct qw_xwayland_view *static_view = calloc(1, sizeof(*static_view));
+    if (!static_view) {
+        wlr_log(WLR_ERROR, "failed to create qw_xwayland_static_view struct");
+        return;
+    }
+
+    static_view->xwayland_surface = xwayland_surface;
+    static_view->base.server = server;
+
+    wl_signal_add(&xwayland_surface->events.destroy, &static_view->destroy);
+    static_view->destroy.notify = static_view_handle_destroy;
+
+    wl_signal_add(&xwayland_surface->events.associate, &static_view->associate);
+    static_view->associate.notify = static_view_handle_associate;
+
+    wl_signal_add(&xwayland_surface->events.dissociate, &static_view->dissociate);
+    static_view->dissociate.notify = static_view_handle_dissociate;
+
+    wl_signal_add(&xwayland_surface->events.request_configure, &static_view->request_configure);
+    static_view->request_configure.notify = static_view_handle_request_configure;
+
+    wl_signal_add(&xwayland_surface->events.request_activate, &static_view->request_activate);
+    static_view->request_activate.notify = static_view_handle_request_activate;
+
+    wl_signal_add(&xwayland_surface->events.set_override_redirect, &static_view->override_redirect);
+    static_view->override_redirect.notify = static_view_handle_override_redirect;
 }
 
 static struct wlr_scene_node *qw_xwayland_view_get_tree_node(void *self) {
@@ -176,6 +356,68 @@ static int qw_xwayland_view_get_pid(void *self) {
     return xwayland_view->xwayland_surface->pid;
 }
 
+// Returns a string containing the window type
+// Uses the same string names as the x11 backend
+static const char *qw_xwayland_view_get_window_type(void *self) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    struct qw_server *server = xwayland_view->base.server;
+    xcb_atom_t *atoms = server->xwayland_atoms;
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+
+    for (size_t i = 0; i < xwayland_surface->window_type_len; i++) {
+        xcb_atom_t t = xwayland_surface->window_type[i];
+        if (t == atoms[NET_WM_WINDOW_TYPE_DIALOG])
+            return "dialog";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_UTILITY])
+            return "utility";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_TOOLBAR])
+            return "toolbar";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_MENU] || t == atoms[NET_WM_WINDOW_TYPE_POPUP_MENU])
+            return "menu";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_SPLASH])
+            return "splash";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DOCK])
+            return "dock";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_TOOLTIP])
+            return "tooltip";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_NOTIFICATION])
+            return "notification";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DESKTOP])
+            return "desktop";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DROPDOWN_MENU])
+            return "dropdown";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_COMBO])
+            return "combo";
+        else if (t == atoms[NET_WM_WINDOW_TYPE_DND])
+            return "dnd";
+        if (t == atoms[NET_WM_WINDOW_TYPE_NORMAL])
+            return "normal";
+    }
+
+    // Fallback if no known type found
+    return "normal";
+}
+
+// Retrieve the WID of the parent window (return 0 if none)
+static int qw_xwayland_get_parent(void *self) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    if (xwayland_view == NULL || xwayland_view->xwayland_surface == NULL) {
+        return 0;
+    }
+
+    struct wlr_xwayland_surface *parent_surface = xwayland_view->xwayland_surface->parent;
+    if (parent_surface == NULL) {
+        return 0;
+    }
+
+    struct qw_xwayland_view *parent_view = parent_surface->data;
+    if (parent_view == NULL) {
+        return 0;
+    }
+
+    return parent_view->base.wid;
+}
+
 // Handle commit event: called when XWayland surface commits state changes
 static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -240,7 +482,7 @@ static void qw_xwayland_view_handle_request_maximize(struct wl_listener *listene
 static void qw_xwayland_view_handle_request_close(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view =
-        wl_container_of(listener, xwayland_view, request_maximize);
+        wl_container_of(listener, xwayland_view, request_close);
     struct wlr_xwayland_surface *surface = xwayland_view->xwayland_surface;
 
     wlr_xwayland_surface_close(surface);
@@ -434,11 +676,24 @@ static void qw_xwayland_view_handle_request_activate(struct wl_listener *listene
     }
 }
 
+static void qw_xwayland_view_handle_set_hints(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, set_hints);
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+
+    if (xwayland_surface->surface == NULL || !xwayland_surface->surface->mapped) {
+        return;
+    }
+    const bool hints_urgency = xcb_icccm_wm_hints_get_urgency(xwayland_surface->hints);
+    if (!hints_urgency) {
+        return;
+    }
+    xwayland_view->base.server->view_urgent_cb((struct qw_view *)&xwayland_view->base,
+                                               xwayland_view->base.server->cb_data);
+}
+
 static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, void *data) {
     UNUSED(data);
-    // TODO: implement
-    // reference:
-    // https://github.com/swaywm/sway/blob/357d341f8fd68cd6902ea029a46baf5ce3411336/sway/desktop/xwayland.c#L783
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, dissociate);
     wl_list_remove(&xwayland_view->map.link);
     wl_list_remove(&xwayland_view->unmap.link);
@@ -453,19 +708,42 @@ static void qw_xwayland_view_handle_destroy(struct wl_listener *listener, void *
     wl_list_remove(&xwayland_view->dissociate.link);
     wl_list_remove(&xwayland_view->request_configure.link);
     wl_list_remove(&xwayland_view->request_activate.link);
+    wl_list_remove(&xwayland_view->set_hints.link);
+    wl_list_remove(&xwayland_view->override_redirect.link);
     qw_view_ftl_manager_handle_destroy(&xwayland_view->base);
     wlr_scene_node_destroy(&xwayland_view->base.content_tree->node);
 
     free(xwayland_view);
 }
 
-static void qw_xwayland_view_focus(void *self, int above) {
-    UNUSED(above);
-    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
-    if (!xwayland_view->xwayland_surface->surface->mapped) {
-        return; // Can't focus if not mapped
+static void qw_xwayland_view_handle_request_override_redirect(struct wl_listener *listener,
+                                                              void *data) {
+    UNUSED(data);
+    struct qw_xwayland_view *xwayland_view =
+        wl_container_of(listener, xwayland_view, override_redirect);
+
+    struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+
+    bool associated = xwayland_surface->surface != NULL;
+    bool mapped = associated && xwayland_surface->surface->mapped;
+    if (mapped) {
+        qw_xwayland_view_handle_unmap(&xwayland_view->unmap, NULL);
     }
-    qw_xwayland_view_do_focus(xwayland_view, xwayland_view->xwayland_surface->surface);
+    if (associated) {
+        qw_xwayland_view_handle_dissociate(&xwayland_view->dissociate, NULL);
+    }
+
+    qw_xwayland_view_handle_destroy(&xwayland_view->destroy, xwayland_view);
+    xwayland_surface->data = NULL;
+
+    qw_server_xwayland_static_view_new(xwayland_view->base.server, xwayland_surface);
+    struct qw_xwayland_view *static_view = xwayland_surface->data;
+    if (associated) {
+        static_view_handle_associate(&static_view->associate, NULL);
+    }
+    if (mapped) {
+        static_view_handle_map(&static_view->map, xwayland_surface);
+    }
 }
 
 static bool qw_xwayland_view_has_fixed_size(void *self) {
@@ -547,6 +825,13 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     wl_signal_add(&xwayland_surface->events.request_activate, &xwayland_view->request_activate);
     xwayland_view->request_activate.notify = qw_xwayland_view_handle_request_activate;
 
+    wl_signal_add(&xwayland_surface->events.set_hints, &xwayland_view->set_hints);
+    xwayland_view->set_hints.notify = qw_xwayland_view_handle_set_hints;
+
+    wl_signal_add(&xwayland_surface->events.set_override_redirect,
+                  &xwayland_view->override_redirect);
+    xwayland_view->override_redirect.notify = qw_xwayland_view_handle_request_override_redirect;
+
     // Assign function pointers for base view operations
     xwayland_view->base.get_tree_node = qw_xwayland_view_get_tree_node;
     xwayland_view->base.place = qw_xwayland_view_place;
@@ -555,6 +840,8 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.hide = qw_xwayland_view_hide;
     xwayland_view->base.unhide = qw_xwayland_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
+    xwayland_view->base.get_wm_type = qw_xwayland_view_get_window_type;
+    xwayland_view->base.get_parent = qw_xwayland_get_parent;
     xwayland_view->base.has_fixed_size = qw_xwayland_view_has_fixed_size;
     xwayland_view->base.update_minimized = qw_xwayland_view_update_minimized;
     xwayland_view->base.update_maximized = qw_xwayland_view_update_maximized;

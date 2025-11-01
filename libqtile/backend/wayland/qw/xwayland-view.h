@@ -10,7 +10,6 @@
 
 struct qw_xwayland_view {
     struct qw_view base;
-    struct qw_server *server;
 
     struct wlr_scene_tree *scene_tree;
     struct wlr_scene_surface *scene_surface;
@@ -28,16 +27,20 @@ struct qw_xwayland_view {
     struct wl_listener request_close;
     struct wl_listener set_title;
     struct wl_listener set_class;
+    struct wl_listener set_hints;
     struct wl_listener associate;
     struct wl_listener dissociate;
     struct wl_listener map;
     struct wl_listener unmap;
     struct wl_listener destroy;
+    struct wl_listener set_geometry;
+    struct wl_listener override_redirect;
 
     struct wl_listener scene_tree_destroy;
 };
 
-struct qw_xwayland_view *create_xwayland_view(struct wlr_xwayland_surface *qw_xsurface);
+void qw_server_xwayland_static_view_new(struct qw_server *server,
+                                        struct wlr_xwayland_surface *xwayland_surface);
 void qw_server_xwayland_view_new(struct qw_server *server,
                                  struct wlr_xwayland_surface *xwayland_surface);
 

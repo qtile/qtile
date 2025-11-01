@@ -43,6 +43,7 @@ struct qw_server;
 
 enum qw_view_type {
     QW_VIEW_XDG,
+    QW_VIEW_XDG_POPUP,
     QW_VIEW_XWAYLAND,
     QW_VIEW_INTERNAL,
 };
@@ -81,6 +82,7 @@ struct qw_view {
     int wid;     // Window identifier (e.g. X11 window id or similar)
     char *title;
     char *app_id;
+    bool urgent;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
     struct wlr_foreign_toplevel_handle_v1 *ftl_handle;
 
@@ -105,7 +107,9 @@ struct qw_view {
     void (*hide)(void *self);
     void (*unhide)(void *self);
     int (*get_pid)(void *self);
+    const char *(*get_wm_type)(void *self);
     bool (*has_fixed_size)(void *self);
+    int (*get_parent)(void *self);
 
     // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
     struct {

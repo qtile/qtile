@@ -65,6 +65,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_session_lock.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
+    wl_list_remove(&server->xwayland_ready.link);
     wlr_xwayland_destroy(server->xwayland);
 #endif
     wl_display_destroy_clients(server->display);
@@ -419,10 +420,52 @@ static void qw_server_handle_new_layer_surface(struct wl_listener *listener, voi
 }
 
 #if WLR_HAS_XWAYLAND
+// xcb atoms cannot be retrieved by publicly available headers so we need
+// to create a connection to the server and submit requests to retrieve the
+// information.
+static xcb_atom_t qw_intern_atom(xcb_connection_t *conn, const char *name) {
+    xcb_intern_atom_cookie_t cookie = xcb_intern_atom(conn, 0, strlen(name), name);
+    xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(conn, cookie, NULL);
+    xcb_atom_t atom = reply ? reply->atom : XCB_ATOM_NONE;
+    free(reply);
+    return atom;
+}
+
+// Store details of window type atoms so we can determine a windows _NET_WM_WINDOW_TYPE
+void qw_xwayland_atoms_init(struct wlr_xwayland *xwayland, xcb_atom_t *atoms) {
+    int screen = 0;
+    xcb_connection_t *conn = xcb_connect(xwayland->display_name, &screen);
+    if (xcb_connection_has_error(conn)) {
+        wlr_log(WLR_ERROR, "Couldn't connect to X server to retrieve atoms.");
+        return;
+    }
+    // clang-format off
+    atoms[NET_WM_WINDOW_TYPE_DIALOG]        = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_DIALOG");
+    atoms[NET_WM_WINDOW_TYPE_UTILITY]       = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_UTILITY");
+    atoms[NET_WM_WINDOW_TYPE_TOOLBAR]       = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_TOOLBAR");
+    atoms[NET_WM_WINDOW_TYPE_MENU]          = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_MENU");
+    atoms[NET_WM_WINDOW_TYPE_SPLASH]        = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_SPLASH");
+    atoms[NET_WM_WINDOW_TYPE_DOCK]          = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_DOCK");
+    atoms[NET_WM_WINDOW_TYPE_TOOLTIP]       = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_TOOLTIP");
+    atoms[NET_WM_WINDOW_TYPE_NOTIFICATION]  = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_NOTIFICATION");
+    atoms[NET_WM_WINDOW_TYPE_DESKTOP]       = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_DESKTOP");
+    atoms[NET_WM_WINDOW_TYPE_DROPDOWN_MENU] = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU");
+    atoms[NET_WM_WINDOW_TYPE_POPUP_MENU]    = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_POPUP_MENU");
+    atoms[NET_WM_WINDOW_TYPE_COMBO]         = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_COMBO");
+    atoms[NET_WM_WINDOW_TYPE_DND]           = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_DND");
+    atoms[NET_WM_WINDOW_TYPE_NORMAL]        = qw_intern_atom(conn, "_NET_WM_WINDOW_TYPE_NORMAL");
+    // clang-format on
+    xcb_disconnect(conn);
+}
+
 static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_xwayland_surface);
     struct wlr_xwayland_surface *xwayland_surface = data;
-    qw_server_xwayland_view_new(server, xwayland_surface);
+    if (xwayland_surface->override_redirect) {
+        qw_server_xwayland_static_view_new(server, xwayland_surface);
+    } else {
+        qw_server_xwayland_view_new(server, xwayland_surface);
+    }
 }
 
 const char *qw_server_xwayland_display_name(struct qw_server *server) {
@@ -431,6 +474,11 @@ const char *qw_server_xwayland_display_name(struct qw_server *server) {
 #else
 const char *qw_server_xwayland_display_name(struct qw_server *server) { return NULL; }
 #endif
+
+static void qw_server_handle_xwayland_ready(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, xwayland_ready);
+    qw_xwayland_atoms_init(server->xwayland, server->xwayland_atoms);
+}
 
 // Return the view at the given layout coordinates, if any.
 // Also fills out surface and surface-local coords if found.
@@ -502,7 +550,6 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
         return;
     }
 
-    // Mark as urgent if not focused
     struct wlr_surface *focused = server->seat->keyboard_state.focused_surface;
 
     if (focused == NULL) {
@@ -513,9 +560,6 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
         wlr_log(WLR_INFO, "Activation token invalid for surface");
         return;
     }
-
-    view->is_urgent = true;
-    wlr_log(WLR_INFO, "View marked urgent: %p", view);
 
     if (server->view_urgent_cb != NULL) {
         server->view_urgent_cb((struct qw_view *)view, server->view_urgent_cb_data);
@@ -719,6 +763,8 @@ struct qw_server *qw_server_create() {
     wlr_xwayland_set_seat(server->xwayland, server->seat);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
+    server->xwayland_ready.notify = qw_server_handle_xwayland_ready;
+    wl_signal_add(&server->xwayland->events.ready, &server->xwayland_ready);
 #endif
 
     // Initializes the interface used to implement urgency hints

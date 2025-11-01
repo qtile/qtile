@@ -28,9 +28,7 @@ class NoArgCall(Call):
 @pytest.fixture
 def hook_fixture():
     libqtile.log_utils.init_log()
-
     yield
-
     hook.clear()
 
 
@@ -578,22 +576,21 @@ def test_client_name_updated(manager_nospawn):
 
 
 @pytest.mark.usefixtures("hook_fixture")
-def test_client_urgent_hint_changed(manager_nospawn, backend_name):
-    if backend_name == "wayland":
-        pytest.skip("Core not listening to XDG request_activate_event ?")
-
+def test_client_urgent_hint_changed(manager_nospawn):
     class ClientUrgentHintChangedConfig(BareConfig):
         groups = [
             config.Group("a"),
             config.Group("b", matches=[Match(title="Test Client")]),
         ]
-        focus_on_window_activation = "urgent"
         test = CallWindow()
         hook.subscribe.client_urgent_hint_changed(test)
 
     manager_nospawn.start(ClientUrgentHintChangedConfig)
     manager_nospawn.test_window("Test Client", urgent_hint=True)
     assert_window(manager_nospawn, "Test Client")
+    # Get urgency of the window
+    _, urgent = manager_nospawn.c.eval("list(self.windows_map.values())[0].urgent")
+    assert urgent == "True"
 
 
 class CallLayoutGroup:

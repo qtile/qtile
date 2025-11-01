@@ -5,6 +5,7 @@ import typing
 import libqtile.backend.base.window as base
 from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
+from libqtile.backend.base.window import WindowType
 from libqtile.backend.wayland.drawer import Drawer
 from libqtile.command.base import CommandError, expose_command
 from libqtile.core.manager import Qtile
@@ -135,6 +136,14 @@ class Base(base._Window):
     def height(self, height: int) -> None:
         self._ptr.height = height
 
+    @property
+    def urgent(self) -> bool:
+        return self._ptr.urgent
+
+    @urgent.setter
+    def urgent(self, urgent: bool) -> None:
+        self._ptr.urgent = urgent
+
     @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
@@ -261,6 +270,9 @@ class Base(base._Window):
 
         # TODO
         # Call core.warp_pointer() previously here
+
+        if self.urgent:
+            self.urgent = False
 
         if self.group and self.group.current_window is not self:
             self.group.focus(self)
@@ -485,6 +497,7 @@ class Window(Base, base.Window):
             self._wid,
         )
 
+    @expose_command()
     def togroup(
         self, group_name: str | None = None, switch_group: bool = False, toggle: bool = False
     ) -> None:
@@ -577,6 +590,13 @@ class Window(Base, base.Window):
 
     def get_pid(self) -> int:
         return int(self._ptr.get_pid(self._ptr))
+
+    def get_wm_type(self) -> str:
+        return ffi.string(self._ptr.get_wm_type(self._ptr)).decode()
+
+    def is_transient_for(self) -> WindowType | None:
+        wid = int(self._ptr.get_parent(self._ptr))
+        return self.qtile.windows_map.get(wid, None)
 
     def get_new_layer(self, state: FloatStates) -> int:
         if self.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
@@ -850,7 +870,6 @@ class Static(Base, base.Static):
         self.y = 0
         self._width = 0
         self._height = 0
-        self._urgent = False
         # TODO: opacity, idle_inhibitors, ftm
 
         self._userdata = ffi.new_handle(self)
