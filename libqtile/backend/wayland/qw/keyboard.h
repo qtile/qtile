@@ -14,6 +14,12 @@ struct qw_keyboard {
     struct wl_listener modifiers;
     struct wl_listener key;
     struct wl_listener destroy;
+
+    // tracking for key repeats
+    bool key_pressed;
+    uint32_t repeat_keycode;
+    uint32_t repeat_time_msec;
+    struct wl_event_source *repeat_source;
 };
 
 // Creates and sets up a new keyboard on the server from the input device

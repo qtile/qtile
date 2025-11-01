@@ -18,6 +18,58 @@ static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data)
     free(keyboard);
 }
 
+// Called via a timer when key is held
+static int qw_keyboard_do_repeat(void *data) {
+    struct qw_keyboard *keyboard = data;
+    struct qw_server *server = keyboard->server;
+    struct wlr_seat *seat = server->seat;
+
+    // If key has been released, do nothing.
+    if (!keyboard->key_pressed) {
+        return 0;
+    }
+
+    uint32_t keycode = keyboard->repeat_keycode;
+    int layout_index = xkb_state_key_get_layout(keyboard->wlr_keyboard->xkb_state, keycode);
+
+    const xkb_keysym_t *syms;
+    int nsyms = xkb_keymap_key_get_syms_by_level(keyboard->wlr_keyboard->keymap, keycode,
+                                                 layout_index, 0, &syms);
+
+    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+
+    bool handled = false;
+    // Call user callback for each symbol to check if handled
+    for (int i = 0; i < nsyms; ++i) {
+        if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
+            handled = true;
+            break;
+        }
+    }
+
+    // If not handled, forward the key event to the seat for default processing
+    if (!handled) {
+        // There's no event time so we need to calculate the msec time
+        struct timespec now;
+        uint32_t time_msec = 0;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        time_msec = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+
+        wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
+        wlr_seat_keyboard_notify_key(seat, time_msec, keycode - 8, WL_KEYBOARD_KEY_STATE_PRESSED);
+    }
+
+    // Schedule next repeat according to repeat rate
+    struct wlr_keyboard *wlr_kbd = keyboard->wlr_keyboard;
+    int rate = wlr_kbd->repeat_info.rate;
+    if (rate > 0 && keyboard->repeat_source) {
+        int next = 1000 / rate;
+        wl_event_source_timer_update(keyboard->repeat_source, next);
+    }
+
+    return 0;
+}
+
 // Called on each key event (press/release)
 static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, key);
@@ -39,8 +91,29 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     // Get current keyboard modifiers (shift, ctrl, alt, etc.)
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
 
-    // If key is pressed, call user callback for each symbol to check if handled
+    // If key is pressed...
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+        // Track key for repeat
+        keyboard->key_pressed = true;
+        keyboard->repeat_keycode = keycode;
+        keyboard->repeat_time_msec = event->time_msec;
+
+        // Set up timer to repeat key press
+        if (!keyboard->repeat_source) {
+            keyboard->repeat_source =
+                wl_event_loop_add_timer(server->event_loop, qw_keyboard_do_repeat, keyboard);
+        }
+
+        // Schedule the repeat timer
+        if (keyboard->repeat_source != NULL) {
+            struct wlr_keyboard *wlr_kbd = keyboard->wlr_keyboard;
+            int delay = wlr_kbd->repeat_info.delay;
+            if (delay <= 0)
+                delay = 400; // fallback default
+            wl_event_source_timer_update(keyboard->repeat_source, delay);
+        }
+
+        // Call user callback for each symbol to check if handled
         for (int i = 0; i < nsyms; ++i) {
             // TODO: for efficiency maybe let c take control of the key list?
             // If callback returns 1, event is handled; no further processing needed
@@ -48,6 +121,14 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
                 handled = true;
                 break;
             }
+        }
+
+        // Remove the timer if key is released
+    } else if (event->state == WL_KEYBOARD_KEY_STATE_RELEASED) {
+        keyboard->key_pressed = false;
+        if (keyboard->repeat_source) {
+            wl_event_source_remove(keyboard->repeat_source);
+            keyboard->repeat_source = NULL;
         }
     }
 
