@@ -476,6 +476,7 @@ const char *qw_server_xwayland_display_name(struct qw_server *server) { return N
 #endif
 
 static void qw_server_handle_xwayland_ready(struct wl_listener *listener, void *data) {
+    UNUSED(data);
     struct qw_server *server = wl_container_of(listener, server, xwayland_ready);
     qw_xwayland_atoms_init(server->xwayland, server->xwayland_atoms);
 }
