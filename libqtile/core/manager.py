@@ -1032,30 +1032,35 @@ class Qtile(CommandObject):
     def debug(self) -> None:
         """Set log level to DEBUG"""
         logger.setLevel(logging.DEBUG)
+        self.core.update_backend_log_level()
         logger.debug("Switching to DEBUG threshold")
 
     @expose_command()
     def info(self) -> None:
         """Set log level to INFO"""
         logger.setLevel(logging.INFO)
+        self.core.update_backend_log_level()
         logger.info("Switching to INFO threshold")
 
     @expose_command()
     def warning(self) -> None:
         """Set log level to WARNING"""
         logger.setLevel(logging.WARNING)
+        self.core.update_backend_log_level()
         logger.warning("Switching to WARNING threshold")
 
     @expose_command()
     def error(self) -> None:
         """Set log level to ERROR"""
         logger.setLevel(logging.ERROR)
+        self.core.update_backend_log_level()
         logger.error("Switching to ERROR threshold")
 
     @expose_command()
     def critical(self) -> None:
         """Set log level to CRITICAL"""
         logger.setLevel(logging.CRITICAL)
+        self.core.update_backend_log_level()
         logger.critical("Switching to CRITICAL threshold")
 
     @expose_command()

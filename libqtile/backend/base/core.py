@@ -121,3 +121,7 @@ class Core(CommandObject, metaclass=ABCMeta):
     def check_screen_fullscreen_background(self, screen: Screen | None = None) -> None:
         """Toggles fullscreen background if any window on the screen is fullscreen."""
         # Wayland only
+
+    def update_backend_log_level(self) -> None:
+        """Update the backend log level based on Qtile's log level."""
+        # Wayland only

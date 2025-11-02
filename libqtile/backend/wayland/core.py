@@ -228,6 +228,10 @@ class Core(base.Core):
         self.painter = Painter(self)
         self._locked = False
 
+    def update_backend_log_level(self) -> None:
+        """Update the wlr log level based on Qtile's log level."""
+        lib.qw_log_init(get_wlr_log_level(), lib.log_cb)
+
     def clear_focus(self) -> None:
         """Clear TODO so that there is no focused window"""
         # TODO
