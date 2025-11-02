@@ -399,7 +399,13 @@ class Window(Base, base.Window):
         ptr.set_app_id_cb = lib.set_app_id_cb
 
     def handle_request_focus(self) -> bool:
-        self.focus()
+        if self.group is None:
+            return False
+
+        logger.debug("Focusing window from external request")
+        self.qtile.current_screen.set_group(self.group)
+        self.group.focus(self)
+        self.bring_to_front()
         return True
 
     def handle_request_close(self) -> bool:
