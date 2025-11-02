@@ -647,7 +647,6 @@ static void qw_server_handle_start_drag(struct wl_listener *listener, void *data
 
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
-    wlr_log_init(WLR_INFO, NULL);
     struct qw_server *server = calloc(1, sizeof(*server));
     if (!server) {
         wlr_log(WLR_ERROR, "failed to create qw_server struct");
