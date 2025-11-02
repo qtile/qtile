@@ -2141,12 +2141,12 @@ class Window(_Window, base.Window):
             self.window.set_property("_NET_WM_STATE", list(current_state))
         elif atoms["_NET_ACTIVE_WINDOW"] == opcode:
             source = data.data32[0]
-            if source == 2:  # XCB_EWMH_CLIENT_SOURCE_TYPE_NORMAL
+            if source == 2:  # Request from a pager should immediately focus the window
                 logger.debug("Focusing window by pager")
                 self.qtile.current_screen.set_group(self.group)
                 self.group.focus(self)
                 self.bring_to_front()
-            else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
+            else:  # Request from the application
                 self.handle_window_activation()
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()

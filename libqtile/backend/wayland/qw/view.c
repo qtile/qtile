@@ -253,9 +253,9 @@ static void qw_handle_ftl_request_activate(struct wl_listener *listener, void *d
     if (view == NULL) {
         return;
     }
-    struct qw_server *server = view->server;
-    if (server->view_urgent_cb != NULL) {
-        server->view_urgent_cb(view, server->view_urgent_cb_data);
+    int handled = view->request_focus_cb(view->cb_data);
+    if (!handled) {
+        wlr_log(WLR_ERROR, "Could not focus window from foreign toplevel manager.");
     }
 }
 
