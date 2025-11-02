@@ -63,8 +63,9 @@ def _get_status_from_iw(interface_name: str):
         elif line.startswith("signal:"):
             signal_match = re.search(r"signal:\s*(-?\d+)", line)
             if signal_match:
-                quality = int(signal_match.group(1))
-                quality *= -1 if quality < 0 else 1
+                signal = int(signal_match.group(1))
+                # see for quality: https://superuser.com/questions/866005/wireless-connection-link-quality-what-does-31-70-indicate
+                quality = signal + 110
 
     if essid is None:
         logger.exception(f"SSID could not be determined from `iw dev {interface_name}` link")

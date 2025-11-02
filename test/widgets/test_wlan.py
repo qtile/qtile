@@ -31,6 +31,11 @@ def mock_open(output):
     return MockOpen
 
 
+# see for quality: https://superuser.com/questions/866005/wireless-connection-link-quality-what-does-31-70-indicate
+# below are the calculations to relate signal from iw and level from iwlib as
+# well as quality from iwlib and signal from iw.
+# level = signal + 256
+# quality = signal + 110
 class MockIwlib(ModuleType):
     DATA = {
         "wlan0": {
@@ -40,7 +45,7 @@ class MockIwlib(ModuleType):
             "BitRate": b"650 Mb/s",
             "ESSID": b"QtileNet",
             "Mode": b"Managed",
-            "stats": {"quality": 49, "level": 190, "noise": 0, "updated": 75},
+            "stats": {"quality": 49, "level": 195, "noise": 0, "updated": 75},
         },
         "wlan1": {
             "ESSID": None,
@@ -63,7 +68,7 @@ class MockIWSubprocessRun:
                 freq: 5180.0
                 RX: 100109613 bytes (77173 packets)
                 TX: 3595242 bytes (19864 packets)
-                signal: -49 dBm
+                signal: -61 dBm
                 rx bitrate: 780.0 MBit/s VHT-MCS 8 80MHz short GI VHT-NSS 2
                 tx bitrate: 650.0 MBit/s VHT-MCS 7 80MHz short GI VHT-NSS 2
                 bss flags: short-slot-time
