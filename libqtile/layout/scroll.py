@@ -15,7 +15,8 @@ class Scroll(base.Layout):
 
     defaults = [
         ("border_width", 5, "Window border width"),
-        ("border_colour", "00ff00", "Window border colour"),
+        ("border_focus", "ff0000", "Window focused border colour"),
+        ("border_normal", "333333", "Window normal border colour"),
         ("margin_focused", 5, "Margin width for focused windows"),
         ("margin_unfocused", 5, "Margin width for unfocused windows"),
     ]
@@ -26,6 +27,14 @@ class Scroll(base.Layout):
         self.clients = []
         self.current_client = None
         self.offset_x = 0
+
+    def clone(self, group):
+        """Create a new instance for each workspace/group."""
+        c = base.Layout.clone(self, group)
+        c.clients = []
+        c.current_client = None
+        c.offset_x = 0
+        return c
 
     # --------------------------
     # Core layout logic
@@ -49,6 +58,11 @@ class Scroll(base.Layout):
             client.hide()
             return
 
+        if client.has_focus:
+            px = self.border_focus
+        else:
+            px = self.border_normal
+
         client.unhide()
         margin = self.margin_focused if client is self.current_client else self.margin_unfocused
         client.place(
@@ -57,7 +71,7 @@ class Scroll(base.Layout):
             w - border * 2,
             h - border * 2,
             border,
-            self.border_colour,
+            px,
             margin=[margin] * 4,
         )
 
