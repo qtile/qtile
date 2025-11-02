@@ -30,31 +30,19 @@ static int qw_keyboard_do_repeat(void *data) {
     }
 
     uint32_t keycode = keyboard->repeat_keycode;
-    int layout_index = xkb_state_key_get_layout(keyboard->wlr_keyboard->xkb_state, keycode);
 
-    const xkb_keysym_t *syms;
-    int nsyms = xkb_keymap_key_get_syms_by_level(keyboard->wlr_keyboard->keymap, keycode,
-                                                 layout_index, 0, &syms);
+    // There's no event time so we need to calculate the msec time
+    struct timespec now;
+    uint32_t time_msec = 0;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    time_msec = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
-    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
-
-    bool handled = false;
-    // Call user callback for each symbol to check if handled
-    for (int i = 0; i < nsyms; ++i) {
-        if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
-            handled = true;
-            break;
-        }
-    }
-
-    // If not handled, forward the key event to the seat for default processing
-    if (!handled) {
-        // There's no event time so we need to calculate the msec time
-        struct timespec now;
-        uint32_t time_msec = 0;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        time_msec = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
+    if (keyboard->repeat_handled) {
+        // Repeat handled key: send callback
+        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+        server->keyboard_key_cb(keyboard->repeat_keysym, modifiers, server->cb_data);
+    } else {
+        // Repeat unhandled key: forward to seat
         wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
         wlr_seat_keyboard_notify_key(seat, time_msec, keycode - 8, WL_KEYBOARD_KEY_STATE_PRESSED);
     }
@@ -96,7 +84,26 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
         // Track key for repeat
         keyboard->key_pressed = true;
         keyboard->repeat_keycode = keycode;
-        keyboard->repeat_time_msec = event->time_msec;
+
+        // Call user callback for each symbol to check if handled
+        for (int i = 0; i < nsyms; ++i) {
+            // TODO: for efficiency maybe let c take control of the key list?
+            // If callback returns 1, event is handled; no further processing needed
+            if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
+                handled = true;
+                keyboard->repeat_keysym = syms[i];
+                break;
+            }
+        }
+
+        // Record whether this key was handled, so repeat knows what to do
+        keyboard->repeat_handled = handled;
+
+        // If not handled, forward the key event to the seat for default processing
+        if (!handled) {
+            wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
+            wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
+        }
 
         // Set up timer to repeat key press
         if (!keyboard->repeat_source) {
@@ -113,16 +120,6 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
             wl_event_source_timer_update(keyboard->repeat_source, delay);
         }
 
-        // Call user callback for each symbol to check if handled
-        for (int i = 0; i < nsyms; ++i) {
-            // TODO: for efficiency maybe let c take control of the key list?
-            // If callback returns 1, event is handled; no further processing needed
-            if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
-                handled = true;
-                break;
-            }
-        }
-
         // Remove the timer if key is released
     } else if (event->state == WL_KEYBOARD_KEY_STATE_RELEASED) {
         keyboard->key_pressed = false;
@@ -130,10 +127,8 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
             wl_event_source_remove(keyboard->repeat_source);
             keyboard->repeat_source = NULL;
         }
-    }
 
-    // If not handled, forward the key event to the seat for default processing
-    if (!handled) {
+        // Forward release to seat (handled or not — release must always be sent)
         wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
         wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
     }
