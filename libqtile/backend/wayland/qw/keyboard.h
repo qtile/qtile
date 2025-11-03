@@ -18,9 +18,7 @@ struct qw_keyboard {
 
     // tracking for key repeats
     bool key_pressed;
-    uint32_t repeat_keycode;
     struct wl_event_source *repeat_source;
-    bool repeat_handled;
     xkb_keysym_t repeat_keysym;
 };
 

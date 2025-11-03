@@ -22,30 +22,15 @@ static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data)
 static int qw_keyboard_do_repeat(void *data) {
     struct qw_keyboard *keyboard = data;
     struct qw_server *server = keyboard->server;
-    struct wlr_seat *seat = server->seat;
 
     // If key has been released, do nothing.
     if (!keyboard->key_pressed) {
         return 0;
     }
 
-    uint32_t keycode = keyboard->repeat_keycode;
-
-    // There's no event time so we need to calculate the msec time
-    struct timespec now;
-    uint32_t time_msec = 0;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    time_msec = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
-    if (keyboard->repeat_handled) {
-        // Repeat handled key: send callback
-        uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
-        server->keyboard_key_cb(keyboard->repeat_keysym, modifiers, server->cb_data);
-    } else {
-        // Repeat unhandled key: forward to seat
-        wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
-        wlr_seat_keyboard_notify_key(seat, time_msec, keycode - 8, WL_KEYBOARD_KEY_STATE_PRESSED);
-    }
+    // Repeat handled key: send callback
+    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+    server->keyboard_key_cb(keyboard->repeat_keysym, modifiers, server->cb_data);
 
     // Schedule next repeat according to repeat rate
     struct wlr_keyboard *wlr_kbd = keyboard->wlr_keyboard;
@@ -83,7 +68,6 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
         // Track key for repeat
         keyboard->key_pressed = true;
-        keyboard->repeat_keycode = keycode;
 
         // Call user callback for each symbol to check if handled
         for (int i = 0; i < nsyms; ++i) {
@@ -96,28 +80,25 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
             }
         }
 
-        // Record whether this key was handled, so repeat knows what to do
-        keyboard->repeat_handled = handled;
+        if (handled) {
+            // Set up timer to repeat key press
+            if (!keyboard->repeat_source) {
+                keyboard->repeat_source =
+                    wl_event_loop_add_timer(server->event_loop, qw_keyboard_do_repeat, keyboard);
+            }
 
-        // If not handled, forward the key event to the seat for default processing
-        if (!handled) {
+            // Schedule the repeat timer
+            if (keyboard->repeat_source != NULL) {
+                struct wlr_keyboard *wlr_kbd = keyboard->wlr_keyboard;
+                int delay = wlr_kbd->repeat_info.delay;
+                if (delay <= 0)
+                    delay = 400; // fallback default
+                wl_event_source_timer_update(keyboard->repeat_source, delay);
+            }
+        } else {
+            // If not handled, forward the key event to the seat for default processing
             wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
             wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
-        }
-
-        // Set up timer to repeat key press
-        if (!keyboard->repeat_source) {
-            keyboard->repeat_source =
-                wl_event_loop_add_timer(server->event_loop, qw_keyboard_do_repeat, keyboard);
-        }
-
-        // Schedule the repeat timer
-        if (keyboard->repeat_source != NULL) {
-            struct wlr_keyboard *wlr_kbd = keyboard->wlr_keyboard;
-            int delay = wlr_kbd->repeat_info.delay;
-            if (delay <= 0)
-                delay = 400; // fallback default
-            wl_event_source_timer_update(keyboard->repeat_source, delay);
         }
 
         // Remove the timer if key is released
