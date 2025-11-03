@@ -1085,24 +1085,36 @@ def test_labelgroup(manager):
 
 
 @manager_config
-def test_change_loglevel(manager):
+def test_change_loglevel(manager, backend_name):
     assert manager.c.loglevel() == logging.INFO
     assert manager.c.loglevelname() == "INFO"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_INFO == lib.wlr_log_get_verbosity()")[1] == "True"
     manager.c.debug()
     assert manager.c.loglevel() == logging.DEBUG
     assert manager.c.loglevelname() == "DEBUG"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_DEBUG == lib.wlr_log_get_verbosity()")[1] == "True"
     manager.c.info()
     assert manager.c.loglevel() == logging.INFO
     assert manager.c.loglevelname() == "INFO"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_INFO == lib.wlr_log_get_verbosity()")[1] == "True"
     manager.c.warning()
     assert manager.c.loglevel() == logging.WARNING
     assert manager.c.loglevelname() == "WARNING"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_ERROR == lib.wlr_log_get_verbosity()")[1] == "True"
     manager.c.error()
     assert manager.c.loglevel() == logging.ERROR
     assert manager.c.loglevelname() == "ERROR"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_ERROR == lib.wlr_log_get_verbosity()")[1] == "True"
     manager.c.critical()
     assert manager.c.loglevel() == logging.CRITICAL
     assert manager.c.loglevelname() == "CRITICAL"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_SILENT == lib.wlr_log_get_verbosity()")[1] == "True"
 
 
 def test_switch_groups_cursor_warp(manager_nospawn):
