@@ -157,7 +157,7 @@ struct scene_node_info {
 typedef void (*node_info_cb_t)(uintptr_t node_ptr, uintptr_t parent_ptr,
                                struct scene_node_info info);
 
-typedef void (*view_urgent_cb_t)(struct qw_view *view, void *userdata);
+typedef void (*view_activation_cb_t)(struct qw_view *view, void *userdata);
 
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
@@ -170,11 +170,11 @@ struct qw_server {
     cursor_button_cb_t cursor_button_cb;
     on_screen_change_cb_t on_screen_change_cb;
     on_screen_reserve_space_cb_t on_screen_reserve_space_cb;
-    view_urgent_cb_t view_urgent_cb;
+    view_activation_cb_t view_activation_cb;
     on_input_device_added_cb_t on_input_device_added_cb;
     focus_current_window_cb_t focus_current_window_cb;
     on_session_lock_cb_t on_session_lock_cb;
-    void *view_urgent_cb_data;
+    void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
 

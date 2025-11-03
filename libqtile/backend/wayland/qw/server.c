@@ -562,8 +562,8 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
         return;
     }
 
-    if (server->view_urgent_cb != NULL) {
-        server->view_urgent_cb((struct qw_view *)view, server->view_urgent_cb_data);
+    if (server->view_activation_cb != NULL) {
+        server->view_activation_cb((struct qw_view *)view, server->view_activation_cb_data);
     }
 
     wlr_log(WLR_INFO, "Activation token valid, focusing view");

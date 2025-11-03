@@ -721,8 +721,8 @@ static void qw_xwayland_view_handle_set_hints(struct wl_listener *listener, void
     if (!hints_urgency) {
         return;
     }
-    xwayland_view->base.server->view_urgent_cb((struct qw_view *)&xwayland_view->base,
-                                               xwayland_view->base.server->cb_data);
+    xwayland_view->base.server->view_activation_cb((struct qw_view *)&xwayland_view->base,
+                                                   xwayland_view->base.server->cb_data);
 }
 
 static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, void *data) {

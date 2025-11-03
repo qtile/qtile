@@ -153,9 +153,9 @@ def on_screen_reserve_space_cb(output: ffi.CData, userdata: ffi.CData) -> None:
 
 
 @ffi.def_extern()
-def view_urgent_cb(view: ffi.CData, userdata: ffi.CData) -> None:
+def view_activation_cb(view: ffi.CData, userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
-    core.handle_view_urgent(view)
+    core.handle_view_activation(view)
 
 
 @ffi.def_extern()
@@ -216,8 +216,8 @@ class Core(base.Core):
         self.qw.cursor_button_cb = lib.cursor_button_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
-        self.qw.view_urgent_cb = lib.view_urgent_cb
-        self.qw.view_urgent_cb_data = self._userdata
+        self.qw.view_activation_cb = lib.view_activation_cb
+        self.qw.view_activation_cb_data = self._userdata
         self.qw.on_input_device_added_cb = lib.on_input_device_added_cb
         self.qw.focus_current_window_cb = lib.focus_current_window_cb
         self.qw.on_session_lock_cb = lib.on_session_lock_cb
@@ -464,7 +464,7 @@ class Core(base.Core):
 
         self._hovered_window = win
 
-    def handle_view_urgent(self, view: ffi.CData) -> None:
+    def handle_view_activation(self, view: ffi.CData) -> None:
         """Handle view urgency notification"""
         assert self.qtile is not None
         wid = view.wid
