@@ -189,11 +189,11 @@ class TestManager:
             try:
                 os.environ.pop("DISPLAY", None)
                 os.environ.pop("WAYLAND_DISPLAY", None)
+                init_log(self.log_level)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
                 from libqtile.core.lifecycle import lifecycle
 
-                init_log(self.log_level)
                 os.close(readlogs)
                 formatter = logging.Formatter("%(levelname)s - %(message)s")
                 handler = logging.StreamHandler(os.fdopen(writelogs, "w"))

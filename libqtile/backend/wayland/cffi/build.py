@@ -52,6 +52,7 @@ enum wlr_log_importance {
     WLR_DEBUG,
     ...
 };
+enum wlr_log_importance wlr_log_get_verbosity(void);
 extern "Python" void log_cb(enum wlr_log_importance importance,
                                        const char *log_str);
 
