@@ -33,8 +33,7 @@ build:
     - libxcb-cursor0
     - git
     - xterm
-    - vlc
-    - volumeicon-alsa
+    - libpulse0
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
