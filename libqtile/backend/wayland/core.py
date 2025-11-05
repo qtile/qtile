@@ -475,7 +475,7 @@ class Core(base.Core):
         win = self.qtile.windows_map.get(wid)
 
         if win:
-            win.handle_window_activation()
+            win.activate_by_config()
 
     def finalize(self) -> None:
         lib.qw_server_finalize(self.qw)

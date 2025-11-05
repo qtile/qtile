@@ -1242,7 +1242,7 @@ class _Window:
     def can_steal_focus(self, can_steal_focus: bool) -> None:
         self._can_steal_focus = can_steal_focus
 
-    def _do_focus(self):
+    def _do_focus(self) -> bool:
         """
         Focus the window if we can, and return whether or not it was successful.
         """
@@ -2143,11 +2143,9 @@ class Window(_Window, base.Window):
             source = data.data32[0]
             if source == 2:  # Request from a pager should immediately focus the window
                 logger.debug("Focusing window by pager")
-                self.qtile.current_screen.set_group(self.group)
-                self.group.focus(self)
-                self.bring_to_front()
+                self.activate()
             else:  # Request from the application
-                self.handle_window_activation()
+                self.activate_by_config()
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()
         elif atoms["WM_CHANGE_STATE"] == opcode:

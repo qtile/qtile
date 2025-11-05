@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import typing
 from abc import ABCMeta, abstractmethod
-from types import FunctionType
 
 from libqtile import hook
 from libqtile.command.base import CommandError, CommandObject, expose_command
@@ -531,35 +530,33 @@ class Window(_Window, metaclass=ABCMeta):
             respect_hints=True,
         )
 
-    def handle_window_activation(self):
+    def activate(self) -> bool:
+        """Focus and raise this window."""
+        if self.group is None:
+            return False
+        # Windows belonging to a scratchpad need to be toggled properly
+        if isinstance(self.group, ScratchPad):
+            for dropdown in self.group.dropdowns.values():
+                if dropdown.window is self:
+                    dropdown.show()
+                    return True
+            return False
+        # Normal window activation
+        self.qtile.current_screen.set_group(self.group)
+        self.group.focus(self)
+        self.bring_to_front()
+        return True
+
+    def activate_by_config(self) -> None:
+        """Activate the window according to focus_on_window_activation setting."""
         focus_behavior = self.qtile.config.focus_on_window_activation
-        if (
-            focus_behavior == "focus"
-            or type(focus_behavior) is FunctionType
-            and focus_behavior(self)
-        ):
+        if focus_behavior == "focus" or callable(focus_behavior) and focus_behavior(self):
             logger.debug("Focusing window (focus_on_window_activation='focus')")
-            # Windows belonging to a scratchpad need to be toggled properly
-            if isinstance(self.group, ScratchPad):
-                for dropdown in self.group.dropdowns.values():
-                    if dropdown.window is self:
-                        dropdown.show()
-                        break
-            else:
-                self.qtile.current_screen.set_group(self.group)
-                self.group.focus(self)
+            self.activate()
         elif focus_behavior == "smart":
-            if self.group.screen == self.qtile.current_screen:
+            if self.group and self.group.screen == self.qtile.current_screen:
                 logger.debug("Focusing window (focus_on_window_activation='smart')")
-                # Windows belonging to a scratchpad need to be toggled properly
-                if isinstance(self.group, ScratchPad):
-                    for dropdown in self.group.dropdowns.values():
-                        if dropdown.window is self:
-                            dropdown.show()
-                            break
-                else:
-                    self.qtile.current_screen.set_group(self.group)
-                    self.group.focus(self)
+                self.activate()
             else:
                 logger.debug("Setting urgent window (focus_on_window_activation='smart')")
                 self.urgent = True
