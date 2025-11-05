@@ -1,4 +1,5 @@
-import shutil
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -88,9 +89,7 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
     if backend_name == "wayland":
         pytest.skip("Skipping test on Wayland.")
 
-    for prog in ("volumeicon", "vlc"):
-        if shutil.which(prog) is None:
-            pytest.skip(f"{prog} must be installed. Skipping test.")
+    script = Path(__file__).parent.parent / "scripts" / "systray.py"
 
     config = minimal_conf_noscreen
     config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget.Systray()], 40))]
@@ -100,8 +99,8 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
     # No icons at this stage so length is 0
     assert manager_nospawn.c.widget["systray"].info()["widget"]["length"] == 0
 
-    manager_nospawn.c.spawn("volumeicon")
-    manager_nospawn.c.spawn("vlc")
+    manager_nospawn.c.spawn(f"{sys.executable} {script.as_posix()} --name qtile")
+    manager_nospawn.c.spawn(f"{sys.executable} {script.as_posix()} --name systray")
 
     wait_for_icons()
 
@@ -118,4 +117,4 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
     # Icons should be in alphabetical order
     _, order = manager_nospawn.c.widget["systray"].eval("[i.name for i in self.tray_icons]")
 
-    assert order == "['vlc', 'volumeicon']"
+    assert order == "['qtile', 'systray']"
