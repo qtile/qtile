@@ -19,14 +19,10 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     free(cursor);
 }
 
-void qw_cursor_update_focus(struct qw_cursor *cursor, double *sx, double *sy) {
+// Pointer focus helper function
+static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *surface, double sx,
+                                 double sy) {
     struct wlr_seat *seat = cursor->server->seat;
-
-    struct wlr_surface *surface = NULL;
-    double tmp_sx = 0.0, tmp_sy = 0.0;
-
-    cursor->view = qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface,
-                                     &tmp_sx, &tmp_sy);
 
     if (surface == NULL) {
         wlr_seat_pointer_clear_focus(seat);
@@ -37,15 +33,20 @@ void qw_cursor_update_focus(struct qw_cursor *cursor, double *sx, double *sy) {
     } else {
         struct wlr_surface *prev_surface = seat->pointer_state.focused_surface;
         if (surface != prev_surface) {
-            wlr_seat_pointer_notify_enter(seat, surface, tmp_sx, tmp_sy);
+            wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
         }
     }
+}
 
-    // Return surface-local position via output parameters, if provided
-    if (sx)
-        *sx = tmp_sx;
-    if (sy)
-        *sy = tmp_sy;
+// Update pointer focus without motion
+void qw_cursor_update_pointer_focus(struct qw_cursor *cursor) {
+    struct wlr_surface *surface = NULL;
+    double sx = 0.0, sy = 0.0;
+
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+
+    update_pointer_focus(cursor, surface, sx, sy);
 }
 
 static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
@@ -77,8 +78,10 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
         return;
     }
 
+    struct wlr_surface *surface = NULL;
     double sx = 0.0, sy = 0.0;
-    qw_cursor_update_focus(cursor, &sx, &sy);
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
     // Notify server callback with current cursor position
     cursor->server->cursor_motion_cb(cursor->server->cb_data);
