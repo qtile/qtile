@@ -241,6 +241,9 @@ struct qw_server {
 #endif
     struct wl_listener request_activate;
     struct wl_listener new_token;
+    struct wlr_relative_pointer_manager_v1 *relative_pointer_manager;
+    struct wlr_pointer_constraints_v1 *pointer_constraints;
+    struct wl_listener new_pointer_constraint;
 };
 
 struct qw_drag_icon {
