@@ -6,6 +6,7 @@
 #include <string.h>
 #include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xdg_shell.h>
 
 int qw_util_get_button_code(uint32_t button) {
@@ -74,7 +75,7 @@ int qw_util_get_modifier_code(const char *codestr) {
 }
 
 xkb_keysym_t qwu_keysym_from_name(const char *name) {
-	return xkb_keysym_from_name(name, XKB_KEYSYM_CASE_INSENSITIVE);
+    return xkb_keysym_from_name(name, XKB_KEYSYM_CASE_INSENSITIVE);
 }
 
 void qw_util_deactivate_surface(struct wlr_surface *surface) {
@@ -120,4 +121,49 @@ bool qw_surfaces_on_same_output(struct wlr_surface *surface_a, struct wlr_surfac
         }
     }
     return false;
+}
+
+struct qw_view *qw_view_from_wlr_surface(struct wlr_surface *surface, bool *is_layer_surface, bool *is_session_lock_surface) {
+    *is_layer_surface = false;
+    *is_session_lock_surface = false;
+
+    struct wlr_xdg_surface *xdg_surface;
+    xdg_surface = wlr_xdg_surface_try_from_wlr_surface(surface);
+    if (xdg_surface != NULL) {
+        struct qw_xdg_view *xdg_view = xdg_surface->data;
+        if (xdg_view != NULL) {
+            return &xdg_view->base;
+        }
+        return NULL;
+    }
+
+#if WLR_HAS_XWAYLAND
+    struct wlr_xwayland_surface *xwayland_surface;
+    xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(surface);
+    if (xwayland_surface != NULL) {
+        struct qw_xwayland_view *xwayland_view = xwayland_surface->data;
+        if (xwayland_view != NULL) {
+            return &xwayland_view->base;
+        }
+        return NULL;
+    }
+#endif
+
+    struct wlr_subsurface *subsurface;
+    subsurface = wlr_subsurface_try_from_wlr_surface(surface);
+    if (subsurface != NULL) {
+        return qw_view_from_wlr_surface(subsurface->parent, is_layer_surface, is_session_lock_surface);
+    }
+
+    if (wlr_layer_surface_v1_try_from_wlr_surface(surface) != NULL) {
+        *is_layer_surface = true;
+        return NULL;
+    }
+
+    if (wlr_session_lock_surface_v1_try_from_wlr_surface(surface) != NULL) {
+        *is_session_lock_surface = true;
+        return NULL;
+    }
+
+    return NULL;
 }
