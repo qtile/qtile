@@ -1,8 +1,8 @@
 import re
-import subprocess
 
 from libqtile.log_utils import logger
 from libqtile.widget.generic_poll_text import GenPollCommand
+from libqtile.widget.wlan import get_private_ip
 
 
 def parse_iw_output(raw: str):
@@ -23,28 +23,6 @@ def parse_iw_output(raw: str):
                 quality = signal + 110
 
     return essid, quality
-
-
-def get_private_ip(interface_name):
-    try:
-        result = subprocess.run(
-            ["ip", "-brief", "addr", "show", "dev", interface_name],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-    except (subprocess.CalledProcessError, OSError):
-        logger.exception(f"Couldn't get the IP for {interface_name}:")
-        return "N/A"
-
-    output = result.stdout.strip()
-    parts = output.split()
-    if len(parts) > 2 and parts[1] == "UP":
-        ip_address = parts[2].split("/")[0]
-        if ":" not in ip_address:
-            return ip_address
-
-    return "N/A"
 
 
 class WlanIw(GenPollCommand):
@@ -80,9 +58,9 @@ class WlanIw(GenPollCommand):
 
     def __init__(self, **config):
         config["cmd"] = ["iw", "dev", f"{config['interface']}", "link"]
-        GenPollCommand.__init__(self, **config)
+        super().__init__(**config)
         self.add_defaults(WlanIw.defaults)
-        self.ethernetInterfaceNotFound = False
+        self.ethernet_interface_not_found = False
 
     def parse(self, raw: str):
         try:
@@ -108,9 +86,9 @@ class WlanIw(GenPollCommand):
                                 return self.disconnected_message
 
                     except FileNotFoundError:
-                        if not self.ethernetInterfaceNotFound:
+                        if not self.ethernet_interface_not_found:
                             logger.error("Ethernet interface has not been found!")
-                            self.ethernetInterfaceNotFound = True
+                            self.ethernet_interface_not_found = True
                         return self.disconnected_message
 
                 else:
@@ -122,6 +100,7 @@ class WlanIw(GenPollCommand):
                 percent=(quality / 70),
                 ipaddr=ipaddr,
             )
+
         except OSError:
             logger.error(
                 "Probably your wlan device is switched off or "
