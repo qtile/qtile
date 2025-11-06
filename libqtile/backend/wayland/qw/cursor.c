@@ -21,17 +21,12 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     free(cursor);
 }
 
-void qw_cursor_update_focus(struct qw_cursor *cursor, struct wlr_surface **surface, double *sx,
-                            double *sy) {
+// Pointer focus helper function
+static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *surface, double sx,
+                                 double sy) {
     struct wlr_seat *seat = cursor->server->seat;
 
-    struct wlr_surface *tmp_surface = NULL;
-    double tmp_sx = 0.0, tmp_sy = 0.0;
-
-    cursor->view = qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y,
-                                     &tmp_surface, &tmp_sx, &tmp_sy);
-
-    if (tmp_surface == NULL) {
+    if (surface == NULL) {
         wlr_seat_pointer_clear_focus(seat);
         // Reset cursor if we're not over a surface and we're not dragging
         if (cursor->server->seat->drag == NULL) {
@@ -39,18 +34,21 @@ void qw_cursor_update_focus(struct qw_cursor *cursor, struct wlr_surface **surfa
         }
     } else {
         struct wlr_surface *prev_surface = seat->pointer_state.focused_surface;
-        if (tmp_surface != prev_surface) {
-            wlr_seat_pointer_notify_enter(seat, tmp_surface, tmp_sx, tmp_sy);
+        if (surface != prev_surface) {
+            wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
         }
     }
+}
 
-    // Return surface-local position via output parameters, if provided
-    if (sx)
-        *sx = tmp_sx;
-    if (sy)
-        *sy = tmp_sy;
-    if (surface)
-        *surface = tmp_surface;
+// Update pointer focus without motion
+void qw_cursor_update_pointer_focus(struct qw_cursor *cursor) {
+    struct wlr_surface *surface = NULL;
+    double sx = 0.0, sy = 0.0;
+
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+
+    update_pointer_focus(cursor, surface, sx, sy);
 }
 
 static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
@@ -86,7 +84,8 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
 
     struct wlr_surface *surface = NULL;
     double sx = 0.0, sy = 0.0;
-    qw_cursor_update_focus(cursor, &surface, &sx, &sy);
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
     wlr_relative_pointer_manager_v1_send_relative_motion(
         cursor->server->relative_pointer_manager, cursor->server->seat, (uint64_t)time * 1000, dx,
@@ -109,6 +108,8 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
     }
 
     wlr_cursor_move(cursor->cursor, device, dx, dy);
+
+    update_pointer_focus(cursor, surface, sx, sy);
 
     // Notify server callback with current cursor position
     cursor->server->cursor_motion_cb(cursor->server->cb_data);
@@ -166,7 +167,7 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
 
 void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y) {
     wlr_cursor_warp_closest(cursor->cursor, NULL, x, y);
-    qw_cursor_process_motion(cursor, 0, 0, 0, 0, 0, 0);
+    qw_cursor_process_motion(cursor, 0, NULL, 0, 0, 0, 0);
 }
 
 static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void *data) {
@@ -198,7 +199,7 @@ void qw_cursor_release_implicit_grab(struct qw_cursor *cursor, uint32_t time) {
         wlr_log(WLR_DEBUG, "Releasing implicit grab.");
         cursor->implicit_grab.live = false;
         // Pretend the cursor just appeared where it is.
-        qw_cursor_process_motion(cursor, time, 0, 0, 0, 0, 0);
+        qw_cursor_process_motion(cursor, time, NULL, 0, 0, 0, 0);
     }
 }
 
@@ -464,7 +465,7 @@ static void check_constraint_region(struct qw_cursor *cursor) {
 
                 wlr_cursor_warp_closest(cursor->cursor, NULL, sx - view->x, sy - view->y);
 
-                qw_cursor_update_focus(cursor, NULL, NULL, NULL);
+                qw_cursor_update_pointer_focus(cursor);
             }
         }
     }
