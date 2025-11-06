@@ -79,6 +79,7 @@ widgets = {
     "WindowName": "windowname",
     "WindowTabs": "windowtabs",
     "Wlan": "wlan",
+    "WlanIw": "wlaniw",
     "Wttr": "wttr",
 }
 
