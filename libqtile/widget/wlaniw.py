@@ -2,27 +2,8 @@ import re
 import subprocess
 
 from libqtile.log_utils import logger
+from libqtile.pangocffi import markup_escape_text
 from libqtile.widget.generic_poll_text import GenPollCommand
-
-
-def parse_iw_output(raw: str):
-    essid, quality = None, None
-    for line in raw.splitlines():
-        line = line.strip()
-
-        if line.startswith("SSID:"):
-            essid_match = re.search(r"SSID:\s*(.*)", line)
-            if essid_match:
-                essid = essid_match.group(1)
-
-        elif line.startswith("signal:"):
-            signal_match = re.search(r"signal:\s*(-?\d+)", line)
-            if signal_match:
-                signal = int(signal_match.group(1))
-                # see: https://superuser.com/questions/866005/wireless-connection-link-quality-what-does-31-70-indicate
-                quality = signal + 110
-
-    return essid, quality
 
 
 def get_private_ip(interface_name):
@@ -45,6 +26,83 @@ def get_private_ip(interface_name):
             return ip_address
 
     return "N/A"
+
+
+def parse_iw_output(raw: str):
+    essid, quality = None, None
+    for line in raw.splitlines():
+        line = line.strip()
+
+        if line.startswith("SSID:"):
+            essid_match = re.search(r"SSID:\s*(.*)", line)
+            if essid_match is not None:
+                essid = essid_match.group(1)
+                if not isinstance(essid, str):
+                    essid = None
+
+        elif line.startswith("signal:"):
+            signal_match = re.search(r"signal:\s*(-?\d+)", line)
+            if signal_match:
+                signal_str = signal_match.group(1)
+                signal = int(signal_str)
+                if signal.__str__() != signal_str:
+                    quality = None
+                else:
+                    # see: https://superuser.com/questions/866005/wireless-connection-link-quality-what-does-31-70-indicate
+                    quality = signal + 110
+
+    return essid, quality
+
+
+def process_essid_and_quality(
+    self,
+    essid: str | None,
+    quality: int | None,
+):
+    """
+    The polling and parsing logic for both Wlan and WlanIw respectively. See
+    libqtile.widget.wlan.Wlan.poll and libqtile.widget.wlaniw.WlanIw.parse.
+    """
+
+    try:
+        disconnected = essid is None
+        quality = 0 if quality is None else quality
+
+        ipaddr = "N/A"
+        if not disconnected:
+            ipaddr = get_private_ip(self.interface)
+
+        else:
+            if self.use_ethernet:
+                ipaddr = get_private_ip(self.ethernet_interface)
+                try:
+                    with open(f"/sys/class/net/{self.ethernet_interface}/operstate") as statfile:
+                        if statfile.read().strip() == "up":
+                            return self.ethernet_message_format.format(ipaddr=ipaddr)
+
+                        else:
+                            return self.disconnected_message
+
+                except FileNotFoundError:
+                    if not self.ethernet_interface_not_found:
+                        logger.error("Ethernet interface has not been found!")
+                        self.ethernet_interface_not_found = True
+                    return self.disconnected_message
+
+            else:
+                return self.disconnected_message
+
+        return self.format.format(
+            essid=markup_escape_text(essid),
+            quality=quality,
+            percent=(quality / 70),
+            ipaddr=ipaddr,
+        )
+
+    except OSError:
+        logger.error(
+            "Probably your wlan device is switched off or  otherwise not present in your system."
+        )
 
 
 class WlanIw(GenPollCommand):
@@ -87,46 +145,9 @@ class WlanIw(GenPollCommand):
         self.ethernet_interface_not_found = False
 
     def parse(self, raw: str):
-        try:
-            essid, quality = parse_iw_output(raw)
-            disconnected = essid is None
-            quality = 0 if quality is None else quality
-
-            ipaddr = "N/A"
-            if not disconnected:
-                ipaddr = get_private_ip(self.interface)
-
-            else:
-                if self.use_ethernet:
-                    ipaddr = get_private_ip(self.ethernet_interface)
-                    try:
-                        with open(
-                            f"/sys/class/net/{self.ethernet_interface}/operstate"
-                        ) as statfile:
-                            if statfile.read().strip() == "up":
-                                return self.ethernet_message_format.format(ipaddr=ipaddr)
-
-                            else:
-                                return self.disconnected_message
-
-                    except FileNotFoundError:
-                        if not self.ethernet_interface_not_found:
-                            logger.error("Ethernet interface has not been found!")
-                            self.ethernet_interface_not_found = True
-                        return self.disconnected_message
-
-                else:
-                    return self.disconnected_message
-
-            return self.format.format(
-                essid=essid,
-                quality=quality,
-                percent=(quality / 70),
-                ipaddr=ipaddr,
-            )
-
-        except OSError:
-            logger.error(
-                "Probably your wlan device is switched off or "
-                " otherwise not present in your system."
-            )
+        essid, quality = parse_iw_output(raw)
+        return process_essid_and_quality(
+            self,
+            essid=essid,
+            quality=quality,
+        )
