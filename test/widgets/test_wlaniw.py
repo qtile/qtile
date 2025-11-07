@@ -33,7 +33,6 @@ def mock_open(output):
             return None
 
         def read(self):
-            print("dsfdsafdsafdsasafa")
             return self.output
 
     return MockOpen
