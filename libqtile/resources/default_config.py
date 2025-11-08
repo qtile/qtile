@@ -2,7 +2,7 @@ import os
 
 import libqtile.resources
 from libqtile import bar, layout, qtile, widget
-from libqtile.config import Click, Drag, Group, Key, Match, Screen
+from libqtile.config import Click, Drag, Group, Key, Match, Pinch, Screen, Swipe
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
 
@@ -162,6 +162,14 @@ mouse = [
     Drag([mod], "Button1", lazy.window.set_position_floating(), start=lazy.window.get_position()),
     Drag([mod], "Button3", lazy.window.set_size_floating(), start=lazy.window.get_size()),
     Click([mod], "Button2", lazy.window.bring_to_front()),
+]
+
+# Pointer gestures
+gestures: list[Swipe | Pinch] = [
+    # Swipe([], "L", lazy.screen.prev_group()),
+    # Swipe([], "R", lazy.screen.next_group()),
+    # Pinch([], lazy.screen.next_group()).shrink(),
+    # Pinch([mod], lazy.screen.prev_group()).grow(),
 ]
 
 dgroups_key_binder = None
