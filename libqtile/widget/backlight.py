@@ -16,6 +16,16 @@ class ChangeDirection(enum.Enum):
     DOWN = 1
 
 
+def find_default_backlight() -> str:
+    try:
+        entries = os.listdir(BACKLIGHT_DIR)
+        if entries:
+            return entries[0]
+    except FileNotFoundError:
+        pass
+    return "QTILE_BACKLIGHT_NOT_FOUND"
+
+
 class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor.
 
@@ -44,7 +54,7 @@ class Backlight(base.InLoopPollText):
     filenames: dict = {}
 
     defaults = [
-        ("backlight_name", "acpi_video0", "ACPI name of a backlight device"),
+        ("backlight_name", find_default_backlight(), "ACPI name of a backlight device"),
         (
             "brightness_file",
             "brightness",
