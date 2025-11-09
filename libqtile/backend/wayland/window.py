@@ -293,6 +293,10 @@ class Internal(Base, base.Internal):
     def surface(self) -> ffi.CData:
         return ffi.cast("void *", self._internal_ptr.image_surface)
 
+    @property
+    def scale(self) -> float:
+        return self._internal_ptr.scale
+
     def finalize(self) -> None:
         self.hide()
 
