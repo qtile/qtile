@@ -370,15 +370,14 @@ class Core(base.Core):
         self.check_screen_fullscreen_background()
 
     def handle_keyboard_key(self, keysym: int, mask: int) -> bool:
+        if (keysym, mask) in self.grabbed_keys:
+            assert self.qtile is not None
+            _, swallowed = self.qtile.process_key_event(keysym, mask)
+            if swallowed:
+                return True
+
         if self.focused_internal:
             self.focused_internal.process_key_press(keysym)
-            return True
-
-        if (keysym, mask) not in self.grabbed_keys:
-            return False
-
-        assert self.qtile is not None
-        if self.qtile.process_key_event(keysym, mask)[1]:
             return True
 
         return False
