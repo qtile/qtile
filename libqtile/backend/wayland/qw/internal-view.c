@@ -100,6 +100,11 @@ static void qw_internal_view_unhide(void *self) {
 
 static void qw_internal_view_kill(void *self) {
     struct qw_internal_view *view = (struct qw_internal_view *)self;
+    if (view->base.server->seat->keyboard_state.focused_surface == NULL) {
+        wlr_scene_node_set_enabled(&view->base.content_tree->node, false);
+        view->base.server->focus_current_window_cb(view->base.server->cb_data);
+    }
+
     cairo_surface_destroy(view->image_surface);
     wlr_buffer_drop(view->buffer);
     wlr_scene_node_destroy(&view->base.content_tree->node);
