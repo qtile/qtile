@@ -12,22 +12,23 @@ jobs:
   build-wayland:
     name: Build Wayland libraries
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_28_x86_64
+    container: quay.io/pypa/manylinux_2_34_x86_64
     env:
-      libdrm-version: "2.4.121"
+      libdrm-version: "2.4.122"
       seatd-version: "0.6.4"
-      pixman-version: "0.42.0"
+      pixman-version: "0.43.0"
       xkbcommon-version: "1.7.0"
       xwayland-version: "22.1.9"
       xcvt-version: "0.1.2"
       inputproto-version: "2021.5"
-      wayland-protocols-version: "1.32"
-      wayland-version: "1.22.0"
-      wlroots-version: "0.17.3"
+      wayland-protocols-version: "1.41"
+      wayland-version: "1.24.0"
+      wlroots-version: "0.19.2"
     steps:
       - name: Install dependencies
         run: |
           yum -y install \
+            almalinux-release-devel \
             hwdata \
             python3-pip \
             libepoxy-devel \
@@ -50,10 +51,12 @@ jobs:
             xcb-util-keysyms-devel \
             xcb-util-renderutil-devel \
             xcb-util-wm-devel \
-            xorg-x11-font-utils \
             xorg-x11-xtrans-devel \
             ninja-build \
             wget
+      - name: Install X11 font utils
+        run: |
+          yum -y install --enablerepo=devel xorg-x11-font-utils
       - name: Set environment variables
         run: |
           echo "CPATH=${HOME}/wayland/usr/include" >> $GITHUB_ENV
@@ -177,7 +180,7 @@ jobs:
     name: Build wheels
     runs-on: ubuntu-latest
     needs: build-wayland
-    container: quay.io/pypa/manylinux_2_28_x86_64
+    container: quay.io/pypa/manylinux_2_34_x86_64
     strategy:
       matrix:
         python-version: ["cp3.12", "cp3.13"]
@@ -217,7 +220,7 @@ jobs:
           python -m build --wheel .
           ls dist/
           auditwheel show dist/qtile-*.whl
-          auditwheel repair --plat manylinux_2_28_x86_64 -w output_wheels dist/qtile-*.whl
+          auditwheel repair --plat manylinux_2_34_x86_64 -w output_wheels dist/qtile-*.whl
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
@@ -252,7 +255,7 @@ jobs:
   build-source:
     name: Build source
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux_2_28_x86_64
+    container: quay.io/pypa/manylinux_2_34_x86_64
     env:
       python-version: "cp3.13"
     steps:
