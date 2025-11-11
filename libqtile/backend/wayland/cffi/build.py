@@ -69,7 +69,6 @@ enum libinput_config_accel_profile {
     LIBINPUT_CONFIG_ACCEL_PROFILE_NONE = 0,
     LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT = (1 << 0),
     LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE = (1 << 1),
-    LIBINPUT_CONFIG_ACCEL_PROFILE_CUSTOM = (1 << 2),
 };
 
 enum libinput_config_click_method {
