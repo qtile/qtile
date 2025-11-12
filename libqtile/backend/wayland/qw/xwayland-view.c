@@ -80,7 +80,7 @@ static void static_view_handle_set_geometry(struct wl_listener *listener, void *
     struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, set_geometry);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
 
-    wlr_scene_node_set_position(&static_view->scene_surface->buffer->node, xwayland_surface->x,
+    wlr_scene_node_set_position(&static_view->scene_tree->node, xwayland_surface->x,
                                 xwayland_surface->y);
 }
 
@@ -89,18 +89,19 @@ static void static_view_handle_map(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, map);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
 
-    static_view->scene_surface =
-        wlr_scene_surface_create(static_view->base.server->scene_windows_layers[LAYER_BRINGTOFRONT],
-                                 xwayland_surface->surface);
-    if (static_view->scene_surface != NULL) {
-        wlr_scene_node_set_position(&static_view->scene_surface->buffer->node, xwayland_surface->x,
+    // Create a subsurface tree for this view under the content tree.
+    static_view->scene_tree =
+        wlr_scene_subsurface_tree_create(static_view->base.content_tree, xwayland_surface->surface);
+
+    if (static_view->scene_tree != NULL) {
+        wlr_scene_node_set_position(&static_view->scene_tree->node, xwayland_surface->x,
                                     xwayland_surface->y);
         wl_signal_add(&xwayland_surface->events.set_geometry, &static_view->set_geometry);
         static_view->set_geometry.notify = static_view_handle_set_geometry;
     }
 
     if (wlr_xwayland_surface_override_redirect_wants_focus(xwayland_surface)) {
-        qw_xwayland_view_focus(static_view->scene_surface, true);
+        qw_xwayland_view_focus(static_view, true);
     }
 }
 
@@ -109,10 +110,10 @@ static void static_view_handle_unmap(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, unmap);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
 
-    if (static_view->scene_surface != NULL) {
+    if (static_view->scene_tree != NULL) {
         wl_list_remove(&static_view->set_geometry.link);
-        wlr_scene_node_destroy(&static_view->scene_surface->buffer->node);
-        static_view->scene_surface = NULL;
+        wlr_scene_node_destroy(&static_view->scene_tree->node);
+        static_view->scene_tree = NULL;
     }
 
     struct wlr_seat *seat = static_view->base.server->seat;
@@ -211,6 +212,10 @@ void qw_server_xwayland_static_view_new(struct qw_server *server,
 
     static_view->xwayland_surface = xwayland_surface;
     static_view->base.server = server;
+
+    // Create a scene tree node for this view that brings it to front
+    static_view->base.content_tree =
+        wlr_scene_tree_create(server->scene_windows_layers[LAYER_BRINGTOFRONT]);
 
     wl_signal_add(&xwayland_surface->events.destroy, &static_view->destroy);
     static_view->destroy.notify = static_view_handle_destroy;
