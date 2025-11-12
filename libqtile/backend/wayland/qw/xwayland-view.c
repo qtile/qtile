@@ -122,7 +122,7 @@ static void static_view_handle_unmap(struct wl_listener *listener, void *data) {
         // This seems to handle JetBrains issues.
         if (xwayland_surface->parent && xwayland_surface->parent->surface &&
             wlr_xwayland_surface_override_redirect_wants_focus(xwayland_surface->parent)) {
-            qw_xwayland_view_focus(xwayland_surface->parent, true);
+            qw_xwayland_view_focus(xwayland_surface->parent->data, true);
             return;
         }
 
@@ -179,6 +179,7 @@ static void static_view_handle_override_redirect(struct wl_listener *listener, v
     struct qw_xwayland_view *static_view =
         wl_container_of(listener, static_view, override_redirect);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
+    struct qw_server *server = static_view->base.server;
 
     bool associated = xwayland_surface->surface != NULL;
     bool mapped = associated && xwayland_surface->surface->mapped;
@@ -192,7 +193,7 @@ static void static_view_handle_override_redirect(struct wl_listener *listener, v
     static_view_handle_destroy(&static_view->destroy, NULL);
     xwayland_surface->data = NULL;
 
-    qw_server_xwayland_view_new(static_view->base.server, xwayland_surface);
+    qw_server_xwayland_view_new(server, xwayland_surface);
     struct qw_xwayland_view *xwayland_view = xwayland_surface->data;
     if (associated) {
         qw_xwayland_view_handle_associate(&xwayland_view->associate, NULL);
@@ -234,6 +235,8 @@ void qw_server_xwayland_static_view_new(struct qw_server *server,
 
     wl_signal_add(&xwayland_surface->events.set_override_redirect, &static_view->override_redirect);
     static_view->override_redirect.notify = static_view_handle_override_redirect;
+
+    xwayland_surface->data = static_view;
 }
 
 static struct wlr_scene_node *qw_xwayland_view_get_tree_node(void *self) {
@@ -477,7 +480,7 @@ static void qw_xwayland_view_handle_request_maximize(struct wl_listener *listene
 
     wlr_xwayland_surface_set_maximized(surface, true, true);
 
-    bool maximized = surface->maximized_horz || surface->maximized_horz;
+    bool maximized = surface->maximized_horz || surface->maximized_vert;
     int handled = xwayland_view->base.request_maximize_cb(maximized, xwayland_view->base.cb_data);
     if (!handled) {
         wlr_log(WLR_ERROR, "Could not maximize X window");
@@ -521,7 +524,7 @@ static void qw_xwayland_view_handle_set_class(struct wl_listener *listener, void
         wlr_foreign_toplevel_handle_v1_set_app_id(xwayland_view->base.ftl_handle,
                                                   xwayland_view->base.app_id);
     }
-    if (xwayland_view->base.set_title_cb && xwayland_view->base.app_id) {
+    if (xwayland_view->base.set_app_id_cb && xwayland_view->base.app_id) {
         xwayland_view->base.set_app_id_cb(xwayland_view->base.app_id, xwayland_view->base.cb_data);
     }
 }
@@ -771,8 +774,8 @@ static void qw_xwayland_view_handle_request_override_redirect(struct wl_listener
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view =
         wl_container_of(listener, xwayland_view, override_redirect);
-
     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
+    struct qw_server *server = xwayland_view->base.server;
 
     bool associated = xwayland_surface->surface != NULL;
     bool mapped = associated && xwayland_surface->surface->mapped;
@@ -786,7 +789,7 @@ static void qw_xwayland_view_handle_request_override_redirect(struct wl_listener
     qw_xwayland_view_handle_destroy(&xwayland_view->destroy, xwayland_view);
     xwayland_surface->data = NULL;
 
-    qw_server_xwayland_static_view_new(xwayland_view->base.server, xwayland_surface);
+    qw_server_xwayland_static_view_new(server, xwayland_surface);
     struct qw_xwayland_view *static_view = xwayland_surface->data;
     if (associated) {
         static_view_handle_associate(&static_view->associate, NULL);
