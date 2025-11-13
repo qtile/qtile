@@ -2,6 +2,7 @@
 #define KEYBOARD_H
 
 #include <wlr/types/wlr_input_device.h> // For wlr_input_device type
+#include <xkbcommon/xkbcommon.h>
 
 struct qw_server; // Forward declaration since qw_server is used but not defined here
 
@@ -14,6 +15,11 @@ struct qw_keyboard {
     struct wl_listener modifiers;
     struct wl_listener key;
     struct wl_listener destroy;
+
+    // tracking for key repeats
+    bool key_pressed;
+    struct wl_event_source *repeat_source;
+    xkb_keysym_t repeat_keysym;
 };
 
 // Creates and sets up a new keyboard on the server from the input device
