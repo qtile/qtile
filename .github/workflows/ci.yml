@@ -28,7 +28,14 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: ${{ matrix.python-version }}
+            - name: Cache uv
+              id: cache-uv
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cargo/bin/uv
+                  key: ${{ runner.os }}-uv-30-10-2025
             - name: Install uv
+              if: steps.cache-uv.outputs.cache-hit != 'true'
               run: curl -LsSf https://astral.sh/uv/install.sh | sh
             - name: Install dependencies
               run: |
