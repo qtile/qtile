@@ -93,10 +93,12 @@ Maintainers
 | `@tych0`_ GPG: ``3CCA B226 289D E016 0C61  BDB4 18D1 8F1B C464 DCA3``
 | `@elParaguayo`_ GPG: ``A6BA A1E1 7D26 64AD B97B  2C6F 58A9 AA7C 8672 7DF7``
 | `@jwijenbergh`_ GPG: ``B1C8 1CF3 063B 5836 4946  3687 4827 061B D417 C233``
+| `@richcarni`_ GPG: ``FBB5 0201 8A0E 9CCF AF00  A5F0 9317 80BE 8CA8 83B5``
 
 .. _`@tych0`: https://github.com/tych0
 .. _`@elParaguayo`: https://github.com/elparaguayo
 .. _`@jwijenbergh`: https://github.com/jwijenbergh
+.. _`@richcarni`: https://github.com/richcarni
 
 Maintainers Emeritus
 ====================
