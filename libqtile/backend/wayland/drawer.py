@@ -47,7 +47,7 @@ class Drawer(drawer.Drawer):
         scale = self._win.scale
 
         # Paint recorded operations to our window's underlying ImageSurface
-        # Allocation could have failed, NULL check
+        # Allocation could have failed or surface may have been destroyed, NULL check
         if not self._win.surface:
             return
         surface = cairocffi.Surface._from_pointer(self._win.surface, True)  # type: ignore[attr-defined]

@@ -118,6 +118,7 @@ static void qw_internal_view_unhide(void *self) {
 static void qw_internal_view_kill(void *self) {
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     cairo_surface_destroy(view->image_surface);
+    view->image_surface = NULL;
     wlr_buffer_drop(view->buffer);
     wlr_scene_node_destroy(&view->base.content_tree->node);
     free(view);
