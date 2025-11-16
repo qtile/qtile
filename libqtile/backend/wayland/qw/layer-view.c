@@ -137,10 +137,8 @@ static void qw_layer_popup_handle_destroy(struct wl_listener *listener, void *da
 }
 
 static void qw_layer_popup_unconstrain(struct qw_layer_popup *popup) {
-    struct qw_server *server = popup->toplevel->server;
     struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
-
-    struct qw_output *output = server->current_output->data;
+    struct qw_output *output = popup->toplevel->output;
 
     // if a client tries to create a popup while we are in the process of destroying
     // its output, don't crash.
@@ -149,7 +147,7 @@ static void qw_layer_popup_unconstrain(struct qw_layer_popup *popup) {
     }
 
     int width, height;
-    wlr_output_effective_resolution(server->current_output, &width, &height);
+    wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
     int lx, ly;
     wlr_scene_node_coords(&popup->toplevel->scene->tree->node, &lx, &ly);
@@ -234,14 +232,15 @@ void qw_server_layer_view_new(struct qw_server *server,
     // assign it the current output
     if (!layer_surface->output) {
         // we cannot assign it to any output as we have none
-        if (!server->current_output) {
+        struct wlr_output *current_output = qw_server_get_current_output(server);
+        if (current_output == NULL) {
             wlr_log(WLR_ERROR,
                     "cannot assign layer surface an output as there is no current output");
             wlr_layer_surface_v1_destroy(layer_surface);
             free(layer_view);
             return;
         }
-        layer_surface->output = server->current_output;
+        layer_surface->output = current_output;
     }
 
     layer_surface->data = layer_view;

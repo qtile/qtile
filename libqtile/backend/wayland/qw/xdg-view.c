@@ -330,10 +330,11 @@ static void qw_xdg_popup_unconstrain(struct qw_xdg_popup *popup) {
     struct qw_view *view = &popup->xdg_view->base;
     struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
 
-    struct qw_output *output = view->server->current_output->data;
+    struct qw_output *output =
+        wlr_output_layout_output_at(view->server->output_layout, view->x, view->y)->data;
 
     int width, height;
-    wlr_output_effective_resolution(view->server->current_output, &width, &height);
+    wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
     // the output box expressed in the coordinate system of the toplevel parent
     // of the popup

@@ -176,6 +176,12 @@ def on_session_lock_cb(locked: bool, userdata: ffi.CData) -> None:
     core.set_locked(locked)
 
 
+@ffi.def_extern()
+def get_current_output_dims_cb(userdata: ffi.CData) -> ffi.CData:
+    core = ffi.from_handle(userdata)
+    return core.handle_get_current_output_dims()
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -221,6 +227,7 @@ class Core(base.Core):
         self.qw.on_input_device_added_cb = lib.on_input_device_added_cb
         self.qw.focus_current_window_cb = lib.focus_current_window_cb
         self.qw.on_session_lock_cb = lib.on_session_lock_cb
+        self.qw.get_current_output_dims_cb = lib.get_current_output_dims_cb
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
@@ -299,6 +306,18 @@ class Core(base.Core):
                 return screen
 
         return self.qtile.current_screen
+
+    def handle_get_current_output_dims(self) -> ffi.CData:
+        assert self.qtile is not None
+
+        output_dims = ffi.new("struct wlr_box *")
+        output_dims.x = self.qtile.current_screen.x
+        output_dims.y = self.qtile.current_screen.y
+        output_dims.width = self.qtile.current_screen.width
+        output_dims.height = self.qtile.current_screen.height
+
+        # Dereference to pass by value
+        return output_dims[0]
 
     def handle_screen_reserve_space(self, output: ffi.CData) -> None:
         screen = self.get_screen_for_output(output)

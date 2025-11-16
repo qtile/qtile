@@ -119,6 +119,9 @@ typedef void (*on_input_device_added_cb_t)(void *userdata);
 // Callback to focus current window (if available). Returns success
 typedef bool (*focus_current_window_cb_t)(void *userdata);
 
+// Callback to get output dimensions for qtile's current screen
+typedef struct wlr_box (*get_current_output_dims_cb_t)(void *userdata);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -174,6 +177,7 @@ struct qw_server {
     on_input_device_added_cb_t on_input_device_added_cb;
     focus_current_window_cb_t focus_current_window_cb;
     on_session_lock_cb_t on_session_lock_cb;
+    get_current_output_dims_cb_t get_current_output_dims_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -194,7 +198,6 @@ struct qw_server {
     struct wlr_scene_output_layout *scene_layout;
     struct wlr_output_layout *output_layout;
     struct wl_list outputs;
-    struct wlr_output *current_output;
     struct wlr_output_manager_v1 *output_mgr;
     struct wl_listener output_manager_apply;
     struct wl_listener output_manager_test;
@@ -292,5 +295,7 @@ void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb)
 
 void qw_server_set_output_fullscreen_background(struct qw_server *server, int x, int y,
                                                 bool enabled);
+
+struct wlr_output *qw_server_get_current_output(struct qw_server *server);
 
 #endif /* SERVER_H */

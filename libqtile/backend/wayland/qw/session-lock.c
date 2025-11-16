@@ -197,7 +197,8 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
     // The qw_server_handle_new_input function will also redirect keyboard to a lock
     // surface if a keyboard appears after the lock surface.
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(lock->server->seat);
-    if (keyboard && output->wlr_output == lock->server->current_output) {
+    struct wlr_output *current_output = qw_server_get_current_output(lock->server);
+    if (keyboard && output->wlr_output == current_output) {
         wlr_seat_keyboard_notify_enter(lock->server->seat, lock_surface->surface,
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
