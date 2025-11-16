@@ -28,8 +28,12 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: ${{ matrix.python-version }}
-            - name: Install uv
-              run: curl -LsSf https://astral.sh/uv/install.sh | sh
+            - name: Set up uv
+              uses: astral-sh/setup-uv@v6
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "pyproject.toml"
+                  python-version: ${{ matrix.python-version }}
             - name: Install dependencies
               run: |
                 sudo apt update
@@ -61,8 +65,7 @@ jobs:
             - name: Upload coverage data to coveralls.io
               continue-on-error: true
               run: |
-                pip -q install coveralls >=3.3.0
-                coveralls --service=github
+                uv tool run coveralls --service=github
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
