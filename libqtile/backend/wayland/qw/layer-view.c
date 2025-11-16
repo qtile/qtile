@@ -137,10 +137,8 @@ static void qw_layer_popup_handle_destroy(struct wl_listener *listener, void *da
 }
 
 static void qw_layer_popup_unconstrain(struct qw_layer_popup *popup) {
-    struct qw_server *server = popup->toplevel->server;
     struct wlr_xdg_popup *wlr_popup = popup->wlr_popup;
-
-    struct qw_output *output = server->current_output->data;
+    struct qw_output *output = popup->toplevel->output;
 
     // if a client tries to create a popup while we are in the process of destroying
     // its output, don't crash.
@@ -149,7 +147,7 @@ static void qw_layer_popup_unconstrain(struct qw_layer_popup *popup) {
     }
 
     int width, height;
-    wlr_output_effective_resolution(server->current_output, &width, &height);
+    wlr_output_effective_resolution(output->wlr_output, &width, &height);
 
     int lx, ly;
     wlr_scene_node_coords(&popup->toplevel->scene->tree->node, &lx, &ly);
