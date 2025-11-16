@@ -80,10 +80,6 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time) {
     double sx = 0.0, sy = 0.0;
     qw_cursor_update_focus(cursor, &sx, &sy);
 
-    // Update current output
-    cursor->server->current_output = wlr_output_layout_output_at(
-        cursor->server->output_layout, cursor->cursor->x, cursor->cursor->y);
-
     // Notify server callback with current cursor position
     cursor->server->cursor_motion_cb(cursor->server->cb_data);
 

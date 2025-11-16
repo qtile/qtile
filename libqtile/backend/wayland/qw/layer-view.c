@@ -232,14 +232,15 @@ void qw_server_layer_view_new(struct qw_server *server,
     // assign it the current output
     if (!layer_surface->output) {
         // we cannot assign it to any output as we have none
-        if (!server->current_output) {
+        struct wlr_output *current_output = qw_server_get_current_output(server);
+        if (current_output == NULL) {
             wlr_log(WLR_ERROR,
                     "cannot assign layer surface an output as there is no current output");
             wlr_layer_surface_v1_destroy(layer_surface);
             free(layer_view);
             return;
         }
-        layer_surface->output = server->current_output;
+        layer_surface->output = current_output;
     }
 
     layer_surface->data = layer_view;
