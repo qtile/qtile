@@ -9,25 +9,33 @@
 
 // Create or recreate the internal view's buffer and associated Cairo surface
 // If init is false, drop the old buffer before creating a new one
+//
+// We scale the cairo surface (wayland/drawer.py) and buffer by its output (display) scale - since
+// cairo largely uses vector drawing primitives, this produces a sharper result than letting wayland
+// upscale for us. We need to set the destination size for wayland to correctly scale the buffer
 static void qw_internal_view_buffer_new(struct qw_internal_view *view, bool init) {
     if (!init) {
         wlr_buffer_drop(view->buffer);
     }
 
+    int scaled_width = (int)(view->base.width * view->scale);
+    int scaled_height = (int)(view->base.height * view->scale);
+
     // Create a new Cairo image surface with ARGB32 format
     view->image_surface =
-        cairo_image_surface_create(CAIRO_FORMAT_ARGB32, view->base.width, view->base.height);
+        cairo_image_surface_create(CAIRO_FORMAT_ARGB32, scaled_width, scaled_height);
 
     unsigned char *data = cairo_image_surface_get_data(view->image_surface);
     size_t stride = cairo_image_surface_get_stride(view->image_surface);
 
     // Create a wlr_buffer backed by the Cairo surface's pixel data
-    view->buffer = cairo_buffer_create(view->base.width, view->base.height, stride, data);
+    view->buffer = cairo_buffer_create(scaled_width, scaled_height, stride, data);
 
     if (!view->buffer) {
         wlr_log(WLR_ERROR, "failed allocating wlr_buffer for internal view");
     } else if (!init) {
         wlr_scene_buffer_set_buffer_with_damage(view->scene_buffer, view->buffer, NULL);
+        wlr_scene_buffer_set_dest_size(view->scene_buffer, view->base.width, view->base.height);
     }
 }
 
@@ -40,9 +48,11 @@ void qw_internal_view_set_buffer_with_damage(struct qw_internal_view *view, int 
 
     // Initialize a pixman region covering the damage rectangle
     pixman_region32_t region;
-    pixman_region32_init_rect(&region, x, y, width, height);
+    pixman_region32_init_rect(&region, (int)(x * view->scale), (int)(y * view->scale),
+                              (int)(width * view->scale), (int)(height * view->scale));
 
     wlr_scene_buffer_set_buffer_with_damage(view->scene_buffer, view->buffer, &region);
+    wlr_scene_buffer_set_dest_size(view->scene_buffer, view->base.width, view->base.height);
 
     // Clean up pixman region
     pixman_region32_fini(&region);
@@ -72,8 +82,15 @@ static void qw_internal_view_place(void *self, int x, int y, int width, int heig
     view->base.y = y;
     wlr_scene_node_set_position(&view->base.content_tree->node, x, y);
 
-    // Resize and recreate buffer if size changed
-    if (width != view->base.width || height != view->base.height) {
+    // Update scale as view may have moved
+    double prev_scale = view->scale;
+    struct wlr_output *output = wlr_output_layout_output_at(view->base.server->output_layout, x, y);
+    if (output != NULL) {
+        view->scale = output->scale;
+    }
+
+    // Resize and recreate buffer if size or scale has changed
+    if (width != view->base.width || height != view->base.height || view->scale != prev_scale) {
         view->base.width = width;
         view->base.height = height;
         qw_internal_view_buffer_new(view, false);
@@ -148,6 +165,11 @@ struct qw_internal_view *qw_server_internal_view_new(struct qw_server *server, i
     view->base = base;
     view->base.content_tree->node.data = view;
     view->base.view_type = QW_VIEW_INTERNAL;
+    view->scale = 1.0;
+    struct wlr_output *output = wlr_output_layout_output_at(server->output_layout, x, y);
+    if (output != NULL) {
+        view->scale = output->scale;
+    }
 
     // Create the initial buffer and disable the scene node by default
     qw_internal_view_buffer_new(view, true);

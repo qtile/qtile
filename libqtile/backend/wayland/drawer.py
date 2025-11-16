@@ -44,6 +44,8 @@ class Drawer(drawer.Drawer):
         if height > self._win.height - offsety:
             height = self._win.height - offsety
 
+        scale = self._win.scale
+
         # Paint recorded operations to our window's underlying ImageSurface
         # Allocation could have failed, NULL check
         if not self._win.surface:
@@ -51,6 +53,8 @@ class Drawer(drawer.Drawer):
         surface = cairocffi.Surface._from_pointer(self._win.surface, True)  # type: ignore[attr-defined]
         with cairocffi.Context(surface) as context:
             context.set_operator(cairocffi.OPERATOR_SOURCE)
+            # Scale the cairo surface by its output (display) scale
+            context.scale(scale, scale)
             # Adjust the source surface position by src_x and src_y e.g. if we want
             # to render part of the surface in a different position
             context.set_source_surface(self.surface, offsetx - src_x, offsety - src_y)
