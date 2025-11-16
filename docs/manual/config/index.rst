@@ -75,6 +75,10 @@ configuration variables that control specific aspects of Qtile's behavior:
       - If a window requests to be fullscreen, it is automatically
         fullscreened. Set this to false if you only want windows to be
         fullscreen if you ask them to be.
+    * - ``auto_minimize``
+      - ``True``
+      - If things like steam games want to auto-minimize themselves when losing
+        focus, should we respect this or not?
     * - ``bring_front_click``
       - ``False``
       - When clicked, should the window be brought to the front or not. If this
@@ -90,6 +94,10 @@ configuration variables that control specific aspects of Qtile's behavior:
         warping to the center of the focused window. When switching focus between
         screens, If there are no windows in the screen, the cursor will warp to
         the center of the screen.
+    * - ``dgroups_app_rules``
+      - ``[]``
+      - A list of Rule objects which can send windows to various groups based
+        on matching criteria.
     * - ``dgroups_key_binder``
       - ``None``
       - A function which generates group binding hotkeys. It takes a single
@@ -100,10 +108,6 @@ configuration variables that control specific aspects of Qtile's behavior:
         <https://github.com/qtile/qtile/blob/master/libqtile/dgroups.py>`_
         called simple_key_binder(), which will bind groups to mod+shift+0-10 by
         default.
-    * - ``dgroups_app_rules``
-      - ``[]``
-      - A list of Rule objects which can send windows to various groups based
-        on matching criteria.
     * - ``extension_defaults``
       - same as ``widget_defaults``
       - Default settings for extensions.
@@ -141,13 +145,13 @@ configuration variables that control specific aspects of Qtile's behavior:
         across windows in a layout. Otherwise set this to ``"click_or_drag_only"``
         to change focus only when doing a :class:`~libqtile.config.Click` or
         :class:`~libqtile.config.Drag` action.
-    * - ``widget_defaults``
-      - ``dict(font='sans', fontsize=12, padding=3)``
-      - Default settings for bar widgets.
     * - ``reconfigure_screens``
       - ``True``
       - Controls whether or not to automatically reconfigure screens when there
         are changes in randr output configuration.
+    * - ``widget_defaults``
+      - ``dict(font='sans', fontsize=12, padding=3)``
+      - Default settings for bar widgets.
     * - ``wmname``
       - ``'LG3D'``
       - Gasp! We're lying here. In fact, nobody really uses or cares
@@ -158,11 +162,6 @@ configuration variables that control specific aspects of Qtile's behavior:
         we're a working one by default. We choose LG3D to maximize irony:
         it is a 3D non-reparenting WM written in java that happens to be
         on java's whitelist.
-    * - ``auto_minimize``
-      - ``True``
-      - If things like steam games want to auto-minimize themselves when losing
-        focus, should we respect this or not?
-
 
 Testing your configuration
 ==========================
