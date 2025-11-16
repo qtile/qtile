@@ -154,10 +154,6 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         config_head = wlr_output_configuration_head_v1_create(config, o->wlr_output);
         config_head->state.enabled = 0;
         wlr_output_layout_remove(server->output_layout, o->wlr_output);
-        // update current output
-        if (o->wlr_output == server->current_output) {
-            server->current_output = NULL;
-        }
         o->full_area = o->area = (struct wlr_box){0};
     }
     wl_list_for_each(o, &server->outputs, link) {
@@ -195,11 +191,6 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
 
         config_head->state.x = o->x = o->full_area.x;
         config_head->state.y = o->y = o->full_area.y;
-
-        // if we have no current output, assign it the first enabled output
-        if (!server->current_output) {
-            server->current_output = o->wlr_output;
-        }
     }
 
     wlr_output_manager_v1_set_configuration(server->output_mgr, config);
@@ -900,4 +891,19 @@ static void qw_server_traverse_scene_node(struct wlr_scene_node *node,
 void qw_server_traverse_scene_graph(struct qw_server *server, node_info_cb_t cb) {
     struct wlr_scene_node *root = &server->scene->tree.node;
     qw_server_traverse_scene_node(root, server->scene_windows_layers, cb, NULL);
+}
+
+struct wlr_output *qw_server_get_current_output(struct qw_server *server) {
+    struct wlr_box current_output = server->get_current_output_dims_cb(server->cb_data);
+
+    struct qw_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        // Outputs alias if they have the same (x, y) and share the same Screen, so
+        // we don't need to check the if the width and height match the Screen's.
+        if (output->x == current_output.x && output->y == current_output.y) {
+            return output->wlr_output;
+        }
+    }
+
+    return NULL;
 }
