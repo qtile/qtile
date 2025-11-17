@@ -5,7 +5,7 @@ This creates a minimal window using GTK that works the same in both X11 or Wayla
 GTK sets the window class via `--name <class>`, and then we manually set the window
 title and type. Therefore this is intended to be called as:
 
-    python window.py --name <class> <title> <type> <new_title>
+    python window.py --name <class> <title> <type>
 
 where <type> is "normal" or "notification"
 
@@ -27,6 +27,7 @@ if not os.environ.get("GDK_BACKEND"):
 # https://wiki.gnome.org/Accessibility/Documentation/GNOME2/Mechanics
 os.environ["NO_AT_BRIDGE"] = "1"
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -141,34 +142,52 @@ class SNItem(ServiceInterface):
 
 if __name__ == "__main__":
     # GTK consumes the `--name <class>` args
-    if len(sys.argv) > 1:
-        title = sys.argv[1]
-    else:
-        title = "TestWindow"
+    parser = argparse.ArgumentParser(
+        description="Create a minimal GTK window for X11 or Wayland."
+    )
+    parser.add_argument(
+        "--name", dest="window_class", default=None, help="Window class (used by GTK)"
+    )
+    parser.add_argument("title", nargs="?", default="TestWindow", help="Window title")
+    parser.add_argument(
+        "type",
+        nargs="?",
+        default="normal",
+        choices=["normal", "notification"],
+        help="Window type",
+    )
+    parser.add_argument(
+        "--new-title", dest="new_title", default=None, help="New window title after delay"
+    )
+    parser.add_argument(
+        "--export-sni-interface",
+        dest="sni",
+        action="store_true",
+        help="Export StatusNotifierItem interface",
+    )
+    parser.add_argument(
+        "--urgent", dest="urgent", action="store_true", help="Set urgency after delay"
+    )
 
-    if len(sys.argv) > 2:
-        window_type = sys.argv[2]
-    else:
-        window_type = "normal"
+    args = parser.parse_args()
 
-    # Check if we want to export a StatusNotifierItem interface
-    sni = "export_sni_interface" in sys.argv
+    title = args.title
+    window_type = args.type
 
     win = Gtk.Window(title=title)
     win.set_default_size(100, 100)
 
-    if len(sys.argv) > 3 and sys.argv[3]:
+    if args.new_title:
 
-        def gtk_set_title(*args):
-            win.set_title(sys.argv[3])
+        def gtk_set_title(*_):
+            win.set_title(args.new_title)
 
         # Time before renaming title
         GLib.timeout_add(500, gtk_set_title)
 
-    if "urgent_hint" in sys.argv:
+    if args.urgent:
 
-        def gtk_set_urgency_hint(*args):
-            # Works only when GDK_BACKEND is x11
+        def gtk_set_urgency_hint(*_):
             win.set_urgency_hint(True)
 
         # Time before changing urgency
@@ -196,7 +215,7 @@ if __name__ == "__main__":
     elif window_type == "normal":
         win.set_type_hint(Gdk.WindowTypeHint.NORMAL)
 
-    if sni:
+    if args.sni:
         bus = PatchedMessageBus().connect_sync()
 
         item = SNItem(win, "org.kde.StatusNotifierItem")
