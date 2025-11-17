@@ -586,7 +586,7 @@ def test_client_urgent_hint_changed(manager_nospawn):
         hook.subscribe.client_urgent_hint_changed(test)
 
     manager_nospawn.start(ClientUrgentHintChangedConfig)
-    manager_nospawn.test_window("Test Client", urgent_hint=True)
+    manager_nospawn.test_window("Test Client", urgent=True)
     assert_window(manager_nospawn, "Test Client")
     # Get urgency of the window
     _, urgent = manager_nospawn.c.eval("list(self.windows_map.values())[0].urgent")

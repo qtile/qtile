@@ -352,8 +352,8 @@ class TestManager:
         name,
         floating=False,
         wm_type="normal",
-        new_title="",
-        urgent_hint=False,
+        new_title=None,
+        urgent=False,
         export_sni=False,
     ):
         """
@@ -372,13 +372,15 @@ class TestManager:
         python = sys.executable
         path = Path(__file__).parent / "scripts" / "window.py"
         wmclass = "dialog" if floating else "TestWindow"
-        args = [python, path, "--name", wmclass, name, wm_type, new_title]
-        if urgent_hint:
-            args.append("urgent_hint")
+        args = [python, path, "--name", wmclass, name, wm_type]
+        if new_title:
+            args += ["--new-title", new_title]
+        if urgent:
+            args.append("--urgent")
             # GDK urgency hint is only available in x11
             os.environ["GDK_BACKEND"] = "x11"
         if export_sni:
-            args.append("export_sni_interface")
+            args.append("--export_sni_interface")
         return self._spawn_window(*args)
 
     def test_notification(self, name="notification"):
