@@ -23,6 +23,23 @@ Qtile x.xx.x, released xxxx-xx-xx:
       - Add `swap` method to Bsp layout
       - Add `swap` method to Columns layout
     * bugfixes
+      - fix which xdg dependency we (optionally) requre xdg -> pyxdg
+      - fix programs launched by spawn() having qtile's stdin as their own,
+        causing hangs sometimes
+      - x11: clear _NET_ACTIVE_WINDOW when no window is focused
+      - port lots of in-loop widgets to asyncio, so that they can not block
+        qtile's main loop if their polling takes a long time
+      - port lots of threaded widgets to asyncio (and aiohttp), so that they
+        do not use lots of resources or cause races in drawing when executing
+        in parallel
+      - x11: don't focus twice in focus_by_click()
+      - x11: use less memory when resolving window attributes
+      - x11: use less memory when resolving which event handler to use
+      - fix stretch widget allocation when there are multiple stretch widgets
+      - fix GroupBox in center_aligned mode
+      - drop use of asyncio.DefaultEventLoopPolicy since it has been removed
+        in python 3.14
+      - drop `qtile udev` and fix udev rules to chmod directly
 
 Qtile 0.33.0, released 2025-07-24:
     !!! breaking changes !!!
