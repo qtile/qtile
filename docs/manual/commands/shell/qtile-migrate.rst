@@ -63,7 +63,7 @@ Running migrations
 ------------------
 
 Assuming your config file is in the default location, running ``qtile migrate``
-is sufficent to start the migration process.
+is sufficient to start the migration process.
 
 Let's say you had a config file with the following contents:
 
