@@ -60,21 +60,14 @@ Building the documentation
 To build the documentation, you will also need to install `graphviz
 <https://www.graphviz.org/download/>`_.
 
-Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
+Build the documentation with ``make docs`` from the root directory.
 
-Build the documentation with ``make html``.
-
-Check the result by opening ``_build/html/index.html`` in your browser.
+Check the result by opening ``docs/_build/html/index.html`` in your browser.
 
 .. note::
 
-  To speed up local testing, screenshots are not generated each time the documentation
-  is built.
-
-  You can enable screenshots by setting the ``QTILE_BUILD_SCREENSHOTS`` environmental
-  variable at build time e.g. ``QTILE_BUILD_SCREENSHOTS=1 make html``. You can also
-  export the variable so it will apply to all local builds ``export QTILE_BUILD_SCREENSHOTS=1``
-  (but remember to unset it if you want to skip building screenshots).
+   The screenshots can take a while to build, so you can export
+   ``QTILE_NO_BUILD_SCREENSHOTS`` to disable building them.
 
 Development and testing
 =======================
