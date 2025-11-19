@@ -38,6 +38,8 @@
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_viewporter.h>
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_xdg_activation_v1.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/util/log.h>
@@ -227,6 +229,10 @@ struct qw_server {
     struct wlr_scene_tree *lock_tree;
     enum qw_session_lock_state lock_state;
     struct wlr_foreign_toplevel_manager_v1 *ftl_mgr;
+    struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard;
+    struct wlr_virtual_pointer_manager_v1 *virtual_pointer;
+    struct wl_listener virtual_keyboard_new;
+    struct wl_listener virtual_pointer_new;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;

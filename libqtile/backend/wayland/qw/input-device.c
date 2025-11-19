@@ -1,6 +1,8 @@
 #include <server.h>
+#include <wlr/types/wlr_seat.h>
 #include <wlr/util/log.h>
 
+#include "cursor.h"
 #include "input-device.h"
 #include "keyboard.h"
 #include "util.h"
@@ -21,6 +23,7 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
         wlr_log(WLR_ERROR, "failed to create qw_input_device struct");
         return;
     }
+    device->data = input_device;
 
     input_device->server = server;
     input_device->device = device;
@@ -29,6 +32,32 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
     wl_signal_add(&device->events.destroy, &input_device->destroy);
 
     wl_list_insert(&server->input_devices, &input_device->link);
+
+    server->on_input_device_added_cb(server->cb_data);
+
+    switch (device->type) {
+    case WLR_INPUT_DEVICE_KEYBOARD:
+        qw_server_keyboard_new(server, device);
+
+        // If there's still an active lock then we need to direct
+        // the keyboard to the lock surface.
+        if (server->lock != NULL) {
+            qw_session_lock_focus_first_lock_surface(server);
+        }
+
+        break;
+    case WLR_INPUT_DEVICE_POINTER:
+        // Attach a new pointer device to the server's cursor
+        wlr_cursor_attach_input_device(server->cursor->cursor, device);
+        break;
+    default:
+        break;
+    }
+    uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
+    if (!wl_list_empty(&server->keyboards)) {
+        caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+    }
+    wlr_seat_set_capabilities(server->seat, caps);
 }
 
 struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_device *input_device) {
