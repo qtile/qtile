@@ -3,6 +3,7 @@
 
 #include <libinput.h>
 #include <wlr/backend/libinput.h>
+
 struct qw_input_device {
     // Private data
     struct qw_server *server;

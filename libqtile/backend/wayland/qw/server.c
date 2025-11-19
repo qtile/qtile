@@ -4,6 +4,8 @@
 #include <wlr/backend/session.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_server_decoration.h>
+#include <wlr/types/wlr_virtual_keyboard_v1.h>
+#include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
 
@@ -63,6 +65,8 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->request_start_drag.link);
     wl_list_remove(&server->start_drag.link);
     wl_list_remove(&server->new_session_lock.link);
+    wl_list_remove(&server->virtual_keyboard_new.link);
+    wl_list_remove(&server->virtual_pointer_new.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wl_list_remove(&server->xwayland_ready.link);
@@ -353,41 +357,33 @@ static void qw_server_handle_renderer_lost(struct wl_listener *listener, void *d
     wlr_log(WLR_INFO, "Successfully recovered from GPU reset");
 }
 
-// Attach a new pointer device to the server's cursor
-static void qw_server_new_pointer(struct qw_server *server, struct wlr_input_device *device) {
-    wlr_cursor_attach_input_device(server->cursor->cursor, device);
-}
-
 // Handle new input devices: keyboard or pointer
 static void qw_server_handle_new_input(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_input);
     struct wlr_input_device *device = data;
-    switch (device->type) {
-    case WLR_INPUT_DEVICE_KEYBOARD:
-        qw_server_keyboard_new(server, device);
 
-        // If there's still an active lock then we need to direct
-        // the keyboard to the lock surface.
-        if (server->lock != NULL) {
-            qw_session_lock_focus_first_lock_surface(server);
-        }
+    qw_server_input_device_new(server, device);
+}
 
-        break;
-    case WLR_INPUT_DEVICE_POINTER:
-        qw_server_new_pointer(server, device);
-        break;
-    default:
-        break;
-    }
-    uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
-    if (!wl_list_empty(&server->keyboards)) {
-        caps |= WL_SEAT_CAPABILITY_KEYBOARD;
-    }
-    wlr_seat_set_capabilities(server->seat, caps);
+void qw_server_handle_virtual_keyboard(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, virtual_keyboard_new);
+    struct wlr_virtual_keyboard_v1 *keyboard = data;
+    struct wlr_input_device *device = &keyboard->keyboard.base;
+
+    qw_server_input_device_new(server, device);
+}
+
+void qw_server_handle_virtual_pointer(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, virtual_pointer_new);
+    struct wlr_virtual_pointer_v1_new_pointer_event *event = data;
+    struct wlr_virtual_pointer_v1 *pointer = event->new_pointer;
+    struct wlr_input_device *device = &pointer->pointer.base;
 
     qw_server_input_device_new(server, device);
 
-    server->on_input_device_added_cb(server->cb_data);
+    if (event->suggested_output != NULL) {
+        wlr_cursor_map_input_to_output(server->cursor->cursor, device, event->suggested_output);
+    }
 }
 
 // Handle new XDG toplevel window creation
@@ -732,6 +728,16 @@ struct qw_server *qw_server_create() {
     server->request_set_primary_selection.notify = qw_server_handle_request_set_primary_selection;
     wl_signal_add(&server->seat->events.request_set_primary_selection,
                   &server->request_set_primary_selection);
+
+    server->virtual_keyboard = wlr_virtual_keyboard_manager_v1_create(server->display);
+    server->virtual_keyboard_new.notify = qw_server_handle_virtual_keyboard;
+    wl_signal_add(&server->virtual_keyboard->events.new_virtual_keyboard,
+                  &server->virtual_keyboard_new);
+
+    server->virtual_pointer = wlr_virtual_pointer_manager_v1_create(server->display);
+    server->virtual_pointer_new.notify = qw_server_handle_virtual_pointer;
+    wl_signal_add(&server->virtual_pointer->events.new_virtual_pointer,
+                  &server->virtual_pointer_new);
 
     // Session lock setup
     qw_session_lock_init(server);
