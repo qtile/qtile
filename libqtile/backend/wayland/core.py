@@ -196,8 +196,6 @@ class Core(base.Core):
     supports_restarting: bool = False
 
     def __init__(self) -> None:
-        # This is the window under the pointer
-        self._hovered_window: base.WindowType | None = None
         # this Internal window receives keyboard input, e.g. via the Prompt widget.
         self.focused_internal: base.Internal | None = None
 
@@ -352,10 +350,10 @@ class Core(base.Core):
 
             handled = self.qtile.process_button_click(int(button), int(mask), x, y)
 
-            if isinstance(self._hovered_window, Internal):
-                self._hovered_window.process_button_click(
-                    int(self.qw_cursor.cursor.x - self._hovered_window.x),
-                    int(self.qw_cursor.cursor.y - self._hovered_window.y),
+            if isinstance(self.qtile.hovered_window, Internal):
+                self.qtile.hovered_window.process_button_click(
+                    int(self.qw_cursor.cursor.x - self.qtile.hovered_window.x),
+                    int(self.qw_cursor.cursor.y - self.qtile.hovered_window.y),
                     int(button),
                 )
 
@@ -465,9 +463,9 @@ class Core(base.Core):
 
         win = self.qtile.windows_map.get(view.wid)
 
-        if self._hovered_window is not win:
+        if self.qtile.hovered_window is not win:
             # We only want to fire client_mouse_enter once, so check
-            # self._hovered_window.
+            # self.qtile.hovered_window.
             hook.fire("client_mouse_enter", win)
 
         if win is not self.qtile.current_window:
@@ -484,7 +482,7 @@ class Core(base.Core):
                     ):
                         self.qtile.focus_screen(win.group.screen.index, False)
 
-        self._hovered_window = win
+        self.qtile.hovered_window = win
 
     def handle_view_activation(self, view: ffi.CData) -> None:
         """Handle view urgency notification"""
