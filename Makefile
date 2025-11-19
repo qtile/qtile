@@ -29,7 +29,7 @@ check: ## Run the test suite on the latest python
 
 .PHONY: docs
 docs:
-	uv run $(UV_PYTHON_ARG) python3 -m sphinx -T -b html -d _build/doctrees -D language=en ./docs docs/_build
+	uv run $(MAKE) -C docs html
 
 .PHONY: check-packaging
 check-packaging:  ## Check that the packaging is sane
