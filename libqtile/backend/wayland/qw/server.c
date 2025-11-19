@@ -554,11 +554,9 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
     }
 
     if (server->view_activation_cb != NULL) {
+        wlr_log(WLR_DEBUG, "Activation token valid, focusing view");
         server->view_activation_cb((struct qw_view *)view, server->view_activation_cb_data);
     }
-
-    wlr_log(WLR_INFO, "Activation token valid, focusing view");
-    qw_xdg_view_focus(view, 1);
 }
 
 void qw_server_set_keymap(struct qw_server *server, const char *layout, const char *options,
