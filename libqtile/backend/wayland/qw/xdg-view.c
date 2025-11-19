@@ -529,7 +529,6 @@ void qw_xdg_activation_new_token(struct wl_listener *listener, void *data) {
     }
 
     // Assign boolean values
-    token_data->qw_valid_surface = token->surface != NULL;
     token_data->qw_valid_seat = token->seat != NULL;
 
     token->data = token_data;
