@@ -546,19 +546,10 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
         return;
     }
 
-    if (!token_data->qw_valid_surface) {
-        wlr_log(WLR_INFO, "Denying focus request, surface wasn't set");
-        return;
-    }
-
     struct wlr_surface *focused = server->seat->keyboard_state.focused_surface;
 
-    if (focused == NULL) {
-        wlr_log(WLR_INFO, "No surface focused");
-    }
-
-    if (focused == event->surface) {
-        wlr_log(WLR_INFO, "Activation token invalid for surface");
+    if (focused != NULL && focused == event->surface) {
+        wlr_log(WLR_INFO, "Ignoring activation request, surface is focused");
         return;
     }
 

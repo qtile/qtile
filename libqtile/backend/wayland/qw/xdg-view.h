@@ -14,7 +14,6 @@ struct qw_server;
 struct wlr_xdg_toplevel_decoration_v1;
 
 struct qw_xdg_activation_token {
-    bool qw_valid_surface;
     bool qw_valid_seat;
     struct wl_listener destroy;
 };
