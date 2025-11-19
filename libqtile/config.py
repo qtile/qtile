@@ -514,7 +514,6 @@ class Screen(CommandObject):
     def finalize_gap(self, position: str) -> None:
         gap = getattr(self, position, None)
         if gap is not None:
-            setattr(self, position, None)
             gap.finalize()
 
     def finalize_gaps(self) -> None:

@@ -409,13 +409,14 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     def finalize(self) -> None:
         if self.future:
             self.future.cancel()
+        for widget in self.widgets:
+            widget.finalize()
         if hasattr(self, "drawer"):
             self.drawer.finalize()
             del self.drawer
         if self.window:
             self.window.kill()
             self.window = None
-        self.widgets.clear()
 
     def _resize(self, length: int, widgets: list[_Widget]) -> None:
         """
