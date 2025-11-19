@@ -21,14 +21,17 @@ endif
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[1m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-.PHONY: check
-check: ## Run the test suite on the latest python
+.PHONY: deps
+deps: ## Install all of qtile's dependencies.
 	uv sync $(UV_PYTHON_ARG) --all-extras
+
+.PHONY: check
+check: deps ## Run the test suite on the latest python
 	uv run ./libqtile/backend/wayland/cffi/build.py
 	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
 
 .PHONY: docs
-docs:
+docs: deps ## Run the sphinx build for the html docs.
 	uv run $(MAKE) -C docs html
 
 .PHONY: check-packaging
