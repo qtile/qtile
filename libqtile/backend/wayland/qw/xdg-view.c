@@ -101,19 +101,41 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
     free(xdg_view);
 }
 
+static void qw_xdg_view_clip(struct qw_xdg_view *xdg_view);
+
 // Handle commit event: called when surface commits state changes
 static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) {
     UNUSED(data);
 
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, commit);
 
-    // On initial commit, set size and notify server to manage this view
+    // On initial commit, set size and decoration mode
     if (xdg_view->xdg_toplevel->base->initial_commit) {
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
         if (xdg_view->decoration != NULL) {
-            qw_xdg_view_handle_decoration_request_mode(&xdg_view->decoration_request_mode,
-                                                       xdg_view->decoration);
+            wlr_xdg_toplevel_decoration_v1_set_mode(
+                xdg_view->decoration, WLR_XDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
         }
+        return;
+    }
+
+    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
+    if (!surface->surface->mapped) {
+        return;
+    }
+
+    struct wlr_box geom = surface->geometry;
+    bool geom_changed = xdg_view->geom.x != geom.x || xdg_view->geom.y != geom.y ||
+                        xdg_view->geom.width != geom.width || xdg_view->geom.height != geom.height;
+
+    if (geom_changed) {
+        // The client changed its surface geometry in this commit - we need to
+        // reposition the surface
+        xdg_view->geom = geom;
+        struct qw_view view = xdg_view->base;
+        wlr_scene_node_set_position(&xdg_view->base.content_tree->node, view.x, view.y);
+        wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, view.width, view.height);
+        qw_xdg_view_clip(xdg_view);
     }
 }
 
