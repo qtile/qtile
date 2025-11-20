@@ -183,12 +183,7 @@ static void qw_cursor_create_implicit_grab(struct qw_cursor *cursor, uint32_t ti
 static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool pressed) {
     // Get current keyboard modifiers (shift, ctrl, etc)
     struct wlr_keyboard *kb = wlr_seat_get_keyboard(cursor->server->seat);
-    if (!kb) {
-        wlr_log(WLR_INFO, "No active keyboard found, keybinding may be missed");
-        return false;
-    }
-
-    uint32_t modifiers = wlr_keyboard_get_modifiers(kb);
+    uint32_t modifiers = kb ? wlr_keyboard_get_modifiers(kb) : 0;
 
     // Call server's button callback with button info and modifiers
     if (cursor->server->lock_state == QW_SESSION_LOCK_UNLOCKED) {
