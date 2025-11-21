@@ -12,8 +12,10 @@
 #include "keyboard.h"
 #include "layer-view.h"
 #include "output.h"
+#include "pointer.h"
 #include "server.h"
 #include "session-lock.h"
+#include "touch.h"
 #include "util.h"
 #include "view.h"
 #include "wayland-server-core.h"
@@ -70,6 +72,7 @@ void qw_server_finalize(struct qw_server *server) {
 #endif
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
+    qw_touch_destroy(server);
     qw_cursor_destroy(server->cursor);
     wlr_allocator_destroy(server->allocator);
     wlr_renderer_destroy(server->renderer);
@@ -353,8 +356,11 @@ static void qw_server_handle_renderer_lost(struct wl_listener *listener, void *d
     wlr_log(WLR_INFO, "Successfully recovered from GPU reset");
 }
 
-// Attach a new pointer device to the server's cursor
 static void qw_server_new_pointer(struct qw_server *server, struct wlr_input_device *device) {
+    // set up listeners for pointer gestures
+    qw_pointer_handle_new(server, device);
+
+    // Attach pointer device to the server's cursor
     wlr_cursor_attach_input_device(server->cursor->cursor, device);
 }
 
@@ -376,12 +382,18 @@ static void qw_server_handle_new_input(struct wl_listener *listener, void *data)
     case WLR_INPUT_DEVICE_POINTER:
         qw_server_new_pointer(server, device);
         break;
+    case WLR_INPUT_DEVICE_TOUCH:
+        qw_touch_handle_new(server, device);
+        break;
     default:
         break;
     }
     uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
     if (!wl_list_empty(&server->keyboards)) {
         caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+    }
+    if (!wl_list_empty(&server->touches)) {
+        caps |= WL_SEAT_CAPABILITY_TOUCH;
     }
     wlr_seat_set_capabilities(server->seat, caps);
 
@@ -671,6 +683,7 @@ struct qw_server *qw_server_create() {
     wlr_fractional_scale_manager_v1_create(server->display, 1);
     wlr_presentation_create(server->display, server->backend, 2);
     wlr_alpha_modifier_v1_create(server->display);
+    server->pointer_gestures = wlr_pointer_gestures_v1_create(server->display);
     server->scene = wlr_scene_create();
     server->scene_wallpaper_tree = wlr_scene_tree_create(&server->scene->tree);
     server->scene_windows_tree = wlr_scene_tree_create(&server->scene->tree);
@@ -688,6 +701,8 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->backend->events.new_output, &server->new_output);
     wl_list_init(&server->keyboards);
     wl_list_init(&server->input_devices);
+    wl_list_init(&server->pointers);
+    wl_list_init(&server->touches);
     server->seat = wlr_seat_create(server->display, "seat0");
     server->cursor = qw_server_cursor_create(server);
     if (!server->cursor) {
