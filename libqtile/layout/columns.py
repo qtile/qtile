@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 from libqtile.command.base import expose_command
 from libqtile.layout.base import Layout, _ClientList
 from libqtile.log_utils import logger
+from libqtile.config import ScreenRect
+from tab_bar import TabBar
 
 if TYPE_CHECKING:
     from typing import Any, Self
-
     from libqtile.backend.base import Window
-    from libqtile.config import ScreenRect
     from libqtile.group import _Group
 
 
@@ -18,13 +18,15 @@ class _Column(_ClientList):
     # shortcuts for current client and index used in Columns layout
     cw = _ClientList.current_client
     current = _ClientList.current_index
+    tab_bar: TabBar
 
-    def __init__(self, split, insert_position, width=100):
+    def __init__(self, split, insert_position, width=100, tab_bars_start_hidden=False):
         _ClientList.__init__(self)
         self.width = width
         self.split = split
         self.insert_position = insert_position
         self.heights = {}
+        self.tab_bar_enabled = not tab_bars_start_hidden
 
     @expose_command()
     def info(self) -> dict[str, Any]:
@@ -40,6 +42,9 @@ class _Column(_ClientList):
     def toggle_split(self):
         self.split = not self.split
 
+    def toggle_tab_bar(self):
+        self.tab_bar_enabled = not self.tab_bar_enabled
+
     def add_client(self, client, height=100):
         _ClientList.add_client(self, client, self.insert_position)
         self.heights[client] = height
@@ -53,6 +58,9 @@ class _Column(_ClientList):
 
     def remove(self, client: Window) -> None:
         _ClientList.remove(self, client)
+        if len(self) == 1 and hasattr(self, "tab_bar"):
+            self.tab_bar.finalize()
+            delattr(self, "tab_bar")
         delta = self.heights[client] - 100
         del self.heights[client]
         if delta != 0:
@@ -156,6 +164,22 @@ class Columns(Layout):
             "Ignored if 'fair=True'.",
         ),
         ("initial_ratio", 1, "Ratio of first column to second column."),
+        # tab bar options
+        (
+            "tab_bars_start_hidden",
+            False,
+            "Start with tab bars hidden for stacked columns.",
+        ),
+        ("bar_position", "top", "Position of the tab bar (top/bottom)"),
+        ("tab_height", 20, "Height of the tab bar for each stacked column"),
+        ("tab_bar_color", "#000000", "Color of the tab bar"),
+        ("focused_tab_text_color", "#ffffff", "Text color of focused tabs"),
+        ("unfocused_tab_text_color", "#ffffff", "Text color of unfocused tabs"),
+        ("unfocused_tab_bg", "#404040", "Background color of unfocused tabs"),
+        ("focused_tab_bg", "#000080", "Background color of focused tabs"),
+        ("tab_font", "sans", "Font for tab text"),
+        ("tab_fontsize", 14, "Font size for tab text"),
+        ("tab_padding", 2, "Padding between tabs"),
     ]
 
     def __init__(self, **config):
@@ -241,7 +265,7 @@ class Columns(Layout):
         return main, secondary
 
     def add_column(self, prepend=False):
-        c = _Column(self.split, self.insert_position)
+        c = _Column(self.split, self.insert_position, tab_bars_start_hidden=self.tab_bars_start_hidden)
         if prepend:
             self.columns.insert(0, c)
             self.current += 1
@@ -258,6 +282,8 @@ class Columns(Layout):
             logger.warning("Trying to remove all columns.")
             return
         idx = self.columns.index(col)
+        if hasattr(col, "tab_bar"):
+            col.tab_bar.finalize()
         del self.columns[idx]
         if idx <= self.current:
             self.current = max(0, self.current - 1)
@@ -316,6 +342,9 @@ class Columns(Layout):
         x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
 
         if col.split:
+            if hasattr(col, "tab_bar"):
+                col.tab_bar.finalize()
+                del col.tab_bar
             pos = 0
             for c in col:
                 if client == c:
@@ -328,11 +357,19 @@ class Columns(Layout):
             )
             client.unhide()
         elif client == col.cw:
+            col_rect = ScreenRect(x, screen_rect.y, width, screen_rect.height)
+            if len(col) > 1 and col.tab_bar_enabled:
+                window_rect = self.configure_tab_bar(col, col_rect)
+            else:
+                window_rect = col_rect
+                if hasattr(col, "tab_bar"):
+                    col.tab_bar.finalize()
+                    del col.tab_bar
             client.place(
-                x,
-                screen_rect.y,
-                width - 2 * border,
-                screen_rect.height - 2 * border,
+                window_rect.x,
+                window_rect.y,
+                window_rect.width - 2 * border,
+                window_rect.height - 2 * border,
                 border,
                 color,
                 margin=margin_size,
@@ -340,6 +377,52 @@ class Columns(Layout):
             client.unhide()
         else:
             client.hide()
+
+    def configure_tab_bar(self, col: _Column, col_rect: ScreenRect) -> ScreenRect:
+        """configure the tab bar based on the screen dimensions, and return a shorter screenrect for the window"""
+        if self.bar_position == "bottom":
+            split = col_rect.vsplit(col_rect.height - self.tab_height)
+            window_rect = split[0]
+            bar_rect = split[1]
+        else:
+            split = col_rect.vsplit(self.tab_height)
+            window_rect = split[1]
+            bar_rect = split[0]
+
+        if not hasattr(col, "tab_bar"):
+            self._create_tab_bar(col, bar_rect)
+
+        col.tab_bar.configure(bar_rect, col.current, [client.name for client in col])
+
+        return window_rect
+
+    def _create_tab_bar(self, col: _Column, bar_rect: ScreenRect) -> None:
+        # TODO: think of a more useful right click function
+        left_click_func = lambda i: self.group.focus(col.clients[i])
+        right_click_func = lambda i: col.clients[i].kill()
+        middle_click_func = lambda i: col.clients[i].kill()
+
+        col.tab_bar = TabBar(
+            self.group.qtile,
+            bar_rect,
+            [client.name for client in col],
+            {
+                "bar_color": self.tab_bar_color,
+                "unfocused_tab_text_color": self.unfocused_tab_text_color,
+                "focused_tab_text_color": self.focused_tab_text_color,
+                "unfocused_tab_bg": self.unfocused_tab_bg,
+                "focused_tab_bg": self.focused_tab_bg,
+                "tab_padding": self.tab_padding,
+                "tab_font": self.tab_font,
+                "tab_fontsize": self.tab_fontsize,
+                "mouse_callbacks": {
+                    1: left_click_func,
+                    2: middle_click_func,
+                    3: right_click_func,
+                },
+            },
+            initial_focused_index=col.current,
+        )
 
     def focus_first(self) -> Window | None:
         """Returns first client in first column of layout"""
@@ -383,9 +466,30 @@ class Columns(Layout):
             return self.columns[idx - 1].focus_last()
         return None
 
+    def hide(self) -> None:
+        for col in self.columns:
+            if hasattr(col, "tab_bar"):
+                col.tab_bar.hide()
+
+    def show(self, screen_rect: ScreenRect) -> None:
+        for col in self.columns:
+            if hasattr(col, "tab_bar"):
+                # intentionally ignore screen_rect
+                col.tab_bar.show()
+
+    def finalize(self) -> None:
+        for col in self.columns:
+            if hasattr(col, "tab_bar"):
+                col.tab_bar.finalize()
+
     @expose_command()
     def toggle_split(self):
         self.cc.toggle_split()
+        self.group.layout_all()
+
+    @expose_command()
+    def toggle_tab_bar(self) -> None:
+        self.cc.toggle_tab_bar()
         self.group.layout_all()
 
     @expose_command()
