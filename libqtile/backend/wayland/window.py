@@ -43,6 +43,7 @@ class Base(base._Window):
         self.defunct = False
         self.group: _Group | None = None
         self._killed = False
+        self.visible = True
 
     def reparent(self, layer: int) -> None:
         if self.layer == layer:
@@ -181,9 +182,13 @@ class Base(base._Window):
 
     def hide(self) -> None:
         self._ptr.hide(self._ptr)
+        self.visible = False
+        self.qtile.core.check_inhibited()
 
     def unhide(self) -> None:
         self._ptr.unhide(self._ptr)
+        self.visible = True
+        self.qtile.core.check_inhibited()
 
     @expose_command()
     def place(
@@ -280,6 +285,26 @@ class Base(base._Window):
             self.group.focus(self)
 
         hook.fire("client_focus", self)
+
+    def add_config_inhibitors(self):
+        for rule in self.qtile.config.wl_idle_inhibitors:
+            if rule.match.compare(self):
+                self.add_idle_inhibitor(rule.when)
+
+    @expose_command()
+    def add_idle_inhibitor(self, inhibitor_type: str = "open"):
+        """
+        Create an inhibitor rule for this window.
+        
+        ``inhibitor_type`` should be one of ``"open"``, ``"focus"``, ``"fullscreen"``
+        or ``"visible"``. Default value is ``"open"``.
+        """
+        self.qtile.core.inhibitor_manager.add_window_inhibitor(self, inhibitor_type)
+
+    @expose_command()
+    def remove_idle_inhibitor(self):
+        """Remove inhibitor rule for this window."""
+        self.qtile.core.inibitor_manager.remove_window_inhibitor(self)
 
 
 class Internal(Base, base.Internal):
@@ -700,6 +725,7 @@ class Window(Base, base.Window):
             screen = None
 
         self.qtile.core.check_screen_fullscreen_background(screen)
+        self.qtile.core.check_inhibited()
 
     @property
     def maximized(self) -> bool:
