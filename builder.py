@@ -9,10 +9,13 @@ WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
 def wants_wayland(config_settings):
     if config_settings:
         for key in ["Backend", "backend"]:
-            if config_settings.get(key, "").lower() == "wayland":
+            value = config_settings.get(key, "").lower()
+            if value == "wayland":
                 return True
+            if value == "x11":
+                return False
 
-    return False
+    return None
 
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
@@ -21,15 +24,18 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
         config_settings = {}
 
     wayland_requested = wants_wayland(config_settings)
-    try:
-        from libqtile.backend.wayland.cffi.build import ffi_compile
+    if wayland_requested is not False:
+        try:
+            from libqtile.backend.wayland.cffi.build import ffi_compile
 
-        ffi_compile(verbose=wayland_requested)
-    except Exception as e:
-        if wayland_requested:
-            sys.exit(f"Wayland backend requested but backend could not be built: {e}")
-        else:
-            print("Wayland backend was not built.")
+            ffi_compile(verbose=wayland_requested)
+        except Exception as e:
+            if wayland_requested:
+                sys.exit(f"Wayland backend requested but backend could not be built: {e}")
+            else:
+                print(f"Wayland backend was not built: {e}")
+    else:
+        print("Wayland backend disabled")
 
     # Write library paths to file, if they are specified at build time via
     # --config-settings=PANGO_PATH=...
