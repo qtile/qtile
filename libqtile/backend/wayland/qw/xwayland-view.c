@@ -347,7 +347,10 @@ static void qw_xwayland_view_hide(void *self) {
     wlr_scene_node_set_enabled(&xwayland_view->base.content_tree->node, false);
 
     // Clear keyboard focus if this view was focused
-    // TODO:
+    if (xwayland_view->xwayland_surface->surface ==
+        xwayland_view->base.server->seat->keyboard_state.focused_surface) {
+        wlr_seat_keyboard_clear_focus(xwayland_view->base.server->seat);
+    }
 }
 
 // Unhide the xwayland_view by enabling its content_tree scene node if currently disabled
