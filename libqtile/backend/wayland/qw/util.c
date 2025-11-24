@@ -1,12 +1,13 @@
 #include "util.h"
 #include "xdg-view.h"
-#if WLR_HAS_XWAYLAND
-#include "xwayland-view.h"
-#endif
 #include <string.h>
+#include <wlr/config.h>
 #include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#if WLR_HAS_XWAYLAND
+#include "xwayland-view.h"
+#endif
 
 int qw_util_get_button_code(uint32_t button) {
     // Array of Linux input event button codes (from linux/input-event-codes.h)
