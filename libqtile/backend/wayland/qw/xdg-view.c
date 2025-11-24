@@ -28,6 +28,14 @@ static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, 
     wl_list_remove(&xdg_view->decoration_request_mode.link);
 }
 
+// Change xdg surface activate state
+static void qw_xdg_view_activate(struct qw_xdg_view *xdg_view, bool activate) {
+    wlr_xdg_toplevel_set_activated(xdg_view->xdg_toplevel, activate);
+    if (xdg_view->base.ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_activated(xdg_view->base.ftl_handle, activate);
+    }
+}
+
 // Focus the given xdg_view's surface, managing activation and keyboard focus
 static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surface *surface) {
     if (!xdg_view) {
@@ -51,10 +59,7 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
         qw_util_deactivate_surface(prev_surface);
     }
 
-    wlr_xdg_toplevel_set_activated(xdg_view->xdg_toplevel, true);
-    if (xdg_view->base.ftl_handle != NULL) {
-        wlr_foreign_toplevel_handle_v1_set_activated(xdg_view->base.ftl_handle, true);
-    }
+    qw_xdg_view_activate(xdg_view, true);
 
     // Notify keyboard about entering this surface (for keyboard input)
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
@@ -221,6 +226,7 @@ static void qw_xdg_view_kill(void *self) {
 static void qw_xdg_view_hide(void *self) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, false);
+    qw_xdg_view_activate(xdg_view, false);
 
     // Clear keyboard focus if this view was focused
     if (xdg_view->xdg_toplevel->base->surface ==
