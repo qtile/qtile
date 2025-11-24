@@ -893,7 +893,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
 
     wl_signal_add(&xwayland_surface->events.request_skip_taskbar,
                   &xwayland_view->request_skip_taskbar);
-    xwayland_view->request_activate.notify = qw_xwayland_view_handle_request_skip_taskbar;
+    xwayland_view->request_skip_taskbar.notify = qw_xwayland_view_handle_request_skip_taskbar;
 
     // Assign function pointers for base view operations
     xwayland_view->base.get_tree_node = qw_xwayland_view_get_tree_node;
