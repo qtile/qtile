@@ -13,6 +13,14 @@
 #include <wlr/xwayland.h>
 #include <xcb/xcb_icccm.h>
 
+// Change xwayland surface activate state
+static void qw_xwayland_view_activate(struct qw_xwayland_view *xwayland_view, bool activate) {
+    wlr_xwayland_surface_activate(xwayland_view->xwayland_surface, activate);
+    if (xwayland_view->base.ftl_handle != NULL) {
+        wlr_foreign_toplevel_handle_v1_set_activated(xwayland_view->base.ftl_handle, activate);
+    }
+}
+
 static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
                                       struct wlr_surface *surface) {
     if (!xwayland_view) {
@@ -38,10 +46,7 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
         qw_util_deactivate_surface(prev_surface);
     }
 
-    wlr_xwayland_surface_activate(xwayland_view->xwayland_surface, true);
-    if (xwayland_view->base.ftl_handle != NULL) {
-        wlr_foreign_toplevel_handle_v1_set_activated(xwayland_view->base.ftl_handle, true);
-    }
+    qw_xwayland_view_activate(xwayland_view, true);
 
     // Notify keyboard about entering this surface (for keyboard input)
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
@@ -163,9 +168,8 @@ static void static_view_handle_request_configure(struct wl_listener *listener, v
 static void static_view_handle_request_activate(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, request_activate);
-    struct wlr_xwayland_surface *surface = static_view->xwayland_surface;
 
-    wlr_xwayland_surface_activate(surface, true);
+    qw_xwayland_view_activate(static_view, true);
 }
 
 // forward declarations
@@ -345,6 +349,7 @@ static void qw_xwayland_view_kill(void *self) {
 static void qw_xwayland_view_hide(void *self) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
     wlr_scene_node_set_enabled(&xwayland_view->base.content_tree->node, false);
+    qw_xwayland_view_activate(xwayland_view, false);
 
     // Clear keyboard focus if this view was focused
     if (xwayland_view->xwayland_surface->surface ==
@@ -714,12 +719,8 @@ static void qw_xwayland_view_handle_request_activate(struct wl_listener *listene
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view =
         wl_container_of(listener, xwayland_view, request_activate);
-    struct wlr_xwayland_surface *surface = xwayland_view->xwayland_surface;
 
-    wlr_xwayland_surface_activate(surface, true);
-    if (xwayland_view->base.ftl_handle != NULL) {
-        wlr_foreign_toplevel_handle_v1_set_activated(xwayland_view->base.ftl_handle, true);
-    }
+    qw_xwayland_view_activate(xwayland_view, true);
 }
 
 static void qw_xwayland_view_handle_set_hints(struct wl_listener *listener, void *data) {
