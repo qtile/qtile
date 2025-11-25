@@ -188,7 +188,12 @@ if __name__ == "__main__":
     if args.urgent:
 
         def gtk_set_urgency_hint(*_):
-            win.set_urgency_hint(True)
+            if os.environ["GDK_BACKEND"] == "wayland":
+                # To send the xdg-activation request activate event,
+                # a keyboard or mouse event is needed before this.
+                win.present()
+            else:
+                win.set_urgency_hint(True)
 
         # Time before changing urgency
         GLib.timeout_add(500, gtk_set_urgency_hint)
