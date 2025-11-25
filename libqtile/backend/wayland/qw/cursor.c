@@ -136,8 +136,6 @@ static void qw_cursor_handle_motion(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, motion);
     struct wlr_pointer_motion_event *event = data;
 
-    wlr_cursor_move(cursor->cursor, &event->pointer->base, event->delta_x, event->delta_y);
-
     if (cursor->implicit_grab.live) {
         qw_cursor_implicit_grab_motion(cursor, event->time_msec);
     } else {
@@ -236,6 +234,13 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, button);
     struct wlr_pointer_button_event *event = data;
 
+    // When the pointer is constrained, skip further processing
+    if (cursor->active_constraint && event->pointer->base.type == WLR_INPUT_DEVICE_POINTER) {
+        wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
+                                       event->state);
+        return;
+    }
+
     // Translate event button to internal code (e.g. BTN_LEFT)
     uint32_t button = qw_util_get_button_code(event->button);
     bool pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED;
@@ -282,7 +287,14 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     static double displacement = 0;
     static const uint32_t DISPLACEMENT_PER_STEP = 15; // could be configurable
     bool handled = false;
-    // TODO: exclusive client
+
+    // When the pointer is constrained, skip further processing
+    if (cursor->active_constraint && event->pointer->base.type == WLR_INPUT_DEVICE_POINTER) {
+        wlr_seat_pointer_notify_axis(cursor->server->seat, event->time_msec, event->orientation,
+                                     event->delta, event->delta_discrete, event->source,
+                                     event->relative_direction);
+        return;
+    }
 
     // Determine which button this corresponds to
     uint32_t button = 0;
