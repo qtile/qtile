@@ -188,7 +188,12 @@ if __name__ == "__main__":
     if args.urgent:
 
         def gtk_set_urgency_hint(*_):
-            win.set_urgency_hint(True)
+            if os.environ["GDK_BACKEND"] == "wayland":
+                # To send the xdg-activation request activate event,
+                # a keyboard or mouse event is needed before this.
+                win.present()
+            else:
+                win.set_urgency_hint(True)
 
         # Time before changing urgency
         GLib.timeout_add(500, gtk_set_urgency_hint)
@@ -238,8 +243,13 @@ if __name__ == "__main__":
             )
         )
 
+    # Quit on every key except 'z'
+    def on_key_press(widget, event):
+        if event.keyval != Gdk.KEY_z:
+            Gtk.main_quit()
+
     win.connect("destroy", Gtk.main_quit)
-    win.connect("key-press-event", Gtk.main_quit)
+    win.connect("key-press-event", on_key_press)
     win.show_all()
 
     Gtk.main()
