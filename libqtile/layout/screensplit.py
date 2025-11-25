@@ -7,7 +7,6 @@ from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect, _Match
 from libqtile.layout import Columns, Max
 from libqtile.layout.base import Layout
-from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -215,8 +214,9 @@ class ScreenSplit(Layout):
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client not in self.layouts:
-            logger.warning("Unknown client: %s", client)
-            return
+            # window hasn't been added to a layout yet. this can happen during
+            # layout switches or when a group with existing windows is shown.
+            self.layouts[client] = self.active_split
 
         layout = self.layouts[client].layout
         rect = self._get_rect(self.layouts[client].rect, screen_rect)
