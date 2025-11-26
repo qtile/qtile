@@ -636,6 +636,10 @@ class Core(base.Core):
                 hook.fire("unlocked")
         self._locked = locked
 
+    def get_mouse_position(self) -> tuple[int, int]:
+        """Get mouse coordinates."""
+        return int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
+
     @expose_command()
     def set_keymap(
         self,
