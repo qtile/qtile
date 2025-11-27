@@ -5,8 +5,7 @@ import pytest
 
 import libqtile.log_utils
 import libqtile.utils
-from libqtile import config, hook, layout
-from libqtile.config import Match
+from libqtile import hook, layout
 from libqtile.resources import default_config
 from test.conftest import BareConfig, dualmonitor
 from test.helpers import Retry
@@ -578,15 +577,12 @@ def test_client_name_updated(manager_nospawn):
 @pytest.mark.usefixtures("hook_fixture")
 def test_client_urgent_hint_changed(manager_nospawn):
     class ClientUrgentHintChangedConfig(BareConfig):
-        groups = [
-            config.Group("a"),
-            config.Group("b", matches=[Match(title="Test Client")]),
-        ]
         test = CallWindow()
         hook.subscribe.client_urgent_hint_changed(test)
 
     manager_nospawn.start(ClientUrgentHintChangedConfig)
     manager_nospawn.test_window("Test Client", urgent=True)
+    manager_nospawn.c.window.togroup("b")
     assert_window(manager_nospawn, "Test Client")
     # Get urgency of the window
     _, urgent = manager_nospawn.c.eval("list(self.windows_map.values())[0].urgent")

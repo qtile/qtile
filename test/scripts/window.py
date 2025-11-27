@@ -29,6 +29,7 @@ os.environ["NO_AT_BRIDGE"] = "1"
 
 import argparse
 import sys
+import subprocess
 from pathlib import Path
 
 import gi
@@ -187,6 +188,13 @@ if __name__ == "__main__":
 
     if args.urgent:
 
+        def on_focus_in(widget, event):
+            if os.environ["GDK_BACKEND"] == "wayland":
+                # Send an input event to the window
+                subprocess.run(["wtype", "z"])
+            else:
+                win.set_urgency_hint(False)
+
         def gtk_set_urgency_hint(*_):
             if os.environ["GDK_BACKEND"] == "wayland":
                 # To send the xdg-activation request activate event,
@@ -195,8 +203,12 @@ if __name__ == "__main__":
             else:
                 win.set_urgency_hint(True)
 
-        # Time before changing urgency
-        GLib.timeout_add(500, gtk_set_urgency_hint)
+        def on_focus_out(widget, event):
+            # Time before changing urgency
+            GLib.timeout_add(500, gtk_set_urgency_hint)
+
+        win.connect("focus-in-event", on_focus_in)
+        win.connect("focus-out-event", on_focus_out)
 
     icon = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../../libqtile/resources", "logo.png")
