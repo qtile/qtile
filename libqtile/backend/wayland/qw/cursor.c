@@ -123,11 +123,13 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
     }
 }
 
-static void qw_cursor_implicit_grab_motion(struct qw_cursor *cursor, uint32_t time) {
+static void qw_cursor_implicit_grab_motion(struct qw_cursor *cursor, uint32_t time,
+                                           struct wlr_input_device *device, double dx, double dy) {
     struct wlr_seat *seat = cursor->server->seat;
 
     double sx = cursor->cursor->x + cursor->implicit_grab.start_dx;
     double sy = cursor->cursor->y + cursor->implicit_grab.start_dy;
+    wlr_cursor_move(cursor->cursor, device, dx, dy);
     wlr_seat_pointer_notify_motion(seat, time, sx, sy);
 }
 
@@ -137,7 +139,8 @@ static void qw_cursor_handle_motion(struct wl_listener *listener, void *data) {
     struct wlr_pointer_motion_event *event = data;
 
     if (cursor->implicit_grab.live) {
-        qw_cursor_implicit_grab_motion(cursor, event->time_msec);
+        qw_cursor_implicit_grab_motion(cursor, event->time_msec, &event->pointer->base,
+                                       event->delta_x, event->delta_y);
     } else {
         qw_cursor_process_motion(cursor, event->time_msec, &event->pointer->base, event->delta_x,
                                  event->delta_y, event->unaccel_dx, event->unaccel_dy);
@@ -157,7 +160,7 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
     double dy = ly - cursor->cursor->y;
 
     if (cursor->implicit_grab.live) {
-        qw_cursor_implicit_grab_motion(cursor, event->time_msec);
+        qw_cursor_implicit_grab_motion(cursor, event->time_msec, &event->pointer->base, dx, dy);
     } else {
         qw_cursor_process_motion(cursor, event->time_msec, &event->pointer->base, dx, dy, dx, dy);
     }
