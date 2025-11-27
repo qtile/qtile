@@ -29,6 +29,7 @@ os.environ["NO_AT_BRIDGE"] = "1"
 
 import argparse
 import sys
+import subprocess
 from pathlib import Path
 
 import gi
@@ -177,6 +178,10 @@ if __name__ == "__main__":
     win = Gtk.Window(title=title)
     win.set_default_size(100, 100)
 
+    # Close on any key press
+    def on_key_press(widget, event):
+        Gtk.main_quit()
+
     if args.new_title:
 
         def gtk_set_title(*_):
@@ -187,6 +192,19 @@ if __name__ == "__main__":
 
     if args.urgent:
 
+        def on_key_press(widget, event):
+            # In wayland, do not quit on 'z' to use it as input event
+            if os.environ["GDK_BACKEND"] == "wayland" and event.keyval == Gdk.KEY_z:
+                return
+            Gtk.main_quit()
+
+        def on_focus_in(widget, event):
+            if os.environ["GDK_BACKEND"] == "wayland":
+                # Send 'z' key as input event to the window
+                subprocess.run(["wtype", "z"])
+            else:
+                win.set_urgency_hint(False)
+
         def gtk_set_urgency_hint(*_):
             if os.environ["GDK_BACKEND"] == "wayland":
                 # To send the xdg-activation request activate event,
@@ -195,8 +213,12 @@ if __name__ == "__main__":
             else:
                 win.set_urgency_hint(True)
 
-        # Time before changing urgency
-        GLib.timeout_add(500, gtk_set_urgency_hint)
+        def on_focus_out(widget, event):
+            # Time before changing urgency
+            GLib.timeout_add(500, gtk_set_urgency_hint)
+
+        win.connect("focus-in-event", on_focus_in)
+        win.connect("focus-out-event", on_focus_out)
 
     icon = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "../../libqtile/resources", "logo.png")
@@ -244,7 +266,7 @@ if __name__ == "__main__":
         )
 
     win.connect("destroy", Gtk.main_quit)
-    win.connect("key-press-event", Gtk.main_quit)
+    win.connect("key-press-event", on_key_press)
     win.show_all()
 
     Gtk.main()

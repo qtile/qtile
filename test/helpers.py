@@ -377,7 +377,8 @@ class TestManager:
             args += ["--new-title", new_title]
         if urgent:
             args.append("--urgent")
-            # GDK urgency hint is only available in x11
+            # Set GDK_BACKEND to x11, since in wayland, the window requieres
+            # of an input event which cannot be passed to the headless session
             os.environ["GDK_BACKEND"] = "x11"
         if export_sni:
             args.append("--export_sni_interface")
