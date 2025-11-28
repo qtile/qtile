@@ -1839,6 +1839,41 @@ class Qtile(CommandObject):
         return state
 
     @expose_command()
+    def save_state(self, state_path: str) -> bool:
+        """Save qtile state to a file
+
+        Parameters
+        ==========
+        state_path :
+            Path where the state file will be saved
+        """
+        try:
+            with open(state_path, "wb") as f:
+                self.dump_state(f)
+            return True
+        except:  # noqa: E722
+            logger.exception("Failed to save state to %s", state_path)
+            return False
+
+    @expose_command()
+    def load_state(self, state_path: str) -> bool:
+        """Load qtile state from a file and apply it
+
+        Parameters
+        ==========
+        state_path :
+            Path to the state file
+        """
+        try:
+            with open(state_path, "rb") as f:
+                state = pickle.load(f)
+            state.apply(self)
+            return True
+        except:  # noqa: E722
+            logger.exception("Failed to load state from %s", state_path)
+            return False
+
+    @expose_command()
     def tracemalloc_toggle(self) -> None:
         """Toggle tracemalloc status
 
