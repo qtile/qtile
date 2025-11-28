@@ -93,6 +93,7 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
 
     // Only apply pointer constraints to real pointer input.
     if (cursor->active_constraint && device != NULL && device->type == WLR_INPUT_DEVICE_POINTER) {
+        wlr_log(WLR_ERROR, "");
         if (cursor->active_constraint->surface != surface) {
             return;
         }
@@ -401,6 +402,7 @@ void qw_cursor_show(struct qw_cursor *cursor) {
 
 static void qw_cursor_handle_pointer_constraint_set_region(struct wl_listener *listener,
                                                            void *data) {
+    wlr_log(WLR_ERROR, "");
     UNUSED(data);
     struct qw_pointer_constraint *sway_constraint =
         wl_container_of(listener, sway_constraint, set_region);
@@ -410,6 +412,7 @@ static void qw_cursor_handle_pointer_constraint_set_region(struct wl_listener *l
 }
 
 static void warp_to_constraint_cursor_hint(struct qw_cursor *cursor) {
+    wlr_log(WLR_ERROR, "");
     struct wlr_pointer_constraint_v1 *constraint = cursor->active_constraint;
 
     if (constraint->current.cursor_hint.enabled) {
@@ -433,6 +436,7 @@ static void warp_to_constraint_cursor_hint(struct qw_cursor *cursor) {
 }
 
 static void qw_cursor_handle_pointer_constraint_destroy(struct wl_listener *listener, void *data) {
+    wlr_log(WLR_ERROR, "");
     struct qw_pointer_constraint *qw_constraint = wl_container_of(listener, qw_constraint, destroy);
     struct wlr_pointer_constraint_v1 *constraint = data;
     struct qw_cursor *cursor = qw_constraint->cursor;
@@ -454,6 +458,7 @@ static void qw_cursor_handle_pointer_constraint_destroy(struct wl_listener *list
 }
 
 static void check_constraint_region(struct qw_cursor *cursor) {
+    wlr_log(WLR_ERROR, "");
     struct wlr_pointer_constraint_v1 *constraint = cursor->active_constraint;
     pixman_region32_t *region = &constraint->region;
     struct qw_view *view = constraint->surface->data;
@@ -489,6 +494,7 @@ static void check_constraint_region(struct qw_cursor *cursor) {
 }
 
 static void qw_cursor_handle_constraint_commit(struct wl_listener *listener, void *data) {
+    wlr_log(WLR_ERROR, "");
     UNUSED(data);
     struct qw_cursor *cursor = wl_container_of(listener, cursor, constraint_commit);
 
@@ -497,6 +503,7 @@ static void qw_cursor_handle_constraint_commit(struct wl_listener *listener, voi
 
 static void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
                                        struct wlr_pointer_constraint_v1 *constraint) {
+    wlr_log(WLR_ERROR, "");
     if (cursor->active_constraint == constraint) {
         return;
     }
@@ -541,6 +548,7 @@ static void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
 
 void qw_cursor_pointer_constraint_new(struct qw_cursor *cursor,
                                       struct wlr_pointer_constraint_v1 *constraint) {
+    wlr_log(WLR_ERROR, "");
 
     struct qw_pointer_constraint *qw_constraint = calloc(1, sizeof(struct qw_pointer_constraint));
     qw_constraint->cursor = cursor;
