@@ -356,19 +356,22 @@ class ScreenRect:
     y: int
     width: int
     height: int
+    serial: str | None
 
     def hsplit(self, columnwidth: int) -> tuple[ScreenRect, ScreenRect]:
         assert 0 < columnwidth < self.width
         return (
-            self.__class__(self.x, self.y, columnwidth, self.height),
-            self.__class__(self.x + columnwidth, self.y, self.width - columnwidth, self.height),
+            self.__class__(self.x, self.y, columnwidth, self.height, None),
+            self.__class__(
+                self.x + columnwidth, self.y, self.width - columnwidth, self.height, None
+            ),
         )
 
     def vsplit(self, rowheight: int) -> tuple[ScreenRect, ScreenRect]:
         assert 0 < rowheight < self.height
         return (
-            self.__class__(self.x, self.y, self.width, rowheight),
-            self.__class__(self.x, self.y + rowheight, self.width, self.height - rowheight),
+            self.__class__(self.x, self.y, self.width, rowheight, None),
+            self.__class__(self.x, self.y + rowheight, self.width, self.height - rowheight, None),
         )
 
 
@@ -394,8 +397,17 @@ class Screen(CommandObject):
     drawn, so you can set the background color for an image by setting
     background here.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events in the X11 backend. By default this is set to None, indicating no limit. Because in the X11 backend we already handle motion notify events later, the performance should already be okay. However, to limit these events further you can use this variable and e.g. set it to your monitor refresh rate. 60 would mean that we handle a drag event 60 times per second.
+    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events
+    in the X11 backend. By default this is set to None, indicating no limit.
+    Because in the X11 backend we already handle motion notify events later,
+    the performance should already be okay. However, to limit these events
+    further you can use this variable and e.g. set it to your monitor refresh
+    rate. 60 would mean that we handle a drag event 60 times per second.
 
+    ``serial`` is optionally the serial number of the monitor this Screen's
+    config should be bound to. You can find this via ``get-edid -b $BUS |
+    parse-edid``, or by looking at the sticker on the back of your monitor :).
+    This is mostly useful for people with multi-monitor configs.
     """
 
     group: _Group
@@ -415,6 +427,7 @@ class Screen(CommandObject):
         y: int | None = None,
         width: int | None = None,
         height: int | None = None,
+        serial: str | None = None,
     ) -> None:
         self.top = top
         self.bottom = bottom
@@ -432,6 +445,7 @@ class Screen(CommandObject):
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
         self.previous_group: _Group | None = None
+        self.serial = serial
 
     def __eq__(self, other: object) -> bool:
         # When we trigger a reconfigure_screens(), _process_screens()
@@ -451,14 +465,15 @@ class Screen(CommandObject):
         # This will fail, because the group's object is stale, and we will not
         # focus things correctly. This is one example, but there are several
         # other object trees that save copies of the current screen.
-        #
-        # One problem with this approach is: if the reconfigure_screens() event
-        # comes as a result of a geometry change, this comparison will still
-        # fail. To fix this, we need to uniquely identify each Screen, which we
-        # can do via EDID info in some future work. For now, this makes things
-        # better than it was :)
         if not isinstance(other, Screen):
             return False
+
+        # prefer serial numbers: if a monitor has its geometry changed, this
+        # still allows us to reason correctly about focus.
+        if self.serial is not None and other.serial is not None:
+            return self.serial == other.serial
+
+        # but if not, fall back to what we have: geometry.
         return (
             other.x == self.x
             and other.y == self.y
@@ -551,7 +566,7 @@ class Screen(CommandObject):
         return val
 
     def get_rect(self) -> ScreenRect:
-        return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
+        return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight, self.serial)
 
     def set_group(
         self, new_group: _Group | None, save_prev: bool = True, warp: bool = True
@@ -678,9 +693,16 @@ class Screen(CommandObject):
         self.group.layout_all()
 
     @expose_command()
-    def info(self) -> dict[str, int]:
+    def info(self) -> dict[str, Any]:
         """Returns a dictionary of info for this screen."""
-        return dict(index=self.index, width=self.width, height=self.height, x=self.x, y=self.y)
+        return dict(
+            index=self.index,
+            width=self.width,
+            height=self.height,
+            x=self.x,
+            y=self.y,
+            serial=self.serial,
+        )
 
     @expose_command()
     def next_group(
