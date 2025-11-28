@@ -717,7 +717,7 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->xdg_decoration_mgr->events.new_toplevel_decoration,
                   &server->new_decoration);
 
-    server->layer_shell = wlr_layer_shell_v1_create(server->display, 3);
+    server->layer_shell = wlr_layer_shell_v1_create(server->display, 4);
     server->new_layer_surface.notify = qw_server_handle_new_layer_surface;
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
     server->renderer_lost.notify = qw_server_handle_renderer_lost;
