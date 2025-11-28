@@ -469,7 +469,7 @@ class Core(base.Core):
             hook.fire("client_mouse_enter", win)
 
         if win is not self.qtile.current_window:
-            if motion and self.qtile.config.follow_mouse_focus:
+            if motion and self.qtile.config.follow_mouse_focus is True:
                 if isinstance(win, Static):
                     self.qtile.focus_screen(win.screen.index, False)
                 elif win is not None:
