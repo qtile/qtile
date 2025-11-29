@@ -27,6 +27,10 @@ class CryptoTicker(GenPollUrl):
 
         # display from Binance API
         widget.CryptoTicker(api="binance", currency="USDT")
+
+    Widget requirements: aiohttp_.
+
+    .. _aiohttp: https://pypi.org/project/aiohttp/
     """
 
     QUERY_URL_DICT = {
