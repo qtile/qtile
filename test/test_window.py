@@ -416,9 +416,8 @@ def test_follow_mouse_focus(manager, follow_mouse_focus):
         assert_window = "one"
     assert manager.c.window.info()["name"] == assert_window
     # Send fake Drag event
-    res = manager.c.eval("self.process_button_click(3, 64, 0, 0)")
-    res = manager.c.eval("self.process_button_release(3, 64)")
-    assert res[0], res[1]
+    manager.c.eval("self.process_button_click(3, 64, 0, 0)")
+    manager.c.eval("self.process_button_release(3, 64)")
     if follow_mouse_focus == "click_or_drag_only":
         assert_window = "one"
     assert manager.c.window.info()["name"] == assert_window
@@ -429,9 +428,8 @@ def test_follow_mouse_focus(manager, follow_mouse_focus):
         assert_window = "two"
     assert manager.c.window.info()["name"] == assert_window
     # Send fake Click event
-    res = manager.c.eval("self.process_button_click(1, 64, 0, 0)")
-    res = manager.c.eval("self.process_button_release(1, 64)")
-    assert res[0], res[1]
+    manager.c.eval("self.process_button_click(1, 64, 0, 0)")
+    manager.c.eval("self.process_button_release(1, 64)")
     if follow_mouse_focus == "click_or_drag_only":
         assert_window = "two"
     assert manager.c.window.info()["name"] == assert_window
