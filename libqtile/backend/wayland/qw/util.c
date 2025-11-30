@@ -136,11 +136,11 @@ struct qw_view *qw_view_from_wlr_surface(struct wlr_surface *surface, bool *is_l
 
 #if WLR_HAS_XWAYLAND
 	struct wlr_xwayland_surface *xwayland_surface;
-    xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(wlr_surface);
+    xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(surface);
 	if (xwayland_surface != NULL) {
         struct qw_xwayland_view *xwayland_view = xwayland_surface->data;
         if (xwayland_view != NULL) {
-            return xwayland_view->base;
+            return &xwayland_view->base;
         }
 		return NULL;
 	}
