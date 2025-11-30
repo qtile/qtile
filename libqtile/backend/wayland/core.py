@@ -818,9 +818,13 @@ class Core(base.Core):
         self.inhibitor_manager.remove_global_inhibitor()
 
     @expose_command()
-    def get_idle_inhibitors(self) -> list[str]:
+    def get_idle_inhibitors(self, active_only: bool = False) -> list[str]:
         """Return list of inhibitors."""
-        return [f"{inhibitor!r}" for inhibitor in self.inhibitor_manager.inhibitors]
+        return [
+            f"{inhibitor!r}"
+            for inhibitor in self.inhibitor_manager.inhibitors
+            if not active_only or (active_only and inhibitor.check())
+        ]
 
 
 class Painter:
