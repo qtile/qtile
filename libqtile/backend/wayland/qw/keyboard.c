@@ -50,6 +50,8 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     struct wlr_keyboard_key_event *event = data;
     struct wlr_seat *seat = server->seat;
 
+    qw_server_idle_notify(server);
+
     // keycode offset by 8 as per evdev conventions
     uint32_t keycode = event->keycode + 8;
 

@@ -105,6 +105,8 @@ static void qw_cursor_handle_motion(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, motion);
     struct wlr_pointer_motion_event *event = data;
 
+    qw_server_idle_notify(cursor->server);
+
     wlr_cursor_move(cursor->cursor, &event->pointer->base, event->delta_x, event->delta_y);
 
     if (cursor->implicit_grab.live) {
@@ -118,6 +120,8 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
     // Handle absolute pointer motion event
     struct qw_cursor *cursor = wl_container_of(listener, cursor, motion_absolute);
     struct wlr_pointer_motion_absolute_event *event = data;
+
+    qw_server_idle_notify(cursor->server);
 
     wlr_cursor_warp_absolute(cursor->cursor, &event->pointer->base, event->x, event->y);
 
@@ -199,6 +203,8 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, button);
     struct wlr_pointer_button_event *event = data;
 
+    qw_server_idle_notify(cursor->server);
+
     // Translate event button to internal code (e.g. BTN_LEFT)
     uint32_t button = qw_util_get_button_code(event->button);
     bool pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED;
@@ -241,6 +247,8 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     // Handle scroll (axis) event
     struct qw_cursor *cursor = wl_container_of(listener, cursor, axis);
     struct wlr_pointer_axis_event *event = data;
+
+    qw_server_idle_notify(cursor->server);
 
     static double displacement = 0;
     static const uint32_t DISPLACEMENT_PER_STEP = 15; // could be configurable
