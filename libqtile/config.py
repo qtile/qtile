@@ -1160,7 +1160,7 @@ class IdleInhibitor:
 
     def __init__(
         self,
-        match: _Match = [],
+        match: _Match | None = None,
         when: Literal["focus" | "fullscreen" | "visible" | "open"] = "open",
     ):
         self.match = match

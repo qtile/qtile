@@ -127,7 +127,8 @@ typedef bool (*focus_current_window_cb_t)(void *userdata);
 typedef struct wlr_box (*get_current_output_dims_cb_t)(void *userdata);
 
 // Callbacks for idle inhibit functions
-typedef bool (*add_idle_inhibitor_cb_t)(void *userdata, void *inhibitor, void *view, bool is_layer_surface, bool is_session_lock_surface);
+typedef bool (*add_idle_inhibitor_cb_t)(void *userdata, void *inhibitor, void *view,
+                                        bool is_layer_surface, bool is_session_lock_surface);
 typedef bool (*remove_idle_inhibitor_cb_t)(void *userdata, void *inhibitor);
 typedef bool (*check_inhibited_cb_t)(void *userdata);
 
@@ -328,6 +329,7 @@ struct wlr_output *qw_server_get_current_output(struct qw_server *server);
 
 void qw_server_idle_notify(struct qw_server *server);
 void qw_server_set_inhibited(struct qw_server *server, bool inhibited);
-bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor, struct wlr_surface *surface);
+bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
+                                         struct wlr_surface *surface);
 
 #endif /* SERVER_H */

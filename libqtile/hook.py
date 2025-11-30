@@ -1091,7 +1091,7 @@ hooks: list[Hook] = [
         **Arguments**
 
             boolean value indicating if inhibitor is active or not.
-        
+
         .. code::
 
           from libqtile import hook
@@ -1100,9 +1100,9 @@ hooks: list[Hook] = [
           @hook.subscribe.idle_inhibitor_change
           def on_idle_inhibit(inhibited):
               logger.info(f"Backend inhibitor is {'on' if inhibited else 'off'}")
-        
+
         """,
-    )
+    ),
 ]
 
 

@@ -634,7 +634,7 @@ static void qw_server_handle_idle_inhibitor_destroy(struct wl_listener *listener
     if (!removed) {
         wlr_log(WLR_ERROR, "Unable to remove idle inhibitor.");
     }
-    
+
     wl_list_remove(&inhibitor->link);
     wl_list_remove(&inhibitor->destroy.link);
 
@@ -657,7 +657,8 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
 
     struct wlr_surface *surface = wlr_inhibitor->surface;
     bool is_layer_surface, is_session_lock_surface;
-    struct qw_view *view = qw_view_from_wlr_surface(surface, &is_layer_surface, &is_session_lock_surface);
+    struct qw_view *view =
+        qw_view_from_wlr_surface(surface, &is_layer_surface, &is_session_lock_surface);
 
     void *view_cb_data = NULL;
 
@@ -665,7 +666,8 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
         view_cb_data = view->cb_data;
     }
 
-    bool added = server->add_idle_inhibitor_cb(server->cb_data, inhibitor, view_cb_data, is_layer_surface, is_session_lock_surface);
+    bool added = server->add_idle_inhibitor_cb(server->cb_data, inhibitor, view_cb_data,
+                                               is_layer_surface, is_session_lock_surface);
     if (!added) {
         wlr_log(WLR_ERROR, "Unable to add idle inhibitor.");
     }
@@ -981,25 +983,26 @@ void qw_server_idle_notify(struct qw_server *server) {
 // We can check this in python when the application is managed by qtile but, where that's not
 // the case, we need to fall back to checking in the compositor.
 // This should only be the case for session lock and layer surfaces.
-bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor, struct wlr_surface *surface) {
+bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
+                                         struct wlr_surface *surface) {
     if (surface == NULL) {
         surface = inhibitor->wlr_inhibitor->surface;
     }
 
-	struct wlr_subsurface *subsurface;
+    struct wlr_subsurface *subsurface;
     subsurface = wlr_subsurface_try_from_wlr_surface(surface);
-	if (subsurface != NULL) {
-		return qw_server_inhibitor_surface_visible(inhibitor, subsurface->parent);
-	}
+    if (subsurface != NULL) {
+        return qw_server_inhibitor_surface_visible(inhibitor, subsurface->parent);
+    }
 
     struct wlr_layer_surface_v1 *layer_surface = wlr_layer_surface_v1_try_from_wlr_surface(surface);
-	if (layer_surface != NULL) {
+    if (layer_surface != NULL) {
         return layer_surface->output && layer_surface->output->enabled && surface->mapped;
-	}
+    }
 
-	if (wlr_session_lock_surface_v1_try_from_wlr_surface(surface) != NULL) {
+    if (wlr_session_lock_surface_v1_try_from_wlr_surface(surface) != NULL) {
         return surface->mapped;
     }
 
-	return false;
+    return false;
 }

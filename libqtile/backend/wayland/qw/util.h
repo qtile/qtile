@@ -35,6 +35,7 @@ bool qw_surfaces_on_same_output(struct wlr_surface *surface_a, struct wlr_surfac
 
 // Helper from returning a qw_view pointer from a given surface
 // Also sets flags to identify if surface is a layer surface or a session lock surface
-struct qw_view *qw_view_from_wlr_surface(struct wlr_surface *surface, bool *is_layer_surface, bool *is_session_lock_surface);
+struct qw_view *qw_view_from_wlr_surface(struct wlr_surface *surface, bool *is_layer_surface,
+                                         bool *is_session_lock_surface);
 
 #endif /* UTIL_H */
