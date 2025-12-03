@@ -26,7 +26,7 @@
           # docs building
           numpydoc
           sphinx
-          sphinx_rtd_theme
+          sphinx-rtd-theme
 
           # tests
           coverage
@@ -45,7 +45,7 @@
 
         common-system-deps = with pkgs; [
           # Gdk namespaces
-          wrapGAppsHook
+          wrapGAppsHook3
           gobject-introspection
 
           # docs graphs
@@ -90,17 +90,17 @@
       checks = forAllSystems (pkgs: pkgs.python3Packages.qtile.passthru.tests);
 
       packages = forAllSystems (pkgs: {
-        default = self.packages.${pkgs.system}.qtile;
+        default = self.packages.${pkgs.stdenv.hostPlatform.system}.qtile;
 
         qtile = import ./nix/qtile.nix { inherit pkgs self; };
       });
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          env = flake-attributes.${pkgs.system}.shell-env;
+          env = flake-attributes.${pkgs.stdenv.hostPlatform.system}.shell-env;
 
-          inputsFrom = [ self.packages.${pkgs.system}.qtile ];
-          packages = flake-attributes.${pkgs.system}.pkgs-wrapped;
+          inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.qtile ];
+          packages = flake-attributes.${pkgs.stdenv.hostPlatform.system}.pkgs-wrapped;
         };
       });
     };
