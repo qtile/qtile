@@ -91,7 +91,7 @@ typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x
                                   void *userdata);
 
 // Output dimensions callback: x, y, width, height of output
-typedef void (*output_dims_cb_t)(int x, int y, int width, int height);
+typedef void (*output_dims_cb_t)(int x, int y, int width, int height, char *name);
 
 // Query tree node wid callback
 typedef void (*node_wid_cb_t)(int wid);

@@ -356,6 +356,7 @@ class ScreenRect:
     y: int
     width: int
     height: int
+    name: str | None = None
 
     def hsplit(self, columnwidth: int) -> tuple[ScreenRect, ScreenRect]:
         assert 0 < columnwidth < self.width
@@ -415,6 +416,7 @@ class Screen(CommandObject):
         y: int | None = None,
         width: int | None = None,
         height: int | None = None,
+        output: str | list[str] | None = None,
     ) -> None:
         self.top = top
         self.bottom = bottom
@@ -431,6 +433,7 @@ class Screen(CommandObject):
         self.y = y if y is not None else 0
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
+        self.output = output
         self.previous_group: _Group | None = None
 
     def __eq__(self, other: object) -> bool:

@@ -90,7 +90,7 @@ void qw_server_loop_output_dims(struct qw_server *server, output_dims_cb_t cb) {
         }
         int width, height;
         wlr_output_effective_resolution(o->wlr_output, &width, &height);
-        cb(o->x, o->y, width, height);
+        cb(o->x, o->y, width, height, o->wlr_output->name);
     }
 }
 

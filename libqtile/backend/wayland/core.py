@@ -512,9 +512,10 @@ class Core(base.Core):
     def get_screen_info(self) -> list[ScreenRect]:
         rects = []
 
-        @ffi.callback("void(int, int, int, int)")
-        def loop(x: int, y: int, width: int, height: int) -> None:
-            rects.append(ScreenRect(x, y, width, height))
+        @ffi.callback("void(int, int, int, int, char*)")
+        def loop(x: int, y: int, width: int, height: int, name_ptr: str) -> None:
+            name = ffi.string(name_ptr).decode()
+            rects.append(ScreenRect(x, y, width, height, name))
 
         lib.qw_server_loop_output_dims(self.qw, loop)
 
