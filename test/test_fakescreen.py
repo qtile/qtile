@@ -121,21 +121,44 @@ class FakeScreenConfig(Config):
 fakescreen_config = pytest.mark.parametrize("manager", [FakeScreenConfig], indirect=True)
 
 
+def filter_screen_info(manager):
+    info = manager.c.screen.info()
+    return {key: info[key] for key in ["x", "y", "index", "width", "height"]}
+
+
 @fakescreen_config
 def test_basic(manager):
     manager.test_window("zero")
     assert manager.c.layout.info()["clients"] == ["zero"]
-    assert manager.c.screen.info() == {"y": 0, "x": 0, "index": 0, "width": 500, "height": 340}
+    assert filter_screen_info(manager) == {
+        "y": 0,
+        "x": 0,
+        "index": 0,
+        "width": 500,
+        "height": 340,
+    }
     manager.c.to_screen(1)
     manager.test_window("one")
     assert manager.c.layout.info()["clients"] == ["one"]
-    assert manager.c.screen.info() == {"y": 0, "x": 500, "index": 1, "width": 300, "height": 380}
+    assert filter_screen_info(manager) == {
+        "y": 0,
+        "x": 500,
+        "index": 1,
+        "width": 300,
+        "height": 380,
+    }
     manager.c.to_screen(2)
     manager.test_window("two")
-    assert manager.c.screen.info() == {"y": 340, "x": 0, "index": 2, "width": 450, "height": 220}
+    assert filter_screen_info(manager) == {
+        "y": 340,
+        "x": 0,
+        "index": 2,
+        "width": 450,
+        "height": 220,
+    }
     manager.c.to_screen(3)
     manager.test_window("one")
-    assert manager.c.screen.info() == {
+    assert filter_screen_info(manager) == {
         "y": 380,
         "x": 450,
         "index": 3,
@@ -177,7 +200,13 @@ def test_maximize_with_move_to_screen(manager):
 
     # go to second screen
     manager.c.to_screen(1)
-    assert manager.c.screen.info() == {"y": 0, "x": 500, "index": 1, "width": 300, "height": 380}
+    assert filter_screen_info(manager) == {
+        "y": 0,
+        "x": 500,
+        "index": 1,
+        "width": 300,
+        "height": 380,
+    }
     assert manager.c.group.info()["name"] == "b"
     manager.c.group["a"].toscreen()
 
@@ -191,7 +220,13 @@ def test_maximize_with_move_to_screen(manager):
 @fakescreen_config
 def test_float_first_on_second_screen(manager):
     manager.c.to_screen(1)
-    assert manager.c.screen.info() == {"y": 0, "x": 500, "index": 1, "width": 300, "height": 380}
+    assert filter_screen_info(manager) == {
+        "y": 0,
+        "x": 500,
+        "index": 1,
+        "width": 300,
+        "height": 380,
+    }
 
     manager.test_window("one")
     # I don't know where y=30, x=12 comes from...
@@ -233,11 +268,23 @@ def test_float_change_screens(manager):
     assert manager.c.window.info()["group"] == "a"
 
     # put on group b
-    assert manager.c.screen.info() == {"y": 0, "x": 0, "index": 0, "width": 500, "height": 340}
+    assert filter_screen_info(manager) == {
+        "y": 0,
+        "x": 0,
+        "index": 0,
+        "width": 500,
+        "height": 340,
+    }
     assert manager.c.group.info()["name"] == "a"
     manager.c.to_screen(1)
     assert manager.c.group.info()["name"] == "b"
-    assert manager.c.screen.info() == {"y": 0, "x": 500, "index": 1, "width": 300, "height": 380}
+    assert filter_screen_info(manager) == {
+        "y": 0,
+        "x": 500,
+        "index": 1,
+        "width": 300,
+        "height": 380,
+    }
     manager.c.group["a"].toscreen()
     assert manager.c.group.info()["name"] == "a"
     assert set(manager.c.group.info()["windows"]) == set(("tiled", "float"))
@@ -253,7 +300,13 @@ def test_float_change_screens(manager):
 
     # move to screen 3
     manager.c.to_screen(2)
-    assert manager.c.screen.info() == {"y": 340, "x": 0, "index": 2, "width": 450, "height": 220}
+    assert filter_screen_info(manager) == {
+        "y": 340,
+        "x": 0,
+        "index": 2,
+        "width": 450,
+        "height": 220,
+    }
     assert manager.c.group.info()["name"] == "c"
     manager.c.group["a"].toscreen()
     assert manager.c.group.info()["name"] == "a"
@@ -268,7 +321,7 @@ def test_float_change_screens(manager):
 
     # now screen 4 for fun
     manager.c.to_screen(3)
-    assert manager.c.screen.info() == {
+    assert filter_screen_info(manager) == {
         "y": 380,
         "x": 450,
         "index": 3,
@@ -289,7 +342,13 @@ def test_float_change_screens(manager):
 
     # and back to one
     manager.c.to_screen(0)
-    assert manager.c.screen.info() == {"y": 0, "x": 0, "index": 0, "width": 500, "height": 340}
+    assert filter_screen_info(manager) == {
+        "y": 0,
+        "x": 0,
+        "index": 0,
+        "width": 500,
+        "height": 340,
+    }
     assert manager.c.group.info()["name"] == "b"
     manager.c.group["a"].toscreen()
     assert manager.c.group.info()["name"] == "a"
