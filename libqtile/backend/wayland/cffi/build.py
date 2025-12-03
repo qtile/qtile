@@ -34,6 +34,12 @@ PROTOS = [
     [
         "pointer-constraints-unstable-v1-protocol.h",
         f"{WAYLAND_PROTOCOLS}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml",
+        "ext-image-capture-source-v1-protocol.h",
+        f"{WAYLAND_PROTOCOLS}/staging/ext-image-capture-source/ext-image-capture-source-v1.xml",
+    ],
+    [
+        "ext-image-copy-capture-v1-protocol.h",
+        f"{WAYLAND_PROTOCOLS}/staging/ext-image-copy-capture/ext-image-copy-capture-v1.xml",
     ],
 ]
 

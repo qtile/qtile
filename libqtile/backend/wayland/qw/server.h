@@ -19,6 +19,8 @@
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_export_dmabuf_v1.h>
+#include <wlr/types/wlr_ext_image_capture_source_v1.h>
+#include <wlr/types/wlr_ext_image_copy_capture_v1.h>
 #include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
@@ -233,6 +235,7 @@ struct qw_server {
     struct wlr_virtual_pointer_manager_v1 *virtual_pointer;
     struct wl_listener virtual_keyboard_new;
     struct wl_listener virtual_pointer_new;
+    struct wlr_ext_image_copy_capture_manager_v1 *image_copy_capture_manager;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
