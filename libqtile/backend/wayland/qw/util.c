@@ -5,6 +5,7 @@
 #include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_subcompositor.h>
+#include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #if WLR_HAS_XWAYLAND
 #include "xwayland-view.h"
