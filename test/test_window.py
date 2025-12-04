@@ -366,3 +366,72 @@ def test_can_steal_focus(manager_nospawn):
 
     manager_nospawn.test_window("three")
     assert_focused(manager_nospawn, "three")
+
+
+class FollowMuseFocus(ManagerConfig):
+    mouse = [
+        config.Click(["mod4"], "Button1"),
+        config.Drag(["mod4"], "Button3"),
+    ]
+    follow_mouse_focus = True
+
+
+class FollowMuseFocusFalse(FollowMuseFocus):
+    follow_mouse_focus = False
+
+
+class FollowMuseFocusClickOrDragOnly(FollowMuseFocus):
+    follow_mouse_focus = "click_or_drag_only"
+
+
+@pytest.fixture
+def follow_mouse_focus(request):
+    return request.param
+
+
+@pytest.mark.parametrize(
+    "manager, follow_mouse_focus",
+    [
+        (FollowMuseFocus, True),
+        (FollowMuseFocusFalse, False),
+        (FollowMuseFocusClickOrDragOnly, "click_or_drag_only"),
+    ],
+    indirect=True,
+)
+def test_follow_mouse_focus(manager, follow_mouse_focus):
+    manager.test_window("one")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.test_window("two")
+    manager.c.window.set_position_floating(150, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    # Last focused windows
+    assert_window = manager.c.window.info()["name"]
+
+    # Go to window one
+    manager.backend.fake_motion(55, 55)
+    if follow_mouse_focus is True:
+        assert_window = "one"
+    assert manager.c.window.info()["name"] == assert_window
+    # Send fake Drag event
+    res = manager.c.eval("self.process_button_click(3, 64, 0, 0)")
+    res = manager.c.eval("self.process_button_release(3, 64)")
+    assert res[0], res[1]
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_window = "one"
+    assert manager.c.window.info()["name"] == assert_window
+
+    # Go to window two
+    manager.backend.fake_motion(155, 55)
+    if follow_mouse_focus is True:
+        assert_window = "two"
+    assert manager.c.window.info()["name"] == assert_window
+    # Send fake Click event
+    res = manager.c.eval("self.process_button_click(1, 64, 0, 0)")
+    res = manager.c.eval("self.process_button_release(1, 64)")
+    assert res[0], res[1]
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_window = "two"
+    assert manager.c.window.info()["name"] == assert_window

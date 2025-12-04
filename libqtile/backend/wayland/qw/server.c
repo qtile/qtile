@@ -3,6 +3,8 @@
 #include <wlr/backend/libinput.h>
 #include <wlr/backend/session.h>
 #include <wlr/types/wlr_output_management_v1.h>
+#include <wlr/types/wlr_pointer_constraints_v1.h>
+#include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/types/wlr_server_decoration.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include <wlr/types/wlr_virtual_pointer_v1.h>
@@ -67,6 +69,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_session_lock.link);
     wl_list_remove(&server->virtual_keyboard_new.link);
     wl_list_remove(&server->virtual_pointer_new.link);
+    wl_list_remove(&server->new_pointer_constraint.link);
     wl_list_remove(&server->new_idle_inhibitor.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
@@ -622,6 +625,13 @@ static void qw_server_handle_start_drag(struct wl_listener *listener, void *data
     wl_signal_add(&drag->events.destroy, &drag_icon->destroy);
 }
 
+void qw_server_handle_new_pointer_constraint(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, new_pointer_constraint);
+    struct wlr_pointer_constraint_v1 *constraint = data;
+
+    qw_cursor_pointer_constraint_new(server->cursor, constraint);
+}
+
 void qw_server_set_inhibited(struct qw_server *server, bool inhibited) {
     wlr_idle_notifier_v1_set_inhibited(server->idle_notifier, inhibited);
 }
@@ -824,6 +834,13 @@ struct qw_server *qw_server_create() {
 
     wlr_scene_set_gamma_control_manager_v1(server->scene,
                                            wlr_gamma_control_manager_v1_create(server->display));
+
+    server->relative_pointer_manager = wlr_relative_pointer_manager_v1_create(server->display);
+
+    server->pointer_constraints = wlr_pointer_constraints_v1_create(server->display);
+    server->new_pointer_constraint.notify = qw_server_handle_new_pointer_constraint;
+    wl_signal_add(&server->pointer_constraints->events.new_constraint,
+                  &server->new_pointer_constraint);
 
     // TODO: power manager
     // TODO: setup listeners

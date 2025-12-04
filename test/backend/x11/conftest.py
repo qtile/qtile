@@ -230,6 +230,16 @@ class XBackend(Backend):
         self.core = Core
         self.manager = None
 
+    def fake_motion(self, x, y):
+        """Move pointer to the specified coordinates"""
+        conn = Connection(self.env["DISPLAY"])
+        root = conn.default_screen.root.wid
+        xtest = conn.conn(xcffib.xtest.key)
+        xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, root, x, y, 0)
+        conn.conn.flush()
+        self.manager.c.sync()
+        conn.finalize()
+
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
         conn = Connection(self.env["DISPLAY"])
