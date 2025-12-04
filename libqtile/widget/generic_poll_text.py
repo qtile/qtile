@@ -24,7 +24,12 @@ except ImportError:
 
 
 class GenPollText(base.BackgroundPoll):
-    """A generic text widget that polls using poll function to get the text"""
+    """A generic text widget that polls using poll function to get the text
+
+    Widget requirements: aiohttp_.
+
+    .. _aiohttp: https://pypi.org/project/aiohttp/
+    """
 
     defaults = [
         ("func", None, "Poll Function"),
@@ -41,7 +46,13 @@ class GenPollText(base.BackgroundPoll):
 
 
 class GenPollUrl(base.BackgroundPoll):
-    """A generic text widget that polls an url and parses it using parse function"""
+    """A generic text widget that polls an url and parses it using parse function
+
+
+    Widget requirements: aiohttp_.
+
+    .. _aiohttp: https://pypi.org/project/aiohttp/
+    """
 
     defaults: list[tuple[str, Any, str]] = [
         ("url", None, "Url"),

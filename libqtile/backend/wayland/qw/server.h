@@ -22,6 +22,8 @@
 #include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_fractional_scale_v1.h>
 #include <wlr/types/wlr_gamma_control_v1.h>
+#include <wlr/types/wlr_idle_inhibit_v1.h>
+#include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
@@ -124,6 +126,15 @@ typedef bool (*focus_current_window_cb_t)(void *userdata);
 // Callback to get output dimensions for qtile's current screen
 typedef struct wlr_box (*get_current_output_dims_cb_t)(void *userdata);
 
+// Callbacks for idle inhibit functions
+typedef bool (*add_idle_inhibitor_cb_t)(void *userdata, void *inhibitor, void *view,
+                                        bool is_layer_surface, bool is_session_lock_surface);
+typedef bool (*remove_idle_inhibitor_cb_t)(void *userdata, void *inhibitor);
+typedef bool (*check_inhibited_cb_t)(void *userdata);
+
+// Callback for idle state change
+typedef void (*idle_state_change_cb_t)(void *userdata, int seconds, bool is_idle);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -180,6 +191,10 @@ struct qw_server {
     focus_current_window_cb_t focus_current_window_cb;
     on_session_lock_cb_t on_session_lock_cb;
     get_current_output_dims_cb_t get_current_output_dims_cb;
+    add_idle_inhibitor_cb_t add_idle_inhibitor_cb;
+    remove_idle_inhibitor_cb_t remove_idle_inhibitor_cb;
+    check_inhibited_cb_t check_inhibited_cb;
+    idle_state_change_cb_t idle_state_change_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -233,6 +248,11 @@ struct qw_server {
     struct wlr_virtual_pointer_manager_v1 *virtual_pointer;
     struct wl_listener virtual_keyboard_new;
     struct wl_listener virtual_pointer_new;
+    struct wlr_idle_inhibit_manager_v1 *idle_inhibit_manager;
+    struct wlr_idle_notifier_v1 *idle_notifier;
+    struct wl_listener new_idle_inhibitor;
+    struct wl_list idle_inhibitors;
+    struct wl_list idle_timers; // list of qw_idle_timer
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
@@ -248,6 +268,23 @@ struct qw_drag_icon {
     // Private data
     struct wlr_scene_tree *scene_icon;
     struct wl_listener destroy;
+};
+
+struct qw_idle_inhibitor {
+    struct qw_server *server;
+    // Private data
+    struct wlr_idle_inhibitor_v1 *wlr_inhibitor;
+    struct wl_listener destroy;
+    struct wl_list link; // server->idle_inhibitors
+};
+
+struct qw_idle_timer {
+    struct qw_server *server;
+    int seconds;
+    bool is_idle;
+    // Private data
+    struct wl_event_source *event_source;
+    struct wl_list link; // server->idle_timers
 };
 
 // Utility functions exposed by the server API
@@ -303,5 +340,12 @@ void qw_server_set_output_fullscreen_background(struct qw_server *server, int x,
                                                 bool enabled);
 
 struct wlr_output *qw_server_get_current_output(struct qw_server *server);
+
+void qw_server_idle_notify(struct qw_server *server);
+void qw_server_set_inhibited(struct qw_server *server, bool inhibited);
+bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
+                                         struct wlr_surface *surface);
+
+void qw_server_add_idle_timer(struct qw_server *server, int seconds);
 
 #endif /* SERVER_H */

@@ -86,6 +86,7 @@ class Qtile(CommandObject):
         self.renamed_widgets: list[str]
         self.groups_map: dict[str, _Group] = {}
         self.groups: list[_Group] = []
+        self.hovered_window: base.WindowType | None = None
 
         self.keys_map: dict[tuple[int, int], Key | KeyChord] = {}
         self.chord_stack: list[KeyChord] = []
@@ -835,8 +836,8 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen or self.screens[0]
 
-    def _focus_hovered_window(self) -> None:
-        window = self.core.hovered_window
+    def focus_hovered_window(self) -> None:
+        window = self.hovered_window
         if window:
             if isinstance(window, base.Window):
                 window.focus()
@@ -849,7 +850,7 @@ class Qtile(CommandObject):
 
             if isinstance(m, Click):
                 if self.config.follow_mouse_focus == "click_or_drag_only":
-                    self._focus_hovered_window()
+                    self.focus_hovered_window()
                 for i in m.commands:
                     if i.check(self):
                         status, val = self.server.call(
@@ -862,7 +863,7 @@ class Qtile(CommandObject):
                 isinstance(m, Drag) and self.current_window and not self.current_window.fullscreen
             ):
                 if self.config.follow_mouse_focus == "click_or_drag_only":
-                    self._focus_hovered_window()
+                    self.focus_hovered_window()
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs, False))
@@ -1841,7 +1842,6 @@ class Qtile(CommandObject):
     @expose_command()
     def save_state(self, state_path: str) -> bool:
         """Save qtile state to a file
-
         Parameters
         ==========
         state_path :
@@ -1858,7 +1858,6 @@ class Qtile(CommandObject):
     @expose_command()
     def load_state(self, state_path: str) -> bool:
         """Load qtile state from a file and apply it
-
         Parameters
         ==========
         state_path :

@@ -115,6 +115,10 @@ extern "Python" void on_input_device_added_cb(void *userdata);
 extern "Python" bool focus_current_window_cb(void *userdata);
 extern "Python" void on_session_lock_cb(bool locked, void *userdata);
 extern "Python" struct wlr_box get_current_output_dims_cb(void *userdata);
+extern "Python" bool add_idle_inhibitor_cb(void *userdata, void *inhibitor, void *view, bool is_layer_surface, bool is_session_lock_surface);
+extern "Python" bool remove_idle_inhibitor_cb(void *userdata, void *inhibitor);
+extern "Python" bool check_inhibited_cb(void *userdata);
+extern "Python" void idle_state_change_cb(void *userdata, int seconds, bool is_idle);
 
 extern "Python" int request_focus_cb(void *userdata);
 extern "Python" int request_close_cb(void *userdata);

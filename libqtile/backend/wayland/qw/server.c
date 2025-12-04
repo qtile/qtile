@@ -67,6 +67,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_session_lock.link);
     wl_list_remove(&server->virtual_keyboard_new.link);
     wl_list_remove(&server->virtual_pointer_new.link);
+    wl_list_remove(&server->new_idle_inhibitor.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wl_list_remove(&server->xwayland_ready.link);
@@ -621,6 +622,57 @@ static void qw_server_handle_start_drag(struct wl_listener *listener, void *data
     wl_signal_add(&drag->events.destroy, &drag_icon->destroy);
 }
 
+void qw_server_set_inhibited(struct qw_server *server, bool inhibited) {
+    wlr_idle_notifier_v1_set_inhibited(server->idle_notifier, inhibited);
+}
+
+static void qw_server_handle_idle_inhibitor_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_idle_inhibitor *inhibitor = wl_container_of(listener, inhibitor, destroy);
+    struct qw_server *server = inhibitor->server;
+    bool removed = server->remove_idle_inhibitor_cb(server->cb_data, inhibitor);
+    if (!removed) {
+        wlr_log(WLR_ERROR, "Unable to remove idle inhibitor.");
+    }
+
+    wl_list_remove(&inhibitor->link);
+    wl_list_remove(&inhibitor->destroy.link);
+
+    free(inhibitor);
+}
+
+static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, new_idle_inhibitor);
+    struct wlr_idle_inhibitor_v1 *wlr_inhibitor = data;
+
+    struct qw_idle_inhibitor *inhibitor = calloc(1, sizeof(struct qw_idle_inhibitor));
+
+    inhibitor->server = server;
+    inhibitor->wlr_inhibitor = wlr_inhibitor;
+
+    wl_list_insert(&server->idle_inhibitors, &inhibitor->link);
+
+    inhibitor->destroy.notify = qw_server_handle_idle_inhibitor_destroy;
+    wl_signal_add(&wlr_inhibitor->events.destroy, &inhibitor->destroy);
+
+    struct wlr_surface *surface = wlr_inhibitor->surface;
+    bool is_layer_surface, is_session_lock_surface;
+    struct qw_view *view =
+        qw_view_from_wlr_surface(surface, &is_layer_surface, &is_session_lock_surface);
+
+    void *view_cb_data = NULL;
+
+    if (view != NULL && view->cb_data) {
+        view_cb_data = view->cb_data;
+    }
+
+    bool added = server->add_idle_inhibitor_cb(server->cb_data, inhibitor, view_cb_data,
+                                               is_layer_surface, is_session_lock_surface);
+    if (!added) {
+        wlr_log(WLR_ERROR, "Unable to add idle inhibitor.");
+    }
+}
+
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     struct qw_server *server = calloc(1, sizeof(*server));
@@ -743,6 +795,16 @@ struct qw_server *qw_server_create() {
     qw_session_lock_init(server);
 
     server->ftl_mgr = wlr_foreign_toplevel_manager_v1_create(server->display);
+
+    server->idle_inhibit_manager = wlr_idle_inhibit_v1_create(server->display);
+    wl_list_init(&server->idle_inhibitors);
+    server->new_idle_inhibitor.notify = qw_server_handle_new_idle_inhibitor;
+    wl_signal_add(&server->idle_inhibit_manager->events.new_inhibitor, &server->new_idle_inhibitor);
+
+    server->idle_notifier = wlr_idle_notifier_v1_create(server->display);
+
+    // Initialize idle timers list
+    wl_list_init(&server->idle_timers);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
@@ -912,4 +974,93 @@ struct wlr_output *qw_server_get_current_output(struct qw_server *server) {
     }
 
     return NULL;
+}
+
+void qw_server_idle_notify(struct qw_server *server) {
+    if (server->idle_inhibit_manager != NULL) {
+        wlr_idle_notifier_v1_notify_activity(server->idle_notifier, server->seat);
+    }
+    // Fire resume for each timer that is currently idle
+    struct qw_idle_timer *timer;
+    wl_list_for_each(timer, &server->idle_timers, link) {
+        if (timer->is_idle && server->idle_state_change_cb) {
+            server->idle_state_change_cb(server->cb_data, timer->seconds, false);
+            timer->is_idle = false; // Back to active state
+        }
+        wl_event_source_timer_update(timer->event_source, timer->seconds * 1000);
+    }
+}
+
+// Timer callback
+static int qw_server_idle_timer_cb(void *data) {
+    struct qw_idle_timer *timer = (struct qw_idle_timer *)data;
+    if (!timer || !timer->event_source || !timer->server) {
+        return 0;
+    }
+
+    struct qw_server *server = timer->server;
+
+    if (server->idle_state_change_cb) {
+        server->idle_state_change_cb(server->cb_data, timer->seconds, true);
+    }
+
+    timer->is_idle = true;
+
+    wl_event_source_timer_update(timer->event_source, 0);
+    return 0;
+}
+
+// Public: add a new idle timer threshold in seconds
+void qw_server_add_idle_timer(struct qw_server *server, int seconds) {
+    if (!server || seconds <= 0) {
+        return;
+    }
+
+    // Don't add duplicates
+    struct qw_idle_timer *it;
+    wl_list_for_each(it, &server->idle_timers, link) {
+        if (it->seconds == seconds) {
+            // Re-arm existing timer
+            wl_event_source_timer_update(it->event_source, seconds * 1000);
+            return;
+        }
+    }
+
+    struct qw_idle_timer *timer = calloc(1, sizeof(*timer));
+    timer->server = server;
+    timer->seconds = seconds;
+    timer->is_idle = false; // Start in active state
+    timer->event_source = wl_event_loop_add_timer(server->event_loop, qw_server_idle_timer_cb, timer);
+    wl_list_insert(&server->idle_timers, &timer->link);
+
+    // Arm immediately from zero
+    wl_event_source_timer_update(timer->event_source, seconds * 1000);
+}
+
+// Idle inhibitors set by applications should only be active when the application is visible
+// We can check this in python when the application is managed by qtile but, where that's not
+// the case, we need to fall back to checking in the compositor.
+// This should only be the case for session lock and layer surfaces.
+bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
+                                         struct wlr_surface *surface) {
+    if (surface == NULL) {
+        surface = inhibitor->wlr_inhibitor->surface;
+    }
+
+    struct wlr_subsurface *subsurface;
+    subsurface = wlr_subsurface_try_from_wlr_surface(surface);
+    if (subsurface != NULL) {
+        return qw_server_inhibitor_surface_visible(inhibitor, subsurface->parent);
+    }
+
+    struct wlr_layer_surface_v1 *layer_surface = wlr_layer_surface_v1_try_from_wlr_surface(surface);
+    if (layer_surface != NULL) {
+        return layer_surface->output && layer_surface->output->enabled && surface->mapped;
+    }
+
+    if (wlr_session_lock_surface_v1_try_from_wlr_surface(surface) != NULL) {
+        return surface->mapped;
+    }
+
+    return false;
 }

@@ -920,8 +920,3 @@ class Core(base.Core):
             self.last_focused.change_layer()
 
         self.last_focused = win
-
-    @property
-    def hovered_window(self) -> base.WindowType | None:
-        _hovered_window = self.conn.conn.core.QueryPointer(self._root.wid).reply().child
-        return self.qtile.windows_map.get(_hovered_window)
