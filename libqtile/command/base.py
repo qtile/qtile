@@ -7,6 +7,7 @@ from __future__ import annotations
 import abc
 import asyncio
 import inspect
+import os
 import sys
 import traceback
 from functools import partial
@@ -319,7 +320,10 @@ class CommandObject(metaclass=abc.ABCMeta):
             except SyntaxError:
                 exec(code, globals_, locals())
                 return True, None
-        except Exception:
+        except Exception as e:
+            if os.environ.get("PYTEST_VERSION") is not None:
+                # Do not fail silently during tests
+                raise CommandError(str(e))
             error = traceback.format_exc().strip().split("\n")[-1]
             return False, error
 
