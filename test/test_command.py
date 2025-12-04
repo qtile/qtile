@@ -8,9 +8,9 @@ import libqtile.confreader
 import libqtile.layout
 import libqtile.log_utils
 import libqtile.widget
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.command.client import CommandClient
-from libqtile.command.interface import CommandError, IPCCommandInterface
+from libqtile.command.interface import IPCCommandInterface
 from libqtile.confreader import Config
 from libqtile.ipc import Client, IPCError
 from libqtile.lazy import lazy
@@ -193,7 +193,7 @@ def test_cmd_commands(manager):
 
 @server_config
 def test_cmd_eval_namespace(manager):
-    assert manager.c.eval("__name__") == (True, "libqtile.core.manager")
+    assert manager.c.eval("__name__")[1] == "libqtile.core.manager"
 
 
 @server_config
@@ -430,18 +430,16 @@ def test_lazy_arguments(manager_nospawn):
     manager_nospawn.start(config)
 
     manager_nospawn.c.simulate_keypress(["control"], "j")
-    _, val = manager_nospawn.c.eval("self.test_func_output")
-    assert val == "10"
+    assert manager_nospawn.c.eval("self.test_func_output")[1] == "10"
 
     manager_nospawn.c.simulate_keypress(["control"], "k")
-    _, val = manager_nospawn.c.eval("self.test_func_output")
-    assert val == "500"
+    assert manager_nospawn.c.eval("self.test_func_output")[1] == "500"
 
 
 def test_lazy_function_coroutine(manager_nospawn):
     """Test that lazy.function accepts coroutines."""
 
-    @Retry(ignore_exceptions=(AssertionError,))
+    @Retry(ignore_exceptions=(AssertionError, CommandError))
     def assert_func_text(manager, value):
         _, text = manager.c.eval("self.test_func_output")
         assert text == value

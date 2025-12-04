@@ -663,19 +663,12 @@ def test_bar_border_horizontal(manager_nospawn):
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
-
-    _, xoffset = manager_nospawn.c.bar["top"].eval("self.widgets[0].offsetx")
-    assert xoffset == "5"
-
-    _, yoffset = manager_nospawn.c.bar["top"].eval("self.widgets[0].offsety")
-    assert xoffset == "5"
+    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsetx")[1] == "5"
+    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsety")[1] == "5"
 
     # Where there is no border, this should be 0
-    _, xoffset = manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsetx")
-    assert xoffset == "0"
-
-    _, yoffset = manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsety")
-    assert xoffset == "0"
+    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsetx")[1] == "0"
+    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsety")[1] == "0"
 
 
 def test_bar_border_vertical(manager_nospawn):
@@ -724,19 +717,12 @@ def test_bar_border_vertical(manager_nospawn):
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
-
-    _, xoffset = manager_nospawn.c.bar["left"].eval("self.widgets[0].offsetx")
-    assert xoffset == "5"
-
-    _, yoffset = manager_nospawn.c.bar["left"].eval("self.widgets[0].offsety")
-    assert xoffset == "5"
+    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsetx")[1] == "5"
+    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsety")[1] == "5"
 
     # Where there is no border, this should be 0
-    _, xoffset = manager_nospawn.c.bar["right"].eval("self.widgets[0].offsetx")
-    assert xoffset == "0"
-
-    _, yoffset = manager_nospawn.c.bar["right"].eval("self.widgets[0].offsety")
-    assert xoffset == "0"
+    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsetx")[1] == "0"
+    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsety")[1] == "0"
 
 
 def test_unsupported_widget(manager_nospawn):
