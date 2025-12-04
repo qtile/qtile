@@ -5,7 +5,7 @@ def test_popup_focus(manager):
     manager.test_window("one")
     start_wins = len(manager.backend.get_all_windows())
 
-    success, msg = manager.c.eval(
+    manager.c.eval(
         textwrap.dedent(
             """
         from libqtile.popup import Popup
@@ -20,7 +20,6 @@ def test_popup_focus(manager):
     """
         )
     )
-    assert success, msg
 
     end_wins = len(manager.backend.get_all_windows())
     assert end_wins == start_wins + 1

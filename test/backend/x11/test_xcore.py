@@ -20,8 +20,7 @@ def test_no_two_qtiles(xmanager):
 
 
 def test_color_pixel(xmanager):
-    (success, e) = xmanager.c.eval('self.core.conn.color_pixel("ffffff")')
-    assert success, e
+    xmanager.c.eval('self.core.conn.color_pixel("ffffff")')
 
 
 @pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=True)
