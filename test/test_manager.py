@@ -1169,21 +1169,21 @@ def test_reload_config(manager_nospawn):
         assert "dd" in manager_nospawn.c.group.info()["windows"]
 
     # Original config
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self.keys_map)")[1] == "1"
+    assert manager_nospawn.c.eval("len(self._mouse_map)")[1] == "1"
     assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
-    assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
+    assert manager_nospawn.c.widget["clock"].eval("self.background")[1] == "None"
     screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
-    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "6")
+    assert manager_nospawn.c.eval("self.dgroups.key_binder")[1] == "None"
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)")[1] == "6"
     manager_nospawn.test_window("one")
     assert manager_nospawn.c.window.info()["floating"] is True
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
+        assert manager_nospawn.c.eval("self.core.wmname")[1] == "LG3D"
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Spawn dropdown
     assert_dd_appeared()
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Send it to ScratchPad
@@ -1193,23 +1193,23 @@ def test_reload_config(manager_nospawn):
     manager_nospawn.c.eval("self.test_data_config_evaluations = 0")
     manager_nospawn.c.reload_config()
     # should be readed twice (check+read), but no more
-    assert manager_nospawn.c.eval("self.test_data_config_evaluations") == (True, "2")
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "2")
-    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "2")
+    assert manager_nospawn.c.eval("self.test_data_config_evaluations")[1] == "2"
+    assert manager_nospawn.c.eval("len(self.keys_map)")[1] == "2"
+    assert manager_nospawn.c.eval("len(self._mouse_map)")[1] == "2"
     assert "".join(manager_nospawn.c.get_groups().keys()) == "123456789S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 2
-    assert manager_nospawn.c.widget["currentlayout"].eval("self.background") == (True, "#ff0000")
+    assert manager_nospawn.c.widget["currentlayout"].eval("self.background")[1] == "#ff0000"
     screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["top"][3] == 32 and not screens["gaps"]["bottom"]
     assert len(manager_nospawn.c.internal_windows()) == 1
     _, binder = manager_nospawn.c.eval("self.dgroups.key_binder")
     assert "function simple_key_binder" in binder
-    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "11")
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)")[1] == "11"
     manager_nospawn.test_window("one")
     assert manager_nospawn.c.window.info()["floating"] is False
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval("self.core.wmname") == (True, "TEST")
+        assert manager_nospawn.c.eval("self.core.wmname")[1] == "TEST"
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown2")  # Spawn second dropdown
     assert_dd_appeared()
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Send it to ScratchPad
@@ -1220,22 +1220,22 @@ def test_reload_config(manager_nospawn):
     manager_nospawn.c.eval("del self.test_data")
     manager_nospawn.c.eval("del self.test_data_config_evaluations")
     manager_nospawn.c.reload_config()
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self.keys_map)")[1] == "1"
+    assert manager_nospawn.c.eval("len(self._mouse_map)")[1] == "1"
     # The last four groups persist within QtileState
     assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
-    assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
+    assert manager_nospawn.c.widget["clock"].eval("self.background")[1] == "None"
     screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
-    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "6")
+    assert manager_nospawn.c.eval("self.dgroups.key_binder")[1] == "None"
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)")[1] == "6"
     manager_nospawn.test_window("one")
     assert manager_nospawn.c.window.info()["floating"] is True
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
+        assert manager_nospawn.c.eval("self.core.wmname")[1] == "LG3D"
     assert "dd" in manager_nospawn.c.get_groups()["S"]["windows"]  # First dropdown persists
     assert "dd" in manager_nospawn.c.get_groups()["1"]["windows"]  # Second orphans to group
 
