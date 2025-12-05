@@ -7,6 +7,7 @@ import typing
 import cairocffi
 
 from libqtile import pangocffi, utils
+from libqtile.images import Img
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -334,6 +335,20 @@ class Drawer:
         self.ctx.line_to(x2, y)
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
+
+    # To prevent blurry upscaling in wayland, we first upscale images to their
+    # final physical size before downscaling to their logical size for
+    # compositing. Since we are using a recording surface, when the final window
+    # is upscaled again, these last two scaling operations cancel out
+    def paint_dpi_aware_pattern(self, img: Img, offsetx=0, offsety=0):
+        scale = getattr(self._win, "scale", 1)
+        img.resize(int(img.width * scale), int(img.height * scale))
+        self.ctx.save()
+        self.ctx.translate(offsetx, offsety)
+        self.ctx.scale(1 / scale, 1 / scale)
+        self.ctx.set_source(img.pattern)
+        self.ctx.paint()
+        self.ctx.restore()
 
 
 class TextLayout:
