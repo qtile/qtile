@@ -342,6 +342,7 @@ class Drawer:
     # is upscaled again, these last two scaling operations cancel out
     def paint_dpi_aware_pattern(self, img: Img, offsetx=0, offsety=0):
         scale = getattr(self._win, "scale", 1)
+        original_size = (img.width, img.height)
         img.resize(int(img.width * scale), int(img.height * scale))
         self.ctx.save()
         self.ctx.translate(offsetx, offsety)
@@ -349,6 +350,8 @@ class Drawer:
         self.ctx.set_source(img.pattern)
         self.ctx.paint()
         self.ctx.restore()
+        # Restore the original width to avoid compounding scaling
+        img.width, img.height = original_size
 
 
 class TextLayout:
