@@ -28,9 +28,9 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     vol.length_type = bar.STATIC
     vol.length = 0
     vol.setup_images()
-    assert len(vol.surfaces) == len(names)
-    for name, surfpat in vol.surfaces.items():
-        assert isinstance(surfpat, cairocffi.SurfacePattern)
+    assert len(vol.images) == len(names)
+    for name, image in vol.images.items():
+        assert isinstance(image.pattern, cairocffi.SurfacePattern)
 
 
 def test_emoji():
