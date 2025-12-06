@@ -27,6 +27,7 @@
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
+#include <wlr/types/wlr_output_power_management_v1.h>
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_presentation_time.h>
 #include <wlr/types/wlr_primary_selection.h>
@@ -233,6 +234,8 @@ struct qw_server {
     struct wlr_virtual_pointer_manager_v1 *virtual_pointer;
     struct wl_listener virtual_keyboard_new;
     struct wl_listener virtual_pointer_new;
+    struct wlr_output_power_manager_v1 *output_power_manager;
+    struct wl_listener set_output_power_mode;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
