@@ -1239,10 +1239,11 @@ class IdleInhibitor:
     """
     Create rules for when the compositor should not go into an idle state.
 
-    IdleInhibitor take two arguments:
-
+    IdleInhibitor takes three arguments:
       -  match: a ``Match`` object to define which windows the rule should apply to. If unset, it will apply to all windows.
                 Note: qtile evaluates whether a rule matches a window once, when the window is first created.
+      -  function: a callable object which should return True if the inhibitor should be activated. The function should receive
+                   a single argument which is the qtile instance.
       -  when: one of the following strings:
 
         - "focus" (default): Inhibitor is active when the matching window is the currently focused window
@@ -1251,14 +1252,19 @@ class IdleInhibitor:
                      (still applies if window is completely covered by a floating window)
         - "open": Inhibitor is active when the matching window is open (even if hidden)
 
+    .. note::
+
+      ``match`` should be used to apply a rule to a matching window while ``function`` is not evaluated against a window.
+
     """
 
     def __init__(
         self,
-        match: _Match | None = None,
+        function: Callable | None = None,
         when: Literal["focus" | "fullscreen" | "visible" | "open"] = "open",
     ):
         self.match = match
+        self.function = function
         self.when = when
 
 

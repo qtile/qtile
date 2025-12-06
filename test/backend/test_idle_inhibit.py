@@ -23,12 +23,17 @@ class FakeCore:
         self._inhibited = value
 
 
+def has_five_windows(qtile):
+    return len(qtile.windows()) > 4
+
+
 class InhibitorConfig(Config):
     idle_inhibitors = [
         IdleInhibitor(when="fullscreen"),  # Any fullscreen window
         IdleInhibitor(match=Match(title="One"), when="focus"),
         IdleInhibitor(match=Match(title="Two"), when="visible"),
         IdleInhibitor(match=Match(title="Three"), when="open"),
+        IdleInhibitor(function=has_five_windows),
     ]
 
 
@@ -147,3 +152,16 @@ def test_inhibitor_global(manager):
 
     manager.c.core.remove_idle_inhibitor()
     assert not is_inhibited(manager)
+
+
+@inhibitor_config
+def test_inhibitor_function(manager):
+    assert not is_inhibited(manager)
+
+    for n in range(4):
+        manager.test_window(f"window_{n}")
+        assert not is_inhibited(manager)
+
+    manager.test_window("window_five")
+    wait_for_windows(manager, 5)
+    assert is_inhibited(manager)
