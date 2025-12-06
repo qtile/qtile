@@ -128,43 +128,43 @@ struct qw_view *qw_view_from_wlr_surface(struct wlr_surface *surface, bool *is_l
     *is_layer_surface = false;
     *is_session_lock_surface = false;
 
-    struct wlr_xdg_surface *xdg_surface;
+	struct wlr_xdg_surface *xdg_surface;
     xdg_surface = wlr_xdg_surface_try_from_wlr_surface(surface);
-    if (xdg_surface != NULL) {
+	if (xdg_surface != NULL) {
         struct qw_xdg_view *xdg_view = xdg_surface->data;
         if (xdg_view != NULL) {
             return &xdg_view->base;
         }
-        return NULL;
-    }
+		return NULL;
+	}
 
 #if WLR_HAS_XWAYLAND
-    struct wlr_xwayland_surface *xwayland_surface;
+	struct wlr_xwayland_surface *xwayland_surface;
     xwayland_surface = wlr_xwayland_surface_try_from_wlr_surface(surface);
-    if (xwayland_surface != NULL) {
+	if (xwayland_surface != NULL) {
         struct qw_xwayland_view *xwayland_view = xwayland_surface->data;
         if (xwayland_view != NULL) {
             return &xwayland_view->base;
         }
-        return NULL;
-    }
+		return NULL;
+	}
 #endif
 
-    struct wlr_subsurface *subsurface;
+	struct wlr_subsurface *subsurface;
     subsurface = wlr_subsurface_try_from_wlr_surface(surface);
-    if (subsurface != NULL) {
-        return qw_view_from_wlr_surface(subsurface->parent, is_layer_surface, is_session_lock_surface);
-    }
+	if (subsurface != NULL) {
+		return qw_view_from_wlr_surface(subsurface->parent, is_layer_surface, is_session_lock_surface);
+	}
 
-    if (wlr_layer_surface_v1_try_from_wlr_surface(surface) != NULL) {
-        *is_layer_surface = true;
+	if (wlr_layer_surface_v1_try_from_wlr_surface(surface) != NULL) {
+		*is_layer_surface = true;
         return NULL;
-    }
+	}
 
-    if (wlr_session_lock_surface_v1_try_from_wlr_surface(surface) != NULL) {
+	if (wlr_session_lock_surface_v1_try_from_wlr_surface(surface) != NULL) {
         *is_session_lock_surface = true;
         return NULL;
     }
 
-    return NULL;
+	return NULL;
 }
