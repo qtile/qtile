@@ -188,6 +188,9 @@ class Qtile(CommandObject):
         # user has used the "suspend" or "resume" hooks in their config.
         inhibitor.start()
 
+        if self.config.idle_inhibitors and hasattr(self.core, "inhibitor_manager"):
+            self.core.inhibitor_manager.set_hooks()
+
         if initial:
             hook.fire("startup_complete")
 

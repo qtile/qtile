@@ -1083,6 +1083,26 @@ hooks: list[Hook] = [
 
         """,
     ),
+    Hook(
+        "idle_inhibitor_change",
+        """
+        Called when the wayland backend's idle inhibitor state changes.
+
+        **Arguments**
+
+            ``inhibited`` (bool):  Whether an idle inhibitor is active or not.
+
+        .. code::
+
+          from libqtile import hook
+          from libqtile.log_utils import logger
+
+          @hook.subscribe.idle_inhibitor_change
+          def on_idle_inhibit(inhibited):
+              logger.info(f"Backend inhibitor is {'on' if inhibited else 'off'}")
+
+        """,
+    ),
 ]
 
 
