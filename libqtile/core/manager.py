@@ -168,6 +168,11 @@ class Qtile(CommandObject):
         if self.config.reconfigure_screens:
             hook.subscribe.screen_change(self.reconfigure_screens)
 
+        # Idle inhibitor listens for "startup" hook so we need to set this
+        # before the hook is fired
+        if self.config.idle_inhibitors:
+            self.core.idle_inhibitor_manager.set_hooks()
+
         # no_spawn is set after the very first startup; we only want to run the
         # startup hook once. Note that this needs to happen *after* the config
         # is loaded and we have subscribed reconfigure_screens() in case people
@@ -189,9 +194,6 @@ class Qtile(CommandObject):
         # NB: the inhibitor will only connect to the dbus service if the
         # user has used the "suspend" or "resume" hooks in their config.
         inhibitor.start()
-
-        if self.config.idle_inhibitors:
-            self.core.idle_inhibitor_manager.set_hooks()
 
         self.core.idle_notifier.clear_timers()
         if self.config.idle_timers:

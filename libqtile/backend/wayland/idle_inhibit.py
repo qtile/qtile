@@ -11,6 +11,7 @@ except ModuleNotFoundError:
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Any
 
     from libqtile.backend.base.window import Window
@@ -22,12 +23,13 @@ class WaylandInhibitor(Inhibitor):
         self,
         qtile: Qtile,
         window: Window | None = None,
+        function: Callable | None = None,
         handle: ffi.CData | None = None,
         inhibitor_type: InhibitorType = InhibitorType.UNSET,
         is_layer_surface: bool = False,
         is_session_lock: bool = False,
     ):
-        super().__init__(qtile, window, inhibitor_type)
+        super().__init__(qtile, window, function, inhibitor_type)
         self.handle = handle
         self.is_layer_surface = is_layer_surface
         self.is_session_lock = is_session_lock
@@ -58,12 +60,14 @@ class WaylandInhibitor(Inhibitor):
 
         return (
             self.window,
+            self.function,
             self.handle,
             self.inhibitor_type,
             self.is_layer_surface,
             self.is_session_lock,
         ) == (
             other.window,
+            other.function,
             other.handle,
             other.inhibitor_type,
             other.is_layer_surface,
@@ -74,10 +78,10 @@ class WaylandInhibitor(Inhibitor):
     def from_base_inhibitor(cls, inhibitor: Inhibitor) -> WaylandInhibitor:
         if isinstance(inhibitor, WaylandInhibitor):
             return inhibitor
-
         return cls(
             qtile=inhibitor.qtile,
             window=inhibitor.window,
+            function=inhibitor.function,
             inhibitor_type=inhibitor.inhibitor_type,
         )
 
