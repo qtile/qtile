@@ -53,7 +53,8 @@ from libqtile import hook
 from libqtile.backend import base
 from libqtile.backend.base.core import Output
 from libqtile.backend.wayland import inputs
-from libqtile.backend.wayland.idle_inhibit import InhibitorManager
+from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
+from libqtile.backend.wayland.idle_notify import IdleNotifier
 from libqtile.backend.wayland.window import Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import ScreenRect
@@ -220,6 +221,12 @@ def get_qtile_config_cb(userdata: ffi.CData) -> ffi.CData:
     return core.get_config()
 
 
+@ffi.def_extern()
+def idle_state_change_cb(userdata: ffi.CData, seconds: int, is_idle: bool) -> None:
+    core = ffi.from_handle(userdata)
+    core.handle_idle_state_change(seconds, is_idle)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -268,14 +275,15 @@ class Core(base.Core):
         self.qw.remove_idle_inhibitor_cb = lib.remove_idle_inhibitor_cb
         self.qw.check_inhibited_cb = lib.check_inhibited_cb
         self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
+        self.qw.idle_state_change_cb = lib.idle_state_change_cb
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 
         self.painter = Painter(self)
         self._locked = False
-        self.inhibitor_manager = InhibitorManager(self)
-        self._inhibited = False
+        self.idle_inhibitor_manager = IdleInhibitorManager(self)
+        self.idle_notifier = IdleNotifier(self)
 
     def update_backend_log_level(self) -> None:
         """Update the wlr log level based on Qtile's log level."""
@@ -436,16 +444,12 @@ class Core(base.Core):
         win._float_width = win.width  # todo: should we be using getter/setter for _float_width
         win._float_height = win.height
 
-        # Check if any user-defined inhibitor rules match the window
-        win.add_config_inhibitors()
-
         self.qtile.manage(win)
         if win.group and win.group.screen:
             self.check_screen_fullscreen_background(win.group.screen)
 
     def handle_unmanage_view(self, view: ffi.CData) -> None:
         assert self.qtile is not None
-        self.inhibitor_manager.remove_window_inhibitor_by_wid(view.wid)
         self.qtile.unmanage(view.wid)
         self.check_screen_fullscreen_background()
 
@@ -815,6 +819,12 @@ class Core(base.Core):
             enabled = any(w.fullscreen for w in s.group.windows)
             lib.qw_server_set_output_fullscreen_background(self.qw, s.x, s.y, enabled)
 
+    def handle_idle_state_change(self, seconds: int, is_idle: bool) -> None:
+        if is_idle:
+            self.idle_notifier.handle_timeout(seconds)
+        else:
+            self.idle_notifier.handle_resume()
+
     def handle_new_idle_inhibitor(
         self,
         inhibitor: ffi.CData,
@@ -822,40 +832,26 @@ class Core(base.Core):
         is_layer_surface: bool,
         is_session_lock_surface: bool,
     ) -> bool:
-        return self.inhibitor_manager.add_extension_inhibitor(
+        return self.idle_inhibitor_manager.add_extension_inhibitor(
             inhibitor, window, is_layer_surface, is_session_lock_surface
         )
 
     def handle_remove_idle_inhibitor(self, inhibitor: ffi.CData) -> bool:
-        return self.inhibitor_manager.remove_extension_inhibitor(inhibitor)
+        return self.idle_inhibitor_manager.remove_extension_inhibitor(inhibitor)
 
     def check_inhibited(self) -> None:
-        self.inhibitor_manager.check()
+        self.idle_inhibitor_manager.check()
 
-    def set_inhibited(self, inhibited: bool) -> None:
-        if inhibited != self._inhibited:
-            hook.fire("idle_inhibitor_change", inhibited)
-            self._inhibited = inhibited
-            lib.qw_server_set_inhibited(self.qw, inhibited)
+    @property
+    def inhibited(self) -> bool:
+        return super().inhibited
 
-    @expose_command()
-    def set_idle_inhibitor(self) -> None:
-        """Create a global idle inhibitor."""
-        self.inhibitor_manager.add_global_inhibitor()
-
-    @expose_command()
-    def remove_idle_inhibitor(self) -> None:
-        """Remove global idle inhibitor."""
-        self.inhibitor_manager.remove_global_inhibitor()
-
-    @expose_command()
-    def get_idle_inhibitors(self, active_only: bool = False) -> list[str]:
-        """Return list of inhibitors."""
-        return [
-            f"{inhibitor!r}"
-            for inhibitor in self.inhibitor_manager.inhibitors
-            if not active_only or (active_only and inhibitor.check())
-        ]
+    @inhibited.setter
+    def inhibited(self, value: bool) -> None:
+        if value != self.inhibited:
+            lib.qw_server_set_inhibited(self.qw, value)
+            self._inhibited = value
+            hook.fire("idle_inhibitor_change", value)
 
 
 class Painter:

@@ -15,7 +15,9 @@ from xcffib.xproto import EventMask
 from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.base.core import Output
+from libqtile.backend.base.idle_inhibit import IdleInhibitorManager, Inhibitor
 from libqtile.backend.x11 import window, xcbq
+from libqtile.backend.x11.idle_notify import IdleNotifier
 from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
@@ -167,6 +169,9 @@ class Core(base.Core):
         self._last_motion_time = 0
 
         self.last_focused: base.Window | None = None
+
+        self.idle_inhibitor_manager: IdleInhibitorManager[Inhibitor] = IdleInhibitorManager(self)
+        self.idle_notifier = IdleNotifier(self)
 
     @property
     def name(self):
@@ -320,6 +325,9 @@ class Core(base.Core):
                     break
 
                 if event.__class__ in _IGNORED_EVENTS:
+                    continue
+
+                if self.idle_notifier.check_event(event):
                     continue
 
                 # Motion Notifies are handled later

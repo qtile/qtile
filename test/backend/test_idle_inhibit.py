@@ -1,20 +1,26 @@
 import pytest
 
-from libqtile.backend.wayland.idle_inhibit import InhibitorManager
+from libqtile.backend.base.idle_inhibit import IdleInhibitorManager
 from libqtile.config import IdleInhibitor, Match
 from libqtile.confreader import Config
 from test.helpers import Retry
 
 
+class FakeQtile:
+    locked = False
+
+
 class FakeCore:
-    class FakeQtile:
-        locked = False
-
-    def no_op(*args, **kwargs):
-        pass
-
     qtile = FakeQtile()
-    set_inhibited = no_op
+
+    @property
+    def inhibited(self):
+        if not hasattr(self, "_inhibited"):
+            self._inhibited = False
+
+    @inhibited.setter
+    def inhibited(self, value):
+        self._inhibited = value
 
 
 class InhibitorConfig(Config):
@@ -39,7 +45,7 @@ def wait_for_windows(manager, count):
 
 
 def test_inhibitor_manager():
-    manager = InhibitorManager(FakeCore())
+    manager = IdleInhibitorManager(FakeCore())
 
     manager.add_window_inhibitor(1, "open")
     assert len(manager.inhibitors) == 1
@@ -79,6 +85,7 @@ def test_inhibitor_open(manager):
 
     manager.c.window.kill()
     wait_for_windows(manager, 1)
+    print(manager.c.core.get_idle_inhibitors())
     assert not is_inhibited(manager)
 
 

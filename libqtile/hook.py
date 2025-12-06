@@ -1086,7 +1086,7 @@ hooks: list[Hook] = [
     Hook(
         "idle_inhibitor_change",
         """
-        Called when the wayland backend's idle inhibitor state changes.
+        Called when the backend's idle inhibitor state changes.
 
         **Arguments**
 
