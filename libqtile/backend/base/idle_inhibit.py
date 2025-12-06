@@ -22,6 +22,7 @@ class InhibitorType(IntEnum):
     VISIBLE = auto()
     FOCUS = auto()
     FULLSCREEN = auto()
+    FUNCTION = auto()
     UNSET = auto()
 
 
@@ -30,6 +31,7 @@ inhibitor_map = {
     "visible": InhibitorType.VISIBLE,
     "focus": InhibitorType.FOCUS,
     "fullscreen": InhibitorType.FULLSCREEN,
+    "function": InhibitorType.FUNCTION,
 }
 
 
@@ -38,16 +40,19 @@ class Inhibitor:
         self,
         qtile: Qtile,
         window: Window | None = None,
+        function: Callable | None = None,
         inhibitor_type: InhibitorType = InhibitorType.UNSET,
     ):
         if (
-            inhibitor_type not in (InhibitorType.GLOBAL, InhibitorType.APPLICATION)
+            inhibitor_type
+            not in (InhibitorType.GLOBAL, InhibitorType.APPLICATION, InhibitorType.FUNCTION)
             and window is None
         ):
             raise ValueError("Inhibitor created with invalid arguments.")
 
         self.qtile = qtile
         self.window = window
+        self.function = function
         self.inhibitor_type = inhibitor_type
 
     def check(self) -> bool:
@@ -69,6 +74,12 @@ class Inhibitor:
                 active = bool(self.window and self.window.fullscreen)
             case InhibitorType.VISIBLE:
                 active = bool(self.window and self.window.visible)
+            case InhibitorType.FUNCTION:
+                if callable(self.function):
+                    try:
+                        active = self.function(self.qtile)
+                    except Exception:
+                        logger.exception("Error in idle inhibitor function.")
 
         return active
 
@@ -76,7 +87,11 @@ class Inhibitor:
         if not isinstance(other, Inhibitor):
             raise NotImplementedError
 
-        return (self.window, self.inhibitor_type) == (other.window, other.inhibitor_type)
+        return (self.window, self.function, self.inhibitor_type) == (
+            other.window,
+            other.function,
+            other.inhibitor_type,
+        )
 
     def __repr__(self) -> str:
         name = self.window.name if self.window else "no window"
@@ -146,9 +161,21 @@ class IdleInhibitorManager(Generic[TInhibitor]):
     def remove_global_inhibitor(self) -> None:
         self.remove_inhibitor(lambda o: o.inhibitor_type == InhibitorType.GLOBAL)
 
+    def add_function_inhibitor(self, function: Callable) -> None:
+        inhibitor = Inhibitor(
+            qtile=self.core.qtile, function=function, inhibitor_type=InhibitorType.FUNCTION
+        )
+        converted = self._convert_inhibitor(inhibitor)
+        self.add_inhibitor_safe(converted)
+
     def check(self) -> None:
         inhibited = any(o.check() for o in self.inhibitors)
         self.core.inhibited = inhibited
+
+    def load_function_inhibitors(self) -> None:
+        for inhibitor in self.core.qtile.config.idle_inhibitors:
+            if inhibitor.function is not None:
+                self.add_function_inhibitor(inhibitor.function)
 
     def update_user_inhibitors(self) -> None:
         self.remove_inhibitor(
