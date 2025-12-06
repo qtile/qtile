@@ -144,6 +144,9 @@ typedef bool (*check_inhibited_cb_t)(void *userdata);
 
 typedef struct qw_qtile_config *(*get_qtile_config_cb_t)(void *userdata);
 
+// Callback for idle state change
+typedef void (*idle_state_change_cb_t)(void *userdata, int seconds, bool is_idle);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -204,6 +207,7 @@ struct qw_server {
     remove_idle_inhibitor_cb_t remove_idle_inhibitor_cb;
     check_inhibited_cb_t check_inhibited_cb;
     get_qtile_config_cb_t get_qtile_config_cb;
+    idle_state_change_cb_t idle_state_change_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -263,6 +267,7 @@ struct qw_server {
     struct wl_list idle_inhibitors;
     struct wlr_output_power_manager_v1 *output_power_manager;
     struct wl_listener set_output_power_mode;
+    struct wl_list idle_timers; // list of qw_idle_timer
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
@@ -289,6 +294,15 @@ struct qw_idle_inhibitor {
     struct wlr_idle_inhibitor_v1 *wlr_inhibitor;
     struct wl_listener destroy;
     struct wl_list link; // server->idle_inhibitors
+};
+
+struct qw_idle_timer {
+    struct qw_server *server;
+    int seconds;
+    bool is_idle;
+    // Private data
+    struct wl_event_source *event_source;
+    struct wl_list link; // server->idle_timers
 };
 
 // Utility functions exposed by the server API
@@ -349,5 +363,8 @@ void qw_server_idle_notify_activity(struct qw_server *server);
 void qw_server_set_inhibited(struct qw_server *server, bool inhibited);
 bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
                                          struct wlr_surface *surface);
+
+void qw_server_add_idle_timer(struct qw_server *server, int seconds);
+void qw_server_remove_idle_timer(struct qw_server *server, int seconds);
 
 #endif /* SERVER_H */

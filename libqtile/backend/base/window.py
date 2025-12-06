@@ -570,6 +570,26 @@ class Window(_Window, metaclass=ABCMeta):
         else:
             logger.debug("Invalid value for focus_on_window_activation: %s", focus_behavior)
 
+    def add_config_inhibitors(self) -> None:
+        for rule in self.qtile.config.idle_inhibitors:
+            if rule.match is None or rule.match.compare(self):
+                self.add_idle_inhibitor(rule.when)
+
+    @expose_command()
+    def add_idle_inhibitor(self, inhibitor_type: str = "open") -> None:
+        """
+        Create an inhibitor rule for this window.
+
+        ``inhibitor_type`` should be one of ``"open"``, ``"focus"``, ``"fullscreen"``
+        or ``"visible"``. Default value is ``"open"``.
+        """
+        self.qtile.core.idle_inhibitor_manager.add_window_inhibitor(self, inhibitor_type)
+
+    @expose_command()
+    def remove_idle_inhibitor(self) -> None:
+        """Remove inhibitor rule for this window."""
+        self.qtile.core.idle_inibitor_manager.remove_window_inhibitor(self)
+
 
 class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""
