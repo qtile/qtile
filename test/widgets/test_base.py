@@ -195,8 +195,7 @@ def test_text_scroll_no_width(manager):
     """
     logs = manager.get_log_buffer()
     assert "WARNING - no_width: You must specify a width when enabling scrolling." in logs
-    _, output = manager.c.widget["no_width"].eval("self.scroll")
-    assert output == "False"
+    assert manager.c.widget["no_width"].eval("self.scroll")[1] == "False"
 
 
 @scrolling_text_config
@@ -211,11 +210,9 @@ def test_text_scroll_short_text(manager):
     assert widget.info()["width"] < 100
 
     # Scrolling is still enabled (but won't do anything)
-    _, output = widget.eval("self.scroll")
-    assert output == "True"
+    assert widget.eval("self.scroll")[1] == "True"
 
-    _, output = widget.eval("self._should_scroll")
-    assert output == "False"
+    assert widget.eval("self._should_scroll")[1] == "False"
 
 
 @scrolling_text_config
@@ -235,11 +232,9 @@ def test_text_scroll_long_text(manager):
     assert widget.info()["width"] == 100
 
     # Scrolling is still enabled
-    _, output = widget.eval("self.scroll")
-    assert output == "True"
+    assert widget.eval("self.scroll")[1] == "True"
 
-    _, output = widget.eval("self._should_scroll")
-    assert output == "True"
+    assert widget.eval("self._should_scroll")[1] == "True"
 
     # Check actually scrolling
     wait_for_scroll(widget)

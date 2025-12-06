@@ -68,8 +68,7 @@ DEFAULT_TIMEOUT_URGENT = 45
 @pytest.mark.usefixtures("dbus")
 def test_notifications(manager_nospawn, minimal_conf_noscreen):
     def background(obj):
-        _, bground = obj.eval("self.background")
-        return bground
+        return obj.eval("self.background")[1]
 
     notify.Notify.timeout_add = log_timeout
     widget = notify.Notify(
@@ -92,8 +91,7 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     assert obj.info()["text"] == MESSAGE_1
     assert background(obj) == BACKGROUND_NORMAL
 
-    _, timeout = obj.eval("self.delay")
-    assert timeout == "5.0"
+    assert obj.eval("self.delay")[1] == "5.0"
 
     # Send second notification and check time and display time
     notif_2 = [NS]
@@ -102,8 +100,7 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     assert obj.info()["text"] == MESSAGE_2.format(colour=URGENT)
     assert background(obj) == BACKGROUND_URGENT
 
-    _, timeout = obj.eval("self.delay")
-    assert timeout == "10.0"
+    assert obj.eval("self.delay")[1] == "10.0"
 
     # Send third notification
     notif_3 = [NS]
@@ -283,7 +280,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     assert result == "[1, 2]"
 
     # Send a new notification with defined actions
-    _, res = manager_nospawn.c.eval(notification_with_actions)
+    manager_nospawn.c.eval(notification_with_actions)
 
     # Right-clicking on notification invokes it
     manager_nospawn.c.bar["top"].fake_button_press(0, 0, button=3)
@@ -333,7 +330,7 @@ def test_unregister(manager_nospawn, minimal_conf_noscreen):
 
     assert notifier_has_callbacks()
 
-    _ = manager_nospawn.c.widget["notify"].eval("self.finalize()")
+    manager_nospawn.c.widget["notify"].eval("self.finalize()")
 
     assert not notifier_has_callbacks()
 
