@@ -52,6 +52,7 @@ struct qw_output {
     struct qw_output_background background;
     struct wlr_session_lock_surface_v1 *lock_surface;
     struct wlr_scene_rect *blanking_rect;
+    bool disabled_by_opm;
 };
 
 void qw_output_arrange_layers(struct qw_output *output);

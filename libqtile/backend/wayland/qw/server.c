@@ -71,6 +71,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->virtual_pointer_new.link);
     wl_list_remove(&server->new_pointer_constraint.link);
     wl_list_remove(&server->new_idle_inhibitor.link);
+    wl_list_remove(&server->set_output_power_mode.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wl_list_remove(&server->xwayland_ready.link);
@@ -89,7 +90,7 @@ void qw_server_finalize(struct qw_server *server) {
 void qw_server_loop_output_dims(struct qw_server *server, output_dims_cb_t cb) {
     struct qw_output *o;
     wl_list_for_each(o, &server->outputs, link) {
-        if (!o->wlr_output || !o->wlr_output->enabled) {
+        if (!o->wlr_output || !o->wlr_output->enabled || o->disabled_by_opm) {
             continue;
         }
         int width, height;
@@ -165,14 +166,14 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         o->full_area = o->area = (struct wlr_box){0};
     }
     wl_list_for_each(o, &server->outputs, link) {
-        if (!o->wlr_output->enabled)
+        if (!o->wlr_output->enabled || o->disabled_by_opm)
             continue;
         if (!wlr_output_layout_get(server->output_layout, o->wlr_output))
             wlr_output_layout_add_auto(server->output_layout, o->wlr_output);
     }
 
     wl_list_for_each(o, &server->outputs, link) {
-        if (!o->wlr_output->enabled)
+        if (!o->wlr_output->enabled || o->disabled_by_opm)
             continue;
         config_head = wlr_output_configuration_head_v1_create(config, o->wlr_output);
 
@@ -334,7 +335,7 @@ static void qw_server_handle_renderer_lost(struct wl_listener *listener, void *d
     struct wlr_output_configuration_v1 *current_config = wlr_output_configuration_v1_create();
     if (current_config) {
         wl_list_for_each(output, &server->outputs, link) {
-            if (!output->wlr_output->enabled)
+            if (!output->wlr_output->enabled || output->disabled_by_opm)
                 continue;
 
             struct wlr_output_configuration_head_v1 *config_head =
@@ -683,6 +684,49 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
     }
 }
 
+static void qw_server_handle_output_power_set_mode(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, set_output_power_mode);
+    struct wlr_output_power_v1_set_mode_event *event = data;
+
+    struct wlr_output *wlr_output = event->output;
+    struct qw_output *output = wlr_output->data;
+    struct wlr_output_state state = {0};
+
+    if (output == NULL) {
+        wlr_log(WLR_ERROR, "Couldn't find qw_output for power management event.");
+        return;
+    }
+
+    if (event->mode == ZWLR_OUTPUT_POWER_V1_MODE_ON) {
+        // Only re-enable if compositor itself disabled output via power management
+        if (output->disabled_by_opm) {
+
+            wlr_output_state_set_enabled(&state, event->mode);
+
+            if (!wlr_output_commit_state(wlr_output, &state)) {
+                wlr_log(WLR_ERROR, "Failed to enable output %s.", wlr_output->name);
+                return;
+            }
+            output->disabled_by_opm = false;
+        }
+
+    } else {
+        if (wlr_output->enabled) {
+            wlr_output_state_set_enabled(&state, event->mode);
+
+            if (!wlr_output_commit_state(wlr_output, &state)) {
+                wlr_log(WLR_ERROR, "Failed to disable output %s", wlr_output->name);
+                return;
+            }
+
+            // Add flag to show that compositor disabled monitor via output power management
+            if (!output->disabled_by_opm) {
+                output->disabled_by_opm = true;
+            }
+        }
+    }
+}
+
 // Create and initialize the server object with all components and listeners.
 struct qw_server *qw_server_create() {
     struct qw_server *server = calloc(1, sizeof(*server));
@@ -839,7 +883,10 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->pointer_constraints->events.new_constraint,
                   &server->new_pointer_constraint);
 
-    // TODO: power manager
+    server->output_power_manager = wlr_output_power_manager_v1_create(server->display);
+    server->set_output_power_mode.notify = qw_server_handle_output_power_set_mode;
+    wl_signal_add(&server->output_power_manager->events.set_mode, &server->set_output_power_mode);
+
     // TODO: setup listeners
 
     return server;
