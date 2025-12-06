@@ -493,3 +493,8 @@ def test_decorators_manager_call(manager):
     widget = manager.c.widget["two"]
     assert widget.exposed() == "OK"
     assert widget.mapped() == "OK"
+
+
+def test_eval_exception(manager):
+    with pytest.raises(CommandError):
+        manager.c.eval("raise Exception")
