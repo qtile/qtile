@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any, Literal
 
-    from libqtile.config import Group, IdleInhibitor, Key, Mouse, Rule, Screen
+    from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Rule, Screen
     from libqtile.layout.base import Layout
 
 
@@ -53,6 +53,7 @@ class Config:
     wl_input_rules: dict[str, Any] | None
     wl_xcursor_theme: str | None
     wl_xcursor_size: int
+    idle_timers: list[IdleTimer]
     idle_inhibitors: list[IdleInhibitor]
 
     def __init__(self, file_path=None, **settings):

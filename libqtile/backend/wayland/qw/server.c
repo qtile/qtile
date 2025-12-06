@@ -862,6 +862,9 @@ struct qw_server *qw_server_create() {
 
     server->idle_notifier = wlr_idle_notifier_v1_create(server->display);
 
+    // Initialize idle timers list
+    wl_list_init(&server->idle_timers);
+
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     wlr_xwayland_set_seat(server->xwayland, server->seat);
@@ -1045,6 +1048,80 @@ struct wlr_output *qw_server_get_current_output(struct qw_server *server) {
 void qw_server_idle_notify_activity(struct qw_server *server) {
     if (server->idle_inhibit_manager != NULL) {
         wlr_idle_notifier_v1_notify_activity(server->idle_notifier, server->seat);
+    }
+    // Fire resume for each timer that is currently idle
+    struct qw_idle_timer *timer;
+    wl_list_for_each(timer, &server->idle_timers, link) {
+        if (timer->is_idle && server->idle_state_change_cb) {
+            server->idle_state_change_cb(server->cb_data, timer->seconds, false);
+            timer->is_idle = false;
+        }
+        wl_event_source_timer_update(timer->event_source, timer->seconds * 1000);
+    }
+}
+
+static int qw_server_idle_timer_cb(void *data) {
+    struct qw_idle_timer *timer = (struct qw_idle_timer *)data;
+    if (!timer || !timer->event_source || !timer->server) {
+        return 0;
+    }
+
+    struct qw_server *server = timer->server;
+
+    // We don't check for any idle inhibitor. The hook fired by qtile contains
+    // an argument to show whether this is the case or not and it's up to the
+    // user to decide whether to honour it.
+    if (server->idle_state_change_cb != NULL) {
+        server->idle_state_change_cb(server->cb_data, timer->seconds, true);
+    }
+
+    timer->is_idle = true;
+
+    return 0;
+}
+
+void qw_server_add_idle_timer(struct qw_server *server, int seconds) {
+    if (!server || seconds <= 0) {
+        return;
+    }
+
+    // Don't add duplicates
+    struct qw_idle_timer *it;
+    wl_list_for_each(it, &server->idle_timers, link) {
+        if (it->seconds == seconds) {
+            return;
+        }
+    }
+
+    struct qw_idle_timer *timer = calloc(1, sizeof(*timer));
+    timer->server = server;
+    timer->seconds = seconds;
+    timer->is_idle = false;
+    timer->event_source =
+        wl_event_loop_add_timer(server->event_loop, qw_server_idle_timer_cb, timer);
+    wl_list_insert(&server->idle_timers, &timer->link);
+
+    wl_event_source_timer_update(timer->event_source, seconds * 1000);
+}
+
+void qw_server_remove_idle_timer(struct qw_server *server, int seconds) {
+    if (server == NULL || seconds <= 0) {
+        return;
+    }
+
+    struct qw_idle_timer *timer, *tmp;
+    wl_list_for_each_safe(timer, tmp, &server->idle_timers, link) {
+        if (timer->seconds == seconds) {
+            // Disarm timer and remove source
+            wl_event_source_timer_update(timer->event_source, -1);
+            wl_event_source_remove(timer->event_source);
+
+            wl_list_remove(&timer->link);
+            free(timer);
+
+            // We can return here as there should be no duplicate timers
+            return;
+        }
     }
 }
 

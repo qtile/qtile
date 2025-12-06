@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from typing import Any, Literal
 
     from libqtile.backend import base
+    from libqtile.backend.base.idle_notify import IdleAction
     from libqtile.bar import BarType
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
@@ -1162,15 +1163,62 @@ class Rule:
         return f"<Rule match={self.matchlist!r} actions=({actions})>"
 
 
+class IdleTimer:
+    """
+    Creates a timer that will trigger an action when the system has been idle
+    for a specified amount of time. An action can also be triggered when user input
+    has been detected (NB this will only fire if the idle time is greater or equal to
+    the specified timeout).
+
+    IdleNotifier takes the following arguments:
+      - ``timeout``: (int) timeout in seconds
+      - ``action``: (callable or ``LazyCall``) the action to run when the timeout period is met (optional).
+      - ``resume``: (callable or ``LazyCall``) the action run when user input is detected (optional).
+      - ``respect_inhibitor``: (boolean) whether the action should be fired if there is an active idle inhibitor
+                               (default ``True``).
+
+    ``action`` and ``resume`` can also take coroutines so that the actions are run asynchronously.
+
+    At least one of ``action`` and ``resume`` must be set.
+    """
+
+    def __init__(
+        self,
+        timeout: int,
+        action: IdleAction = None,
+        resume: IdleAction = None,
+        respect_inhibitor: bool = True,
+    ) -> None:
+        if not (action or resume):
+            raise ValueError("You must set one of 'action' or 'resume'.")
+
+        if not isinstance(timeout, int) or timeout < 0:
+            raise ValueError(f"Invalid idle timeout specified: {timeout}.")
+
+        self.timeout = timeout
+        self.action = action
+        self.resume = resume
+        self.respect_inhibitor = respect_inhibitor
+        self.fired = False
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, IdleTimer):
+            return False
+        return self.timeout == other.timeout
+
+    def __lt__(self, other: Any) -> bool:
+        if not isinstance(other, IdleTimer):
+            return False
+        return self.timeout < other.timeout
+
+
 class IdleInhibitor:
     """
-    Note: Wayland Only
-
     Create rules for when the compositor should not go into an idle state.
 
     IdleInhibitor take two arguments:
       -  match: a ``Match`` object to define which windows the rule should apply to. If unset, it will apply to all windows.
-                Note: qtile evaluates whether a rule mtahces a window once, when the window is first created.
+                Note: qtile evaluates whether a rule matches a window once, when the window is first created.
       -  when: one of the following strings:
         - "focus" (default): Inhibitor is active when the matching window is the currently focused window
         - "fullscreen": Inhibitor is active when the matching window is fullscreen

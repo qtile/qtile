@@ -190,8 +190,12 @@ class Qtile(CommandObject):
         # user has used the "suspend" or "resume" hooks in their config.
         inhibitor.start()
 
-        if self.config.idle_inhibitors and hasattr(self.core, "inhibitor_manager"):
-            self.core.inhibitor_manager.set_hooks()
+        if self.config.idle_inhibitors:
+            self.core.idle_inhibitor_manager.set_hooks()
+
+        self.core.idle_notifier.clear_timers()
+        if self.config.idle_timers:
+            self.core.idle_notifier.start()
 
         if initial:
             hook.fire("startup_complete")
@@ -810,6 +814,9 @@ class Qtile(CommandObject):
             if not win.group and self.current_screen.group:
                 self.current_screen.group.add(win)
 
+        # Check if any user-defined inhibitor rules match the window
+        win.add_config_inhibitors()
+
         hook.fire("client_managed", win)
 
     def unmanage(self, wid: int) -> None:
@@ -825,6 +832,8 @@ class Qtile(CommandObject):
                 if c.group:
                     c.group.remove(c)
             del self.windows_map[wid]
+            if isinstance(c, base.Window):
+                self.core.idle_inhibitor_manager.remove_window_inhibitor(c)
 
     def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""

@@ -45,6 +45,7 @@ questions, you can find support in the following places:
     manual/ref/extensions
     manual/commands/keybindings
     manual/stacking
+    manual/idle
 
 .. toctree::
     :maxdepth: 1
