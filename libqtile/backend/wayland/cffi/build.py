@@ -30,6 +30,10 @@ PROTOS = [
         "wlr-layer-shell-unstable-v1-protocol.h",
         f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml",
     ],
+    [
+        "wlr-output-power-management-unstable-v1-protocol.h",
+        f"{QW_PROTO_IN_PATH}/wlr-output-power-management-unstable-v1.xml",
+    ],
     ["xdg-shell-protocol.h", f"{WAYLAND_PROTOCOLS}/stable/xdg-shell/xdg-shell.xml"],
     [
         "pointer-constraints-unstable-v1-protocol.h",

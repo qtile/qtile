@@ -68,7 +68,7 @@ void qw_output_arrange_layer(struct qw_output *output, struct wl_list *list,
 void qw_output_arrange_layers(struct qw_output *output) {
     int i;
     struct wlr_box usable_area = output->full_area;
-    if (!output->wlr_output->enabled) {
+    if (!output->wlr_output->enabled || output->disabled_by_opm) {
         return;
     }
 
