@@ -1083,6 +1083,26 @@ hooks: list[Hook] = [
 
         """,
     ),
+    Hook(
+        "config_reloaded",
+        """
+        Called once the config has been reloaded
+
+        **Arguments**
+
+            None
+
+        .. code::
+
+          from libqtile import hook
+          from libqtile.log_utils import logger
+
+          @hook.subscribe.config_reloaded
+          def on_config_reload():
+              logger.info(f"Config was successfully reloaded.")
+
+        """,
+    ),
 ]
 
 
