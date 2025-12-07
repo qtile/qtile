@@ -780,6 +780,10 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->pointer_constraints->events.new_constraint,
                   &server->new_pointer_constraint);
 
+    server->image_copy_capture_manager =
+        wlr_ext_image_copy_capture_manager_v1_create(server->display, 1);
+    wlr_ext_output_image_capture_source_manager_v1_create(server->display, 1);
+
     // TODO: power manager
     // TODO: setup listeners
 
