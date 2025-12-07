@@ -7,6 +7,7 @@ from libqtile.log_utils import get_default_log, init_log
 from libqtile.scripts import (
     check,
     cmd_obj,
+    identify_output,
     launch,
     migrate,
     repl,
@@ -58,6 +59,7 @@ def main():
     migrate.add_subcommand(subparsers, [parent_parser])
     launch.add_subcommand(subparsers, [parent_parser])
     repl.add_subcommand(subparsers, [parent_parser])
+    identify_output.add_subcommand(subparsers, [parent_parser])
 
     # `qtile help` should print help
     def print_help(options):
