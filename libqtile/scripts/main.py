@@ -14,6 +14,7 @@ from libqtile.scripts import (
     shell,
     start,
     top,
+    x11_identify_output,
 )
 from libqtile.utils import VERSION
 
@@ -58,6 +59,7 @@ def main():
     migrate.add_subcommand(subparsers, [parent_parser])
     launch.add_subcommand(subparsers, [parent_parser])
     repl.add_subcommand(subparsers, [parent_parser])
+    x11_identify_output.add_subcommand(subparsers, [parent_parser])
 
     # `qtile help` should print help
     def print_help(options):
