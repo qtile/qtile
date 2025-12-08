@@ -138,6 +138,10 @@ static void qw_cursor_handle_motion(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, motion);
     struct wlr_pointer_motion_event *event = data;
 
+    qw_server_idle_notify(cursor->server);
+
+    wlr_cursor_move(cursor->cursor, &event->pointer->base, event->delta_x, event->delta_y);
+
     if (cursor->implicit_grab.live) {
         qw_cursor_implicit_grab_motion(cursor, event->time_msec, &event->pointer->base,
                                        event->delta_x, event->delta_y);
@@ -151,6 +155,8 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
     // Handle absolute pointer motion event
     struct qw_cursor *cursor = wl_container_of(listener, cursor, motion_absolute);
     struct wlr_pointer_motion_absolute_event *event = data;
+
+    qw_server_idle_notify(cursor->server);
 
     double lx, ly;
     wlr_cursor_absolute_to_layout_coords(cursor->cursor, &event->pointer->base, event->x, event->y,
@@ -237,6 +243,8 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, button);
     struct wlr_pointer_button_event *event = data;
 
+    qw_server_idle_notify(cursor->server);
+
     // When the pointer is constrained, skip further processing
     if (cursor->active_constraint && event->pointer->base.type == WLR_INPUT_DEVICE_POINTER) {
         wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
@@ -286,6 +294,8 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     // Handle scroll (axis) event
     struct qw_cursor *cursor = wl_container_of(listener, cursor, axis);
     struct wlr_pointer_axis_event *event = data;
+
+    qw_server_idle_notify(cursor->server);
 
     static double displacement = 0;
     static const uint32_t DISPLACEMENT_PER_STEP = 15; // could be configurable
