@@ -427,4 +427,4 @@ class IPCCommandServer:
         except CommandError as err:
             return ERROR, err.args[0]
         except Exception:
-            return EXCEPTION, traceback.format_exc()
+            return EXCEPTION, traceback.format_exc().strip().split("\n")[-1]
