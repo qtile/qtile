@@ -321,5 +321,5 @@ def test_skip_taskbar(manager):
 
     if manager.c.core.info()["backend"] == "x11":
         # check that window's _NET_WM_STATE contains _NET_WM_STATE_SKIP_TASKBAR
-        net_wm_state = manager.c.window.eval("self.window.get_net_wm_state()")[1]
+        net_wm_state = manager.c.window.eval("self.window.get_net_wm_state()")
         assert "_NET_WM_STATE_SKIP_TASKBAR" in net_wm_state

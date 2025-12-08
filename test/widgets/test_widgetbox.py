@@ -148,8 +148,7 @@ def test_widgetbox_with_systray_reconfigure_screens_box_closed(
     assert len(topbar.info()["widgets"]) == 1
 
     # Check that we've still got a Systray widget in the box.
-    _, name = manager_nospawn.c.widget["widgetbox"].eval("self.widgets[0].name")
-    assert name == "systray"
+    assert manager_nospawn.c.widget["widgetbox"].eval("self.widgets[0].name") == "systray"
 
 
 def test_deprecated_configuration(caplog):

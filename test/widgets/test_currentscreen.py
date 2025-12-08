@@ -22,10 +22,10 @@ def test_change_screen(manager_nospawn, minimal_conf_noscreen):
 
     widget = manager_nospawn.c.widget["currentscreen"]
 
-    assert widget.eval("self.text")[1] == "A"
-    assert widget.eval("self.layout.colour")[1] == ACTIVE
+    assert widget.eval("self.text") == "A"
+    assert widget.eval("self.layout.colour") == ACTIVE
 
     manager_nospawn.c.to_screen(1)
 
-    assert widget.eval("self.text")[1] == "I"
-    assert widget.eval("self.layout.colour")[1] == INACTIVE
+    assert widget.eval("self.text") == "I"
+    assert widget.eval("self.layout.colour") == INACTIVE

@@ -128,7 +128,7 @@ def test_eval(manager):
     command = IPCCommandInterface(client)
     sh = QSh(command)
     sh.process_line("eval(self._test_val=(1,2))")
-    _, result = sh.process_line("eval(self._test_val)")
+    result = sh.process_line("eval(self._test_val)")
     assert result == "(1, 2)"
 
 

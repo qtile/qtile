@@ -127,12 +127,12 @@ def test_tasklist_skip_taskbar_defaults(tasklist_manager):
         # check that window's _NET_WM_STATE contains _NET_WM_STATE_SKIP_TASKBAR
         net_wm_state = tasklist_manager.c.window.eval(
             'self.window.get_property("_NET_WM_STATE", "ATOM", unpack=int)'
-        )[1]
+        )
         skip_taskbar = tasklist_manager.c.window.eval(
             'self.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]'
-        )[1]
+        )
         assert skip_taskbar in net_wm_state
-        assert tasklist_manager.c.window.eval("self.window.get_wm_type()")[1] == "normal"
+        assert tasklist_manager.c.window.eval("self.window.get_wm_type()") == "normal"
         assert widget.info()["text"] == "one"
 
 

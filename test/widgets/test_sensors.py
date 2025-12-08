@@ -68,17 +68,14 @@ def test_thermal_sensor_format(sensors_manager):
 
 
 def test_thermal_sensor_colour_normal(sensors_manager):
-    _, temp = sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour")
-    assert temp == "ffffff"
+    assert sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour") == "ffffff"
 
 
 @pytest.mark.parametrize("sensors_manager", [{"threshold": 30}], indirect=True)
 def test_thermal_sensor_colour_alert(sensors_manager):
-    _, temp = sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour")
-    assert temp == "ff0000"
+    assert sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour") == "ff0000"
 
 
 @pytest.mark.parametrize("sensors_manager", [{"set_defaults": True}], indirect=True)
 def test_thermal_sensor_widget_defaults(sensors_manager):
-    _, temp = sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour")
-    assert temp == "123456"
+    assert sensors_manager.c.widget["thermalsensor"].eval("self.layout.colour") == "123456"

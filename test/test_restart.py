@@ -100,7 +100,7 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
     assert manager.restart_calls.value == 1
 
     # Get the path to the state file
-    _, state_file = manager.c.eval("self.lifecycle.state_file")
+    state_file = manager.c.eval("self.lifecycle.state_file")
     assert state_file
 
     # We need a copy of this as the next file will probably overwrite it
@@ -142,7 +142,7 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
         # As before, inject code, restart and get state file
         restarted_manager.c.eval(inject)
         restarted_manager.c.restart()
-        _, restarted_state = restarted_manager.c.eval("self.lifecycle.state_file")
+        restarted_state = restarted_manager.c.eval("self.lifecycle.state_file")
         assert restarted_state
         restarted_manager.c.eval("self._do_stop()")
 

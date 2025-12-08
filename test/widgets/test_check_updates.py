@@ -145,8 +145,7 @@ def test_update_available_with_execute(manager_nospawn, minimal_conf_noscreen, m
 
     # The second time we poll the widget, the update process is complete
     # and there are no more updates
-    _, result = manager_nospawn.c.widget["checkupdates"].eval("self.poll()")
-    assert result == nus
+    assert manager_nospawn.c.widget["checkupdates"].eval("self.poll()") == nus
 
 
 def test_update_process_error(fake_qtile, fake_window):

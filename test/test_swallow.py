@@ -44,13 +44,11 @@ class SwallowConfig(Config):
 # It also looks up the keysym and mask to pass to it
 def send_process_key_event(manager, key):
     keysym, mask = Core.lookup_key(None, key)
-    _, output = manager.c.eval(f"self.process_key_event({keysym}, {mask})[1]")
-    return output == "True"
+    return manager.c.eval(f"self.process_key_event({keysym}, {mask})[1]") == "True"
 
 
 def get_test_counter(manager):
-    _, output = manager.c.eval("self.test_data")
-    return int(output)
+    return int(manager.c.eval("self.test_data"))
 
 
 @pytest.mark.parametrize("manager", [SwallowConfig], indirect=True)
