@@ -32,7 +32,7 @@ def test_textbox_color_change(manager):
     widget = manager.c.widget["colorchanger"]
 
     widget.update("f")
-    assert widget.eval("self.foreground")[1] == "0000ff"
+    assert widget.eval("self.foreground") == "0000ff"
 
     widget.update("f")
-    assert widget.eval("self.foreground")[1] == "ff0000"
+    assert widget.eval("self.foreground") == "ff0000"

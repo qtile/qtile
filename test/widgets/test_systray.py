@@ -83,8 +83,7 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
 
     @Retry(ignore_exceptions=(AssertionError))
     def wait_for_icons():
-        _, icons = manager_nospawn.c.widget["systray"].eval("len(self.tray_icons)")
-        assert int(icons) == 2
+        assert int(manager_nospawn.c.widget["systray"].eval("len(self.tray_icons)")) == 2
 
     if backend_name == "wayland":
         pytest.skip("Skipping test on Wayland.")
@@ -108,13 +107,13 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
     assert manager_nospawn.c.widget["systray"].info()["widget"]["length"] > 0
 
     # Check positioning of icon
-    _, x = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].x")
-    _, y = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].y")
+    x = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].x")
+    y = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].y")
 
     # Positions are relative to bar
     assert (int(x), int(y)) == (3, 10)
 
     # Icons should be in alphabetical order
-    _, order = manager_nospawn.c.widget["systray"].eval("[i.name for i in self.tray_icons]")
+    order = manager_nospawn.c.widget["systray"].eval("[i.name for i in self.tray_icons]")
 
     assert order == "['qtile', 'systray']"

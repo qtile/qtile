@@ -663,12 +663,12 @@ def test_bar_border_horizontal(manager_nospawn):
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
-    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsetx")[1] == "5"
-    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsety")[1] == "5"
+    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsetx") == "5"
+    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsety") == "5"
 
     # Where there is no border, this should be 0
-    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsetx")[1] == "0"
-    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsety")[1] == "0"
+    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsetx") == "0"
+    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsety") == "0"
 
 
 def test_bar_border_vertical(manager_nospawn):
@@ -717,12 +717,12 @@ def test_bar_border_vertical(manager_nospawn):
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
-    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsetx")[1] == "5"
-    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsety")[1] == "5"
+    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsetx") == "5"
+    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsety") == "5"
 
     # Where there is no border, this should be 0
-    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsetx")[1] == "0"
-    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsety")[1] == "0"
+    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsetx") == "0"
+    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsety") == "0"
 
 
 def test_unsupported_widget(manager_nospawn):
@@ -785,10 +785,8 @@ def test_dont_reserve_bar(no_reserve_manager, bar_x, bar_y, bar_w, bar_h):
 
     bar = manager.c.bar[manager.bar_position]
     bar_info = bar.info()
-    _, x = bar.eval("self.x")
-    _, y = bar.eval("self.y")
 
-    assert bar_x == int(x)
-    assert bar_y == int(y)
+    assert bar_x == int(bar.eval("self.x"))
+    assert bar_y == int(bar.eval("self.y"))
     assert bar_w == bar_info["width"]
     assert bar_h == bar_info["height"]

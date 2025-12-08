@@ -297,8 +297,7 @@ class CallGroupname:
 
 @Retry(ignore_exceptions=(AssertionError))
 def assert_groupname(mgr_nospawn, groupname):
-    _, _groupname = mgr_nospawn.c.eval("self.config.test.groupname")
-    assert _groupname == groupname
+    assert mgr_nospawn.c.eval("self.config.test.groupname") == groupname
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -454,10 +453,8 @@ class CallGroupWindow:
 
 @Retry(ignore_exceptions=(AssertionError))
 def assert_group_window(mgr_nospawn, group, window):
-    _, _group = mgr_nospawn.c.eval("self.config.test.group")
-    _, _window = mgr_nospawn.c.eval("self.config.test.window")
-    assert _group == group
-    assert _window == window
+    assert mgr_nospawn.c.eval("self.config.test.group") == group
+    assert mgr_nospawn.c.eval("self.config.test.window") == window
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -493,8 +490,7 @@ class CallWindow:
 
 @Retry(ignore_exceptions=(AssertionError))
 def assert_window(mgr_nospawn, window):
-    _, _window = mgr_nospawn.c.eval("self.config.test.window")
-    assert _window == window
+    assert mgr_nospawn.c.eval("self.config.test.window") == window
 
 
 @pytest.mark.usefixtures("hook_fixture")
@@ -585,10 +581,10 @@ def test_client_urgent_hint_changed(manager_nospawn):
     manager_nospawn.c.screen.next_group()
     assert_window(manager_nospawn, "Test Client")
     # Get urgency of the window
-    assert manager_nospawn.c.eval("self.normal_windows()[0].urgent")[1] == "True"
+    assert manager_nospawn.c.eval("self.normal_windows()[0].urgent") == "True"
     # Refocusing the window should clear the urgency
     manager_nospawn.c.screen.prev_group()
-    assert manager_nospawn.c.eval("self.normal_windows()[0].urgent")[1] == "False"
+    assert manager_nospawn.c.eval("self.normal_windows()[0].urgent") == "False"
 
 
 class CallLayoutGroup:
@@ -603,10 +599,8 @@ class CallLayoutGroup:
 
 @Retry(ignore_exceptions=(AssertionError))
 def assert_layout_group(mgr_nospawn, layout, group):
-    _, _layout = mgr_nospawn.c.eval("self.config.test.layout")
-    assert _layout == layout
-    _, _group = mgr_nospawn.c.eval("self.config.test.group")
-    assert _group == group
+    assert mgr_nospawn.c.eval("self.config.test.layout") == layout
+    assert mgr_nospawn.c.eval("self.config.test.group") == group
 
 
 @pytest.mark.usefixtures("hook_fixture")

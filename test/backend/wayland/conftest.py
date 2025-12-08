@@ -62,9 +62,9 @@ class WaylandBackend(Backend):
 
     def configure(self, manager):
         """This backend needs to get WAYLAND_DISPLAY variable."""
-        _, self.env["WAYLAND_DISPLAY"] = manager.c.eval("self.core.display_name")
+        self.env["WAYLAND_DISPLAY"] = manager.c.eval("self.core.display_name")
         # Optionally for XWayland tests get the DISPLAY variable
-        _, self.env["DISPLAY"] = manager.c.eval('os.environ.get("DISPLAY", "")')
+        self.env["DISPLAY"] = manager.c.eval('os.environ.get("DISPLAY", "")')
 
     def fake_motion(self, x, y):
         """Move pointer to the specified coordinates"""

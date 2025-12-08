@@ -90,9 +90,5 @@ def test_tasklist_defaults(launchbar_manager):
 )
 @set_progs([[("one", "qshell:None", ""), ("two", "qshell:None", "")]])
 def test_launchbar_click(launchbar_manager, position, coords, clicked):
-    def assert_clicked():
-        _, value = launchbar_manager.c.widget["launchbar"].eval("self.clicked_icon")
-        assert value == clicked
-
     launchbar_manager.c.bar[position].fake_button_press(*coords)
-    assert_clicked()
+    assert launchbar_manager.c.widget["launchbar"].eval("self.clicked_icon") == clicked

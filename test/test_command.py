@@ -8,7 +8,7 @@ import libqtile.confreader
 import libqtile.layout
 import libqtile.log_utils
 import libqtile.widget
-from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile.command.base import CommandError, CommandException, CommandObject, expose_command
 from libqtile.command.client import CommandClient
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.confreader import Config
@@ -193,7 +193,7 @@ def test_cmd_commands(manager):
 
 @server_config
 def test_cmd_eval_namespace(manager):
-    assert manager.c.eval("__name__")[1] == "libqtile.core.manager"
+    assert manager.c.eval("__name__") == "libqtile.core.manager"
 
 
 @server_config
@@ -430,19 +430,18 @@ def test_lazy_arguments(manager_nospawn):
     manager_nospawn.start(config)
 
     manager_nospawn.c.simulate_keypress(["control"], "j")
-    assert manager_nospawn.c.eval("self.test_func_output")[1] == "10"
+    assert manager_nospawn.c.eval("self.test_func_output") == "10"
 
     manager_nospawn.c.simulate_keypress(["control"], "k")
-    assert manager_nospawn.c.eval("self.test_func_output")[1] == "500"
+    assert manager_nospawn.c.eval("self.test_func_output") == "500"
 
 
 def test_lazy_function_coroutine(manager_nospawn):
     """Test that lazy.function accepts coroutines."""
 
-    @Retry(ignore_exceptions=(AssertionError, CommandError))
+    @Retry(ignore_exceptions=(AssertionError, CommandException))
     def assert_func_text(manager, value):
-        _, text = manager.c.eval("self.test_func_output")
-        assert text == value
+        assert manager.c.eval("self.test_func_output") == value
 
     @lazy.function
     async def test_async_func(qtile, value):
@@ -496,5 +495,5 @@ def test_decorators_manager_call(manager):
 
 
 def test_eval_exception(manager):
-    with pytest.raises(CommandError):
+    with pytest.raises(CommandException):
         manager.c.eval("raise Exception")
