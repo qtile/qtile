@@ -83,7 +83,7 @@ class Drawer:
             cairocffi.CONTENT_COLOR_ALPHA,
             None,
         )
-        self.ctx = self.new_ctx()
+        self.ctx = cairocffi.Context(self.surface)
 
     def _create_last_surface(self):
         """Creates a separate RecordingSurface for mirrors to access."""
@@ -217,9 +217,6 @@ class Drawer:
             the Y position of the origin in the source surface
         """
 
-    def new_ctx(self):
-        return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
-
     def set_source_rgb(self, colour: ColorsType, ctx: cairocffi.Context | None = None):
         # If an alternate context is not provided then we draw to the
         # drawer's default context
@@ -341,7 +338,7 @@ class TextLayout:
         self, drawer, text, colour, font_family, font_size, font_shadow, wrap=True, markup=False
     ):
         self.drawer, self.colour = drawer, colour
-        layout = drawer.ctx.create_layout()
+        layout = pangocffi.create_layout(drawer.ctx)
         layout.set_alignment(pangocffi.ALIGN_CENTER)
         if not wrap:  # pango wraps by default
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
@@ -422,11 +419,11 @@ class TextLayout:
         if self.font_shadow is not None:
             self.drawer.set_source_rgb(self.font_shadow)
             self.drawer.ctx.move_to(x + 1, y + 1)
-            self.drawer.ctx.show_layout(self.layout)
+            pangocffi.show_layout(self.drawer.ctx, self.layout)
 
         self.drawer.set_source_rgb(self.colour)
         self.drawer.ctx.move_to(x, y)
-        self.drawer.ctx.show_layout(self.layout)
+        pangocffi.show_layout(self.drawer.ctx, self.layout)
 
     def framed(self, border_width, border_color, pad_x, pad_y, highlight_color=None):
         return TextFrame(
