@@ -42,7 +42,6 @@ class Base(base._Window):
         # TODO: what is this?
         self.defunct = False
         self.group: _Group | None = None
-        self._killed = False
         self.visible = True
 
     def reparent(self, layer: int) -> None:
@@ -176,9 +175,7 @@ class Base(base._Window):
         )
 
     def kill(self) -> None:
-        if not self._killed:
-            self._ptr.kill(self._ptr)
-            self._killed = True
+        self._ptr.kill(self._ptr)
 
     def hide(self) -> None:
         self._ptr.hide(self._ptr)
@@ -296,6 +293,7 @@ class Internal(Base, base.Internal):
         base.Internal.__init__(self)
         ptr.base.wid = wid
         self._internal_ptr = ptr
+        self._killed = False
 
     @property
     def surface(self) -> ffi.CData:
@@ -319,7 +317,9 @@ class Internal(Base, base.Internal):
 
     @expose_command()
     def kill(self) -> None:
-        super().kill()
+        if not self._killed:
+            self._ptr.kill(self._ptr)
+            self._killed = True
         if self.wid in self.qtile.windows_map:
             # It will be present during config reloads; absent during shutdown as this
             # will follow graceful_shutdown
