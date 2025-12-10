@@ -1,7 +1,6 @@
 #include "output.h"
 #include "cairo-buffer.h"
 #include "layer-view.h"
-#include "proto/wlr-layer-shell-unstable-v1-protocol.h"
 #include "server.h"
 #include "session-lock.h"
 #include "util.h"
