@@ -6,18 +6,14 @@ pango = ffi.dlopen(find_library(DynamicLibraries.PANGO))  # type: ignore
 pangocairo = ffi.dlopen(find_library(DynamicLibraries.PANGOCAIRO))  # type: ignore
 
 
-def patch_cairo_context(cairo_t):
-    def create_layout():
-        return PangoLayout(cairo_t._pointer)
+def create_layout(cairo_t):
+    """Create a PangoLayout from a cairo context."""
+    return PangoLayout(cairo_t._pointer)
 
-    cairo_t.create_layout = create_layout
 
-    def show_layout(layout):
-        pangocairo.pango_cairo_show_layout(cairo_t._pointer, layout._pointer)
-
-    cairo_t.show_layout = show_layout
-
-    return cairo_t
+def show_layout(cairo_t, layout):
+    """Show a PangoLayout on a cairo context."""
+    pangocairo.pango_cairo_show_layout(cairo_t._pointer, layout._pointer)
 
 
 ALIGN_CENTER = pango.PANGO_ALIGN_CENTER
