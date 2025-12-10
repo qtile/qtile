@@ -1,16 +1,7 @@
-import os
-
 import pytest
 
 import libqtile
 from libqtile.widget import generic_poll_text
-
-# Use local httpbin in CI, fallback to httpbin.org for local development
-HTTPBIN_BASE = (
-    "http://localhost:8080"
-    if os.environ.get("GITHUB_ACTIONS") == "true"
-    else "https://httpbin.org"
-)
 
 
 def test_gen_poll_text():
@@ -46,9 +37,9 @@ def test_gen_poll_url_headers_and_json():
 
 
 @pytest.mark.asyncio
-async def test_gen_poll_url_text():
+async def test_gen_poll_url_text(httpbin):
     gpurl = generic_poll_text.GenPollUrl(
-        json=False, parse=lambda x: x, url=f"{HTTPBIN_BASE}/anything"
+        json=False, parse=lambda x: x, url=f"{httpbin.url}/anything"
     )
     result = await gpurl.apoll()
     assert isinstance(result, str)
@@ -56,38 +47,38 @@ async def test_gen_poll_url_text():
 
 
 @pytest.mark.asyncio
-async def test_gen_poll_url_json_with_data():
+async def test_gen_poll_url_json_with_data(httpbin):
     gpurl = generic_poll_text.GenPollUrl(
-        parse=lambda x: x["data"], data={"test": "value"}, url=f"{HTTPBIN_BASE}/anything"
+        parse=lambda x: x["data"], data={"test": "value"}, url=f"{httpbin.url}/anything"
     )
     result = await gpurl.apoll()
     assert result == '{"test": "value"}'
 
 
 @pytest.mark.asyncio
-async def test_gen_poll_url_xml_no_xmltodict():
+async def test_gen_poll_url_xml_no_xmltodict(httpbin):
     gpurl = generic_poll_text.GenPollUrl(
-        json=False, xml=True, parse=lambda x: x, url=f"{HTTPBIN_BASE}/anything"
+        json=False, xml=True, parse=lambda x: x, url=f"{httpbin.url}/anything"
     )
     result = await gpurl.apoll()
     assert result == "Can't parse"
 
 
 @pytest.mark.asyncio
-async def test_gen_poll_url_broken_parse():
+async def test_gen_poll_url_broken_parse(httpbin):
     gpurl = generic_poll_text.GenPollUrl(
-        json=False, parse=lambda x: x.foo, url=f"{HTTPBIN_BASE}/anything"
+        json=False, parse=lambda x: x.foo, url=f"{httpbin.url}/anything"
     )
     result = await gpurl.apoll()
     assert result == "Can't parse"
 
 
 @pytest.mark.asyncio
-async def test_gen_poll_url_custom_headers():
+async def test_gen_poll_url_custom_headers(httpbin):
     gpurl = generic_poll_text.GenPollUrl(
         headers={"X-Custom-Header": "test-value", "X-Another-Header": "another-value"},
         parse=lambda x: x["headers"],
-        url=f"{HTTPBIN_BASE}/headers",
+        url=f"{httpbin.url}/headers",
     )
     result = await gpurl.apoll()
     assert "X-Custom-Header" in result
