@@ -7,7 +7,7 @@ from libqtile import qtile
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import create_task
-from libqtile.widget.volume import Volume
+from libqtile.widget.volume import VolumeBase
 
 lock = asyncio.Lock()
 
@@ -160,7 +160,7 @@ class PulseConnection:
 pulse = PulseConnection()
 
 
-class PulseVolume(Volume):
+class PulseVolume(VolumeBase):
     """
     Volume widget for systems using PulseAudio.
 
@@ -180,14 +180,14 @@ class PulseVolume(Volume):
     ]
 
     def __init__(self, **config):
-        Volume.__init__(self, **config)
+        VolumeBase.__init__(self, **config)
         self.add_defaults(PulseVolume.defaults)
         self.volume = 0
         self.is_mute = 0
         self._previous_state = (-1.0, -1)
 
     def _configure(self, qtile, bar):
-        Volume._configure(self, qtile, bar)
+        VolumeBase._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
         pulse.subscribe(self.get_vals)
@@ -253,4 +253,4 @@ class PulseVolume(Volume):
     def finalize(self):
         # Close the connection to the server
         pulse.unsubscribe(self.get_vals)
-        Volume.finalize(self)
+        VolumeBase.finalize(self)

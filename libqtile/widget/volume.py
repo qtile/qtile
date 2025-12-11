@@ -15,23 +15,10 @@ __all__ = [
 re_vol = re.compile(r"(\d?\d?\d?)%")
 
 
-class Volume(base._TextBox):
-    """Widget that display and change volume
-
-    By default, this widget uses ``amixer`` to get and set the volume so users
-    will need to make sure this is installed. Alternatively, users may set the
-    relevant parameters for the widget to use a different application.
-
-    If theme_path is set it draw widget as icons.
-    """
-
+class VolumeBase(base._TextBox):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("cardid", None, "Card Id"),
-        ("device", "default", "Device Name"),
-        ("channel", "Master", "Channel"),
         ("padding", 3, "Padding left and right. Calculated if None."),
-        ("update_interval", 0.2, "Update time in seconds."),
         ("theme_path", None, "Path of the icons"),
         (
             "emoji",
@@ -45,27 +32,9 @@ class Volume(base._TextBox):
             "List of emojis/font-symbols to display volume states, only if ``emoji`` is set."
             " List contains 4 symbols, from lowest volume to highest.",
         ),
-        ("mute_command", None, "Mute command"),
         ("mute_foreground", None, "Foreground color for mute volume."),
         ("mute_format", "M", "Format to display when volume is muted."),
         ("unmute_format", "{volume}%", "Format of text to display when volume is not muted."),
-        ("volume_app", None, "App to control volume"),
-        ("volume_up_command", None, "Volume up command"),
-        ("volume_down_command", None, "Volume down command"),
-        (
-            "get_volume_command",
-            None,
-            "Command to get the current volume. "
-            "The expected output should include 1-3 numbers and a ``%`` sign.",
-        ),
-        ("check_mute_command", None, "Command to check mute status"),
-        (
-            "check_mute_string",
-            "[off]",
-            "String expected from check_mute_command when volume is muted."
-            "When the output of the command matches this string, the"
-            "audio source is treated as muted.",
-        ),
         (
             "step",
             2,
@@ -76,24 +45,10 @@ class Volume(base._TextBox):
 
     def __init__(self, **config):
         base._TextBox.__init__(self, "", **config)
-        self.add_defaults(Volume.defaults)
+        self.add_defaults(VolumeBase.defaults)
         self.surfaces = {}
         self.volume = None
         self.is_mute = False
-
-        self.add_callbacks(
-            {
-                "Button1": self.mute,
-                "Button3": self.run_app,
-                "Button4": self.increase_vol,
-                "Button5": self.decrease_vol,
-            }
-        )
-
-    def timer_setup(self):
-        create_task(self.do_volume())
-        if self.theme_path:
-            self.setup_images()
 
     def _configure(self, qtile, parent_bar):
         if self.theme_path:
@@ -101,34 +56,6 @@ class Volume(base._TextBox):
             self.length = 0
         base._TextBox._configure(self, qtile, parent_bar)
         self.unmute_foreground = self.foreground
-
-    def create_amixer_command(self, *args) -> str:
-        cmd = ["amixer"]
-
-        if self.cardid is not None:
-            cmd.extend(["-c", str(self.cardid)])
-
-        if self.device is not None:
-            cmd.extend(["-D", str(self.device)])
-
-        cmd.extend([x for x in args])
-        return subprocess.list2cmdline(cmd)
-
-    def button_press(self, x, y, button):
-        base._TextBox.button_press(self, x, y, button)
-        self.draw()
-
-    async def do_volume(self):
-        vol, muted = await self.get_volume()
-        if vol != self.volume or muted != self.is_mute:
-            self.volume = vol
-            self.is_mute = muted
-            # Update the underlying canvas size before actually attempting
-            # to figure out how big it is and draw it.
-            self._update_drawer()
-            self.bar.draw()
-        await asyncio.sleep(self.update_interval)
-        create_task(self.do_volume())
 
     def _update_drawer(self):
         if self.mute_foreground is not None:
@@ -184,6 +111,94 @@ class Volume(base._TextBox):
                 self.length = img.width + self.padding * 2
             self.surfaces[name] = img.pattern
 
+    def draw(self):
+        if self.theme_path:
+            self.draw_at_default_position()
+        else:
+            base._TextBox.draw(self)
+
+
+class Volume(VolumeBase):
+    """Widget that display and change volume
+
+    By default, this widget uses ``amixer`` to get and set the volume so users
+    will need to make sure this is installed. Alternatively, users may set the
+    relevant parameters for the widget to use a different application.
+
+    If theme_path is set it draw widget as icons.
+    """
+
+    defaults = [
+        ("cardid", None, "Card Id"),
+        ("device", "default", "Device Name"),
+        ("channel", "Master", "Channel"),
+        ("update_interval", 0.2, "Update time in seconds."),
+        ("mute_command", None, "Mute command"),
+        ("volume_app", None, "App to control volume"),
+        ("volume_up_command", None, "Volume up command"),
+        ("volume_down_command", None, "Volume down command"),
+        (
+            "get_volume_command",
+            None,
+            "Command to get the current volume. "
+            "The expected output should include 1-3 numbers and a ``%`` sign.",
+        ),
+        ("check_mute_command", None, "Command to check mute status"),
+        (
+            "check_mute_string",
+            "[off]",
+            "String expected from check_mute_command when volume is muted."
+            "When the output of the command matches this string, the"
+            "audio source is treated as muted.",
+        ),
+    ]
+
+    def __init__(self, **config):
+        VolumeBase.__init__(self, **config)
+        self.add_defaults(Volume.defaults)
+
+        self.add_callbacks(
+            {
+                "Button1": self.mute,
+                "Button3": self.run_app,
+                "Button4": self.increase_vol,
+                "Button5": self.decrease_vol,
+            }
+        )
+
+    def timer_setup(self):
+        create_task(self.do_volume())
+        if self.theme_path:
+            self.setup_images()
+
+    def create_amixer_command(self, *args) -> str:
+        cmd = ["amixer"]
+
+        if self.cardid is not None:
+            cmd.extend(["-c", str(self.cardid)])
+
+        if self.device is not None:
+            cmd.extend(["-D", str(self.device)])
+
+        cmd.extend([x for x in args])
+        return subprocess.list2cmdline(cmd)
+
+    def button_press(self, x, y, button):
+        base._TextBox.button_press(self, x, y, button)
+        self.draw()
+
+    async def do_volume(self):
+        vol, muted = await self.get_volume()
+        if vol != self.volume or muted != self.is_mute:
+            self.volume = vol
+            self.is_mute = muted
+            # Update the underlying canvas size before actually attempting
+            # to figure out how big it is and draw it.
+            self._update_drawer()
+            self.bar.draw()
+        await asyncio.sleep(self.update_interval)
+        create_task(self.do_volume())
+
     async def get_volume(self):
         try:
             if self.get_volume_command is not None:
@@ -207,12 +222,6 @@ class Volume(base._TextBox):
         else:
             # this shouldn't happen
             return -1, muted
-
-    def draw(self):
-        if self.theme_path:
-            self.draw_at_default_position()
-        else:
-            base._TextBox.draw(self)
 
     @expose_command()
     def increase_vol(self):
