@@ -423,11 +423,11 @@ class Dimension:
 
     @property
     def physical_size(self):
-        return self._logical_size * self._drawer._win.scale
+        return self._logical_size * getattr(self._drawer._win, "scale", 1)
 
     @property
     def physical_size_int(self):
-        return int(self._logical_size * self._drawer._win.scale)
+        return int(self._logical_size * getattr(self._drawer._win, "scale", 1))
 
 
 class TextLayout:

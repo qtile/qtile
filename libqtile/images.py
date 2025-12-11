@@ -34,7 +34,7 @@ def get_cairo_surface_for_data(image):
     surf = cairocffi.ImageSurface.create_for_data(
         image.data, image.format, image.width, image.height
     )
-    return _SurfaceInfo(surf, None)
+    return _SurfaceInfo(surf, image.format)
 
 
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
@@ -184,7 +184,10 @@ class Img:
         try:
             return self._default_surface
         except AttributeError:
-            surf, fmt = get_cairo_surface(self.bytes_img)
+            if self.bytes_img:
+                surf, fmt = get_cairo_surface(self.bytes_img)
+            elif self.image_data:
+                surf, fmt = get_cairo_surface_for_data(self.image_data)
             self._default_surface = surf
             return surf
 
@@ -252,7 +255,7 @@ class Img:
             if self.bytes_img:
                 surf, fmt = get_cairo_surface(self.bytes_img, self.width, self.height)
             elif self.image_data:
-                surf = get_cairo_surface_for_data(self.image_data)
+                surf, fmt = get_cairo_surface_for_data(self.image_data)
             self._surface = surf
             return surf
 
