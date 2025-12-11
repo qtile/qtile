@@ -52,7 +52,7 @@ class Image(base._Widget, base.MarginMixin):
             return
 
         self.drawer.clear(self.background or self.bar.background)
-        self.drawer.paint_dpi_aware_pattern(self.img, self.margin_x, self.margin_y)
+        self.drawer.dpi_aware_paint_image(self.img, self.margin_x, self.margin_y)
         self.draw_at_default_position()
 
     def calculate_length(self):

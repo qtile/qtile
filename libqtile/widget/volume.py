@@ -145,7 +145,7 @@ class Volume(base._TextBox):
             else:  # self.volume >= 80:
                 img_name = "audio-volume-high"
 
-            self.drawer.paint_dpi_aware_pattern(self.images[img_name])
+            self.drawer.dpi_aware_paint_image(self.images[img_name])
         elif self.emoji:
             if len(self.emoji_list) < 4:
                 self.emoji_list = ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"]

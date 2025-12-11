@@ -30,6 +30,13 @@ def get_cairo_surface(bytes_img, width=None, height=None):
         return _SurfaceInfo(surf, fmt)
 
 
+def get_cairo_surface_for_data(image):
+    surf = cairocffi.ImageSurface.create_for_data(
+        image.data, image.format, image.width, image.height
+    )
+    return _SurfaceInfo(surf, None)
+
+
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     """Return a SurfacePattern from an ImageSurface.
 
@@ -119,6 +126,14 @@ class _Rotation(_Resetter):
 _ImgSize = namedtuple("_ImgSize", ("width", "height"))
 
 
+class ImageData:
+    def __init__(self, data, format, width, height):
+        self.data = data
+        self.format = format
+        self.width = width
+        self.height = height
+
+
 class Img:
     """Img is a class which creates & manipulates cairo SurfacePatterns from an image
 
@@ -137,6 +152,7 @@ class Img:
         self.bytes_img = bytes_img
         self.name = name
         self.path = path
+        self.image_data = None
 
     def _reset(self):
         if hasattr(self, "surface"):
@@ -154,6 +170,14 @@ class Img:
         name = os.path.basename(image_path)
         name, file_type = os.path.splitext(name)
         return cls(bytes_img, name=name, path=image_path)
+
+    @classmethod
+    def from_data(cls, data, format, width, height):
+        "Create an Img instance from image data"
+        image_data = ImageData(data, format, width, height)
+        img = cls(None)
+        img.image_data = image_data
+        return img
 
     @property
     def default_surface(self):
@@ -225,7 +249,10 @@ class Img:
         try:
             return self._surface
         except AttributeError:
-            surf, fmt = get_cairo_surface(self.bytes_img, self.width, self.height)
+            if self.bytes_img:
+                surf, fmt = get_cairo_surface(self.bytes_img, self.width, self.height)
+            elif self.image_data:
+                surf = get_cairo_surface_for_data(self.image_data)
             self._surface = surf
             return surf
 
