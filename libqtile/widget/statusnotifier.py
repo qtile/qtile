@@ -102,25 +102,18 @@ class StatusNotifier(base._Widget):
             self.mouse_callbacks[name]()
 
     def _draw_icon(self, icon, x, y):
-        # Despite scaling the icon down here for compositing, cairo keeps the higher
-        # res snapshot, which will be used when the whole buffer is scaled up later
-        scale = 1 / getattr(self.bar.window, "scale", 1)
-        self.drawer.ctx.save()
-        self.drawer.ctx.translate(x, y)
-        self.drawer.ctx.scale(scale, scale)
-        self.drawer.ctx.set_source_surface(icon, 0, 0)
-        self.drawer.ctx.paint()
-        self.drawer.ctx.restore()
+        self.drawer.dpi_aware_paint_surface(icon, x, y)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
         xoffset = self.padding
         yoffset = (self.bar.size - self.icon_size) // 2
 
-        # Scale icon up by output scale factor
-        scaled_icon_size = int(self.icon_size * getattr(self.bar.window, "scale", 1))
         for item in self.available_icons:
-            icon = item.get_icon(scaled_icon_size)
+            # For HiDPI, we want the icon stored at its final "physical" size
+            icon = item.get_icon(
+                self.drawer.dpi_aware_dimension(self.icon_size).physical_size_int
+            )
             if self.bar.horizontal:
                 self._draw_icon(icon, xoffset, yoffset)
             else:

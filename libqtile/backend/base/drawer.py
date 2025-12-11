@@ -363,6 +363,15 @@ class Drawer:
         self.ctx.paint()
         self.ctx.restore()
 
+    def dpi_aware_paint_surface(self, surface, offsetx=0, offsety=0):
+        scale = getattr(self._win, "scale", 1)
+        self.ctx.save()
+        self.ctx.translate(offsetx, offsety)
+        self.ctx.scale(1 / scale, 1 / scale)
+        self.ctx.set_source_surface(surface)
+        self.ctx.paint()
+        self.ctx.restore()
+
     # def dpi_aware_resize_pattern(self, pattern, width=None, height=None, lock_aspect=False):
     def dpi_aware_get_pattern(self, img, width=None, height=None, lock_aspect=False):
         pattern = img.pattern
@@ -415,6 +424,10 @@ class Dimension:
     @property
     def physical_size(self):
         return self._logical_size * self._drawer._win.scale
+
+    @property
+    def physical_size_int(self):
+        return int(self._logical_size * self._drawer._win.scale)
 
 
 class TextLayout:
