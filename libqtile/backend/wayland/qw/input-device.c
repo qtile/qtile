@@ -33,8 +33,6 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
 
     wl_list_insert(&server->input_devices, &input_device->link);
 
-    server->on_input_device_added_cb(server->cb_data);
-
     switch (device->type) {
     case WLR_INPUT_DEVICE_KEYBOARD:
         qw_server_keyboard_new(server, device);
@@ -58,6 +56,8 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
         caps |= WL_SEAT_CAPABILITY_KEYBOARD;
     }
     wlr_seat_set_capabilities(server->seat, caps);
+
+    server->on_input_device_added_cb(server->cb_data);
 }
 
 struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_device *input_device) {
