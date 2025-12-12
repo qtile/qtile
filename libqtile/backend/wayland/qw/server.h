@@ -93,8 +93,12 @@ typedef void (*cursor_motion_cb_t)(void *userdata);
 typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x, int y,
                                   void *userdata);
 
-// Output dimensions callback: x, y, width, height of output
-typedef void (*output_dims_cb_t)(int x, int y, int width, int height);
+// Forward declaration for wlr_output
+struct wlr_output;
+
+// Output dimensions callback: x, y, width, height, wlr_output
+typedef void (*output_dims_cb_t)(int x, int y, int width, int height,
+                                 struct wlr_output *wlr_output);
 
 // Query tree node wid callback
 typedef void (*node_wid_cb_t)(int wid);
