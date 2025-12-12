@@ -7,6 +7,7 @@ import typing
 import cairocffi
 
 from libqtile import pangocffi, utils
+from libqtile.images import Img
 from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
@@ -334,6 +335,99 @@ class Drawer:
         self.ctx.line_to(x2, y)
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
+
+    # To prevent blurry upscaling in wayland, we first upscale images to their
+    # final physical size before downscaling to their logical size for
+    # compositing. Since we are using a recording surface, when the final window
+    # is upscaled again, these last two scaling operations cancel out
+    # def paint_dpi_aware_pattern(self, img: Img, offsetx=0, offsety=0):
+    def dpi_aware_paint_image(self, img: Img, offsetx=0, offsety=0):
+        scale = getattr(self._win, "scale", 1)
+        original_size = (img.width, img.height)
+        img.resize(int(img.width * scale), int(img.height * scale))
+        self.ctx.save()
+        self.ctx.translate(offsetx, offsety)
+        self.ctx.scale(1 / scale, 1 / scale)
+        self.ctx.set_source(img.pattern)
+        self.ctx.paint()
+        self.ctx.restore()
+        # Restore the original width to avoid compounding scaling
+        img.width, img.height = original_size
+
+    def dpi_aware_paint_pattern(self, pattern, offsetx=0, offsety=0):
+        scale = getattr(self._win, "scale", 1)
+        self.ctx.save()
+        self.ctx.translate(offsetx, offsety)
+        self.ctx.scale(1 / scale, 1 / scale)
+        self.ctx.set_source(pattern)
+        self.ctx.paint()
+        self.ctx.restore()
+
+    def dpi_aware_paint_surface(self, surface, offsetx=0, offsety=0):
+        scale = getattr(self._win, "scale", 1)
+        self.ctx.save()
+        self.ctx.translate(offsetx, offsety)
+        self.ctx.scale(1 / scale, 1 / scale)
+        self.ctx.set_source_surface(surface)
+        self.ctx.paint()
+        self.ctx.restore()
+
+    # def dpi_aware_resize_pattern(self, pattern, width=None, height=None, lock_aspect=False):
+    def dpi_aware_get_pattern(self, img, width=None, height=None, lock_aspect=False):
+        pattern = img.pattern
+        surface = pattern.get_surface()
+        h0 = surface.get_height()
+        w0 = surface.get_width()
+        screen_scale = getattr(self._win, "scale", 1)
+
+        if width is None and height is not None:
+            lock_aspect = True
+            width = w0 * (height / h0)
+
+        elif height is None and width is not None:
+            lock_aspect = True
+            height = h0 * (width / w0)
+
+        if width is None:
+            width = w0
+        if height is None:
+            height = h0
+
+        xscale = w0 / (width * screen_scale)
+        yscale = h0 / (height * screen_scale)
+
+        matrix = cairocffi.Matrix()
+        if lock_aspect:
+            # make sure it doesn't exceed either dimension
+            scale = min(xscale, yscale)
+            matrix.scale(scale, scale)
+        else:
+            matrix.scale(xscale, yscale)
+
+        pattern.set_matrix(matrix)
+
+        return pattern
+
+    def dpi_aware_dimension(self, dim):
+        return Dimension(dim, self)
+
+
+class Dimension:
+    def __init__(self, dim, drawer):
+        self._logical_size = dim
+        self._drawer = drawer
+
+    @property
+    def logical_size(self):
+        return self._logical_size
+
+    @property
+    def physical_size(self):
+        return self._logical_size * getattr(self._drawer._win, "scale", 1)
+
+    @property
+    def physical_size_int(self):
+        return int(self._logical_size * getattr(self._drawer._win, "scale", 1))
 
 
 class TextLayout:

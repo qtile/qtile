@@ -651,11 +651,9 @@ class BatteryIcon(base._Widget):
     def draw(self) -> None:
         self.drawer.clear(self.background or self.bar.background)
         image = self.images[self.current_icon]
-        self.drawer.ctx.save()
-        self.drawer.ctx.translate(self.padding, (self.bar.size - image.height) // 2)
-        self.drawer.ctx.set_source(image.pattern)
-        self.drawer.ctx.paint()
-        self.drawer.ctx.restore()
+        self.drawer.dpi_aware_paint_image(
+            image, self.padding, (self.bar.size - image.height) // 2
+        )
         self.draw_at_default_position()
 
     @staticmethod
