@@ -1055,6 +1055,28 @@ def test_move_float_above_tiled(xmanager):
     assert _clients() == ["one", "three", "two"]
 
 
+@manager_config
+def test_floats_kept_above_cleared_on_toggle(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+
+    def has_state_above(wid):
+        r = conn.conn.core.GetProperty(
+            False, wid, conn.atoms["_NET_WM_STATE"], conn.atoms["ATOM"], 0, (2**32) - 1
+        ).reply()
+        return conn.atoms["_NET_WM_STATE_ABOVE"] in r.value.to_atoms()
+
+    xmanager.test_window("one")
+    wid = xmanager.c.window.info()["id"]
+
+    assert not has_state_above(wid)
+
+    window_by_name(xmanager.c, "one").toggle_floating()
+    assert has_state_above(wid)
+
+    window_by_name(xmanager.c, "one").toggle_floating()
+    assert not has_state_above(wid)
+
+
 def test_multiple_wm_types(xmanager):
     conn = xcbq.Connection(xmanager.display)
     w = conn.create_window(50, 50, 50, 50)

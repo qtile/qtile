@@ -1748,6 +1748,8 @@ class Window(_Window, base.Window):
                 self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
             self.group.mark_floating(self, False)
+            if self.kept_above and self.qtile.config.floats_kept_above:
+                self.keep_above(enable=False)
             if tiled_stack:
                 self.window.configure(
                     stackmode=xcffib.xproto.StackMode.Above, sibling=tiled_stack[-1]
