@@ -560,12 +560,11 @@ class Core(base.Core):
 
         return rects
 
-    def _get_sym_from_code(self, keycode: int) -> str:
-        # TODO: test keycodes
-        sym = lib.qwu_get_sym_from_code(keycode)
+    def _get_sym_from_code(self, keycode: int) -> int:
+        sym = lib.qw_server_get_sym_from_code(self.qw, keycode)
         if not sym:
             raise QtileError("Unable to grab keycode. No active keyboard found.")
-        return ffi.string(sym).decode()
+        return sym
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         if isinstance(key.key, str):

@@ -117,10 +117,14 @@ void qw_server_start(struct qw_server *server) {
 }
 
 // Stub function – maybe used for keymap introspection in the future
-const char *qw_server_get_sym_from_code(struct qw_server *server, int code) {
-    UNUSED(server);
-    UNUSED(code);
-    return NULL;
+xkb_keysym_t qw_server_get_sym_from_code(struct qw_server *server, int code) {
+    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(server->seat);
+
+    if (keyboard == NULL || keyboard->xkb_state == NULL) {
+        return 0;
+    }
+
+    return xkb_state_key_get_one_sym(keyboard->xkb_state, code);
 }
 
 void qw_server_keyboard_clear_focus(struct qw_server *server) {
