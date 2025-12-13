@@ -3,6 +3,7 @@ import pytest
 from libqtile import bar, config, hook, layout, log_utils, resources, widget
 from libqtile.confreader import Config
 from test.conftest import BareConfig, dualmonitor
+from test.helpers import window_by_name
 from test.layouts.layout_utils import assert_focused, assert_unfocused
 from test.test_manager import ManagerConfig
 
@@ -323,15 +324,12 @@ class WindowNameConfig(BareConfig):
 
 @pytest.mark.parametrize("manager", [WindowNameConfig], indirect=True)
 def test_focus_switch(manager):
-    def _wnd(name):
-        return manager.c.window[{w["name"]: w["id"] for w in manager.c.windows()}[name]]
-
     manager.test_window("One")
     manager.test_window("Two")
 
     assert manager.c.widget["windowname"].info()["text"] == "Two"
 
-    _wnd("One").focus()
+    window_by_name(manager.c, "One").focus()
     assert manager.c.widget["windowname"].info()["text"] == "One"
 
 
