@@ -406,3 +406,7 @@ def assert_window_died(client, window_info):
     client.sync()
     wid = window_info["id"]
     assert wid not in set([x["id"] for x in client.windows()]), f"window {wid} still here"
+
+
+def window_by_name(client, name):
+    return client.window[{w["name"]: w["id"] for w in client.windows()}[name]]
