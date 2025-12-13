@@ -281,8 +281,8 @@ struct qw_idle_inhibitor {
 
 // Utility functions exposed by the server API
 
-// Get symbolic key name string from a key code
-const char *qw_server_get_sym_from_code(struct qw_server *server, int code);
+// Get  key sym from a key code
+xkb_keysym_t qw_server_get_sym_from_code(struct qw_server *server, int code);
 
 // Poll for server events (non-blocking)
 void qw_server_poll(struct qw_server *server);
