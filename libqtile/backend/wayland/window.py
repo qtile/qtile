@@ -657,6 +657,8 @@ class Window(Base, base.Window):
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
+            if self.layer != lib.LAYER_KEEPABOVE and self.qtile.config.floats_kept_above:
+                self.keep_above(enable=True)
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             self.reparent(lib.LAYER_LAYOUT)
             self._update_fullscreen(False)
