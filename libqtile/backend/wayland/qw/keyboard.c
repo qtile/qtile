@@ -84,7 +84,7 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
 
         if (handled) {
             // Set up timer to repeat key press
-            if (keyboard->repeat_source != NULL) {
+            if (keyboard->repeat_source == NULL) {
                 keyboard->repeat_source =
                     wl_event_loop_add_timer(server->event_loop, qw_keyboard_do_repeat, keyboard);
             }
