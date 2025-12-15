@@ -262,6 +262,7 @@ static void qw_server_output_manager_reconfigure(struct qw_server *server,
     }
     wlr_output_configuration_v1_destroy(config);
     if (apply) {
+        qw_cursor_configure_xcursor(server->cursor);
         qw_server_handle_output_layout_change(&server->output_layout_change, NULL);
     }
 }

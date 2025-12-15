@@ -74,6 +74,11 @@ enum {
 };
 #endif
 
+struct qw_qtile_config {
+    char *wl_xcursor_theme;
+    int wl_xcursor_size;
+};
+
 // Callback typedefs for input and view events
 
 // Keyboard key event callback: keysym, modifier mask, and user data
@@ -132,6 +137,8 @@ typedef bool (*add_idle_inhibitor_cb_t)(void *userdata, void *inhibitor, void *v
                                         bool is_layer_surface, bool is_session_lock_surface);
 typedef bool (*remove_idle_inhibitor_cb_t)(void *userdata, void *inhibitor);
 typedef bool (*check_inhibited_cb_t)(void *userdata);
+
+typedef struct qw_qtile_config *(*get_qtile_config_cb_t)(void *userdata);
 
 enum {
     LAYER_BACKGROUND,   // background, layer shell
@@ -192,6 +199,7 @@ struct qw_server {
     add_idle_inhibitor_cb_t add_idle_inhibitor_cb;
     remove_idle_inhibitor_cb_t remove_idle_inhibitor_cb;
     check_inhibited_cb_t check_inhibited_cb;
+    get_qtile_config_cb_t get_qtile_config_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;

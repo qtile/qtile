@@ -29,6 +29,7 @@ struct qw_cursor {
     struct wl_listener button;
     struct wl_listener constraint_commit;
     struct wlr_xcursor_manager *mgr;
+    struct wlr_xcursor_manager *xwayland_mgr;
     struct wlr_surface *saved_surface;
     uint32_t saved_hotspot_x;
     uint32_t saved_hotspot_y;
@@ -64,5 +65,7 @@ void qw_cursor_release_implicit_grab(struct qw_cursor *cursor, uint32_t time);
 
 void qw_cursor_pointer_constraint_new(struct qw_cursor *cursor,
                                       struct wlr_pointer_constraint_v1 *constraint);
+
+void qw_cursor_configure_xcursor(struct qw_cursor *cursor);
 
 #endif /* CURSOR_H */

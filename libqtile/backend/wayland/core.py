@@ -213,6 +213,12 @@ def check_inhibited_cb(userdata: ffi.CData) -> bool:
     return core.check_inhibited()
 
 
+@ffi.def_extern()
+def get_qtile_config_cb(userdata: ffi.CData) -> ffi.CData:
+    core = ffi.from_handle(userdata)
+    return core.get_config()
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -260,6 +266,7 @@ class Core(base.Core):
         self.qw.add_idle_inhibitor_cb = lib.add_idle_inhibitor_cb
         self.qw.remove_idle_inhibitor_cb = lib.remove_idle_inhibitor_cb
         self.qw.check_inhibited_cb = lib.check_inhibited_cb
+        self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
@@ -282,12 +289,27 @@ class Core(base.Core):
         assert self.qtile is not None
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
+    # Callback to fetch qtile config parameters from wayc
+    # Add additional parameters as needed (server.h: struct qw_qtile_config)
+    def get_config(self) -> ffi.CData:
+        config = ffi.new("struct qw_qtile_config *")
+        theme = self.qtile.config.wl_xcursor_theme
+        config.wl_xcursor_theme = (
+            ffi.new("char[]", theme.encode()) if theme is not None else ffi.NULL
+        )
+        config.wl_xcursor_size = self.qtile.config.wl_xcursor_size
+        self._config = config  # Reference to keep config alive
+        return config
+
     def on_config_load(self, initial: bool) -> None:
         assert self.qtile is not None
 
         # Apply input device configuration
         if self.qtile.config.wl_input_rules:
             inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
+
+        # Apply xcursor settings
+        lib.qw_cursor_configure_xcursor(self.qw_cursor)
 
         if initial:
             # This backend does not support restarting
