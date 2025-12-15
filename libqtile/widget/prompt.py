@@ -413,6 +413,7 @@ class Prompt(base._TextBox):
         if self.bell_style == "visual":
             self.original_background = self.background
 
+    @expose_command()
     def start_input(
         self,
         prompt,
