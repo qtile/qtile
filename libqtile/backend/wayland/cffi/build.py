@@ -132,6 +132,7 @@ extern "Python" struct wlr_box get_current_output_dims_cb(void *userdata);
 extern "Python" bool add_idle_inhibitor_cb(void *userdata, void *inhibitor, void *view, bool is_layer_surface, bool is_session_lock_surface);
 extern "Python" bool remove_idle_inhibitor_cb(void *userdata, void *inhibitor);
 extern "Python" bool check_inhibited_cb(void *userdata);
+extern "Python" struct qw_qtile_config *get_qtile_config_cb(void *userdata);
 
 extern "Python" int request_focus_cb(void *userdata);
 extern "Python" int request_close_cb(void *userdata);

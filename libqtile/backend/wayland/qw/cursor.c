@@ -569,3 +569,74 @@ void qw_cursor_pointer_constraint_new(struct qw_cursor *cursor,
         qw_cursor_constrain_cursor(cursor, constraint);
     }
 }
+
+static bool xcursor_manager_is_named(const struct wlr_xcursor_manager *manager, const char *name) {
+    return (manager->name == NULL && name == NULL) ||
+           (name != NULL && manager->name != NULL && strcmp(name, manager->name) == 0);
+}
+
+void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
+    unsigned cursor_size = 24;
+    const char *cursor_theme = NULL; // Defaults prob not necessary here?
+
+    struct qw_server *server = cursor->server;
+    struct qw_qtile_config *config = server->get_qtile_config_cb(server->cb_data);
+    cursor_size = config->wl_xcursor_size;
+    cursor_theme = config->wl_xcursor_theme;
+
+    char cursor_size_fmt[16];
+    snprintf(cursor_size_fmt, sizeof(cursor_size_fmt), "%u", cursor_size);
+    setenv("XCURSOR_SIZE", cursor_size_fmt, 1);
+    if (cursor_theme != NULL) {
+        setenv("XCURSOR_THEME", cursor_theme, 1);
+    }
+
+#if WLR_HAS_XWAYLAND
+    if (server->xwayland != NULL &&
+        (cursor->xwayland_mgr == NULL ||
+         !xcursor_manager_is_named(cursor->xwayland_mgr, cursor_theme) ||
+         cursor->xwayland_mgr->size != cursor_size)) {
+
+        wlr_xcursor_manager_destroy(cursor->xwayland_mgr);
+
+        cursor->xwayland_mgr = wlr_xcursor_manager_create(cursor_theme, cursor_size);
+        if (cursor->mgr == NULL) {
+            wlr_log(WLR_ERROR, "Cannot create XCursor manager for theme '%s'", cursor_theme);
+        }
+        wlr_xcursor_manager_load(cursor->xwayland_mgr, 1);
+        struct wlr_xcursor *xcursor =
+            wlr_xcursor_manager_get_xcursor(cursor->xwayland_mgr, "default", 1);
+        if (xcursor != NULL) {
+            struct wlr_xcursor_image *image = xcursor->images[0];
+            wlr_xwayland_set_cursor(server->xwayland, image->buffer, image->width * 4, image->width,
+                                    image->height, image->hotspot_x, image->hotspot_y);
+        }
+    }
+#endif
+
+    /* Create xcursor manager if we don't have one already, or if the
+     * theme has changed */
+    if (cursor->mgr == NULL || !xcursor_manager_is_named(cursor->mgr, cursor_theme) ||
+        cursor->mgr->size != cursor_size) {
+        wlr_xcursor_manager_destroy(cursor->mgr);
+        cursor->mgr = wlr_xcursor_manager_create(cursor_theme, cursor_size);
+        if (cursor->mgr == NULL) {
+            wlr_log(WLR_ERROR, "Cannot create XCursor manager for theme '%s'", cursor_theme);
+        }
+
+        struct qw_output *qw_output;
+        wl_list_for_each(qw_output, &server->outputs, link) {
+            struct wlr_output *output = qw_output->wlr_output;
+            bool result = wlr_xcursor_manager_load(cursor->mgr, output->scale);
+            if (!result) {
+                wlr_log(WLR_ERROR, "Cannot load xcursor theme for output '%s' with scale %f",
+                        output->name, output->scale);
+            }
+        }
+
+        // Reset the cursor so that we apply it to outputs that just appeared
+        wlr_cursor_unset_image(cursor->cursor);
+        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+        wlr_cursor_warp(cursor->cursor, NULL, cursor->cursor->x, cursor->cursor->y);
+    }
+}
