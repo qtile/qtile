@@ -316,7 +316,14 @@ class Prompt(base._TextBox):
     defaults = [
         ("cursor", True, "Show a cursor"),
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
-        ("cursor_type", "line", "Cursor visual type. Possible values: 'line', 'block'."),
+        (
+            "cursor_type",
+            "line",
+            "The visual appearance of the cursor. Possible values: "
+            + "'line': A line under the selected character. "
+            + "'block': A block in the place of the selected character. "
+            + "'none': Only the color appears."
+        ),
         ("cursor_color", "bef098", "Color for the cursor and text over it."),
         ("prompt", "{prompt}: ", "Text displayed at the prompt"),
         ("record_history", True, "Keep a record of executed commands"),
@@ -491,6 +498,8 @@ class Prompt(base._TextBox):
             text = f'<span foreground="{color}">{text}</span>'
             if self.show_cursor:
                 text = f"<u>{text}</u>"
+        elif self.cursor_type == "none" or self.cursor_type is None:
+            text = f'<span foreground="{color}">{text}</span>'
         return text
 
     def _update(self) -> None:
