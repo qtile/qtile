@@ -68,6 +68,10 @@ jobs:
                 COVERALLS_PARALLEL: true
                 COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
 
+    wheel-tests:
+        name: Build and test wheels
+        uses: ./.github/workflows/wheel-tests.yml
+
     coverage:
         name: Finalize Coverage
         needs: build
