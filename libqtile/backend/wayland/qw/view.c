@@ -394,3 +394,36 @@ void qw_view_ftl_manager_handle_destroy(struct qw_view *view) {
     wlr_foreign_toplevel_handle_v1_destroy(view->ftl_handle);
     view->ftl_handle = NULL;
 }
+
+// Find which output a view is on
+// If across multiple outputs, return the primary (that most of the view is on) output
+// If offscreen, return NULL
+struct qw_output *qw_view_get_primary_output(struct qw_view *view) {
+    struct qw_server *server = view->server;
+    struct wlr_output *primary_output = NULL;
+    struct wlr_output_layout_output *layout;
+    // clang-format off
+    struct wlr_box view_box = {
+        .x = view->x,
+        .y = view->y,
+        .width = view->width,
+        .height = view->height
+    };
+    // clang-format on
+    int largest_overlap_area = 0;
+
+    wl_list_for_each(layout, &server->output_layout->outputs, link) {
+        struct wlr_box output_box, intersect;
+        wlr_output_layout_get_box(server->output_layout, layout->output, &output_box);
+
+        if (wlr_box_intersection(&intersect, &view_box, &output_box)) {
+            int overlap_area = intersect.width * intersect.height;
+            if (overlap_area > largest_overlap_area) {
+                largest_overlap_area = overlap_area;
+                primary_output = layout->output;
+            }
+        }
+    }
+
+    return primary_output->data;
+}
