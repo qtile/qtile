@@ -323,7 +323,7 @@ class Prompt(base._TextBox):
             + "'line': A line under the selected character. "
             + "'block': A block in the place of the selected character. "
             + "'bar': A vertical bar. Only looks good at the end of text. "
-            + "'none': Only the color appears."
+            + "'none': Only the color appears.",
         ),
         ("cursor_color", "bef098", "Color for the cursor and text over it."),
         ("prompt", "{prompt}: ", "Text displayed at the prompt"),
