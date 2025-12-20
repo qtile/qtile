@@ -511,18 +511,19 @@ class Prompt(base._TextBox):
     def _update(self) -> None:
         if self.active:
             self.text = self.archived_input or self.user_input
-            cursor = pangocffi.markup_escape_text(" ")
             if self.cursor_position < len(self.text):
+                # Escaping after slicing to preserve the cursor position
                 txt1 = self.text[: self.cursor_position]
+                txt1 = pangocffi.markup_escape_text(txt1)
                 txt2 = self.text[self.cursor_position]
-                txt3 = self.text[self.cursor_position + 1 :]
-                for text in (txt1, txt2, txt3):
-                    text = pangocffi.markup_escape_text(text)
+                txt2 = pangocffi.markup_escape_text(txt2)
                 txt2 = self._highlight_text(txt2)
-                self.text = f"{txt1}{txt2}{txt3}{cursor}"
+                txt3 = self.text[self.cursor_position + 1 :]
+                txt3 = pangocffi.markup_escape_text(txt3)
+                self.text = f"{txt1}{txt2}{txt3}"
             else:
                 self.text = pangocffi.markup_escape_text(self.text)
-                self.text += self._highlight_text(cursor)
+                self.text += self._highlight_text(" ")
             self.text = self.display + self.text
         else:
             self.text = ""
