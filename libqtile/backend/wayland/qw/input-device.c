@@ -5,6 +5,8 @@
 #include "cursor.h"
 #include "input-device.h"
 #include "keyboard.h"
+#include "pointer.h"
+#include "touch.h"
 #include "util.h"
 
 // Called when the device is destroyed
@@ -15,6 +17,14 @@ static void qw_input_device_handle_destroy(struct wl_listener *listener, void *d
     wl_list_remove(&input_device->destroy.link);
     wl_list_remove(&input_device->link);
     free(input_device);
+}
+
+static void qw_input_device_new_pointer(struct qw_server *server, struct wlr_input_device *device) {
+    // set up listeners for pointer gestures
+    qw_pointer_handle_new(server, device);
+
+    // Attach pointer device to the server's cursor
+    wlr_cursor_attach_input_device(server->cursor->cursor, device);
 }
 
 void qw_server_input_device_new(struct qw_server *server, struct wlr_input_device *device) {
@@ -44,7 +54,7 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
         }
         break;
     case WLR_INPUT_DEVICE_POINTER:
-        qw_server_new_pointer(server, device);
+        qw_input_device_new_pointer(server, device);
         break;
     case WLR_INPUT_DEVICE_TOUCH:
         qw_touch_handle_new(server, device);

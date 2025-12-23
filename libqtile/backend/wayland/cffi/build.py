@@ -156,8 +156,8 @@ cdef_files = [
     "cursor.h",
     "input-device.h",
     "keyboard.h",
-    "pointer.h",
     "touch.h",
+    "pointer.h",
 ]
 
 for file in cdef_files:

@@ -70,11 +70,14 @@ static void qw_gesture_reset(struct qw_touch *touch) {
 }
 
 void qw_handle_tap(struct qw_server *server, double x, double y) {
+    UNUSED(server);
     wlr_log(WLR_DEBUG, "Tap detected at %.3f, %.3f", x, y);
 }
 
 void qw_handle_pinch_or_rotate(struct qw_server *server, double pinch, double rotate,
                                double total_rotation) {
+    UNUSED(server);
+    UNUSED(total_rotation);
     if (fabs(pinch) > 0.0)
         wlr_log(WLR_DEBUG, "Pinch end: Δdistance=%.3f", pinch);
     if (fabs(rotate) > 0.0)
@@ -83,6 +86,7 @@ void qw_handle_pinch_or_rotate(struct qw_server *server, double pinch, double ro
 
 static void qw_handle_swipe(struct qw_server *server, size_t fingers, enum qw_swipe_dir dir,
                             double distance) {
+    UNUSED(server);
     const char *dir_str = (dir == QW_SWIPE_LEFT)    ? "left"
                           : (dir == QW_SWIPE_RIGHT) ? "right"
                           : (dir == QW_SWIPE_UP)    ? "up"
@@ -92,8 +96,9 @@ static void qw_handle_swipe(struct qw_server *server, size_t fingers, enum qw_sw
     // TODO: integrate with Qtile actions here
 }
 
-static void handle_touch_down(struct wl_listener *listener, void *data) {
+static void qw_touch_handle_down(struct wl_listener *listener, void *data) {
     struct qw_touch *touch = wl_container_of(listener, touch, down);
+    struct qw_server *server = touch->server;
     struct wlr_touch_down_event *event = data;
 
     struct qw_touch_point *p = calloc(1, sizeof(*p));
@@ -127,7 +132,7 @@ static void handle_touch_down(struct wl_listener *listener, void *data) {
                                        sy);
             touch->touched_surface = surface;
             touch->origin_sx = lx - sx;
-            touch->origin_sy - ly - sy;
+            touch->origin_sy = ly - sy;
         } else {
             touch->touched_surface = NULL;
             touch->origin_sx = 0;
@@ -170,7 +175,7 @@ static void handle_touch_down(struct wl_listener *listener, void *data) {
 //     }
 // }
 
-static void handle_touch_up(struct wl_listener *listener, void *data) {
+static void qw_touch_handle_up(struct wl_listener *listener, void *data) {
     struct qw_touch *touch = wl_container_of(listener, touch, up);
     struct wlr_touch_up_event *event = data;
 
@@ -182,6 +187,8 @@ static void handle_touch_up(struct wl_listener *listener, void *data) {
     uint32_t duration = event->time_msec - point->start_time_msec;
     double dx = point->x - point->start_x;
     double dy = point->y - point->start_y;
+    double up_x = point->x;
+    double up_y = point->y;
     double distance = sqrt(dx * dx + dy * dy);
 
     wlr_seat_touch_notify_up(touch->server->seat, event->time_msec, point->id);
@@ -206,7 +213,7 @@ static void handle_touch_up(struct wl_listener *listener, void *data) {
                 enum qw_swipe_dir dir = swipe_direction_from_angle(angle);
                 qw_handle_swipe(touch->server, 1, dir, distance);
             } else if (distance < TAP_MAX_DISTANCE && duration < TAP_MAX_DURATION) {
-                qw_handle_tap(touch->server, point->x, point->y);
+                qw_handle_tap(touch->server, up_x, up_y);
             }
         } else if (fingers >= 3) {
             // Multi-finger swipe
@@ -230,7 +237,7 @@ static void handle_touch_up(struct wl_listener *listener, void *data) {
     }
 }
 
-static void handle_touch_motion(struct wl_listener *listener, void *data) {
+static void qw_touch_handle_motion(struct wl_listener *listener, void *data) {
     struct qw_touch *touch = wl_container_of(listener, touch, motion);
     struct wlr_touch_motion_event *event = data;
 

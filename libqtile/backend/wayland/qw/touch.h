@@ -59,13 +59,6 @@ struct qw_touch {
     struct wl_list link;
 };
 
-enum qw_swipe_dir {
-    QW_SWIPE_LEFT,
-    QW_SWIPE_RIGHT,
-    QW_SWIPE_UP,
-    QW_SWIPE_DOWN,
-};
-
 // Functions to initialise and destroy touch device
 void qw_touch_handle_new(struct qw_server *server, struct wlr_input_device *device);
 void qw_touch_destroy(struct qw_server *server);

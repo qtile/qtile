@@ -370,14 +370,6 @@ static void qw_server_handle_renderer_lost(struct wl_listener *listener, void *d
     wlr_log(WLR_INFO, "Successfully recovered from GPU reset");
 }
 
-static void qw_server_new_pointer(struct qw_server *server, struct wlr_input_device *device) {
-    // set up listeners for pointer gestures
-    qw_pointer_handle_new(server, device);
-
-    // Attach pointer device to the server's cursor
-    wlr_cursor_attach_input_device(server->cursor->cursor, device);
-}
-
 // Handle new input devices: keyboard or pointer
 static void qw_server_handle_new_input(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, new_input);
