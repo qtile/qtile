@@ -1,7 +1,9 @@
 import argparse
 import glob
 import os
+import shutil
 import subprocess
+import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -13,11 +15,19 @@ from setuptools.command.build_ext import build_ext
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
 PKG_CONFIG = os.environ.get("PKG_CONFIG", "pkg-config")
-WAYLAND_SCANNER = subprocess.run(
-    [PKG_CONFIG, "--variable=wayland_scanner", "wayland-scanner"],
-    text=True,
-    stdout=subprocess.PIPE,
-).stdout.strip()
+WAYLAND_SCANNER = os.environ.get("QTILE_WAYLAND_SCANNER", shutil.which("wayland-scanner"))
+if not WAYLAND_SCANNER:
+    print(
+        "Didn't find a wayland-scanner executable in $PATH, and "
+        "$QTILE_WAYLAND_SCANNER is not set. Trying to get the path to it from "
+        "pkg-config",
+        file=sys.stderr,
+    )
+    WAYLAND_SCANNER = subprocess.run(
+        [PKG_CONFIG, "--variable=wayland_scanner", "wayland-scanner"],
+        text=True,
+        stdout=subprocess.PIPE,
+    ).stdout.strip()
 WAYLAND_PROTOCOLS = subprocess.run(
     [PKG_CONFIG, "--variable=pkgdatadir", "wayland-protocols"],
     text=True,
