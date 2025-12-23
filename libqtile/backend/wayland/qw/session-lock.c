@@ -7,6 +7,7 @@
 #include "output.h"
 #include "server.h"
 #include "util.h"
+#include <stdlib.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_session_lock_v1.h>
 
