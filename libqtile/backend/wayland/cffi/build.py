@@ -12,13 +12,14 @@ from setuptools.command.build_ext import build_ext
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
 
+PKG_CONFIG = os.environ.get("PKG_CONFIG", "pkg-config")
 WAYLAND_SCANNER = subprocess.run(
-    ["pkg-config", "--variable=wayland_scanner", "wayland-scanner"],
+    [PKG_CONFIG, "--variable=wayland_scanner", "wayland-scanner"],
     text=True,
     stdout=subprocess.PIPE,
 ).stdout.strip()
 WAYLAND_PROTOCOLS = subprocess.run(
-    ["pkg-config", "--variable=pkgdatadir", "wayland-protocols"],
+    [PKG_CONFIG, "--variable=pkgdatadir", "wayland-protocols"],
     text=True,
     stdout=subprocess.PIPE,
 ).stdout.strip()
