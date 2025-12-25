@@ -5,6 +5,8 @@
 #include "cursor.h"
 #include "input-device.h"
 #include "keyboard.h"
+#include "pointer.h"
+#include "touch.h"
 #include "util.h"
 
 // Called when the device is destroyed
@@ -15,6 +17,14 @@ static void qw_input_device_handle_destroy(struct wl_listener *listener, void *d
     wl_list_remove(&input_device->destroy.link);
     wl_list_remove(&input_device->link);
     free(input_device);
+}
+
+static void qw_input_device_new_pointer(struct qw_server *server, struct wlr_input_device *device) {
+    // set up listeners for pointer gestures
+    qw_pointer_handle_new(server, device);
+
+    // Attach pointer device to the server's cursor
+    wlr_cursor_attach_input_device(server->cursor->cursor, device);
 }
 
 void qw_server_input_device_new(struct qw_server *server, struct wlr_input_device *device) {
@@ -42,11 +52,12 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
         if (server->lock != NULL) {
             qw_session_lock_focus_first_lock_surface(server);
         }
-
         break;
     case WLR_INPUT_DEVICE_POINTER:
-        // Attach a new pointer device to the server's cursor
-        wlr_cursor_attach_input_device(server->cursor->cursor, device);
+        qw_input_device_new_pointer(server, device);
+        break;
+    case WLR_INPUT_DEVICE_TOUCH:
+        qw_touch_handle_new(server, device);
         break;
     default:
         break;
@@ -54,6 +65,9 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
     uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
     if (!wl_list_empty(&server->keyboards)) {
         caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+    }
+    if (!wl_list_empty(&server->touches)) {
+        caps |= WL_SEAT_CAPABILITY_TOUCH;
     }
     wlr_seat_set_capabilities(server->seat, caps);
 

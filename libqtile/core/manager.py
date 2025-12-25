@@ -27,7 +27,19 @@ from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject, expose_command
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
-from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Rule, Screen, ScreenRect
+from libqtile.config import (
+    Click,
+    Drag,
+    Key,
+    KeyChord,
+    Match,
+    Mouse,
+    Pinch,
+    Rule,
+    Screen,
+    ScreenRect,
+    Swipe,
+)
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import LoopContext
@@ -149,6 +161,9 @@ class Qtile(CommandObject):
 
         for button in self.config.mouse:
             self.grab_button(button)
+
+        for gesture in self.config.gestures:
+            gesture.modmask = self.core.translate_masks(gesture.modifiers)
 
         if self._state:
             if isinstance(self._state, str):
@@ -965,6 +980,62 @@ class Qtile(CommandObject):
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse command error %s: %s", i.name, val)
+
+    def process_pointer_swipe(
+        self, modmask: int, sequence: str, fingers: int, check_only: bool = False
+    ) -> bool:
+        handled = False
+
+        for g in self.config.gestures:
+            if not isinstance(g, Swipe):
+                continue
+            if check_only:
+                if all((g.modmask == modmask, g.sequence[0] == sequence)):
+                    return True
+                else:
+                    continue
+            if not all((g.modmask == modmask, g.sequence == sequence)):
+                continue
+            if g._fingers is not None and g._fingers != fingers:
+                continue
+            for i in g.commands:
+                if i.check(self):
+                    status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs, False))
+                    if status in (interface.ERROR, interface.EXCEPTION):
+                        logger.error("Swipe gesture command error %s: %s", i.name, val)
+                    handled = True
+            break
+
+        return handled
+
+    def process_pointer_pinch(
+        self, modmask: int, shrink: bool, clockwise: bool, fingers: int, check_only: bool = False
+    ) -> bool:
+        handled = False
+
+        for g in self.config.gestures:
+            if not isinstance(g, Pinch):
+                continue
+            if g.modmask != modmask:
+                continue
+            if g._shrink is not None and g._shrink != shrink:
+                continue
+            if g._clockwise is not None and g._clockwise != clockwise:
+                continue
+            if g._fingers is not None and g._fingers != fingers:
+                continue
+            if check_only:
+                return True
+
+            for i in g.commands:
+                if i.check(self):
+                    status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs, False))
+                    if status in (interface.ERROR, interface.EXCEPTION):
+                        logger.error("Pinch gesture command error %s: %s", i.name, val)
+                    handled = True
+            break
+
+        return handled
 
     def warp_to_screen(self) -> None:
         if self.current_screen:

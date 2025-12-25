@@ -31,6 +31,7 @@
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output_power_management_v1.h>
 #include <wlr/types/wlr_pointer.h>
+#include <wlr/types/wlr_pointer_gestures_v1.h>
 #include <wlr/types/wlr_presentation_time.h>
 #include <wlr/types/wlr_primary_selection.h>
 #include <wlr/types/wlr_primary_selection_v1.h>
@@ -40,6 +41,7 @@
 #include <wlr/types/wlr_session_lock_v1.h>
 #include <wlr/types/wlr_single_pixel_buffer_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
+#include <wlr/types/wlr_touch.h>
 #include <wlr/types/wlr_viewporter.h>
 #include <wlr/types/wlr_virtual_keyboard_v1.h>
 #include <wlr/types/wlr_virtual_pointer_v1.h>
@@ -104,6 +106,14 @@ struct wlr_output;
 // Output dimensions callback: x, y, width, height, wlr_output
 typedef void (*output_dims_cb_t)(int x, int y, int width, int height,
                                  struct wlr_output *wlr_output);
+
+// Pointer swipe event callback: modifiers, swipe sequence, fingers, check_only, user data
+typedef int (*pointer_swipe_cb_t)(uint32_t mask, const char *sequence, uint32_t fingers,
+                                  bool check_only, void *userdata);
+
+// Pointer swipe event callback: modifiers, shrink, clockwise, fingers, check_only, user data
+typedef int (*pointer_pinch_cb_t)(uint32_t mask, bool shrink, bool clockwise, uint32_t fingers,
+                                  bool check_only, void *userdata);
 
 // Query tree node wid callback
 typedef void (*node_wid_cb_t)(int wid);
@@ -193,6 +203,8 @@ struct qw_server {
     unmanage_view_cb_t unmanage_view_cb;
     cursor_motion_cb_t cursor_motion_cb;
     cursor_button_cb_t cursor_button_cb;
+    pointer_swipe_cb_t pointer_swipe_cb;
+    pointer_pinch_cb_t pointer_pinch_cb;
     on_screen_change_cb_t on_screen_change_cb;
     on_screen_reserve_space_cb_t on_screen_reserve_space_cb;
     view_activation_cb_t view_activation_cb;
@@ -233,8 +245,11 @@ struct qw_server {
     struct wl_listener renderer_lost;
     struct wl_list keyboards;
     struct wl_list input_devices;
+    struct wl_list pointers;
+    struct wl_list touches;
     struct wlr_seat *seat;
     struct qw_cursor *cursor;
+    struct wlr_pointer_gestures_v1 *pointer_gestures;
     struct wlr_xdg_shell *xdg_shell;
     struct wlr_layer_shell_v1 *layer_shell;
     struct wlr_xdg_decoration_manager_v1 *xdg_decoration_mgr;
