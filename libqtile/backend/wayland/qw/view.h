@@ -153,4 +153,6 @@ void qw_view_ftl_manager_handle_create(struct qw_view *view);
 void qw_view_ftl_manager_handle_destroy(struct qw_view *view);
 void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, int height);
 
+struct qw_output *qw_view_get_primary_output(struct qw_view *view);
+
 #endif /* VIEW_H */
