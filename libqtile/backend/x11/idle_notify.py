@@ -16,7 +16,7 @@ class IdleNotifier(BaseIdleNotifier):
 
     @property
     def has_timeout(self):
-        return self.index < len(self.timeouts)
+        return self.timeouts and self.index < len(self.timeouts)
 
     def run(self):
         if not self.has_screen_saver:
@@ -33,7 +33,8 @@ class IdleNotifier(BaseIdleNotifier):
 
     def reset(self):
         self.index = 0
-        self.set_timer()
+        if self.has_timeout:
+            self.set_timer()
 
     def set_timer(self):
         interval = self.timeout_increments[self.index]
@@ -69,3 +70,7 @@ class IdleNotifier(BaseIdleNotifier):
             self.handle_resume()
 
         return True
+
+    def clear_timers(self) -> None:
+        super().clear_timers()
+        self.reset()

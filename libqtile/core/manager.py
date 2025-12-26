@@ -193,8 +193,8 @@ class Qtile(CommandObject):
         if self.config.idle_inhibitors:
             self.core.idle_inhibitor_manager.set_hooks()
 
+        self.core.idle_notifier.clear_timers()
         if self.config.idle_timers:
-            self.core.idle_notifier.clear_timers()
             self.core.idle_notifier.start()
 
         if initial:
