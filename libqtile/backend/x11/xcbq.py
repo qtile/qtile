@@ -16,6 +16,7 @@ import cairocffi.pixbuf
 import cairocffi.xcb
 import xcffib
 import xcffib.randr
+import xcffib.screensaver
 import xcffib.xinerama
 import xcffib.xproto
 from xcffib.xfixes import SelectionEventMask
@@ -407,6 +408,22 @@ class Xinerama:
         return r.screen_info
 
 
+class ScreenSaver:
+    def __init__(self, conn):
+        self.conn = conn
+        self.ext = conn.conn(xcffib.screensaver.key)
+        self.ext.QueryVersion(xcffib.screensaver.MAJOR_VERSION, xcffib.screensaver.MINOR_VERSION)
+
+    def select_events(self, root):
+        self.ext.SelectInput(
+            root, xcffib.screensaver.Event.NotifyMask | xcffib.screensaver.Event.CycleMask
+        )
+
+    def set_interval(self, interval):
+        self.conn.conn.core.SetScreenSaver(interval, 60, False, False)
+        self.conn.conn.flush()
+
+
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
@@ -477,6 +494,7 @@ class Connection:
         "xinerama": Xinerama,
         "randr": RandR,
         "xfixes": XFixes,
+        "mit-screen-saver": ScreenSaver,
     }
 
     def __init__(self, display):
@@ -490,7 +508,7 @@ class Connection:
 
         for i in extensions:
             if i in self._extmap:
-                setattr(self, i, self._extmap[i](self))
+                setattr(self, i.replace("-", "_"), self._extmap[i](self))
 
         self.atoms = AtomCache(self)
 
