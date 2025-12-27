@@ -43,6 +43,7 @@ class IdleNotifier:
                 logger.exception("Error when trying to run idle timer command.")
 
     def fire_action(self, timeout: int) -> None:
+        self.core.idle_inhibitor_manager.check()
         for timer in self.timers:
             if timer.timeout == timeout and timer.action is not None:
                 if not (self.core.inhibited and timer.respect_inhibitor):
