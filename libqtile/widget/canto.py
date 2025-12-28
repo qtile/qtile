@@ -4,7 +4,7 @@ from libqtile.widget import base
 
 
 class Canto(base.BackgroundPoll):
-    """Display RSS tags updates using the canto console reader
+    """Display RSS feeds updates using the canto console reader
 
     Widget requirements: canto_
 
@@ -13,7 +13,7 @@ class Canto(base.BackgroundPoll):
 
     defaults = [
         ("fetch", False, "Whether to fetch new items on update"),
-        ("tags", [], "List of tags to display, empty for all"),
+        ("feeds", [], "List of feeds to display, empty for all"),
         ("one_format", "{name}: {number}", "One feed display format"),
         ("all_format", "{number}", "All feeds display format"),
     ]
@@ -23,18 +23,20 @@ class Canto(base.BackgroundPoll):
         self.add_defaults(Canto.defaults)
 
     def poll(self):
-        if self.fetch:
-            call(["canto-remote", "force-update"])
-        if not self.tags:
-            output = self.all_format.format(number=self.call_process(["canto-remote", "status"]))
+        if not self.feeds:
+            arg = "-a"
+            if self.fetch:
+                arg += "u"
+            output = self.all_format.format(number=self.call_process(["canto", arg])[:-1])
             return output
         else:
+            if self.fetch:
+                call(["canto", "-u"])
             return "".join(
                 [
                     self.one_format.format(
-                        name=tag,
-                        number=self.call_process(["canto-remote", "status", "--tag", tag])[:-1],
+                        name=feed, number=self.call_process(["canto", "-n", feed])[:-1]
                     )
-                    for tag in self.tags
+                    for feed in self.feeds
                 ]
             )
