@@ -1,4 +1,8 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! Breaking changes !!!
+      - Removed the cmus and moc widgets. These were GPL licensed, and as such
+        incompatible with our MIT license. They were added to the tree by
+        mistake.
     * features
     * bugfixes
 
