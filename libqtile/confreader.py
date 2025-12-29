@@ -75,7 +75,8 @@ class Config:
             try:
                 value = settings[key]
             except KeyError:
-                value = getattr(self, key, default[key])
+                # Always fall back to default config value
+                value = default[key]
             setattr(self, key, value)
 
     def _reload_config_submodules(self, path: Path) -> None:
@@ -109,11 +110,18 @@ class Config:
 
         if name in sys.modules:
             self._reload_config_submodules(path)
-            config = importlib.reload(sys.modules[name])
-        else:
-            config = importlib.import_module(name)
 
-        self.update(**vars(config))
+            # Using reload updates the existing module namespace with new values.
+            # If a value is removed from the config, the old value is not removed.
+            # To fix this, we exec the config and store the values in a globals dict
+            config = {}
+            with open(self.file_path) as f:
+                code = compile(f.read(), self.file_path, "exec")
+            exec(code, config)
+        else:
+            config = vars(importlib.import_module(name))
+
+        self.update(**config)
 
     def validate(self) -> None:
         """
