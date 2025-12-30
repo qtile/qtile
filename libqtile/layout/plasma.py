@@ -944,7 +944,9 @@ class Plasma(Layout):
         self.add_mode = None
 
     def remove(self, client):
-        self.root.find_payload(client).remove()
+        payload = self.root.find_payload(client)
+        if payload is not None:
+            payload.remove()
 
     def configure(self, client, screen_rect):
         self.root.x = screen_rect.x
