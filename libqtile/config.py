@@ -469,7 +469,11 @@ class Screen(CommandObject):
 
         # prefer serial numbers: if a monitor has its geometry changed, this
         # still allows us to reason correctly about focus.
-        if self.serial is not None and other.serial is not None:
+        if (
+            self.serial is not None
+            and other.serial is not None
+            and self.serial.strip() != "000000000000"
+        ):
             return self.serial == other.serial
 
         # but if not, fall back to what we have: geometry.

@@ -211,7 +211,7 @@ def parse_serial_from_edid(raw):
         if t[0:2] != b"\x00\x00":
             continue
         # https://en.wikipedia.org/wiki/Extended_Display_Identification_Data#Monitor_Descriptors
-        content = t[5:].decode("cp437")
+        content = t[5:].decode("cp437").strip()
         if t[3] == 0xFF:
             serial = content
 
@@ -223,11 +223,14 @@ def parse_serial_from_edid(raw):
         # serial and hope for the best. if only they had used, you know, one
         # of the masks that indicated serial or name!
         if t[3] == 0xFE:
-            content = t[5:].decode("cp437")
+            content = t[5:].decode("cp437").strip()
             if name is None:
                 name = content
             else:
                 serial = content
+
+    if serial == "000000000000":
+        serial = None
 
     return (serial, name)
 
