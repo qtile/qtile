@@ -291,8 +291,8 @@ class Core(base.Core):
         lib.qw_log_init(get_wlr_log_level(), lib.log_cb)
 
     def clear_focus(self) -> None:
-        """Clear TODO so that there is no focused window"""
-        # TODO
+        """Clear focus so that there is no focused window"""
+        lib.qw_server_keyboard_clear_focus(self.qw)
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""

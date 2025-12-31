@@ -130,6 +130,8 @@ xkb_keysym_t qw_server_get_sym_from_code(struct qw_server *server, int code) {
 void qw_server_keyboard_clear_focus(struct qw_server *server) {
     struct wlr_seat *seat = server->seat;
     wlr_seat_keyboard_clear_focus(seat);
+    // Deactivate any existing pointer constraints
+    qw_cursor_constrain_cursor(server->cursor, NULL);
 }
 
 // Handle when a new output (monitor/display) is connected.

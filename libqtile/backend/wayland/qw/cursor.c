@@ -473,6 +473,11 @@ static void check_constraint_region(struct qw_cursor *cursor) {
     if (cursor->active_confine_requires_warp && view) {
         cursor->active_confine_requires_warp = false;
 
+        // We may be over the constrained surface but haven't got pointer focus yet
+        if (cursor->server->seat->pointer_state.focused_surface != constraint->surface) {
+            qw_cursor_update_pointer_focus(cursor);
+        }
+
         double sx = cursor->cursor->x - view->x;
         double sy = cursor->cursor->y - view->y;
 
@@ -505,8 +510,8 @@ static void qw_cursor_handle_constraint_commit(struct wl_listener *listener, voi
     check_constraint_region(cursor);
 }
 
-static void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
-                                       struct wlr_pointer_constraint_v1 *constraint) {
+void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
+                                struct wlr_pointer_constraint_v1 *constraint) {
     if (cursor->active_constraint == constraint) {
         return;
     }
