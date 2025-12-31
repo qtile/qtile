@@ -429,8 +429,8 @@ static void warp_to_constraint_cursor_hint(struct qw_cursor *cursor) {
             return;
         }
 
-        double lx = sx - view->x;
-        double ly = sy - view->y;
+        double lx = view->x + sx;
+        double ly = view->y + sy;
 
         wlr_cursor_warp(cursor->cursor, NULL, lx, ly);
 
@@ -474,8 +474,8 @@ static void check_constraint_region(struct qw_cursor *cursor) {
     if (cursor->active_confine_requires_warp && view) {
         cursor->active_confine_requires_warp = false;
 
-        double sx = cursor->cursor->x + view->x;
-        double sy = cursor->cursor->y + view->y;
+        double sx = cursor->cursor->x - view->x;
+        double sy = cursor->cursor->y - view->y;
 
         if (!pixman_region32_contains_point(region, floor(sx), floor(sy), NULL)) {
             int nboxes;
