@@ -37,4 +37,4 @@ def test_edid_decoding():
 
     (serial, name) = xcbq.parse_serial_from_edid(edid)
     assert serial == "ATNA40YK20-0"
-    assert name == "SDC          "
+    assert name == "SDC"
