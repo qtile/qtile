@@ -239,16 +239,10 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
 static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     // Handle pointer button press/release event
     struct qw_cursor *cursor = wl_container_of(listener, cursor, button);
+    struct wlr_seat *seat = cursor->server->seat;
     struct wlr_pointer_button_event *event = data;
 
     qw_server_idle_notify_activity(cursor->server);
-
-    // When the pointer is constrained, skip further processing
-    if (cursor->active_constraint && event->pointer->base.type == WLR_INPUT_DEVICE_POINTER) {
-        wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
-                                       event->state);
-        return;
-    }
 
     // Translate event button to internal code (e.g. BTN_LEFT)
     uint32_t button = qw_util_get_button_code(event->button);
@@ -267,22 +261,27 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
         if (cursor->implicit_grab.live) {
             wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                            event->state);
-            qw_cursor_release_implicit_grab(cursor, event->time_msec);
+            if (pressed_button_count == 0) {
+                qw_cursor_release_implicit_grab(cursor, event->time_msec);
+            }
             return;
         }
 
-        handled = qw_cursor_process_button(cursor, button, pressed);
+        // When the pointer is constrained, skip further processing
+        if (!cursor->active_constraint || event->pointer->base.type != WLR_INPUT_DEVICE_POINTER) {
+            handled = qw_cursor_process_button(cursor, button, pressed);
+
+            if (!handled) {
+                struct wlr_surface *surface = seat->pointer_state.focused_surface;
+                struct wlr_drag *drag = cursor->server->seat->drag;
+                if (pressed_button_count == 1 && surface != NULL && drag == NULL) {
+                    qw_cursor_create_implicit_grab(cursor, event->time_msec);
+                }
+            }
+        }
     }
 
     if (!handled) {
-        struct wlr_seat *seat = cursor->server->seat;
-        struct wlr_surface *surface = seat->pointer_state.focused_surface;
-        struct wlr_drag *drag = cursor->server->seat->drag;
-
-        if (pressed_button_count == 1 && surface != NULL && drag == NULL) {
-            qw_cursor_create_implicit_grab(cursor, event->time_msec);
-        }
-
         wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                        event->state);
     }
