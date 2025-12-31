@@ -187,6 +187,7 @@ class TestManager:
 
         def run_qtile():
             try:
+                rpipe.close()
                 os.environ.pop("DISPLAY", None)
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 init_log(self.log_level)
@@ -210,23 +211,29 @@ class TestManager:
                 lifecycle._atexit()
             except Exception:
                 wpipe.send(traceback.format_exc())
+            finally:
+                wpipe.close()
 
         self.proc = multiprocessing.Process(target=run_qtile)
         self.proc.start()
+        wpipe.close()
         os.close(writelogs)
         self.logspipe = readlogs
 
         # First, wait for socket to appear
-        if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
-            ipc_client = ipc.Client(self.sockfile)
-            ipc_command = command.interface.IPCCommandInterface(ipc_client)
-            self.c = command.client.InteractiveCommandClient(ipc_command)
-            self.backend.configure(self)
-            return
-        if rpipe.poll(0.1):
-            error = rpipe.recv()
-            raise AssertionError(f"Error launching qtile, traceback:\n{error}")
-        raise AssertionError("Error launching qtile")
+        try:
+            if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
+                ipc_client = ipc.Client(self.sockfile)
+                ipc_command = command.interface.IPCCommandInterface(ipc_client)
+                self.c = command.client.InteractiveCommandClient(ipc_command)
+                self.backend.configure(self)
+                return
+            if rpipe.poll(0.1):
+                error = rpipe.recv()
+                raise AssertionError(f"Error launching qtile, traceback:\n{error}")
+            raise AssertionError("Error launching qtile")
+        finally:
+            rpipe.close()
 
     def create_manager(self, config_class):
         """Create a Qtile manager instance in this thread
