@@ -182,6 +182,13 @@ class PulseVolume(VolumeBase):
     def __init__(self, **config):
         VolumeBase.__init__(self, **config)
         self.add_defaults(PulseVolume.defaults)
+        self.add_callbacks(
+            {
+                "Button1": self.mute,
+                "Button4": self.increase_vol,
+                "Button5": self.decrease_vol,
+            }
+        )
         self.volume = 0
         self.is_mute = 0
         self._previous_state = (-1.0, -1)
