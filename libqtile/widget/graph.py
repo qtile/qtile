@@ -120,7 +120,7 @@ class _Graph(base._Widget, base.MarginMixin):
                 self.margin_x + self.border_width / 2.0,
                 self.margin_y + self.border_width / 2.0,
                 self.graphwidth + self.border_width,
-                self.graphheight - self.border_width,
+                self.graphheight + self.border_width,
             )
             self.drawer.ctx.stroke()
         x = self.margin_x + self.border_width
