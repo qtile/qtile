@@ -1,10 +1,5 @@
-from subprocess import call
-
-from libqtile.widget import base
-
-from libqtile.widget.generic_poll_text import GenPollCommand
-
 from libqtile.log_utils import logger
+from libqtile.widget.generic_poll_text import GenPollCommand
 
 
 class Canto(GenPollCommand):
