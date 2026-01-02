@@ -30,6 +30,9 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             calc = self.bar.size - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
 
+        if self.padding is None:
+            self.padding = self.fontsize // 2
+
         self.layout = self.drawer.textlayout(
             "", "ffffff", self.font, self.fontsize, self.fontshadow, markup=self.markup
         )
