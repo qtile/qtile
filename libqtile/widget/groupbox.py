@@ -24,7 +24,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         return width + self.padding_x * 2 + self.borderwidth * 2
 
     def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
+        base._TextBox._configure(self, qtile, bar)
 
         if self.fontsize is None:
             calc = self.bar.size - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
