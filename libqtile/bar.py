@@ -693,7 +693,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 )
 
         for i in self.widgets:
-            i.draw()
+            try:
+                i.draw()
+            except Exception:
+                logger.exception("Widget failed to draw")
 
         # We need to check if there is any unoccupied space in the bar
         # This can happen where there are no SPACER-type widgets to fill
