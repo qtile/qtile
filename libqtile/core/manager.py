@@ -428,8 +428,7 @@ class Qtile(CommandObject):
         )
 
         for i, info in enumerate(output_info):
-            scr = Screen(serial=info.serial)
-            scr.name = info.name
+            scr = Screen(serial=info.serial, name=info.name)
             fresh_screen = True
 
             # first, try to find a screen that matches this one by serial
@@ -447,6 +446,16 @@ class Qtile(CommandObject):
                     if screen.serial == info.serial:
                         scr = screen
                         fresh_screen = False
+                        logger.debug(
+                            f"using config serial {screen.serial} for output {info.name}"
+                        )
+                        break
+
+                if screen.name is not None:
+                    if screen.name == info.name:
+                        scr = screen
+                        fresh_screen = False
+                        logger.debug(f"using config name {screen.name} for output {info.name}")
                         break
 
             # if we didn't find one by serial number, take the ith screen
@@ -454,13 +463,17 @@ class Qtile(CommandObject):
             if fresh_screen and i < len(config):
                 if config[i].serial is not None and config[i].serial != info.serial:
                     logger.warning(
-                        "using config serial %s for physical serial %s", scr.serial, info.serial
+                        "using config serial %s for output %s with physical serial %s",
+                        config[i].serial,
+                        info.name,
+                        info.serial,
                     )
                     # we need a copy here in case the ith window was a
                     # previously used serial number
                     scr = copy.copy(config[i])
                 else:
                     scr = config[i]
+                    logger.debug(f"using config at index {i} for output {info.name}")
 
                 scr.serial = info.serial
                 scr.name = info.name
