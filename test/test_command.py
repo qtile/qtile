@@ -473,19 +473,6 @@ def test_decorators_direct_call():
     assert widget.mapped() == "OK"
 
 
-def test_decorators_deprecated_direct_call():
-    widget = DecoratedTextBox()
-    assert widget.cmd_exposed() == "OK"
-
-
-def test_decorators_deprecated_method():
-    class CmdWidget(libqtile.widget.TextBox):
-        def cmd_exposed(self):
-            pass
-
-    assert "exposed" in CmdWidget().commands()
-
-
 @dualmonitor
 @server_config
 def test_decorators_manager_call(manager):
