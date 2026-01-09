@@ -572,7 +572,7 @@ class Window(_Window, metaclass=ABCMeta):
 
     def add_config_inhibitors(self) -> None:
         for rule in self.qtile.config.idle_inhibitors:
-            if rule.match is None or rule.match.compare(self):
+            if rule.function is None and (rule.match is None or rule.match.compare(self)):
                 self.add_idle_inhibitor(rule.when)
 
     @expose_command()
