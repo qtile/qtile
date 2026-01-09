@@ -98,4 +98,13 @@ def test_net_use_prefix(patch_net):
     assert net6.poll() == "all: U 0.04MB 440.0kB D 1.2MB 13.2MB T 1.24MB 13.64MB"
 
 
+def test_net_missing_interface(patch_net):
+    """Tests `missing_interface` option"""
+    net7 = patch_net(interface="unknown_interface")
+    assert net7.poll() == "unknown_interface not found"
+
+    net8 = patch_net(interface="unknown_interface", missing_interface="")
+    assert net8.poll() == ""
+
+
 # Untested: 128-129 - generic exception catching
