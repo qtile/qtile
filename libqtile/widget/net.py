@@ -4,7 +4,6 @@ from math import log
 
 import psutil
 
-from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
@@ -38,6 +37,11 @@ class Net(base.InLoopPollText):
             "format",
             "{interface}: {down:6.2f}{down_suffix:<2}\u2193\u2191{up:6.2f}{up_suffix:<2}",
             "Display format of down/upload/total speed of given interfaces",
+        ),
+        (
+            "missing_interface",
+            "{interface} not found",
+            "Display when interface is missing/unavailable.",
         ),
         (
             "interface",
@@ -125,47 +129,54 @@ class Net(base.InLoopPollText):
 
     def poll(self):
         ret_stat = []
-        try:
-            new_stats = self.get_stats()
-            for intf in self.interface:
-                down = new_stats[intf]["down"] - self.stats[intf]["down"]
-                up = new_stats[intf]["up"] - self.stats[intf]["up"]
-                total = new_stats[intf]["total"] - self.stats[intf]["total"]
+        new_stats = self.get_stats()
+        for intf in self.interface:
+            if intf not in new_stats:
+                ret_stat.append(self.missing_interface.format(interface=intf))
+                continue
 
-                down = down / self.update_interval
-                up = up / self.update_interval
-                total = total / self.update_interval
-                down, down_suffix = self.convert_b(down, self.prefix)
-                down_cumulative, down_cumulative_suffix = self.convert_b(
-                    new_stats[intf]["down"], self.cumulative_prefix
-                )
-                up, up_suffix = self.convert_b(up, self.prefix)
-                up_cumulative, up_cumulative_suffix = self.convert_b(
-                    new_stats[intf]["up"], self.cumulative_prefix
-                )
-                total, total_suffix = self.convert_b(total, self.prefix)
-                total_cumulative, total_cumulative_suffix = self.convert_b(
-                    new_stats[intf]["total"], self.cumulative_prefix
-                )
+            # This is for any interfaces that appear after the widget has started.
+            # In that scenario, new_stats[intf] will exist but self.stats[intf] would result
+            # in a KeyError, so we populate it now.
+            if intf not in self.stats:
                 self.stats[intf] = new_stats[intf]
-                ret_stat.append(
-                    self.format.format(
-                        interface=intf,
-                        down=down,
-                        down_suffix=down_suffix,
-                        down_cumulative=down_cumulative,
-                        down_cumulative_suffix=down_cumulative_suffix,
-                        up=up,
-                        up_suffix=up_suffix,
-                        up_cumulative=up_cumulative,
-                        up_cumulative_suffix=up_cumulative_suffix,
-                        total=total,
-                        total_suffix=total_suffix,
-                        total_cumulative=total_cumulative,
-                        total_cumulative_suffix=total_cumulative_suffix,
-                    )
-                )
 
-            return " ".join(ret_stat)
-        except Exception:
-            logger.exception("Net widget errored while polling:")
+            down = new_stats[intf]["down"] - self.stats[intf]["down"]
+            up = new_stats[intf]["up"] - self.stats[intf]["up"]
+            total = new_stats[intf]["total"] - self.stats[intf]["total"]
+
+            down = down / self.update_interval
+            up = up / self.update_interval
+            total = total / self.update_interval
+            down, down_suffix = self.convert_b(down, self.prefix)
+            down_cumulative, down_cumulative_suffix = self.convert_b(
+                new_stats[intf]["down"], self.cumulative_prefix
+            )
+            up, up_suffix = self.convert_b(up, self.prefix)
+            up_cumulative, up_cumulative_suffix = self.convert_b(
+                new_stats[intf]["up"], self.cumulative_prefix
+            )
+            total, total_suffix = self.convert_b(total, self.prefix)
+            total_cumulative, total_cumulative_suffix = self.convert_b(
+                new_stats[intf]["total"], self.cumulative_prefix
+            )
+            self.stats[intf] = new_stats[intf]
+            ret_stat.append(
+                self.format.format(
+                    interface=intf,
+                    down=down,
+                    down_suffix=down_suffix,
+                    down_cumulative=down_cumulative,
+                    down_cumulative_suffix=down_cumulative_suffix,
+                    up=up,
+                    up_suffix=up_suffix,
+                    up_cumulative=up_cumulative,
+                    up_cumulative_suffix=up_cumulative_suffix,
+                    total=total,
+                    total_suffix=total_suffix,
+                    total_cumulative=total_cumulative,
+                    total_cumulative_suffix=total_cumulative_suffix,
+                )
+            )
+
+        return " ".join(ret_stat)
