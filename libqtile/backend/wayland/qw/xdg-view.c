@@ -444,6 +444,11 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
 
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
 
+    // Create foreign toplevel manager and listeners
+    if (xdg_view->base.ftl_handle == NULL) {
+        qw_view_ftl_manager_handle_create(&xdg_view->base);
+    }
+
     // Set foreign top level attributes
     if (xdg_view->base.ftl_handle != NULL) {
         if (xdg_view->base.title != NULL) {
@@ -658,9 +663,6 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->scene_tree =
         wlr_scene_xdg_surface_create(xdg_view->base.content_tree, xdg_toplevel->base);
     xdg_toplevel->base->data = xdg_view;
-
-    // Create foreign toplevel manager and listeners
-    qw_view_ftl_manager_handle_create(&xdg_view->base);
 
     // Assign function pointers for base view operations
     xdg_view->base.get_tree_node = qw_xdg_view_get_tree_node;
