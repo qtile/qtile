@@ -565,6 +565,11 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
 
     xwayland_view->base.skip_taskbar = xwayland_surface->skip_taskbar;
 
+    // Create foreign toplevel manager and listeners
+    if (xwayland_view->base.ftl_handle == NULL) {
+        qw_view_ftl_manager_handle_create(&xwayland_view->base);
+    }
+
     // Set properties for foreign toplevel manager
     if (xwayland_view->base.ftl_handle != NULL) {
         if (xwayland_view->base.title != NULL) {
@@ -862,10 +867,6 @@ void qw_server_xwayland_view_new(struct qw_server *server,
         wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xwayland_view->base.content_tree->node.data = xwayland_view;
     xwayland_view->base.layer = LAYER_LAYOUT;
-
-    // Create foreign toplevel manager and listeners
-    // Needs to be after content tree is created as we create an output tracking scene buffer
-    qw_view_ftl_manager_handle_create(&xwayland_view->base);
 
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
     xwayland_view->destroy.notify = qw_xwayland_view_handle_destroy;
