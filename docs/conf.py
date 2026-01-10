@@ -101,7 +101,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Qtile"
-copyright = "2008-2021, Aldo Cortesi and contributers"
+copyright = "2008-2026, the Qtile contributors"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -294,7 +294,7 @@ texinfo_documents = [
         "index",
         "Qtile",
         "Qtile Documentation",
-        "Aldo Cortesi",
+        "The Qtile contributors",
         "Qtile",
         "A hackable tiling window manager.",
         "Miscellaneous",
