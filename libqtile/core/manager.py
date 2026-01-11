@@ -433,7 +433,8 @@ class Qtile(CommandObject):
 
             # first, try to find a screen that matches this one by serial
             # number
-            for screen in config:
+            matched_screen_index = None
+            for j, screen in enumerate(config):
                 if screen.serial is not None:
                     if not have_serials_from_hardware:
                         # if no hardware provided a serial and people provided
@@ -446,6 +447,7 @@ class Qtile(CommandObject):
                     if screen.serial == info.serial:
                         scr = screen
                         fresh_screen = False
+                        matched_screen_index = j
                         logger.debug(
                             f"using config serial {screen.serial} for output {info.name}"
                         )
@@ -455,6 +457,7 @@ class Qtile(CommandObject):
                     if screen.name == info.name:
                         scr = screen
                         fresh_screen = False
+                        matched_screen_index = j
                         logger.debug(f"using config name {screen.name} for output {info.name}")
                         break
 
@@ -483,14 +486,25 @@ class Qtile(CommandObject):
                 reloading = False
 
             grp = None
-            if i < len(current_groups):
-                grp = current_groups[i]
+            if matched_screen_index is not None:
+                if matched_screen_index < len(current_groups):
+                    grp = current_groups[matched_screen_index]
+                else:
+                    # We need to assign a new group
+                    # Get an available group or create a new one
+                    grp = self.get_available_group(matched_screen_index)
+                    if grp is None:
+                        grp = self.add_autogen_group(i)
+
             else:
-                # We need to assign a new group
-                # Get an available group or create a new one
-                grp = self.get_available_group(i)
-                if grp is None:
-                    grp = self.add_autogen_group(i)
+                if i < len(current_groups):
+                    grp = current_groups[i]
+                else:
+                    # We need to assign a new group
+                    # Get an available group or create a new one
+                    grp = self.get_available_group(i)
+                    if grp is None:
+                        grp = self.add_autogen_group(i)
 
             # If the screen has changed position and/or size, or is a new screen then make sure that any gaps/bars
             # are reconfigured
