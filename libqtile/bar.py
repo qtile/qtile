@@ -410,7 +410,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         if self.future:
             self.future.cancel()
         for widget in self.widgets:
-            widget.finalize()
+            if not widget.finalized:
+                widget.finalize()
         if hasattr(self, "drawer"):
             self.drawer.finalize()
             del self.drawer

@@ -349,7 +349,8 @@ class Qtile(CommandObject):
         """
         try:
             for widget in self.widgets_map.values():
-                widget.finalize()
+                if not widget.finalized:
+                    widget.finalize()
             self.widgets_map.clear()
 
             # For layouts we need to finalize each clone of a layout in each group
