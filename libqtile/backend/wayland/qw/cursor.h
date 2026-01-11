@@ -68,4 +68,7 @@ void qw_cursor_pointer_constraint_new(struct qw_cursor *cursor,
 
 void qw_cursor_configure_xcursor(struct qw_cursor *cursor);
 
+void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
+                                struct wlr_pointer_constraint_v1 *constraint);
+
 #endif /* CURSOR_H */

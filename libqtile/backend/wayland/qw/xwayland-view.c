@@ -1,4 +1,5 @@
 #include "xwayland-view.h"
+#include "cursor.h"
 #include "server.h"
 #include "session-lock.h"
 #include "util.h"
@@ -55,6 +56,12 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
     }
+
+    // Activate/deactivate pointer constraints
+    struct wlr_pointer_constraint_v1 *constraint =
+        wlr_pointer_constraints_v1_constraint_for_surface(server->pointer_constraints, surface,
+                                                          server->seat);
+    qw_cursor_constrain_cursor(server->cursor, constraint);
 }
 
 static void qw_xwayland_view_focus(void *self, int above) {

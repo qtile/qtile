@@ -239,16 +239,10 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
 static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     // Handle pointer button press/release event
     struct qw_cursor *cursor = wl_container_of(listener, cursor, button);
+    struct wlr_seat *seat = cursor->server->seat;
     struct wlr_pointer_button_event *event = data;
 
     qw_server_idle_notify_activity(cursor->server);
-
-    // When the pointer is constrained, skip further processing
-    if (cursor->active_constraint && event->pointer->base.type == WLR_INPUT_DEVICE_POINTER) {
-        wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
-                                       event->state);
-        return;
-    }
 
     // Translate event button to internal code (e.g. BTN_LEFT)
     uint32_t button = qw_util_get_button_code(event->button);
@@ -267,22 +261,27 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
         if (cursor->implicit_grab.live) {
             wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                            event->state);
-            qw_cursor_release_implicit_grab(cursor, event->time_msec);
+            if (pressed_button_count == 0) {
+                qw_cursor_release_implicit_grab(cursor, event->time_msec);
+            }
             return;
         }
 
-        handled = qw_cursor_process_button(cursor, button, pressed);
+        // When the pointer is constrained, skip further processing
+        if (!cursor->active_constraint || event->pointer->base.type != WLR_INPUT_DEVICE_POINTER) {
+            handled = qw_cursor_process_button(cursor, button, pressed);
+
+            if (!handled) {
+                struct wlr_surface *surface = seat->pointer_state.focused_surface;
+                struct wlr_drag *drag = cursor->server->seat->drag;
+                if (pressed_button_count == 1 && surface != NULL && drag == NULL) {
+                    qw_cursor_create_implicit_grab(cursor, event->time_msec);
+                }
+            }
+        }
     }
 
     if (!handled) {
-        struct wlr_seat *seat = cursor->server->seat;
-        struct wlr_surface *surface = seat->pointer_state.focused_surface;
-        struct wlr_drag *drag = cursor->server->seat->drag;
-
-        if (pressed_button_count == 1 && surface != NULL && drag == NULL) {
-            qw_cursor_create_implicit_grab(cursor, event->time_msec);
-        }
-
         wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                        event->state);
     }
@@ -429,8 +428,8 @@ static void warp_to_constraint_cursor_hint(struct qw_cursor *cursor) {
             return;
         }
 
-        double lx = sx - view->x;
-        double ly = sy - view->y;
+        double lx = view->x + sx;
+        double ly = view->y + sy;
 
         wlr_cursor_warp(cursor->cursor, NULL, lx, ly);
 
@@ -474,8 +473,13 @@ static void check_constraint_region(struct qw_cursor *cursor) {
     if (cursor->active_confine_requires_warp && view) {
         cursor->active_confine_requires_warp = false;
 
-        double sx = cursor->cursor->x + view->x;
-        double sy = cursor->cursor->y + view->y;
+        // We may be over the constrained surface but haven't got pointer focus yet
+        if (cursor->server->seat->pointer_state.focused_surface != constraint->surface) {
+            qw_cursor_update_pointer_focus(cursor);
+        }
+
+        double sx = cursor->cursor->x - view->x;
+        double sy = cursor->cursor->y - view->y;
 
         if (!pixman_region32_contains_point(region, floor(sx), floor(sy), NULL)) {
             int nboxes;
@@ -506,8 +510,8 @@ static void qw_cursor_handle_constraint_commit(struct wl_listener *listener, voi
     check_constraint_region(cursor);
 }
 
-static void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
-                                       struct wlr_pointer_constraint_v1 *constraint) {
+void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
+                                struct wlr_pointer_constraint_v1 *constraint) {
     if (cursor->active_constraint == constraint) {
         return;
     }
