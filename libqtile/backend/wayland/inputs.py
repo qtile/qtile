@@ -114,6 +114,23 @@ class ScrollMethod(enum.IntEnum):
     on_button_down = lib.LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN
 
 
+def input_get_info(
+    input_device: ffi.CData, name: str, type: int, vendor: int, product: int
+) -> tuple[str, str]:
+    if name == " " or not name.isprintable():
+        name = "_"
+    type_key = "type:" + InputDeviceType(type).name.lower()
+    identifier = f"{vendor:d}:{product:d}:{name!s}"
+
+    if type_key == "type:pointer" and lib is not None:
+        # This checks whether the pointer is a touchpad, so that we can target those
+        # specifically.
+        if lib.qw_input_device_is_touchpad(input_device):
+            type_key = "type:touchpad"
+
+    return type_key, identifier
+
+
 def configure_input_devices(server: ffi.CData, configs: dict[str, Any]) -> None:
     @ffi.callback(
         "void(struct qw_input_device *input_device, char *name, int type, int vendor, int product)"
@@ -123,18 +140,8 @@ def configure_input_devices(server: ffi.CData, configs: dict[str, Any]) -> None:
     ) -> None:
         # Get the device type and identifier for this input device. These can be used be
         # used to assign ``InputConfig`` options to devices or types of devices.
-        name = ffi.string(name).decode()
-        if name == " " or not name.isprintable():
-            name = "_"
-        type_key = "type:" + InputDeviceType(type).name.lower()
-        identifier = f"{vendor:d}:{product:d}:{name!s}"
-
-        if type_key == "type:pointer" and lib is not None:
-            # This checks whether the pointer is a touchpad, so that we can target those
-            # specifically.
-            if lib.qw_input_device_is_touchpad(input_device):
-                type_key = "type:touchpad"
-
+        name_dec = ffi.string(name).decode()
+        type_key, identifier = input_get_info(input_device, name_dec, type, vendor, product)
         if identifier in configs:
             conf = configs[identifier]
         elif type_key in configs:
