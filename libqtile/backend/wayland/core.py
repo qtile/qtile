@@ -45,6 +45,7 @@ import os
 import signal
 import sys
 import time
+from collections import defaultdict
 from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -754,7 +755,26 @@ class Core(base.Core):
     @expose_command()
     def get_inputs(self) -> dict[str, list[dict[str, str]]]:
         """Get information on all input devices."""
-        raise Exception("TODO: implement")
+        info: defaultdict[str, list[dict]] = defaultdict(list)
+
+        @ffi.callback(
+            "void(struct qw_input_device *input_device, char *name, int type, int vendor, int product)"
+        )
+        def input_device_cb(
+            input_device: ffi.CData, name: ffi.CData, type: int, vendor: int, product: int
+        ) -> None:
+            name_dec = ffi.string(name).decode()
+            type_key, identifier = inputs.input_get_info(
+                input_device, name_dec, type, vendor, product
+            )
+            type_info = dict(
+                name=name_dec,
+                identifier=identifier,
+            )
+            info[type_key].append(type_info)
+
+        lib.qw_server_loop_input_devices(self.qw, input_device_cb)
+        return dict(info)
 
     @expose_command()
     def query_tree(self) -> list[int]:
