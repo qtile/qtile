@@ -796,7 +796,7 @@ class Core(base.Core):
     def handle_UnmapNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
-        win = self.qtile.windows_map.get(event.window)
+        win = self.qtile.lookup_client(event.window)
 
         if win and getattr(win, "group", None):
             try:

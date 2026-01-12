@@ -815,8 +815,8 @@ class Qtile(CommandObject):
             if not win.group and self.current_screen.group:
                 self.current_screen.group.add(win)
 
-        # Check if any user-defined inhibitor rules match the window
-        win.add_config_inhibitors()
+            # Check if any user-defined inhibitor rules match the window
+            win.add_config_inhibitors()
 
         hook.fire("client_managed", win)
 
@@ -1513,6 +1513,12 @@ class Qtile(CommandObject):
             for i in self.windows_map.values()
             if not isinstance(i, base.Internal | _Widget) and isinstance(i, CommandObject)
         ]
+
+    def lookup_client(self, wid: int) -> base.Window | None:
+        w = self.windows_map.get(wid)
+        if isinstance(w, base.Window):
+            return w
+        return None
 
     @expose_command()
     def internal_windows(self) -> list[dict[str, Any]]:
