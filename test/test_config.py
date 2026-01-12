@@ -116,13 +116,13 @@ def test_screen_serial_ordering_the_order(manager_nospawn, minimal_conf_noscreen
     assert manager_nospawn.c.screen[1].info()["serial"] == "b"
 
 
-def make_screen(name: str) -> Screen:
-    return Screen(serial=name, top=Bar([TextBox(name)], 10))
+def make_screen(name: str | None = None, serial: str | None = None, text: str = "") -> Screen:
+    return Screen(name=name, serial=serial, top=Bar([TextBox(text)], 10))
 
 
 def test_screen_serial_ordering_one_serial(manager_nospawn, minimal_conf_noscreen, monkeypatch):
     # one serial number is allowed, serial re-use overwrites to avoid confusion
-    minimal_conf_noscreen.screens = [Screen(), make_screen("one")]
+    minimal_conf_noscreen.screens = [Screen(), make_screen(serial="one", text="one")]
 
     def the_order(self) -> list[Output]:
         return [
@@ -145,7 +145,10 @@ def test_screen_serial_ordering_serials_backwards(
 ):
     # when the backend renders serial numbers reverse of config, they should be
     # in config order
-    minimal_conf_noscreen.screens = [make_screen("one"), make_screen("two")]
+    minimal_conf_noscreen.screens = [
+        make_screen(serial="one", text="one"),
+        make_screen(serial="two", text="two"),
+    ]
 
     def the_order(self) -> list[Output]:
         return [
@@ -160,4 +163,50 @@ def test_screen_serial_ordering_serials_backwards(
     assert manager_nospawn.c.screen[0].info()["serial"] == "two"
     assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "two"
     assert manager_nospawn.c.screen[1].info()["serial"] == "one"
+    assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"
+
+
+def test_screen_serial_ordering_one_name(manager_nospawn, minimal_conf_noscreen, monkeypatch):
+    # one output name is allowed, output name re-use overwrites to avoid confusion
+    minimal_conf_noscreen.screens = [Screen(), make_screen(name="one", text="one")]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output("one", None, ScreenRect(0, 0, 800, 600)),
+            Output("a", None, ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "one"
+    assert manager_nospawn.c.screen[0].info()["name"] == "one"
+    assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"
+    assert manager_nospawn.c.screen[1].info()["name"] == "a"
+
+
+def test_screen_name_ordering_names_backwards(
+    manager_nospawn, minimal_conf_noscreen, monkeypatch
+):
+    # when the backend renders named outputs reverse of config, they should be
+    # in config order
+    minimal_conf_noscreen.screens = [
+        make_screen(name="one", text="one"),
+        make_screen(name="two", text="two"),
+    ]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output("two", None, ScreenRect(0, 0, 800, 600)),
+            Output("one", None, ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].info()["name"] == "two"
+    assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "two"
+    assert manager_nospawn.c.screen[1].info()["name"] == "one"
     assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"
