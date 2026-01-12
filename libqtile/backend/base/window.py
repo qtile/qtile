@@ -625,6 +625,9 @@ class Internal(_Window, metaclass=ABCMeta):
     def paint_borders(self, color: ColorsType, width: int) -> None:
         """Paint the window borders with the given color(s) and width"""
 
+    def focus(self, warp: bool = True) -> None:
+        """Focus this window and optional warp the pointer to it."""
+
 
 class Static(_Window, metaclass=ABCMeta):
     """A window bound to a screen rather than a group."""
