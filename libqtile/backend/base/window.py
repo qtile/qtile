@@ -245,6 +245,7 @@ class Window(_Window, metaclass=ABCMeta):
     # If float_x or float_y are None, the window has never been placed
     float_x: int | None
     float_y: int | None
+    bordercolor: ColorsType | None
 
     def __repr__(self):
         return f"{self.__class__.__name__!s}(name={self.name!r}, wid={self.wid:d})"
