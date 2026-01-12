@@ -155,4 +155,5 @@ class IdleInhibitorManager(Generic[TInhibitor]):
             lambda o: o.inhibitor_type != InhibitorType.APPLICATION, skip_check=True
         )
         for win in self.core.qtile.windows_map.values():
-            win.add_config_inhibitors()
+            if isinstance(win, Window):
+                win.add_config_inhibitors()
