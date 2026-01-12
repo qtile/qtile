@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
     import asyncio
     from typing import Any
 
-    from libqtile.backend.base import Drawer, Internal, WindowType
+    from libqtile.backend.base import Drawer, Internal, Window
     from libqtile.command.base import ItemT
     from libqtile.config import Screen
     from libqtile.core.manager import Qtile
@@ -183,7 +183,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self._saved_size = 0
 
         # Previous window when the bar grabs the keyboard
-        self._saved_focus: WindowType | None = None
+        self._saved_focus: Window | None = None
 
         # Track widgets that are receiving input
         self._has_cursor: _Widget | None = None
