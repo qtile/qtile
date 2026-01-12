@@ -588,7 +588,7 @@ class Window(_Window, metaclass=ABCMeta):
     @expose_command()
     def remove_idle_inhibitor(self) -> None:
         """Remove inhibitor rule for this window."""
-        self.qtile.core.idle_inibitor_manager.remove_window_inhibitor(self)
+        self.qtile.core.idle_inhibitor_manager.remove_window_inhibitor(self)
 
 
 class Internal(_Window, metaclass=ABCMeta):
