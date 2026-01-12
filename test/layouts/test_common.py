@@ -173,6 +173,22 @@ def test_window_types(manager):
 
 
 @each_layout_config
+def test_next_previous(manager):
+    if manager.c.layout.info()["name"] == "floating":
+        pytest.skip("floating layout does not implement next / previous")
+    manager.test_window("one")
+    manager.test_window("two")
+
+    assert_focused(manager, "two")
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+    manager.c.layout.next()
+    assert_focused(manager, "two")
+    manager.c.layout.previous()
+    assert_focused(manager, "one")
+
+
+@each_layout_config
 def test_focus_cycle(manager):
     manager.test_window("one")
     manager.test_window("two")
