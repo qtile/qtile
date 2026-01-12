@@ -68,7 +68,7 @@ class Inhibitor:
             case InhibitorType.FULLSCREEN:
                 active = bool(self.window and self.window.fullscreen)
             case InhibitorType.VISIBLE:
-                active = bool(self.window and self.window.visible)
+                active = bool(self.window and self.window.is_visible())
 
         return active
 
