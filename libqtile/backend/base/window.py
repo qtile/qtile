@@ -622,6 +622,9 @@ class Internal(_Window, metaclass=ABCMeta):
     def process_key_press(self, keycode: int) -> None:
         """Handle a key press."""
 
+    def paint_borders(self, color: ColorsType, width: int) -> None:
+        """Paint the window borders with the given color(s) and width"""
+
 
 class Static(_Window, metaclass=ABCMeta):
     """A window bound to a screen rather than a group."""

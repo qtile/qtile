@@ -5,11 +5,9 @@ from typing import TYPE_CHECKING
 from libqtile import configurable, pangocffi
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from cairocffi import ImageSurface
 
-    from libqtile.backend.base import Drawer
+    from libqtile.backend.base import Drawer, Internal
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorType
 
@@ -47,9 +45,7 @@ class Popup(configurable.Configurable):
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
 
-        self.win: Any = qtile.core.create_internal(
-            x, y, width, height
-        )  # TODO: better annotate Internal
+        self.win: Internal = qtile.core.create_internal(x, y, width, height)
         self.win.opacity = self.opacity
         self.win.process_button_click = self.process_button_click
         self.win.process_window_expose = self.draw
