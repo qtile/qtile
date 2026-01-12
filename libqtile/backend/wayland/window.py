@@ -42,7 +42,6 @@ class Base(base._Window):
         # TODO: what is this?
         self.defunct = False
         self.group: _Group | None = None
-        self.visible = True
 
     def reparent(self, layer: int) -> None:
         if self.layer == layer:
@@ -179,12 +178,10 @@ class Base(base._Window):
 
     def hide(self) -> None:
         self._ptr.hide(self._ptr)
-        self.visible = False
         self.qtile.core.check_inhibited()
 
     def unhide(self) -> None:
         self._ptr.unhide(self._ptr)
-        self.visible = True
         self.qtile.core.check_inhibited()
 
     @expose_command()

@@ -42,7 +42,7 @@ class WaylandInhibitor(Inhibitor):
         if self.inhibitor_type == InhibitorType.APPLICATION:
             # Application-set inhibitors should apply when the client is visible
             if self.window is not None:
-                active = self.window.visible
+                active = self.window.is_visible()
             elif self.is_session_lock or self.is_layer_surface:
                 active = lib.qw_server_inhibitor_surface_visible(self.handle, ffi.NULL)
             # We shouldn't really get here but, if we do, treat it as active
