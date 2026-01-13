@@ -32,6 +32,8 @@
           coverage
           pytest
           isort
+          pytest-asyncio
+          anyio
         ];
 
         tests = {
