@@ -195,6 +195,8 @@ auto_minimize = True
 wl_input_rules = None
 
 # xcursor theme (string or None) and size (integer) for Wayland backend
+# If deviating from the default values it's recommended to also set
+# the XCURSOR_THEME & XCURSOR_SIZE env vars before running qtile.
 wl_xcursor_theme = None
 wl_xcursor_size = 24
 
