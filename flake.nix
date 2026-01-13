@@ -34,6 +34,7 @@
           isort
           pytest-asyncio
           anyio
+          pytest-httpbin
         ];
 
         tests = {
@@ -79,11 +80,15 @@
         }
         // build-config.resolved-env-vars;
 
-        pkgs-wrapped = pkgs.lib.lists.flatten [
-          common-python-deps
-          common-system-deps
-          (builtins.attrValues tests)
-        ];
+        qtile-final = self.packages.${pkgs.stdenv.hostPlatform.system}.qtile;
+
+        pkgs-wrapped =
+          pkgs.lib.lists.flatten [
+            common-python-deps
+            common-system-deps
+            (builtins.attrValues tests)
+          ]
+          ++ [ qtile-final ];
       });
     in
     {
@@ -97,13 +102,19 @@
         qtile = import ./nix/qtile.nix { inherit pkgs self; };
       });
 
-      devShells = forAllSystems (pkgs: {
-        default = pkgs.mkShell {
-          env = flake-attributes.${pkgs.stdenv.hostPlatform.system}.shell-env;
+      devShells = forAllSystems (
+        pkgs:
+        let
+          flake-attrs = flake-attributes.${pkgs.stdenv.hostPlatform.system};
+        in
+        {
+          default = pkgs.mkShell {
+            env = flake-attrs.shell-env;
 
-          inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.qtile ];
-          packages = flake-attributes.${pkgs.stdenv.hostPlatform.system}.pkgs-wrapped;
-        };
-      });
+            inputsFrom = [ flake-attrs.qtile-final ];
+            packages = flake-attrs.pkgs-wrapped;
+          };
+        }
+      );
     };
 }
