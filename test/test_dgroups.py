@@ -16,10 +16,11 @@ class DGroupsConfig(libqtile.confreader.Config):
     screens = []
 
 
+terminal = libqtile.utils.guess_terminal()
 class DGroupsSpawnConfig(DGroupsConfig):
     groups = [
         libqtile.config.Group("a"),
-        libqtile.config.Group("b", spawn=["xterm"]),
+        libqtile.config.Group("b", spawn=[terminal]),
     ]
 
 
