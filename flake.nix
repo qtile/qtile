@@ -1,7 +1,11 @@
 {
   description = "Qtile's flake, full-featured, hackable tiling window manager written and configured in Python";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    # This pins the flake to a previous version. This is added at the moment
+    # in this pull request as a temporary fix to allow running of all tests
+    # from this flakes development shell. After figuring out what is causing
+    # the issue in the newest version, this SHOULD BE REMOVED BEFORE MERGING.
+    nixpkgs.url = "github:nixos/nixpkgs?ref=01f116e4df6a15f4ccdffb1bcd41096869fb";
   };
   outputs =
     {
