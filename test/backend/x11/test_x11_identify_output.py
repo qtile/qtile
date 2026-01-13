@@ -11,7 +11,8 @@ def run_identify_output(env=None):
     argv = [sys.executable, cmd, "x11-identify-output"]
 
     if env is None:
-        env = os.environ.copy()
+        env = {}
+    env = os.environ.copy() | env
 
     proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     stdout, stderr = proc.communicate()
