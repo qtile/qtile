@@ -19,7 +19,7 @@ class DF(base.InLoopPollText):
             "format",
             "{p} ({uf}{m}|{r:.0f}%)",
             "String format (p: partition, s: size, "
-            "f: free space, uf: used free space, m: measure, r: ratio (uf/s))",
+            "f: free space, uf: used space, m: measure, r: ratio (uf/s))",
         ),
         ("update_interval", 60, "The update interval."),
     ]
