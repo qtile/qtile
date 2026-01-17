@@ -77,6 +77,22 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
     qw_cursor_constrain_cursor(server->cursor, constraint);
 }
 
+// Hide the xdg_view (disable scene node and clear keyboard focus if needed)
+static void qw_xdg_view_hide(void *self) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+    wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, false);
+    qw_xdg_view_activate(xdg_view, false);
+
+    // Clear keyboard focus if this view was focused
+    if (xdg_view->xdg_toplevel->base->surface ==
+        xdg_view->base.server->seat->keyboard_state.focused_surface) {
+        wlr_seat_keyboard_clear_focus(xdg_view->base.server->seat);
+    }
+
+    // View under the cursor may have changed
+    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
+}
+
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
 static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -85,6 +101,7 @@ static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
     qw_view_cleanup_borders((struct qw_view *)xdg_view);
     xdg_view->base.server->unmanage_view_cb((struct qw_view *)&xdg_view->base,
                                             xdg_view->base.server->cb_data);
+    qw_xdg_view_hide(xdg_view);
 
     wl_list_remove(&xdg_view->request_maximize.link);
     wl_list_remove(&xdg_view->request_fullscreen.link);
@@ -148,6 +165,9 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         wlr_scene_node_set_position(&xdg_view->base.content_tree->node, view.x, view.y);
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, view.width, view.height);
         qw_xdg_view_clip(xdg_view);
+
+        // View under the cursor may have changed
+        qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
     }
 }
 
@@ -221,25 +241,15 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
     if (above != 0) {
         qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
     }
+
+    // View under the cursor may have changed
+    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
 }
 
 // Send close event to the xdg_toplevel surface (kill the view)
 static void qw_xdg_view_kill(void *self) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_send_close(xdg_view->xdg_toplevel);
-}
-
-// Hide the xdg_view (disable scene node and clear keyboard focus if needed)
-static void qw_xdg_view_hide(void *self) {
-    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
-    wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, false);
-    qw_xdg_view_activate(xdg_view, false);
-
-    // Clear keyboard focus if this view was focused
-    if (xdg_view->xdg_toplevel->base->surface ==
-        xdg_view->base.server->seat->keyboard_state.focused_surface) {
-        wlr_seat_keyboard_clear_focus(xdg_view->base.server->seat);
-    }
 }
 
 // Unhide the xdg_view by enabling its content_tree scene node if currently disabled
