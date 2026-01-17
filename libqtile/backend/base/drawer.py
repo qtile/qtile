@@ -11,7 +11,6 @@ from libqtile.log_utils import logger
 
 if typing.TYPE_CHECKING:
     from libqtile.backend.base import Internal
-    from libqtile.core.manager import Qtile
     from libqtile.utils import ColorsType
 
 
@@ -22,8 +21,7 @@ class Drawer:
     finally drawing all operations to a backend-specific target.
     """
 
-    def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
-        self.qtile = qtile
+    def __init__(self, win: Internal, width: int, height: int):
         self._win = win
         self._width = width
         self._height = height

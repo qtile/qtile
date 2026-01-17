@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import contextlib
-from typing import TYPE_CHECKING
 
 import cairocffi
 import xcffib.xproto
 
 from libqtile import utils
-from libqtile.backend.base import drawer
-
-if TYPE_CHECKING:
-    from libqtile.backend.base import Internal
-    from libqtile.core.manager import Qtile
+from libqtile.backend.base import Internal, drawer
+from libqtile.backend.x11 import xcbq
 
 
 class Drawer(drawer.Drawer):
@@ -24,13 +20,12 @@ class Drawer(drawer.Drawer):
     and recreate them when we need them again with the new geometry.
     """
 
-    def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
-        drawer.Drawer.__init__(self, qtile, win, width, height)
+    def __init__(self, conn: xcbq.Connection, win: Internal, width: int, height: int):
+        drawer.Drawer.__init__(self, win, width, height)
+        self.conn = conn
         self._xcb_surface = None
         self._gc = None
-        self._depth, self._visual = qtile.core.conn.default_screen._get_depth_and_visual(
-            win._depth
-        )
+        self._depth, self._visual = conn.default_screen._get_depth_and_visual(win._depth)
         # Create an XCBSurface and pixmap
         self._check_xcb()
 
@@ -71,14 +66,14 @@ class Drawer(drawer.Drawer):
         return self._pixmap
 
     def _create_gc(self):
-        gc = self.qtile.core.conn.conn.generate_id()
-        self.qtile.core.conn.conn.core.CreateGC(
+        gc = self.conn.conn.generate_id()
+        self.conn.conn.core.CreateGC(
             gc,
             self._win.wid,
             xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
             [
-                self.qtile.core.conn.default_screen.black_pixel,
-                self.qtile.core.conn.default_screen.white_pixel,
+                self.conn.default_screen.black_pixel,
+                self.conn.default_screen.white_pixel,
             ],
         )
         return gc
@@ -86,12 +81,12 @@ class Drawer(drawer.Drawer):
     def _free_gc(self):
         if self._gc is not None:
             with contextlib.suppress(xcffib.ConnectionException):
-                self.qtile.core.conn.conn.core.FreeGC(self._gc)
+                self.conn.conn.core.FreeGC(self._gc)
             self._gc = None
 
     def _create_xcb_surface(self):
         surface = cairocffi.XCBSurface(
-            self.qtile.core.conn.conn,
+            self.conn.conn,
             self._pixmap,
             self._visual,
             self.width,
@@ -105,8 +100,8 @@ class Drawer(drawer.Drawer):
             self._xcb_surface = None
 
     def _create_pixmap(self):
-        pixmap = self.qtile.core.conn.conn.generate_id()
-        self.qtile.core.conn.conn.core.CreatePixmap(
+        pixmap = self.conn.conn.generate_id()
+        self.conn.conn.core.CreatePixmap(
             self._depth,
             pixmap,
             self._win.wid,
@@ -118,7 +113,7 @@ class Drawer(drawer.Drawer):
     def _free_pixmap(self):
         if self._pixmap is not None:
             with contextlib.suppress(xcffib.ConnectionException):
-                self.qtile.core.conn.conn.core.FreePixmap(self._pixmap)
+                self.conn.conn.core.FreePixmap(self._pixmap)
             self._pixmap = None
 
     def _check_xcb(self):
@@ -153,7 +148,7 @@ class Drawer(drawer.Drawer):
         self._paint()
 
         # Finally, copy XCBSurface's underlying pixmap to the window.
-        self.qtile.core.conn.conn.core.CopyArea(
+        self.conn.conn.core.CopyArea(
             self._pixmap,
             self._win.wid,
             self._gc,
@@ -166,9 +161,9 @@ class Drawer(drawer.Drawer):
         )
 
     def _find_root_visual(self):
-        for i in self.qtile.core.conn.default_screen.allowed_depths:
+        for i in self.conn.default_screen.allowed_depths:
             for v in i.visuals:
-                if v.visual_id == self.qtile.core.conn.default_screen.root_visual:
+                if v.visual_id == self.conn.default_screen.root_visual:
                     return v
 
     def set_source_rgb(self, colour, ctx=None):

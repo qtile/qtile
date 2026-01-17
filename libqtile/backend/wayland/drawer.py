@@ -8,7 +8,6 @@ from libqtile.backend.base import drawer
 
 if TYPE_CHECKING:
     from libqtile.backend.wayland.window import Internal
-    from libqtile.core.manager import Qtile
 
 
 class Drawer(drawer.Drawer):
@@ -19,8 +18,8 @@ class Drawer(drawer.Drawer):
     2. Then apply these operations to the windows's underlying ImageSurface.
     """
 
-    def __init__(self, qtile: Qtile, win: Internal, width: int, height: int):
-        drawer.Drawer.__init__(self, qtile, win, width, height)
+    def __init__(self, win: Internal, width: int, height: int):
+        drawer.Drawer.__init__(self, win, width, height)
 
     def _draw(
         self,

@@ -305,7 +305,7 @@ class Internal(Base, base.Internal):
 
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
-        return Drawer(self.qtile, self, width, height)
+        return Drawer(self, width, height)
 
     def set_buffer_with_damage(self, offsetx: int, offsety: int, width: int, height: int) -> None:
         lib.qw_internal_view_set_buffer_with_damage(
