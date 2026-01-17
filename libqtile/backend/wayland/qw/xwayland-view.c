@@ -459,8 +459,22 @@ static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *d
     // This commit handler can be used for other purposes like updating geometry
     // or handling surface state changes after the view is already managed
 
-    // Update clipping if geometry changed
-    qw_xwayland_view_clip(xwayland_view);
+    struct wlr_xwayland_surface *surface = xwayland_view->xwayland_surface;
+    struct wlr_surface_state *state = &surface->surface->current;
+    struct wlr_box geom = {};
+    geom.width = state->width;
+    geom.height = state->height;
+
+    bool size_changed =
+        xwayland_view->geom.width != geom.width || xwayland_view->geom.height != geom.height;
+
+    // Update clipping if surface size changed
+    if (size_changed) {
+        qw_xwayland_view_clip(xwayland_view);
+
+        // View under the cursor may have changed
+        qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
+    }
 
     if (xwayland_view->initial_commit) {
         // The view may have received pointer focus before it was able to update
