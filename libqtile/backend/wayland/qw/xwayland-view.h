@@ -15,6 +15,7 @@ struct qw_xwayland_view {
     struct wlr_scene_surface *scene_surface;
     struct wlr_box geom;
     struct wlr_xwayland_surface *xwayland_surface;
+    bool initial_commit;
 
     // Listeners for various XWayland surface events and requests
     // Private data

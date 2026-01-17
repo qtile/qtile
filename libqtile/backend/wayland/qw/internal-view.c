@@ -1,5 +1,6 @@
 #include "internal-view.h"
 #include "cairo-buffer.h"
+#include "cursor.h"
 #include "pixman.h"
 #include "server.h"
 #include "util.h"
@@ -95,6 +96,9 @@ static void qw_internal_view_place(void *self, int x, int y, int width, int heig
         view->base.height = height;
         qw_internal_view_buffer_new(view, false);
     }
+
+    // View under the cursor may have changed
+    qw_cursor_update_pointer_focus(view->base.server->cursor);
 }
 
 // TODO: Focus logic for internal views (empty for now)
