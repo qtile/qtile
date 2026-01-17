@@ -1,5 +1,6 @@
 #include "output.h"
 #include "cairo-buffer.h"
+#include "cursor.h"
 #include "layer-view.h"
 #include "proto/wlr-layer-shell-unstable-v1-protocol.h"
 #include "server.h"
@@ -110,6 +111,9 @@ void qw_output_arrange_layers(struct qw_output *output) {
             }
         }
     }
+
+    // View under the cursor may have changed
+    qw_cursor_update_pointer_focus(output->server->cursor);
 }
 
 void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_output) {
