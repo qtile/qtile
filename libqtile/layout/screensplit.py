@@ -244,12 +244,12 @@ class ScreenSplit(Layout):
     @expose_command
     def next(self) -> None:
         """Move to next client."""
-        self.__getattr__("next")
+        self.active_layout.next()
 
     @expose_command
     def previous(self) -> None:
         """Move to previous client."""
-        self.__getattr__("previous")
+        self.active_layout.previous()
 
     def focus_first(self) -> Window:
         return self.active_layout.focus_first()
