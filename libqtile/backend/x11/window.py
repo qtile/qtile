@@ -1515,12 +1515,13 @@ class Internal(_Window, base.Internal):
 
     def __init__(self, win, qtile, desired_depth=32):
         _Window.__init__(self, win, qtile)
+        self.conn: xcbq.Connection = qtile.core.conn
         win.set_property("QTILE_INTERNAL", 1)
         self._depth = desired_depth
 
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
-        return Drawer(self.qtile, self, width, height)
+        return Drawer(self.conn, self, width, height)
 
     @expose_command()
     def kill(self):
