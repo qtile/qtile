@@ -6,8 +6,8 @@ import cairocffi
 import xcffib.xproto
 
 from libqtile import utils
-from libqtile.backend.base import Internal, drawer
-from libqtile.backend.x11 import xcbq
+from libqtile.backend.base import drawer
+from libqtile.backend.x11 import window, xcbq
 
 
 class Drawer(drawer.Drawer):
@@ -20,7 +20,7 @@ class Drawer(drawer.Drawer):
     and recreate them when we need them again with the new geometry.
     """
 
-    def __init__(self, conn: xcbq.Connection, win: Internal, width: int, height: int):
+    def __init__(self, conn: xcbq.Connection, win: window.Internal, width: int, height: int):
         drawer.Drawer.__init__(self, win, width, height)
         self.conn = conn
         self._xcb_surface = None
