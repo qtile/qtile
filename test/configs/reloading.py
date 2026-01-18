@@ -56,8 +56,8 @@ floating_layout = layout.Floating(float_rules=[Match(title="one")])
 wmname = "LG3D"
 
 
-if hasattr(qtile, "test_data"):
-    # Add more items or change values qtile.test_data is set
+if getattr(qtile, "test_data", None) is not None:
+    # Add more items or change values if qtile.test_data is set
     keys.append(
         Key(["mod4"], "l", lazy.layout.right(), desc="Move focus to right"),
     )
