@@ -3,9 +3,11 @@ from __future__ import annotations
 import contextlib
 import typing
 from abc import ABCMeta, abstractmethod
+from dataclasses import dataclass
 
+from libqtile import hook
 from libqtile.command.base import CommandObject, expose_command
-from libqtile.config import ScreenRect
+from libqtile.config import Screen, ScreenRect
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -15,6 +17,13 @@ if typing.TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
+
+
+@dataclass
+class Output:
+    name: str | None
+    serial: str | None
+    rect: ScreenRect
 
 
 class Core(CommandObject, metaclass=ABCMeta):
@@ -54,8 +63,8 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Set the current desktops of the window manager"""
 
     @abstractmethod
-    def get_screen_info(self) -> list[ScreenRect]:
-        """Get the screen information"""
+    def get_output_info(self) -> list[Output]:
+        """Get the output information"""
 
     @abstractmethod
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
@@ -102,9 +111,6 @@ class Core(CommandObject, metaclass=ABCMeta):
     def flush(self) -> None:
         """If needed, flush the backend's event queue."""
 
-    def graceful_shutdown(self):
-        """Try to close windows gracefully before exiting"""
-
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulate a keypress with given modifiers"""
 
@@ -120,3 +126,43 @@ class Core(CommandObject, metaclass=ABCMeta):
     def info(self) -> dict[str, Any]:
         """Get basic information about the running backend."""
         return {"backend": self.name, "display_name": self.display_name}
+
+    def check_screen_fullscreen_background(self, screen: Screen | None = None) -> None:
+        """Toggles fullscreen background if any window on the screen is fullscreen."""
+        # Wayland only
+
+    def update_backend_log_level(self) -> None:
+        """Update the backend log level based on Qtile's log level."""
+        # Wayland only
+
+    @property
+    def inhibited(self) -> bool:
+        if not hasattr(self, "_inhibited"):
+            self._inhibited = False
+
+        return self._inhibited
+
+    @inhibited.setter
+    def inhibited(self, value: bool):
+        if value != self.inhibited:
+            self._inhibited = value
+            hook.fire("idle_inhibitor_change", value)
+
+    @expose_command()
+    def set_idle_inhibitor(self) -> None:
+        """Create a global idle inhibitor."""
+        self.idle_inhibitor_manager.add_global_inhibitor()
+
+    @expose_command()
+    def remove_idle_inhibitor(self) -> None:
+        """Remove global idle inhibitor."""
+        self.idle_inhibitor_manager.remove_global_inhibitor()
+
+    @expose_command()
+    def get_idle_inhibitors(self, active_only: bool = False) -> list[str]:
+        """Return list of inhibitors."""
+        return [
+            f"{inhibitor!r}"
+            for inhibitor in self.idle_inhibitor_manager.inhibitors
+            if not active_only or (active_only and inhibitor.check())
+        ]

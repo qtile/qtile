@@ -1,22 +1,3 @@
-# Copyright (c) 2022 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -26,7 +7,6 @@ from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect, _Match
 from libqtile.layout import Columns, Max
 from libqtile.layout.base import Layout
-from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -234,8 +214,9 @@ class ScreenSplit(Layout):
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
         if client not in self.layouts:
-            logger.warning("Unknown client: %s", client)
-            return
+            # window hasn't been added to a layout yet. this can happen during
+            # layout switches or when a group with existing windows is shown.
+            self.layouts[client] = self.active_split
 
         layout = self.layouts[client].layout
         rect = self._get_rect(self.layouts[client].rect, screen_rect)

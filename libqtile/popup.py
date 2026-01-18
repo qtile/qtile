@@ -1,23 +1,3 @@
-# Copyright (c) 2020-21, Matt Colligan. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -25,11 +5,9 @@ from typing import TYPE_CHECKING
 from libqtile import configurable, pangocffi
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from cairocffi import ImageSurface
 
-    from libqtile.backend.base import Drawer
+    from libqtile.backend.base import Drawer, Internal
     from libqtile.core.manager import Qtile
     from libqtile.utils import ColorType
 
@@ -67,9 +45,7 @@ class Popup(configurable.Configurable):
         self.add_defaults(Popup.defaults)
         self.qtile = qtile
 
-        self.win: Any = qtile.core.create_internal(
-            x, y, width, height
-        )  # TODO: better annotate Internal
+        self.win: Internal = qtile.core.create_internal(x, y, width, height)
         self.win.opacity = self.opacity
         self.win.process_button_click = self.process_button_click
         self.win.process_window_expose = self.draw

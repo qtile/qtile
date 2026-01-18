@@ -1,33 +1,10 @@
-# Copyright (c) 2012-2014 roger
-# Copyright (c) 2012-2015 Tycho Andersen
-# Copyright (c) 2013 dequis
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2013 Craig Barnes
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2018 Piotr Przymus
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-import math
+import os
+from pathlib import Path
 
 import cairocffi
 
 try:
+    from xdg.DesktopEntry import DesktopEntry
     from xdg.IconTheme import getIconPath
 
     has_xdg = True
@@ -39,6 +16,14 @@ from libqtile import hook, pangocffi
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
+
+data_home = os.environ.get("XDG_DATA_HOME", "~/.local/share")
+
+DESKTOP_LOCATIONS = [
+    Path(data_home) / "applications",
+    Path("/usr/local/share/applications"),
+    Path("/usr/share/applications"),
+]
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
@@ -101,7 +86,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "   return text"
             "then set option parse_text=my_func",
         ),
-        ("spacing", None, "Spacing between tasks.(if set to None, will be equal to margin_x)"),
+        (
+            "spacing",
+            None,
+            "Spacing between tasks. If set to None, defaults to margin_x in "
+            "horizontal bars and margin_y in vertical bars.",
+        ),
         (
             "txt_minimized",
             "_ ",
@@ -190,8 +180,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def __init__(self, **config):
         base._Widget.__init__(self, libqtile.bar.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
-        self.add_defaults(base.PaddingMixin.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
         self._icons_cache = {}
         self._box_end_positions = []
         self.markup = False
@@ -261,57 +249,24 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return f"{state}{window_name}"
 
     @property
-    def widget_height(self):
-        if self.bar.horizontal:
-            return self.height
-        return self.width
-
-    @property
-    def widget_width(self):
-        if self.bar.horizontal:
-            return self.width
-        return self.height
-
-    @property
-    def padding_side(self):
-        if self.bar.horizontal:
-            return self.padding_x
-        return self.padding_y
-
-    @property
-    def padding_top(self):
-        if self.bar.horizontal:
-            return self.padding_y
-        return self.padding_x
-
-    @property
-    def margin_side(self):
-        if self.bar.horizontal:
-            return self.margin_x
-        return self.margin_y
-
-    @property
-    def margin_top(self):
-        if self.bar.horizontal:
-            return self.margin_y
-        return self.margin_x
-
-    @property
     def windows(self):
+        windows = []
         if self.qtile.core.name == "x11":
-            windows = []
             for w in self.bar.screen.group.windows:
                 wm_states = list(w.window.get_property("_NET_WM_STATE", "ATOM", unpack=int))
                 skip_taskbar = w.qtile.core.conn.atoms["_NET_WM_STATE_SKIP_TASKBAR"]
                 if w.window.get_wm_type() in ("normal", None) and skip_taskbar not in wm_states:
                     windows.append(w)
-            return windows
-        return self.bar.screen.group.windows
+        else:
+            for w in self.bar.screen.group.windows:
+                if w.get_wm_type() in ("normal", None) and not w.skip_taskbar:
+                    windows.append(w)
+
+        return windows
 
     @property
     def max_width(self):
-        width = self.bar.width if self.bar.horizontal else self.bar.height
-        width -= sum(
+        width = self.bar.length - sum(
             w.length
             for w in self.bar.widgets
             if w is not self and w.length_type != libqtile.bar.STRETCH
@@ -409,14 +364,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.icon_size = 0
 
         if self.icon_size is None:
-            self.icon_size = self.widget_height - 2 * (self.borderwidth + self.margin_top)
+            self.icon_size = self.bar.size - 2 * (self.borderwidth + self.margin_top)
 
         if self.fontsize is None:
             calc = (
-                self.widget_height
-                - self.margin_top * 2
-                - self.borderwidth * 2
-                - self.padding_top * 2
+                self.bar.size - self.margin_top * 2 - self.borderwidth * 2 - self.padding_top * 2
             )
             self.fontsize = max(calc, 1)
 
@@ -484,7 +436,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.drawtext(text, textcolor, width)
 
         icon_padding = (self.icon_size + self.padding_side) if icon else 0
-        padding_x = [self.padding_side + icon_padding, self.padding_side]
+        pad_x = [self.padding_side + icon_padding, self.padding_side]
 
         if bordercolor is None:
             # border colour is set to None when we don't want to draw a border at all
@@ -496,7 +448,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             border_width = self.borderwidth
             framecolor = bordercolor
 
-        framed = self.layout.framed(border_width, framecolor, padding_x, self.padding_top)
+        framed = self.layout.framed(border_width, framecolor, pad_x, self.padding_top)
         if block and bordercolor is not None:
             framed.draw_fill(offset, self.margin_top, rounded)
         else:
@@ -509,11 +461,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         box_start = self.margin_side
         if self.bar.horizontal:
             pos = x
+        elif self.bar.screen.left is self.bar:
+            pos = self.length - y
         else:
-            if self.bar.screen.left is self.bar:
-                pos = self.widget_width - y
-            else:
-                pos = y
+            pos = y
         for box_end, win in zip(self._box_end_positions, self.windows):
             if box_start <= pos <= box_end:
                 return win
@@ -554,6 +505,33 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         return img
 
+    def _read_desktop_file(self, desktopfile):
+        icon = DesktopEntry(desktopfile).getIcon()
+        if icon and Path(icon).expanduser().exists():
+            return icon
+
+    def _find_desktop_entry(self, classes):
+        for p in DESKTOP_LOCATIONS:
+            for cl in classes:
+                for app in set([cl, cl.lower()]):
+                    f = (p / f"{app}.desktop").expanduser()
+                    if f.exists():
+                        icon = self._read_desktop_file(f)
+                        if icon:
+                            return icon
+
+    def _get_desktop_icon(self, window):
+        classes = window.get_wm_class()
+
+        if not classes:
+            return None
+
+        icon = self._find_desktop_entry(classes)
+
+        if icon:
+            img = Img.from_path(icon)
+            return img.surface
+
     def _get_theme_icon(self, window):
         classes = window.get_wm_class()
 
@@ -592,6 +570,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.qtile.core.name == "x11":
             img = self._get_class_icon(window)
 
+        if img is None and has_xdg and self.theme_mode != "preferred":
+            img = self._get_desktop_icon(window)
+
         if self.theme_mode == "preferred" or (self.theme_mode == "fallback" and img is None):
             xdg_img = self._get_theme_icon(window)
             if xdg_img:
@@ -629,21 +610,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
         offset = self.margin_side
-        ctx = self.drawer.ctx
-        ctx.save()
-
-        if not self.bar.horizontal:
-            # Left bar reads bottom to top
-            # Can be overriden to read bottom to top all the time with vertical_text_direction
-            if self.bar.screen.left is self.bar:
-                ctx.rotate(-90 * math.pi / 180.0)
-                ctx.translate(-self.length, 0)
-
-            # Right bar is top to bottom
-            # Can be overriden to read top to bottom all the time with vertical_text_direction
-            else:
-                ctx.translate(self.bar.width, 0)
-                ctx.rotate(90 * math.pi / 180.0)
+        self.drawer.ctx.save()
+        self.rotate_drawer()
 
         self._box_end_positions = []
         for w, icon, task, bw in self.calc_box_widths():
@@ -679,6 +647,5 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             )
             offset += bw + self.spacing
 
-        ctx.restore()
-
+        self.drawer.ctx.restore()
         self.draw_at_default_position()

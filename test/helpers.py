@@ -181,17 +181,20 @@ class TestManager:
         return os.read(self.logspipe, 64 * 1024).decode("utf-8")
 
     def start(self, config_class, no_spawn=False, state=None):
+        multiprocessing.set_start_method("fork", force=True)
         readlogs, writelogs = os.pipe()
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
             try:
+                rpipe.close()
                 os.environ.pop("DISPLAY", None)
                 os.environ.pop("WAYLAND_DISPLAY", None)
+                init_log(self.log_level)
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
+                from libqtile.core.lifecycle import lifecycle
 
-                init_log(self.log_level)
                 os.close(readlogs)
                 formatter = logging.Formatter("%(levelname)s - %(message)s")
                 handler = logging.StreamHandler(os.fdopen(writelogs, "w"))
@@ -205,25 +208,32 @@ class TestManager:
                     no_spawn=no_spawn,
                     state=state,
                 ).loop()
+                lifecycle._atexit()
             except Exception:
                 wpipe.send(traceback.format_exc())
+            finally:
+                wpipe.close()
 
         self.proc = multiprocessing.Process(target=run_qtile)
         self.proc.start()
+        wpipe.close()
         os.close(writelogs)
         self.logspipe = readlogs
 
         # First, wait for socket to appear
-        if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
-            ipc_client = ipc.Client(self.sockfile)
-            ipc_command = command.interface.IPCCommandInterface(ipc_client)
-            self.c = command.client.InteractiveCommandClient(ipc_command)
-            self.backend.configure(self)
-            return
-        if rpipe.poll(0.1):
-            error = rpipe.recv()
-            raise AssertionError(f"Error launching qtile, traceback:\n{error}")
-        raise AssertionError("Error launching qtile")
+        try:
+            if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
+                ipc_client = ipc.Client(self.sockfile)
+                ipc_command = command.interface.IPCCommandInterface(ipc_client)
+                self.c = command.client.InteractiveCommandClient(ipc_command)
+                self.backend.configure(self)
+                return
+            if rpipe.poll(0.1):
+                error = rpipe.recv()
+                raise AssertionError(f"Error launching qtile, traceback:\n{error}")
+            raise AssertionError("Error launching qtile")
+        finally:
+            rpipe.close()
 
     def create_manager(self, config_class):
         """Create a Qtile manager instance in this thread
@@ -349,8 +359,8 @@ class TestManager:
         name,
         floating=False,
         wm_type="normal",
-        new_title="",
-        urgent_hint=False,
+        new_title=None,
+        urgent=False,
         export_sni=False,
     ):
         """
@@ -365,14 +375,20 @@ class TestManager:
         Windows created with this method must have their process killed explicitly, no
         matter what type they are.
         """
+        os.environ.pop("GDK_BACKEND", None)
         python = sys.executable
         path = Path(__file__).parent / "scripts" / "window.py"
         wmclass = "dialog" if floating else "TestWindow"
-        args = [python, path, "--name", wmclass, name, wm_type, new_title]
-        if urgent_hint:
-            args.append("urgent_hint")
+        args = [python, path, "--name", wmclass, name, wm_type]
+        if new_title:
+            args += ["--new-title", new_title]
+        if urgent:
+            args.append("--urgent")
+            # Set GDK_BACKEND to x11, since in wayland, the window requieres
+            # of an input event which cannot be passed to the headless session
+            os.environ["GDK_BACKEND"] = "x11"
         if export_sni:
-            args.append("export_sni_interface")
+            args.append("--export_sni_interface")
         return self._spawn_window(*args)
 
     def test_notification(self, name="notification"):
@@ -397,3 +413,7 @@ def assert_window_died(client, window_info):
     client.sync()
     wid = window_info["id"]
     assert wid not in set([x["id"] for x in client.windows()]), f"window {wid} still here"
+
+
+def window_by_name(client, name):
+    return client.window[{w["name"]: w["id"] for w in client.windows()}[name]]

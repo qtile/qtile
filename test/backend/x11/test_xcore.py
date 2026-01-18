@@ -20,8 +20,7 @@ def test_no_two_qtiles(xmanager):
 
 
 def test_color_pixel(xmanager):
-    (success, e) = xmanager.c.eval('self.core.conn.color_pixel("ffffff")')
-    assert success, e
+    xmanager.c.eval('self.core.conn.color_pixel("ffffff")')
 
 
 @pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=True)
@@ -52,3 +51,17 @@ def test_net_client_list(xmanager, conn):
     assert_clients(1)
     xmanager.kill_window(two)
     assert_clients(0)
+
+
+@pytest.mark.parametrize("xmanager", [ManagerConfig], indirect=True)
+def test_clear_focus_empty_group(xmanager, conn):
+    """Test that _NET_ACTIVE_WINDOW is 0 when focusing an empty group"""
+    xmanager.test_window("one")
+
+    active = conn.default_screen.root.get_property("_NET_ACTIVE_WINDOW", unpack=int)
+    assert active[0] != 0
+
+    xmanager.c.screen.next_group()
+
+    active = conn.default_screen.root.get_property("_NET_ACTIVE_WINDOW", unpack=int)
+    assert active[0] == 0

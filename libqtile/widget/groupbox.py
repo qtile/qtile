@@ -1,35 +1,3 @@
-# Copyright (c) 2008, 2010 Aldo Cortesi
-# Copyright (c) 2009 Ben Duffield
-# Copyright (c) 2010 aldo
-# Copyright (c) 2010-2012 roger
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2011 Kenji_Takahashi
-# Copyright (c) 2011-2015 Tycho Andersen
-# Copyright (c) 2012-2013 dequis
-# Copyright (c) 2012 Craig Barnes
-# Copyright (c) 2013 xarvh
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Filipe Nepomuceno
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import itertools
 from functools import partial
 from typing import Any
@@ -48,8 +16,6 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     def __init__(self, **config):
         base._TextBox.__init__(self, **config)
         self.add_defaults(_GroupBase.defaults)
-        self.add_defaults(base.PaddingMixin.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
 
     def box_width(self, groups):
         width, _ = self.drawer.max_layout_size(
@@ -58,10 +24,10 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         return width + self.padding_x * 2 + self.borderwidth * 2
 
     def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
+        base._TextBox._configure(self, qtile, bar)
 
         if self.fontsize is None:
-            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
+            calc = self.bar.size - self.margin_y * 2 - self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
 
         self.layout = self.drawer.textlayout(
@@ -109,8 +75,8 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             self.layout.width = width
         if line:
             pad_y = [
-                (self.bar.height - self.layout.height - self.borderwidth) / 2,
-                (self.bar.height - self.layout.height + self.borderwidth) / 2,
+                (self.bar.size - self.layout.height - self.borderwidth) / 2,
+                (self.bar.size - self.layout.height + self.borderwidth) / 2,
             ]
         else:
             pad_y = self.padding_y
@@ -128,10 +94,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         framed = self.layout.framed(border_width, framecolor, 0, pad_y, highlight_color)
         y = self.margin_y
         if self.center_aligned:
-            for t in base.MarginMixin.defaults:
-                if t[0] == "margin":
-                    y += (self.bar.height - framed.height) / 2 - t[1]
-                    break
+            y += (self.bar.size - framed.height) / 2 - self.margin_y
         if block and bordercolor is not None:
             framed.draw_fill(offset, y, rounded)
         elif line:

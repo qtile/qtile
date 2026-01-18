@@ -1,22 +1,3 @@
-# Copyright (c) 2025, elParaguayo. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import asyncio
 import builtins
 import codeop
@@ -134,6 +115,7 @@ class QtileREPLServer:
 
     async def handle_client(self, reader, writer):
         """Method for sending data to REPL client."""
+        q = self.locals.get("qtile", None)
 
         async def send(message, end=True):
             """Wrapper to send data to client."""
@@ -182,9 +164,13 @@ class QtileREPLServer:
             # Ready to execute
             output = ""
 
-            # Evaluate code in a thread so blocking calls don't block the eventloop
-            loop = asyncio.get_running_loop()
-            output = await loop.run_in_executor(None, self.evaluate_code, buffer)
+            # Block interaction if session is locked
+            if q is not None and q.locked:
+                output = "Server is locked."
+            else:
+                # Evaluate code in a thread so blocking calls don't block the eventloop
+                loop = asyncio.get_running_loop()
+                output = await loop.run_in_executor(None, self.evaluate_code, buffer)
 
             # Send output to client
             await send(output.strip())

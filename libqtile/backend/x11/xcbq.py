@@ -1,35 +1,3 @@
-# Copyright (c) 2009-2010 Aldo Cortesi
-# Copyright (c) 2010 matt
-# Copyright (c) 2010, 2012, 2014 dequis
-# Copyright (c) 2010 Philip Kranz
-# Copyright (c) 2010-2011 Paul Colomiets
-# Copyright (c) 2011 osebelin
-# Copyright (c) 2011 Mounier Florian
-# Copyright (c) 2011 Kenji_Takahashi
-# Copyright (c) 2011 Tzbob
-# Copyright (c) 2012, 2014 roger
-# Copyright (c) 2012, 2014-2015 Tycho Andersen
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014-2015 Sean Vig
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 """
 A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
 complete - it only implements the subset of functionalty needed by qtile.
@@ -40,6 +8,7 @@ from __future__ import annotations
 import contextlib
 import functools
 import operator
+import struct
 from itertools import chain, repeat
 
 import cairocffi
@@ -47,11 +16,13 @@ import cairocffi.pixbuf
 import cairocffi.xcb
 import xcffib
 import xcffib.randr
+import xcffib.screensaver
 import xcffib.xinerama
 import xcffib.xproto
 from xcffib.xfixes import SelectionEventMask
 from xcffib.xproto import CW, EventMask, WindowClass
 
+from libqtile.backend.base.core import Output
 from libqtile.backend.x11 import window
 from libqtile.backend.x11.xcursors import Cursors
 from libqtile.backend.x11.xkeysyms import keysyms
@@ -221,6 +192,47 @@ XCB_KEY_RELEASE = 3
 XCB_BUTTON_PRESS = 4
 XCB_BUTTON_RELEASE = 5
 XCB_MOTION_NOTIFY = 6
+
+
+def parse_serial_from_edid(raw):
+    # https://en.wikipedia.org/wiki/Extended_Display_Identification_Data#EDID_1.4_data_format
+    if sum(map(int, raw)) % 256 != 0:
+        raise Exception(f"bad EDID data checksum {raw}")
+
+    # we only care about the serial number/monitor model name, which can occur
+    # in any of the four possible timing locations, each of which are 18
+    # bytes. We discard everything else.
+    timings = struct.unpack("<54x18s18s18s18s2x", raw[:128])
+    serial = None
+    name = None
+    for t in timings:
+        # skip timing info. we could decode this, but we can get it via
+        # randr's preferred mode encoding if we eventually care.
+        if t[0:2] != b"\x00\x00":
+            continue
+        # https://en.wikipedia.org/wiki/Extended_Display_Identification_Data#Monitor_Descriptors
+        content = t[5:].decode("cp437").strip()
+        if t[3] == 0xFF:
+            serial = content
+
+        if t[3] == 0xFD:
+            name = content
+
+        # some monitors export *both* the serial and the name as 0xfe, which
+        # is annoying. if we see this, first set the name, then set the
+        # serial and hope for the best. if only they had used, you know, one
+        # of the masks that indicated serial or name!
+        if t[3] == 0xFE:
+            content = t[5:].decode("cp437").strip()
+            if name is None:
+                name = content
+            else:
+                serial = content
+
+    if serial == "000000000000":
+        serial = None
+
+    return (serial, name)
 
 
 class MaskMap:
@@ -399,14 +411,36 @@ class Xinerama:
         return r.screen_info
 
 
+class ScreenSaver:
+    def __init__(self, conn):
+        self.conn = conn
+        self.ext = conn.conn(xcffib.screensaver.key)
+        self.ext.QueryVersion(xcffib.screensaver.MAJOR_VERSION, xcffib.screensaver.MINOR_VERSION)
+
+    def select_events(self, root):
+        self.ext.SelectInput(
+            root, xcffib.screensaver.Event.NotifyMask | xcffib.screensaver.Event.CycleMask
+        )
+
+    def set_interval(self, interval):
+        self.conn.conn.core.SetScreenSaver(interval, 60, False, False)
+        self.conn.conn.flush()
+
+
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
+        self.conn = conn
 
     def query_crtcs(self, root):
         infos = []
+        primary = self.ext.GetOutputPrimary(root).reply().output
         for output in self.ext.GetScreenResources(root).reply().outputs:
             info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
+
+            # ignore disconnected monitors
+            if info.connection != xcffib.randr.Connection.Connected:
+                continue
 
             # ignore outputs with no monitor plugged in
             if not info.crtc:
@@ -414,7 +448,27 @@ class RandR:
 
             crtc_info = self.ext.GetCrtcInfo(info.crtc, xcffib.CurrentTime).reply()
 
-            infos.append(ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height))
+            edid_raw = (
+                self.ext.GetOutputProperty(
+                    crtc_info.outputs[0], self.conn.atoms["EDID"], 0, 0, 256, False, False
+                )
+                .reply()
+                .data
+            )
+            serial = None
+            name = None
+            if len(edid_raw) > 0:
+                (serial, name) = parse_serial_from_edid(bytes(edid_raw))
+
+            rect = ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height)
+            out = Output(name, serial, rect)
+
+            # prepend the primary output, append all others in screen
+            # resources order
+            if primary == output:
+                infos.insert(0, out)
+            else:
+                infos.append(out)
         return infos
 
     def enable_screen_change_notifications(self, conn):
@@ -443,6 +497,7 @@ class Connection:
         "xinerama": Xinerama,
         "randr": RandR,
         "xfixes": XFixes,
+        "mit-screen-saver": ScreenSaver,
     }
 
     def __init__(self, display):
@@ -456,7 +511,7 @@ class Connection:
 
         for i in extensions:
             if i in self._extmap:
-                setattr(self, i, self._extmap[i](self))
+                setattr(self, i.replace("-", "_"), self._extmap[i](self))
 
         self.atoms = AtomCache(self)
 
@@ -494,13 +549,13 @@ class Connection:
         elif hasattr(self, "xinerama"):
             pseudoscreens = []
             for i, s in enumerate(self.xinerama.query_screens()):
-                scr = ScreenRect(
+                rect = ScreenRect(
                     s.x_org,
                     s.y_org,
                     s.width,
                     s.height,
                 )
-                pseudoscreens.append(scr)
+                pseudoscreens.append(Output(None, None, rect))
             return pseudoscreens
         raise Exception("no randr or xinerama?")
 
@@ -654,8 +709,8 @@ class Painter:
         # necessary size of the root window by looking at the
         # pseudoscreens attribute and calculating the max x and y extents.
         root_windows = screen.qtile.core.conn.pseudoscreens
-        width = max(win.x + win.width for win in root_windows)
-        height = max(win.y + win.height for win in root_windows)
+        width = max(win.rect.x + win.rect.width for win in root_windows)
+        height = max(win.rect.y + win.rect.height for win in root_windows)
 
         try:
             root_pixmap = self.default_screen.root.get_property(

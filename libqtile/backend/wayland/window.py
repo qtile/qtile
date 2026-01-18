@@ -1,279 +1,520 @@
-# Copyright (c) 2021 Matt Colligan
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
-import abc
-import functools
 import typing
 
-import cairocffi
-import wlroots.wlr_types.foreign_toplevel_management_v1 as ftm
-from pywayland.server import Client, Listener
-from wlroots import PtrHasData
-from wlroots.util.box import Box
-from wlroots.wlr_types import Buffer
-from wlroots.wlr_types.idle_inhibit_v1 import IdleInhibitorV1
-from wlroots.wlr_types.pointer_constraints_v1 import (
-    PointerConstraintV1,
-    PointerConstraintV1StateField,
-)
-from wlroots.wlr_types.scene import SceneBuffer, SceneRect, SceneTree
-
-from libqtile import config, hook, utils
-from libqtile.backend import base
+import libqtile.backend.base.window as base
+from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
+from libqtile.backend.base.window import WindowType
 from libqtile.backend.wayland.drawer import Drawer
-from libqtile.backend.wayland.wlrq import HasListeners
 from libqtile.command.base import CommandError, expose_command
+from libqtile.core.manager import Qtile
+from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.utils import ColorsType, rgb
 
 try:
     # Continue if ffi not built, so that docs can be built without wayland deps.
     from libqtile.backend.wayland._ffi import ffi, lib
 except ModuleNotFoundError:
-    pass
+    print("Warning: Wayland backend not built. Backend will not run.")
+    # Continue if ffi not built, so that docs can be built without wayland deps.
+    # Provide a stub for FFI to keep going
+    from libqtile.backend.wayland.ffi_stub import ffi, lib
 
 if typing.TYPE_CHECKING:
-    from typing import Any
-
-    from wlroots.wlr_types import Surface
-
-    from libqtile.backend.wayland.core import Core
     from libqtile.command.base import CommandObject, ItemT
-    from libqtile.core.manager import Qtile
-    from libqtile.group import _Group
-    from libqtile.utils import ColorsType, ColorType
-
-S = typing.TypeVar("S", bound=PtrHasData)
 
 
-@functools.lru_cache
-def _rgb(color: ColorType) -> ffi.CData:
-    """Helper to create and cache float[4] arrays for border painting"""
-    if isinstance(color, ffi.CData):
-        return color
-    return ffi.new("float[4]", utils.rgb(color))
+class Base(base._Window):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
+        base._Window.__init__(self)
+        self.qtile = qtile
+        self._group: _Group | None = None
+        # TODO: why are there 2 groups here?
+        self._ptr = ptr
+        self._wid = wid
+        self._wm_class: str | None = None
+        self._wm_instance: str | None = None
+        self._wm_role: str | None = None
+        self.bordercolor: ColorsType | None = None
+        self.borderwidth = 0
+        # TODO: what is this?
+        self.defunct = False
+        self.group: _Group | None = None
 
+    def reparent(self, layer: int) -> None:
+        if self.layer == layer:
+            return
+        lib.qw_view_reparent(self._ptr, layer)
 
-class _Base:
-    _wid: int
+    @property
+    def layer(self) -> int:
+        return self._ptr.layer
+
+    @expose_command()
+    def keep_above(self, enable: bool | None = None) -> None:
+        is_enabled = self.layer == lib.LAYER_KEEPABOVE
+        if enable is None:
+            enable = not is_enabled
+
+        if enable:
+            self.reparent(lib.LAYER_KEEPABOVE)
+        else:
+            self.reparent(lib.LAYER_LAYOUT)
+
+    @expose_command()
+    def keep_below(self, enable: bool | None = None) -> None:
+        is_enabled = self.layer == lib.LAYER_KEEPBELOW
+        if enable is None:
+            enable = not is_enabled
+
+        if enable:
+            self.reparent(lib.LAYER_KEEPBELOW)
+        else:
+            self.reparent(lib.LAYER_LAYOUT)
+
+    @expose_command()
+    def move_to_top(self) -> None:
+        lib.qw_view_raise_to_top(self._ptr)
+
+    @expose_command()
+    def move_up(self, force: bool = False) -> None:
+        if force and self.layer == lib.LAYER_KEEPBELOW:
+            new_layer = self.get_new_layer(self._float_state)
+            self.reparent(new_layer)
+        lib.qw_view_move_up(self._ptr)
+
+    @expose_command()
+    def move_down(self, force: bool = False) -> None:
+        if force and self.layer == lib.LAYER_KEEPAOVE:
+            new_layer = self.get_new_layer(self._float_state)
+            self.reparent(new_layer)
+        lib.qw_view_move_down(self._ptr)
+
+    @expose_command()
+    def move_to_bottom(self) -> None:
+        lib.qw_view_lower_to_bottom(self._ptr)
+
+    @expose_command()
+    def bring_to_front(self) -> None:
+        self.reparent(lib.LAYER_BRINGTOFRONT)
+        lib.qw_view_raise_to_top(self._ptr)
 
     @property
     def wid(self) -> int:
         return self._wid
+
+    @property
+    def x(self) -> int:
+        return self._ptr.x
+
+    @x.setter
+    def x(self, x: int) -> None:
+        self._ptr.x = x
+
+    @property
+    def y(self) -> int:
+        return self._ptr.y
+
+    @y.setter
+    def y(self, y: int) -> None:
+        self._ptr.y = y
 
     @property
     def width(self) -> int:
-        return self._width
+        return self._ptr.width
 
     @width.setter
     def width(self, width: int) -> None:
-        self._width = width
+        self._ptr.width = width
 
     @property
     def height(self) -> int:
-        return self._height
+        return self._ptr.height
 
     @height.setter
     def height(self, height: int) -> None:
-        self._height = height
-
-
-class Window(typing.Generic[S], _Base, base.Window, HasListeners):
-    """
-    This is a generic window class for "regular" windows. The type variable `S` denotes
-    which type of surface the window manages, and by extension which shell the window
-    belongs to. While this does implement some of `base.Window`'s abstract methods, the
-    concrete classes are responsible for implementing a few others.
-    """
-
-    def __init__(self, core: Core, qtile: Qtile, surface: S):
-        base.Window.__init__(self)
-        self.core = core
-        self.qtile = qtile
-        self.surface = surface
-        self._group: _Group | None = None
-        self.x = 0
-        self.y = 0
-        self._opacity: float = 1.0
-        self._wm_class: str | None = None
-        self._idle_inhibitors_count: int = 0
-        self._urgent = False
-
-        # Create a scene-graph tree for this window and its borders
-        self.data_handle: ffi.CData = ffi.new_handle(self)
-        self.container = SceneTree.create(core.mid_window_tree)
-        self.container.node.set_enabled(enabled=False)
-        self.container.node.data = self.data_handle
-
-        # The borders are wlr_scene_rects.
-        # Inner list: N, E, S, W edges
-        # Outer list: outside-in borders i.e. multiple for multiple borders
-        self._borders: list[list[SceneRect]] = []
-        self.bordercolor: ColorsType = "000000"
-
-        # This is a placeholder to be set properly when the window maps for the first
-        # time (and therefore exposed to the user). We need the attribute to exist so
-        # that __repr__ doesn't AttributeError.
-        self._wid: int = -1
-
-        self._width: int = 0
-        self._height: int = 0
-        self.float_x: int | None = None
-        self.float_y: int | None = None
-        self._float_width: int = 0
-        self._float_height: int = 0
-        self._float_state = FloatStates.NOT_FLOATING
-
-        # Each regular window gets a foreign toplevel handle: all instances of Window
-        # (i.e. toplevel XDG windows and regular X11 windows) have one. If a user uses
-        # the static() command to convert one of these into a Static, that Static will
-        # keep the same handle. However, Static windows can also be layer shell windows
-        # or non-regular X11 clients (e.g. X11 bars or popups), and so might not have a
-        # handle. Because we pass ownership of the handle to a Static during static(),
-        # and the old Window would destroy the handle during finalize(), we make this
-        # attribute optional to avoid the destroy().
-        self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
-
-    def finalize(self) -> None:
-        self.finalize_listeners()
-        self.surface.data = None
-
-        # Remove the scene graph container. Any borders will die with it.
-        self.container.node.data = None
-        self.container.node.destroy()
-        del self.data_handle
-
-        if self.ftm_handle:
-            self.ftm_handle.destroy()
-            self.ftm_handle = None
-
-        self.core.remove_pointer_constraints(self)
-
-    def _on_map(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: window map")
-        self.unhide()
-
-    def _on_unmap(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: window unmap")
-        self.hide()
-
-    @property
-    def wid(self) -> int:
-        return self._wid
-
-    @property
-    def group(self) -> _Group | None:
-        return self._group
-
-    @group.setter
-    def group(self, group: _Group | None) -> None:
-        self._group = group
+        self._ptr.height = height
 
     @property
     def urgent(self) -> bool:
-        return self._urgent
+        return self._ptr.urgent
 
-    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: window destroy")
-        self.hide()
+    @urgent.setter
+    def urgent(self, urgent: bool) -> None:
+        self._ptr.urgent = urgent
 
-        if self in self.core.pending_windows:
-            self.core.pending_windows.remove(self)
-        else:
-            self.qtile.unmanage(self.wid)
+    @expose_command()
+    def info(self) -> dict:
+        """Return a dictionary of info."""
+        # TODO: complete implementation
+        float_info = {
+            "x": self.float_x,
+            "y": self.float_y,
+            "width": self._float_width,
+            "height": self._float_height,
+        }
+        return dict(
+            name=self.name,
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            group=self.group.name if self.group else None,
+            id=self.wid,
+            wm_class=self.get_wm_class(),
+            # shell can be either "XDG" or "XWayland" or "layer"?
+            shell=ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
+            float_info=float_info,
+            floating=self._float_state != FloatStates.NOT_FLOATING,
+            maximized=self._float_state == FloatStates.MAXIMIZED,
+            minimized=self._float_state == FloatStates.MINIMIZED,
+            fullscreen=self._float_state == FloatStates.FULLSCREEN,
+        )
 
-        self.finalize()
-
-    def _on_foreign_request_maximize(
-        self, _listener: Listener, event: ftm.ForeignToplevelHandleV1MaximizedEvent
-    ) -> None:
-        logger.debug("Signal: foreign_toplevel_management request_maximize")
-        self.maximized = event.maximized
-
-    def _on_foreign_request_minimize(
-        self, _listener: Listener, event: ftm.ForeignToplevelHandleV1MinimizedEvent
-    ) -> None:
-        logger.debug("Signal: foreign_toplevel_management request_minimize")
-        self.minimized = event.minimized
-
-    def _on_foreign_request_fullscreen(
-        self, _listener: Listener, event: ftm.ForeignToplevelHandleV1FullscreenEvent
-    ) -> None:
-        logger.debug("Signal: foreign_toplevel_management request_fullscreen")
-        self.fullscreen = event.fullscreen
-
-    def _on_foreign_request_activate(
-        self, _listener: Listener, event: ftm.ForeignToplevelHandleV1ActivatedEvent
-    ) -> None:
-        logger.debug("Signal: foreign_toplevel_management request_activate")
-        if self.group:
-            self.qtile.current_screen.set_group(self.group)
-            self.group.focus(self)
-
-    def _on_foreign_request_close(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: foreign_toplevel_management request_close")
-        self.kill()
-
-    def _on_inhibitor_destroy(self, listener: Listener, surface: Surface) -> None:
-        # We don't have reference to the inhibitor, but it doesn't really
-        # matter we only need to keep count of how many inhibitors there are
-        self._idle_inhibitors_count -= 1
-        listener.remove()
-        if self._idle_inhibitors_count == 0:
-            self.core.check_idle_inhibitor()
-            # TODO: do we also need to check idle inhibitors when unmapping?
+    def kill(self) -> None:
+        self._ptr.kill(self._ptr)
 
     def hide(self) -> None:
-        self.container.node.set_enabled(enabled=False)
-        seat = self.core.seat
-        if not seat.destroyed:
-            if self.surface.surface == seat.keyboard_state.focused_surface:
-                seat.keyboard_clear_focus()
+        self._ptr.hide(self._ptr)
+        self.qtile.core.check_inhibited()
 
-    def get_wm_class(self) -> list | None:
-        if self._wm_class:
-            return [self._wm_class]
-        return None
+    def unhide(self) -> None:
+        self._ptr.unhide(self._ptr)
+        self.qtile.core.check_inhibited()
 
-    def belongs_to_client(self, other: Client) -> bool:
-        return other == Client.from_resource(self.surface.surface._ptr.resource)
+    @expose_command()
+    def place(
+        self,
+        x: int | None,
+        y: int | None,
+        width: int | None,
+        height: int | None,
+        borderwidth: int | None = None,
+        bordercolor: ColorsType | None = None,
+        above: bool = False,
+        margin: int | list[int] | None = None,
+        respect_hints: bool = False,
+    ) -> None:
+        # Adjust the placement to account for layout margins, if there are any.
+        # TODO: is respect_hints only for X11?
+        assert ffi is not None
+        if x is None:
+            x = self.x
+        if y is None:
+            y = self.y
+        if bordercolor is None:
+            bordercolor = self.bordercolor
+        if borderwidth is None:
+            borderwidth = borderwidth or 0
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+        if margin is not None:
+            if isinstance(margin, int):
+                margin = [margin] * 4
+            x += margin[3]
+            y += margin[0]
+            width -= margin[1] + margin[3]
+            height -= margin[0] + margin[2]
 
+        # TODO: respect hints
+
+        if self.group is not None and self.group.screen is not None:
+            self.float_x = x - self.group.screen.x
+            self.float_y = y - self.group.screen.y
+        n = 0
+        c_layers = ffi.NULL
+        if bordercolor is not None:
+            if isinstance(bordercolor, list):
+                # multiple border colors
+                if all(isinstance(x, str) or isinstance(x, tuple) for x in bordercolor):
+                    colors = bordercolor
+                else:
+                    pass
+                    # TODO: Check validation logic, handle this case
+            else:
+                colors = [bordercolor]
+            n = len(colors)
+
+            # Allocate array of qw_border
+            c_layers = ffi.new(f"struct qw_border[{n}]")
+
+            base_width = borderwidth // n
+            remainder = borderwidth % n
+
+            for i, bc in enumerate(colors):
+                # Set type RECT
+                c_layers[i].type = lib.QW_BORDER_RECT
+
+                # Set width, distribute remainder
+                c_layers[i].width = base_width + (1 if i < remainder else 0)
+
+                # Convert python color to RGBA float[4]
+                rgba = rgb(bc)
+
+                # Copy RGBA into c struct color field
+                # Each edge is set to the same colour
+                for side in range(4):
+                    for j in range(4):
+                        c_layers[i].rect.color[side][j] = rgba[j]
+
+        self.bordercolor = bordercolor
+        self.borderwidth = borderwidth
+        self._ptr.place(self._ptr, x, y, width, height, c_layers, n, int(above))
+
+    @expose_command()
     def focus(self, warp: bool = True) -> None:
-        self._urgent = False
-        self.core.focus_window(self)
+        self.qtile.core.focus_window(self)
 
-        if warp and self.qtile.config.cursor_warp:
-            self.core.warp_pointer(
-                self.x + self._width / 2,
-                self.y + self._height / 2,
-            )
+        # TODO
+        # Call core.warp_pointer() previously here
+
+        if self.urgent:
+            self.urgent = False
 
         if self.group and self.group.current_window is not self:
             self.group.focus(self)
 
         hook.fire("client_focus", self)
 
+
+class Internal(Base, base.Internal):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
+        Base.__init__(self, qtile, lib.qw_internal_view_get_base(ptr), wid)
+        base.Internal.__init__(self)
+        ptr.base.wid = wid
+        self._internal_ptr = ptr
+        self._killed = False
+
+    @property
+    def surface(self) -> ffi.CData:
+        return ffi.cast("void *", self._internal_ptr.image_surface)
+
+    @property
+    def scale(self) -> float:
+        return self._internal_ptr.scale
+
+    def finalize(self) -> None:
+        self.hide()
+
+    def create_drawer(self, width: int, height: int) -> Drawer:
+        """Create a Drawer that draws to this window."""
+        return Drawer(self.qtile, self, width, height)
+
+    def set_buffer_with_damage(self, offsetx: int, offsety: int, width: int, height: int) -> None:
+        lib.qw_internal_view_set_buffer_with_damage(
+            self._internal_ptr, offsetx, offsety, width, height
+        )
+
+    @expose_command()
+    def kill(self) -> None:
+        if not self._killed:
+            self._ptr.kill(self._ptr)
+            self._killed = True
+        if self.wid in self.qtile.windows_map:
+            # It will be present during config reloads; absent during shutdown as this
+            # will follow graceful_shutdown
+            del self.qtile.windows_map[self.wid]
+
+    @expose_command()
+    def info(self) -> dict:
+        """Return a dictionary of info."""
+        return dict(
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            id=self.wid,
+        )
+
+
+@ffi.def_extern()
+def request_focus_cb(userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_focus():
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def request_close_cb(userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_close():
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def request_fullscreen_cb(fullscreen: bool, userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_fullscreen(fullscreen):
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def request_maximize_cb(maximize: bool, userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_maximize(maximize):
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def request_minimize_cb(minimize: bool, userdata: ffi.CData) -> int:
+    win = ffi.from_handle(userdata)
+    if win.handle_request_minimize(minimize):
+        return 1
+    return 0
+
+
+@ffi.def_extern()
+def set_title_cb(title: ffi.CData, userdata: ffi.CData) -> None:
+    win = ffi.from_handle(userdata)
+    win.handle_set_title(ffi.string(title).decode())
+
+
+@ffi.def_extern()
+def set_app_id_cb(app_id: ffi.CData, userdata: ffi.CData) -> None:
+    win = ffi.from_handle(userdata)
+    win.handle_set_app_id(ffi.string(app_id).decode())
+
+
+class Window(Base, base.Window):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
+        Base.__init__(self, qtile, ptr, wid)
+        base.Window.__init__(self)
+
+        self.float_x: int | None = None
+        self.float_y: int | None = None
+        self._float_width: int = 0
+        self._float_height: int = 0
+        self._float_state = FloatStates.NOT_FLOATING
+        # TODO: destroy?
+        self._userdata = ffi.new_handle(self)
+        ptr.cb_data = self._userdata
+        ptr.request_focus_cb = lib.request_focus_cb
+        ptr.request_close_cb = lib.request_close_cb
+        ptr.request_maximize_cb = lib.request_maximize_cb
+        ptr.request_minimize_cb = lib.request_minimize_cb
+        ptr.request_fullscreen_cb = lib.request_fullscreen_cb
+        ptr.set_title_cb = lib.set_title_cb
+        ptr.set_app_id_cb = lib.set_app_id_cb
+
+    def handle_request_focus(self) -> bool:
+        logger.debug("Focusing window from external request")
+        return self.activate()
+
+    def handle_request_close(self) -> bool:
+        self.kill()
+        return True
+
+    def handle_request_fullscreen(self, fullscreen: bool) -> bool:
+        if self.qtile.config.auto_fullscreen:
+            if self.fullscreen != fullscreen:
+                self.fullscreen = fullscreen
+                return True
+        return False
+
+    def handle_request_maximize(self, maximize: bool) -> bool:
+        self.maximized = maximize
+        return True
+
+    def handle_request_minimize(self, minimize: bool) -> bool:
+        self.minimized = minimize
+        return True
+
+    def handle_set_title(self, title: str) -> None:
+        logger.debug("Signal: xdgwindow set_title")
+        if title != self.name:
+            self.name = title
+            # TODO: Handle foreign-toplevel-management?
+            hook.fire("client_name_updated", self)
+
+    def handle_set_app_id(self, app_id: str) -> None:
+        logger.debug("Signal: xdgwindow set_app_id")
+        self._wm_class = app_id
+        # TODO: Handle foreign-toplevel-management?
+
+    def get_wm_class(self) -> list | None:
+        wm_class = []
+        if self._wm_instance:
+            wm_class.append(self._wm_instance)
+        if self._wm_class:
+            wm_class.append(self._wm_class)
+
+        return wm_class or None
+
+    def get_wm_role(self) -> str | None:
+        return self._wm_role or None
+
+    @expose_command()
+    def is_visible(self) -> bool:
+        return lib.qw_view_is_visible(self._ptr)
+
+    @expose_command()
+    def static(
+        self,
+        screen: int | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
+    ) -> None:
+        # The concrete Window class must fire the client_managed hook after it's
+        # completed any custom logic.
+        self.defunct = True
+        if self.group:
+            self.group.remove(self)
+
+        # Keep track of user-specified geometry to support X11.
+        # Respect configure requests only if these are `None` here.
+        conf_x = x
+        conf_y = y
+        conf_width = width
+        conf_height = height
+
+        if x is None:
+            x = self.x + self.borderwidth
+        if y is None:
+            y = self.y + self.borderwidth
+        if width is None:
+            width = self.width
+        if height is None:
+            height = self.height
+
+        win = self._to_static(conf_x, conf_y, conf_width, conf_height)
+
+        # Remove references to original window
+        self._userdata = None
+
+        # TODO: pass over ftm
+
+        if screen is not None:
+            win.screen = self.qtile.screens[screen]
+        win.unhide()
+        win.place(x, y, width, height, 0, None)
+        self.qtile.windows_map[self.wid] = win
+
+        # TODO: pointer constraints
+
+        hook.fire("client_managed", win)
+
+    def _to_static(
+        self, x: int | None, y: int | None, width: int | None, height: int | None
+    ) -> Static:
+        return Static(
+            self.qtile,
+            self._ptr,
+            self._wid,
+        )
+
+    @expose_command()
     def togroup(
-        self, group_name: str | None = None, *, switch_group: bool = False, toggle: bool = False
+        self, group_name: str | None = None, switch_group: bool = False, toggle: bool = False
     ) -> None:
         """
         Move window to a specified group
@@ -319,88 +560,75 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         if switch_group:
             group.toscreen(toggle=toggle)
 
-    def paint_borders(self, colors: ColorsType | None, width: int) -> None:
-        if not colors:
-            colors = []
-            width = 0
+    def _items(self, name: str) -> ItemT:
+        if name == "group":
+            return True, []
+        if name == "layout":
+            if self.group:
+                return True, list(range(len(self.group.layouts)))
+            return None
+        if name == "screen":
+            if self.group and self.group.screen:
+                return True, []
+        return None
 
-        if not isinstance(colors, list):
-            colors = [colors]
-
-        if self.tree:
-            self.tree.node.set_position(width, width)
-        self.bordercolor = colors
-        self.borderwidth = width
-
-        if width == 0:
-            for rects in self._borders:
-                for rect in rects:
-                    rect.node.destroy()
-            self._borders.clear()
-            return
-
-        if len(colors) > width:
-            colors = colors[:width]
-
-        num = len(colors)
-        old_borders = self._borders
-        new_borders = []
-        widths = [width // num] * num
-        for i in range(width % num):
-            widths[i] += 1
-
-        outer_w = self.width + width * 2
-        outer_h = self.height + width * 2
-        coord = 0
-
-        for i, color in enumerate(colors):
-            color_ = _rgb(color)
-            bw = widths[i]
-
-            # [x, y, width, height] for N, E, S, W
-            geometries = (
-                (coord, coord, outer_w - coord * 2, bw),
-                (outer_w - bw - coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-                (coord, outer_h - bw - coord, outer_w - coord * 2, bw),
-                (coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-            )
-
-            if old_borders:
-                rects = old_borders.pop(0)
-                for (x, y, w, h), rect in zip(geometries, rects):
-                    rect.set_color(color_)
-                    rect.set_size(w, h)
-                    rect.node.set_position(x, y)
-
+    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
+        if name == "group":
+            return self.group
+        elif name == "layout":
+            if sel is None:
+                return self.group.layout if self.group else None
             else:
-                rects = []
-                for x, y, w, h in geometries:
-                    rect = SceneRect(self.container, w, h, color_)
-                    rect.node.set_position(x, y)
-                    rects.append(rect)
-
-            new_borders.append(rects)
-            coord += bw
-
-        for rects in old_borders:
-            for rect in rects:
-                rect.node.destroy()
-
-        # Ensure the window contents and any nested surfaces are drawn above the
-        # borders.
-        if self.tree:
-            self.tree.node.raise_to_top()
-
-        self._borders = new_borders
+                return utils.lget(self.group.layouts, int(sel)) if self.group else None
+        elif name == "screen":
+            return self.group.screen if self.group else None
+        return None
 
     @property
-    def opacity(self) -> float:
-        return self._opacity
+    def group(self) -> _Group | None:
+        return self._group
 
-    @opacity.setter
-    def opacity(self, opacity: float) -> None:
-        self._opacity = opacity
-        self.core.configure_node_opacity(self.container.node)
+    @group.setter
+    def group(self, group: _Group | None) -> None:
+        self._group = group
+
+    @property
+    def skip_taskbar(self) -> bool:
+        return bool(self._ptr.skip_taskbar)
+
+    @skip_taskbar.setter
+    def skip_taskbar(self, value: bool) -> None:
+        self._ptr.skip_taskbar = value
+
+    @expose_command()
+    def get_position(self) -> tuple[int, int]:
+        return int(self._ptr.x), int(self._ptr.y)
+
+    @expose_command()
+    def get_size(self) -> tuple[int, int]:
+        return int(self._ptr.width), int(self._ptr.height)
+
+    def has_fixed_size(self) -> bool:
+        return self._ptr.has_fixed_size(self._ptr)
+
+    def get_pid(self) -> int:
+        return int(self._ptr.get_pid(self._ptr))
+
+    def get_wm_type(self) -> str:
+        return ffi.string(self._ptr.get_wm_type(self._ptr)).decode()
+
+    def is_transient_for(self) -> WindowType | None:
+        wid = int(self._ptr.get_parent(self._ptr))
+        return self.qtile.windows_map.get(wid, None)
+
+    def get_new_layer(self, state: FloatStates) -> int:
+        if self.qtile.config.floats_kept_above and state == FloatStates.FLOATING:
+            return lib.LAYER_KEEPABOVE
+        if state == FloatStates.MAXIMIZED:
+            return lib.LAYER_MAX
+        if state == FloatStates.FULLSCREEN:
+            return lib.LAYER_FULLSCREEN
+        return lib.LAYER_LAYOUT
 
     @property
     def floating(self) -> bool:
@@ -412,8 +640,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self.is_placed():
                 screen = self.group.screen  # type: ignore[union-attr] # see is_placed()
                 if not self._float_width:  # These might start as 0
-                    self._float_width = self._width
-                    self._float_height = self._height
+                    self._float_width = self.width
+                    self._float_height = self.height
                 self._reconfigure_floating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
@@ -423,12 +651,17 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
+            if self.layer != lib.LAYER_KEEPABOVE and self.qtile.config.floats_kept_above:
+                self.keep_above(enable=True)
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
+            self.reparent(lib.LAYER_LAYOUT)
             self._update_fullscreen(False)
+            self._update_maximized(False)
+            self._update_minimized(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
-                self._float_width = self._width
-                self._float_height = self._height
+                self._float_width = self.width
+                self._float_height = self.height
             self._float_state = FloatStates.NOT_FLOATING
             if self.group:
                 self.group.mark_floating(self, False)
@@ -459,10 +692,19 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         elif self._float_state == FloatStates.FULLSCREEN:
             self._restore_geometry()
             self.floating = False
+            self._update_fullscreen(False)
 
-    @abc.abstractmethod
     def _update_fullscreen(self, do_full: bool) -> None:
-        pass
+        if do_full != (self._float_state == FloatStates.FULLSCREEN):
+            self._ptr.update_fullscreen(self._ptr, do_full)
+
+        if self.group and self.group.screen:
+            screen = self.group.screen
+        else:
+            screen = None
+
+        self.qtile.core.check_screen_fullscreen_background(screen)
+        self.qtile.core.check_inhibited()
 
     @property
     def maximized(self) -> bool:
@@ -491,8 +733,9 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
                 self._restore_geometry()
                 self.floating = False
 
-        if self.ftm_handle:
-            self.ftm_handle.set_maximized(do_maximize)
+    def _update_maximized(self, do_max: bool) -> None:
+        if do_max != (self._float_state == FloatStates.MAXIMIZED):
+            self._ptr.update_maximized(self._ptr, do_max)
 
     @property
     def minimized(self) -> bool:
@@ -507,8 +750,34 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
-        if self.ftm_handle:
-            self.ftm_handle.set_minimized(do_minimize)
+    def _update_minimized(self, do_min: bool) -> None:
+        if do_min != (self._float_state == FloatStates.MINIMIZED):
+            self._ptr.update_minimized(self._ptr, do_min)
+
+    def _reconfigure_floating(
+        self,
+        x: int | None = None,
+        y: int | None = None,
+        w: int | None = None,
+        h: int | None = None,
+        new_float_state: FloatStates = FloatStates.FLOATING,
+    ) -> None:
+        if self._float_state != new_float_state:
+            self._float_state = new_float_state
+            self.reparent(self.get_new_layer(new_float_state))
+            if self.group:  # may be not, if it's called from hook
+                self.group.mark_floating(self, True)
+            self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
+            hook.fire("float_change")
+        self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
+        self._update_maximized(new_float_state == FloatStates.MAXIMIZED)
+        self._update_minimized(new_float_state == FloatStates.MINIMIZED)
+        if new_float_state == FloatStates.MINIMIZED:
+            self.hide()
+        else:
+            self.place(
+                x, y, w, h, self.borderwidth, self.bordercolor, above=True, respect_hints=True
+            )
 
     def _tweak_float(
         self,
@@ -530,11 +799,11 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
         y += dy
 
         if w is None:
-            w = self._width
+            w = self.width
         w += dw
 
         if h is None:
-            h = self._height
+            h = self.height
         h += dh
 
         if h < 0:
@@ -549,98 +818,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             self.qtile.focus_screen(screen.index)
 
         self._reconfigure_floating(x, y, w, h)
-
-    def _reconfigure_floating(
-        self,
-        x: int | None = None,
-        y: int | None = None,
-        w: int | None = None,
-        h: int | None = None,
-        new_float_state: FloatStates = FloatStates.FLOATING,
-    ) -> None:
-        self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
-        if new_float_state == FloatStates.MINIMIZED:
-            self.hide()
-        else:
-            self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=True, respect_hints=True
-            )
-        if self._float_state != new_float_state:
-            self._float_state = new_float_state
-            if self.group:  # may be not, if it's called from hook
-                self.group.mark_floating(self, True)
-            hook.fire("float_change")
-
-    @expose_command()
-    def info(self) -> dict:
-        """Return a dictionary of info."""
-        float_info = {
-            "x": self.float_x,
-            "y": self.float_y,
-            "width": self._float_width,
-            "height": self._float_height,
-        }
-        return dict(
-            name=self.name,
-            x=self.x,
-            y=self.y,
-            width=self._width,
-            height=self._height,
-            group=self.group.name if self.group else None,
-            id=self.wid,
-            wm_class=self.get_wm_class(),
-            shell="XDG" if self.__class__.__name__ == "XdgWindow" else "XWayland",
-            float_info=float_info,
-            floating=self._float_state != FloatStates.NOT_FLOATING,
-            maximized=self._float_state == FloatStates.MAXIMIZED,
-            minimized=self._float_state == FloatStates.MINIMIZED,
-            fullscreen=self._float_state == FloatStates.FULLSCREEN,
-        )
-
-    def match(self, match: config._Match) -> bool:
-        return match.compare(self)
-
-    def add_idle_inhibitor(
-        self,
-        surface: Surface,
-        _x: int,
-        _y: int,
-        inhibitor: IdleInhibitorV1,
-    ) -> None:
-        if surface == inhibitor.surface:
-            self._idle_inhibitors_count += 1
-            inhibitor.data = self
-            self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
-            if self._idle_inhibitors_count == 1:
-                self.core.check_idle_inhibitor()
-
-    @property
-    def is_idle_inhibited(self) -> bool:
-        return self._idle_inhibitors_count > 0
-
-    def _items(self, name: str) -> ItemT:
-        if name == "group":
-            return True, []
-        if name == "layout":
-            if self.group:
-                return True, list(range(len(self.group.layouts)))
-            return None
-        if name == "screen":
-            if self.group and self.group.screen:
-                return True, []
-        return None
-
-    def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
-        if name == "group":
-            return self.group
-        elif name == "layout":
-            if sel is None:
-                return self.group.layout if self.group else None
-            else:
-                return utils.lget(self.group.layouts, int(sel)) if self.group else None
-        elif name == "screen":
-            return self.group.screen if self.group else None
-        return None
 
     @expose_command()
     def move_floating(self, dx: int, dy: int) -> None:
@@ -661,8 +838,8 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
             return
 
         if self.group:
-            cx = self.core.cursor.x
-            cy = self.core.cursor.y
+            cx = self.qtile.core.qw_cursor.cursor.x
+            cy = self.qtile.core.qw_cursor.cursor.y
             for window in self.group.windows:
                 if (
                     window is not self
@@ -676,14 +853,6 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     @expose_command()
     def set_size_floating(self, w: int, h: int) -> None:
         self._tweak_float(w=w, h=h)
-
-    @expose_command()
-    def get_position(self) -> tuple[int, int]:
-        return self.x, self.y
-
-    @expose_command()
-    def get_size(self) -> tuple[int, int]:
-        return self._width, self._height
 
     @expose_command()
     def toggle_floating(self) -> None:
@@ -717,287 +886,49 @@ class Window(typing.Generic[S], _Base, base.Window, HasListeners):
     def disable_fullscreen(self) -> None:
         self.fullscreen = False
 
-    @expose_command()
-    def bring_to_front(self) -> None:
-        self.container.node.raise_to_top()
 
-    @expose_command()
-    def static(
-        self,
-        screen: int | None = None,
-        x: int | None = None,
-        y: int | None = None,
-        width: int | None = None,
-        height: int | None = None,
-    ) -> None:
-        # The concrete Window class must fire the client_managed hook after it's
-        # completed any custom logic.
-        self.defunct = True
-        if self.group:
-            self.group.remove(self)
-
-        # Keep track of user-specified geometry to support X11.
-        # Respect configure requests only if these are `None` here.
-        conf_x = x
-        conf_y = y
-        conf_width = width
-        conf_height = height
-
-        if x is None:
-            x = self.x + self.borderwidth
-        if y is None:
-            y = self.y + self.borderwidth
-        if width is None:
-            width = self._width
-        if height is None:
-            height = self._height
-
-        self.finalize_listeners()
-
-        # Destroy the borders. Currently static windows are always borderless.
-        while self._borders:
-            for rect in self._borders.pop():
-                rect.node.destroy()
-        if self.tree:
-            self.tree.node.set_position(0, 0)
-
-        win = self._to_static(conf_x, conf_y, conf_width, conf_height)
-
-        # Pass ownership of the foreign toplevel handle to the static window.
-        if self.ftm_handle:
-            win.ftm_handle = self.ftm_handle
-            self.ftm_handle = None
-            win.add_listener(win.ftm_handle.request_close_event, win._on_foreign_request_close)
-
-        if screen is not None:
-            win.screen = self.qtile.screens[screen]
-        win.unhide()
-        win.place(x, y, width, height, 0, None)
-        self.qtile.windows_map[self.wid] = win
-
-    @expose_command()
-    def is_visible(self) -> bool:
-        return self.container.node.enabled
-
-    @abc.abstractmethod
-    def _to_static(
-        self, x: int | None, y: int | None, width: int | None, height: int | None
-    ) -> Static:
-        # This must return a new `Static` subclass instance
-        pass
-
-
-class Static(typing.Generic[S], _Base, base.Static, HasListeners):
-    def __init__(
-        self,
-        core: Core,
-        qtile: Qtile,
-        surface: S,
-        wid: int,
-        idle_inhibitor_count: int = 0,
-    ):
+class Static(Base, base.Static):
+    def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
+        Base.__init__(self, qtile, ptr, wid)
         base.Static.__init__(self)
-        self.core = core
-        self.qtile = qtile
-        self.surface = surface
         self.screen = qtile.current_screen
-        self._wid = wid
         self.x = 0
         self.y = 0
         self._width = 0
         self._height = 0
-        self.borderwidth: int = 0
-        self.bordercolor: list[ffi.CData] = [_rgb((0, 0, 0, 1))]
-        self.opacity: float = 1.0
-        self._wm_class: str | None = None
-        self._idle_inhibitors_count = idle_inhibitor_count
-        self.ftm_handle: ftm.ForeignToplevelHandleV1 | None = None
-        self.data_handle = ffi.new_handle(self)
-        surface.data = self.data_handle
-        self._urgent = False
+        # TODO: opacity, idle_inhibitors, ftm
 
-    def finalize(self) -> None:
-        self.finalize_listeners()
-        self.surface.data = None
-        self.core.remove_pointer_constraints(self)
-        del self.data_handle
+        self._userdata = ffi.new_handle(self)
+        ptr.cb_data = self._userdata
+        ptr.request_focus_cb = ffi.NULL
+        ptr.request_close_cb = ffi.NULL
+        ptr.request_maximize_cb = ffi.NULL
+        ptr.request_minimize_cb = ffi.NULL
+        ptr.request_fullscreen_cb = ffi.NULL
+        ptr.set_title_cb = lib.set_title_cb
+        ptr.set_app_id_cb = lib.set_app_id_cb
+
+        if self._ptr.title != ffi.NULL:
+            self.name = ffi.string(self._ptr.title).decode()
+        if self._ptr.app_id != ffi.NULL:
+            self._wm_class = ffi.string(self._ptr.app_id).decode()
+
+    def handle_set_title(self, title: str) -> None:
+        logger.debug("Signal: static window set_title")
+        if title != self.name:
+            self.name = title
+            # TODO: Handle foreign-toplevel-management?
+            hook.fire("client_name_updated", self)
+
+    def handle_set_app_id(self, app_id: str) -> None:
+        logger.debug("Signal: static window set_app_id")
+        self._wm_class = app_id
+        # TODO: Handle foreign-toplevel-management?
 
     @property
     def wid(self) -> int:
         return self._wid
 
-    @property
-    def urgent(self) -> bool:
-        return self._urgent
-
-    def focus(self, warp: bool = True) -> None:
-        self._urgent = False
-        self.core.focus_window(self)
-
-        if warp and self.qtile.config.cursor_warp:
-            self.core.warp_pointer(
-                self.x + self._width / 2,
-                self.y + self._height / 2,
-            )
-
-        hook.fire("client_focus", self)
-
-    def _on_map(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: static map")
-        self.unhide()
-        self.focus(True)
-        self.bring_to_front()
-
-    def _on_unmap(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: static unmap")
-        self.hide()
-
-    def hide(self) -> None:
-        if self.surface.surface == self.core.seat.keyboard_state.focused_surface:
-            group = self.qtile.current_screen.group
-            if group.current_window:
-                group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
-            else:
-                self.core.seat.keyboard_clear_focus()
-
-    def _on_destroy(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: static destroy")
-        self.hide()
-
-        if self in self.core.pending_windows:
-            self.core.pending_windows.remove(self)
-        else:
-            self.qtile.unmanage(self.wid)
-
-        self.finalize()
-
-    def _on_foreign_request_close(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: foreign_toplevel_management static request_close")
-        self.kill()
-
-    def _on_inhibitor_destroy(self, listener: Listener, surface: Surface) -> None:
-        # We don't have reference to the inhibitor, but it doesn't really
-        # matter we only need to keep count of how many inhibitors there are
-        self._idle_inhibitors_count -= 1
-        listener.remove()
-        if self._idle_inhibitors_count == 0:
-            self.core.check_idle_inhibitor()
-
-    def add_idle_inhibitor(
-        self,
-        surface: Surface,
-        _x: int,
-        _y: int,
-        inhibitor: IdleInhibitorV1,
-    ) -> None:
-        if surface == inhibitor.surface:
-            self._idle_inhibitors_count += 1
-            inhibitor.data = self
-            self.add_listener(inhibitor.destroy_event, self._on_inhibitor_destroy)
-            if self._idle_inhibitors_count == 1:
-                self.core.check_idle_inhibitor()
-
-    @property
-    def is_idle_inhibited(self) -> bool:
-        return self._idle_inhibitors_count > 0
-
-    def belongs_to_client(self, other: Client) -> bool:
-        return other == Client.from_resource(self.surface.surface._ptr.resource)
-
-    @expose_command()
-    def bring_to_front(self) -> None:
-        self.container.node.raise_to_top()
-
-    @expose_command()
-    def info(self) -> dict:
-        """Return a dictionary of info."""
-        info = base.Static.info(self)
-        cls_name = self.__class__.__name__
-        if cls_name == "XdgStatic":
-            info["shell"] = "XDG"
-        elif cls_name == "XStatic":
-            info["shell"] = "XWayland"
-        else:
-            info["shell"] = "layer"
-        return info
-
-
-class Internal(_Base, base.Internal):
-    """
-    Internal windows are simply textures controlled by the compositor.
-    """
-
-    def __init__(self, core: Core, qtile: Qtile, x: int, y: int, width: int, height: int):
-        self.core = core
-        self.qtile = qtile
-        self._wid: int = self.core.new_wid()
-        self.x: int = x
-        self.y: int = y
-        self._width: int = width
-        self._height: int = height
-        self._opacity: float = 1.0
-
-        # Store this object on the scene node for finding the window under the pointer.
-        self.wlr_buffer, self.surface = self._new_buffer(init=True)
-        self.tree = SceneTree.create(core.mid_window_tree)
-        self.data_handle = ffi.new_handle(self)
-        self.tree.node.set_enabled(enabled=False)
-        self.tree.node.data = self.data_handle
-        self.tree.node.set_position(x, y)
-        scene_buffer = SceneBuffer.create(self.tree, self.wlr_buffer)
-        if scene_buffer is None:
-            raise RuntimeError("Couldn't create scene buffer")
-        self._scene_buffer = scene_buffer
-        # The borders are wlr_scene_rects.
-        # Inner list: N, E, S, W edges
-        # Outer list: outside-in borders i.e. multiple for multiple borders
-        self._borders: list[list[SceneRect]] = []
-        self.bordercolor: ColorsType = "000000"
-
-    def finalize(self) -> None:
-        self.hide()
-
-    def _new_buffer(self, init: bool = False) -> tuple[Buffer, cairocffi.ImageSurface]:
-        if not init:
-            self.wlr_buffer.drop()
-
-        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self._width, self._height)
-        stride = surface.get_stride()
-        data = cairocffi.cairo.cairo_image_surface_get_data(surface._pointer)
-        wlr_buffer = lib.cairo_buffer_create(self._width, self._height, stride, data)
-        if wlr_buffer == ffi.NULL:
-            raise RuntimeError("Couldn't allocate cairo buffer.")
-
-        buffer = Buffer(wlr_buffer)
-
-        if not init:
-            self._scene_buffer.set_buffer_with_damage(buffer)
-
-        return buffer, surface
-
-    def create_drawer(self, width: int, height: int) -> Drawer:
-        """Create a Drawer that draws to this window."""
-        return Drawer(self.qtile, self, width, height)
-
-    def hide(self) -> None:
-        self.tree.node.set_enabled(enabled=False)
-
-    def unhide(self) -> None:
-        self.tree.node.set_enabled(enabled=True)
-
-    @expose_command()
-    def focus(self, warp: bool = True) -> None:
-        self.core.focus_window(self)
-
-    @expose_command()
-    def kill(self) -> None:
-        self.hide()
-        if self.wid in self.qtile.windows_map:
-            # It will be present during config reloads; absent during shutdown as this
-            # will follow graceful_shutdown
-            del self.qtile.windows_map[self.wid]
-
-    @expose_command()
     def place(
         self,
         x: int,
@@ -1010,185 +941,19 @@ class Internal(_Base, base.Internal):
         margin: int | list[int] | None = None,
         respect_hints: bool = False,
     ) -> None:
-        if above:
-            self.bring_to_front()
-
         self.x = x
         self.y = y
-        self.tree.node.set_position(x, y)
+        self._width = width
+        self._height = height
 
-        if width != self._width or height != self._height:
-            # Changed size, we need to regenerate the buffer
-            self._width = width
-            self._height = height
-            self.wlr_buffer, self.surface = self._new_buffer()
-
-    def paint_borders(self, colors: ColorsType | None, width: int) -> None:
-        if not colors:
-            colors = []
-            width = 0
-
-        if not isinstance(colors, list):
-            colors = [colors]
-
-        if self._scene_buffer:
-            self._scene_buffer.node.set_position(width, width)
-        self.bordercolor = colors
-        self.borderwidth = width
-
-        if width == 0:
-            for rects in self._borders:
-                for rect in rects:
-                    rect.node.destroy()
-            self._borders.clear()
-            return
-
-        if len(colors) > width:
-            colors = colors[:width]
-
-        num = len(colors)
-        old_borders = self._borders
-        new_borders = []
-        widths = [width // num] * num
-        for i in range(width % num):
-            widths[i] += 1
-
-        outer_w = self.width + width * 2
-        outer_h = self.height + width * 2
-        coord = 0
-
-        for i, color in enumerate(colors):
-            color_ = _rgb(color)
-            bw = widths[i]
-
-            # [x, y, width, height] for N, E, S, W
-            geometries = (
-                (coord, coord, outer_w - coord * 2, bw),
-                (outer_w - bw - coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-                (coord, outer_h - bw - coord, outer_w - coord * 2, bw),
-                (coord, bw + coord, bw, outer_h - bw * 2 - coord * 2),
-            )
-
-            if old_borders:
-                rects = old_borders.pop(0)
-                for (x, y, w, h), rect in zip(geometries, rects):
-                    rect.set_color(color_)
-                    rect.set_size(w, h)
-                    rect.node.set_position(x, y)
-
-            else:
-                rects = []
-                for x, y, w, h in geometries:
-                    rect = SceneRect(self.tree, w, h, color_)
-                    rect.node.set_position(x, y)
-                    rects.append(rect)
-
-            new_borders.append(rects)
-            coord += bw
-
-        for rects in old_borders:
-            for rect in rects:
-                rect.node.destroy()
-
-        # Ensure the window contents and any nested surfaces are drawn above the
-        # borders.
-        if self._scene_buffer:
-            self._scene_buffer.node.raise_to_top()
-
-        self._borders = new_borders
+        n = 0
+        self._ptr.place(self._ptr, x, y, width, height, ffi.NULL, n, int(above))
 
     @expose_command()
     def info(self) -> dict:
         """Return a dictionary of info."""
-        return dict(
-            x=self.x,
-            y=self.y,
-            width=self._width,
-            height=self._height,
-            id=self.wid,
+        info = base.Static.info(self)
+        info["shell"] = (
+            ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
         )
-
-    @expose_command()
-    def bring_to_front(self) -> None:
-        self.tree.node.raise_to_top()
-
-
-WindowType = Window | Static | Internal
-
-
-class PointerConstraint(HasListeners):
-    """
-    A small object to listen to signals on `struct wlr_pointer_constraint_v1` instances.
-    """
-
-    rect: Box
-
-    def __init__(self, core: Core, wlr_constraint: PointerConstraintV1):
-        self.core = core
-        self.wlr_constraint = wlr_constraint
-        self._warp_target: tuple[float, float] = (0, 0)
-        self._needs_warp: bool = False
-
-        assert core.qtile is not None
-        owner = None
-
-        for win in core.qtile.windows_map.values():
-            if isinstance(win, (Window | Static)):
-                if win.surface.surface == self.wlr_constraint.surface:
-                    owner = win
-                    break
-
-        if owner is None:
-            logger.error("No window found for pointer constraints. Please report.")
-            raise RuntimeError
-
-        self.window: Window | Static = owner
-
-        self.add_listener(wlr_constraint.set_region_event, self._on_set_region)
-        self.add_listener(wlr_constraint.destroy_event, self._on_destroy)
-
-    def finalize(self) -> None:
-        if self.core.active_pointer_constraint is self:
-            self.disable()
-        self.finalize_listeners()
-        self.core.pointer_constraints.remove(self)
-
-    def _on_set_region(self, _listener: Listener, _data: Any) -> None:
-        logger.debug("Signal: wlr_pointer_constraint_v1 set_region")
-        self._get_region()
-
-    def _on_destroy(self, _listener: Listener, wlr_constraint: PointerConstraintV1) -> None:
-        logger.debug("Signal: wlr_pointer_constraint_v1 destroy")
-        self.finalize()
-
-    def _on_commit(self, _listener: Listener, _data: Any) -> None:
-        if self._needs_warp:
-            # Warp in case the pointer is not inside the rect
-            if not self.rect.contains_point(self.core.cursor.x, self.core.cursor.y):
-                self.core.warp_pointer(*self._warp_target)
-            self._needs_warp = False
-
-    def _get_region(self) -> None:
-        rect = self.wlr_constraint.region.rectangles_as_boxes()[0]
-        rect.x += self.window.x + self.window.borderwidth
-        rect.y += self.window.y + self.window.borderwidth
-        self._warp_target = (rect.x + rect.width / 2, rect.y + rect.height / 2)
-        self.rect = rect
-        self._needs_warp = True
-
-    def enable(self) -> None:
-        logger.debug("Enabling pointer constraints.")
-        self.core.active_pointer_constraint = self
-        self._get_region()
-        self.add_listener(self.wlr_constraint.surface.commit_event, self._on_commit)
-        self.wlr_constraint.send_activated()
-
-    def disable(self) -> None:
-        logger.debug("Disabling pointer constraints.")
-
-        if self.wlr_constraint.current.committed & PointerConstraintV1StateField.CURSOR_HINT:
-            x, y = self.wlr_constraint.current.cursor_hint
-            self.core.warp_pointer(x + self.window.x, y + self.window.y)
-
-        self.core.active_pointer_constraint = None
-        self.wlr_constraint.send_deactivated()
+        return info

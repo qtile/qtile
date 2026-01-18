@@ -1,26 +1,3 @@
-# Copyright (c) 2008, Aldo Cortesi <aldo@corte.si>
-# Copyright (c) 2011, Andrew Grigorev <andrew@ei-grad.ru>
-#
-# All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 import importlib
@@ -32,7 +9,7 @@ if TYPE_CHECKING:
     from types import FunctionType
     from typing import Any, Literal
 
-    from libqtile.config import Group, Key, Mouse, Rule, Screen
+    from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Rule, Screen
     from libqtile.layout.base import Layout
 
 
@@ -76,6 +53,8 @@ class Config:
     wl_input_rules: dict[str, Any] | None
     wl_xcursor_theme: str | None
     wl_xcursor_size: int
+    idle_timers: list[IdleTimer]
+    idle_inhibitors: list[IdleInhibitor]
 
     def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings

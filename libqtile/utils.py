@@ -1,24 +1,3 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# Copyright (c) 2020, Matt Colligan. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 import asyncio
@@ -28,6 +7,7 @@ import os
 import traceback
 from collections import defaultdict
 from collections.abc import Sequence
+from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from random import randint
 from shutil import which
@@ -42,6 +22,7 @@ try:
 except ImportError:
     has_dbus = False
 
+import libqtile
 from libqtile.log_utils import logger
 
 ColorType = str | tuple[int, int, int] | tuple[int, int, int, float]
@@ -52,11 +33,16 @@ if TYPE_CHECKING:
 
     T = TypeVar("T")
 
+try:
+    VERSION = distribution("qtile").version
+except PackageNotFoundError:
+    VERSION = "dev"
+
 dbus_bus_connections = set()
 
 # Create a list to collect references to tasks so they're not garbage collected
 # before they've run
-TASKS: list[asyncio.Task[None]] = []
+TASKS: set[asyncio.Task[None]] = set()
 
 
 def create_task(coro: Coroutine) -> asyncio.Task | None:
@@ -71,20 +57,11 @@ def create_task(coro: Coroutine) -> asyncio.Task | None:
     if not loop:
         return None
 
-    def tidy(task: asyncio.Task) -> None:
-        TASKS.remove(task)
-
     task = asyncio.create_task(coro)
-    TASKS.append(task)
-    task.add_done_callback(tidy)
+    TASKS.add(task)
+    task.add_done_callback(TASKS.discard)
 
     return task
-
-
-def cancel_tasks() -> None:
-    """Cancel scheduled tasks."""
-    for task in TASKS:
-        task.cancel()
 
 
 class QtileError(Exception):
@@ -294,6 +271,9 @@ def send_notification(
     passed when calling this function again to replace that notification. See:
     https://developer.gnome.org/notification-spec/
     """
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        logger.warning("skipped notification because we are in tests")
+        return -1
     if not has_dbus:
         logger.warning("dbus-fast is not installed. Unable to send notifications.")
         return -1
@@ -301,12 +281,8 @@ def send_notification(
     id_ = randint(10, 1000) if id_ is None else id_
     urgency = 2 if urgent else 1
 
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        logger.warning("Eventloop has not started. Cannot send notification.")
-    else:
-        loop.create_task(_notify(title, message, urgency, timeout, id_))
+    loop = libqtile.event_loop
+    loop.create_task(_notify(title, message, urgency, timeout, id_))
 
     return id_
 
@@ -358,30 +334,39 @@ def guess_terminal(preference: str | Sequence | None = None) -> str | None:
         test_terminals += list(preference)
     if "WAYLAND_DISPLAY" in os.environ:
         # Wayland-only terminals
-        test_terminals += ["foot"]
+        test_terminals += [
+            "foot",
+            "mlterm-wl",
+        ]
     test_terminals += [
-        "roxterm",
-        "sakura",
-        "hyper",
         "alacritty",
-        "terminator",
-        "termite",
+        "cool-retro-term",
+        "coreterminal",
+        "eterm",
+        "ghostty",
         "gnome-terminal",
+        "guake",
+        "hyper",
+        "kitty",
         "konsole",
-        "xfce4-terminal",
         "lxterminal",
         "mate-terminal",
-        "kitty",
-        "ghostty",
-        "yakuake",
-        "tilda",
-        "guake",
-        "eterm",
+        "mlterm",
+        "ptyxis",
+        "qterminal",
+        "roxterm",
+        "sakura",
         "st",
+        "terminator",
+        "terminology",
+        "tilda",
         "urxvt",
         "wezterm",
-        "xterm",
         "x-terminal-emulator",
+        "xfce4-terminal",
+        "xterm",
+        "yakuake",
+        "zutty",
     ]
 
     for terminal in test_terminals:
@@ -630,16 +615,57 @@ def remove_dbus_rules() -> None:
         bus._sock.close()
 
 
+ASYNC_PIDS: set[int] = set()
+
+
+async def acall_process(command: str | list[str], shell: bool = False) -> str:
+    """
+    Like call_process, but the async version. Tracks PIDs in ASYNC_PIDS.
+    """
+    stdin = asyncio.subprocess.DEVNULL
+    stdout = asyncio.subprocess.PIPE
+    stderr = asyncio.subprocess.STDOUT
+
+    if shell:
+        if isinstance(command, list):
+            command = " ".join(command)
+        p = await asyncio.subprocess.create_subprocess_shell(
+            command, stdin=stdin, stdout=stdout, stderr=stderr
+        )
+    else:
+        if isinstance(command, str):
+            command = [command]
+        p = await asyncio.subprocess.create_subprocess_exec(
+            *command, stdin=stdin, stdout=stdout, stderr=stderr
+        )
+
+    if p.pid is not None:
+        ASYNC_PIDS.add(p.pid)
+
+    try:
+        (out, _) = await p.communicate()
+        return out.decode("utf-8")
+    finally:
+        # Remove PID from tracking list when process completes
+        if p.pid is not None:
+            ASYNC_PIDS.discard(p.pid)
+
+
 def reap_zombies() -> None:
     """
     A SIGCHLD handler that reaps all zombies until there are no more.
+    Uses WNOWAIT for processes in ASYNC_PIDS to avoid interfering with async cleanup.
     """
     try:
         # One signal might mean mulitple children have exited. Reap everything
         # that has exited, until there's nothing left.
         while True:
-            wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG)
+            wait_result = os.waitid(os.P_ALL, 0, os.WEXITED | os.WNOHANG | os.WNOWAIT)
             if wait_result is None:
                 return
+
+            if wait_result.si_pid in ASYNC_PIDS:
+                break
+            os.waitid(os.P_PID, wait_result.si_pid, os.WEXITED)
     except ChildProcessError:
         pass

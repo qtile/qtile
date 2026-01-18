@@ -1,40 +1,21 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# Copyright (c) 2011, Florian Mounier
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# Set the locale before any widgets or anything are imported, so any widget
-# whose defaults depend on a reasonable locale sees something reasonable.
 from __future__ import annotations
 
 import locale
 from os import makedirs, path
+from pathlib import Path
 from sys import exit
 from typing import TYPE_CHECKING
 
 import libqtile.backend
 from libqtile import confreader, qtile
 from libqtile.log_utils import logger
-from libqtile.utils import get_config_file
+from libqtile.utils import VERSION, get_config_file
 
 if TYPE_CHECKING:
     from libqtile.core.manager import Qtile
+
+
+LIBQTILE_PATH = Path(__file__).parent.parent
 
 
 def rename_process():
@@ -52,6 +33,11 @@ def rename_process():
         setproctitle.setproctitle("qtile")
     except ImportError:
         pass
+
+
+def get_default_config():
+    config = LIBQTILE_PATH / "resources" / "default_config.py"
+    return config.resolve().as_posix()
 
 
 def make_qtile(options) -> Qtile | None:
@@ -99,6 +85,8 @@ def start(options):
     except locale.Error:
         pass
 
+    libpath = (LIBQTILE_PATH / "..").resolve()
+    logger.warning(f"Starting Qtile {VERSION} from {libpath}")
     rename_process()
     q = make_qtile(options)
     if q is None:
@@ -115,13 +103,22 @@ def start(options):
 
 def add_subcommand(subparsers, parents):
     parser = subparsers.add_parser("start", parents=parents, help="Start a Qtile session.")
-    parser.add_argument(
+    configs = parser.add_mutually_exclusive_group()
+    configs.add_argument(
         "-c",
         "--config",
         action="store",
         default=get_config_file(),
         dest="configfile",
         help="Use the specified configuration file.",
+    )
+    configs.add_argument(
+        "-d",
+        "--use-default-config",
+        action="store_const",
+        const=get_default_config(),
+        dest="configfile",
+        help="Use qtile's default configuration file.",
     )
     parser.add_argument(
         "-s",

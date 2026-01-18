@@ -1,38 +1,8 @@
-# Copyright (c) 2009-2010 Aldo Cortesi
-# Copyright (c) 2010 Lee McCuller
-# Copyright (c) 2010 matt
-# Copyright (c) 2010, 2014 dequis
-# Copyright (c) 2010, 2012, 2014 roger
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2011 Kenji_Takahashi
-# Copyright (c) 2011 Paul Colomiets
-# Copyright (c) 2011 Tzbob
-# Copyright (c) 2012-2015 Tycho Andersen
-# Copyright (c) 2012 Craig Barnes
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014 Sean Vig
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 from typing import TYPE_CHECKING
 
 from libqtile import backend, utils
@@ -51,17 +21,24 @@ def clear():
     subscriptions.clear()
 
 
-def _fire_async_event(co):
+def _fire_async_event(co, unsubscribe):
     from libqtile.utils import create_task
+
+    def finish_task(task):
+        if task.result() is True:
+            unsubscribe()
 
     loop = None
     with contextlib.suppress(RuntimeError):
         loop = asyncio.get_running_loop()
 
     if loop is None:
-        asyncio.run(co)
+        result = asyncio.run(co)
+        if result is True:
+            unsubscribe()
     else:
-        create_task(co)
+        task = create_task(co)
+        task.add_done_callback(finish_task)
 
 
 # Custom hook functions receive a single argument, "self", which will refer to the
@@ -184,16 +161,32 @@ class Registry:
         # third party libraries will need this to prevent KeyErrors when firing hooks
         if self.name not in subscriptions:
             subscriptions[self.name] = dict()
+
+        # Handlers for transient hooks
+        def unsubscribe_func(event, func):
+            def _wrapper():
+                getattr(self.unsubscribe, event)(func)
+
+            return _wrapper
+
+        to_unsubscribe = []
+
         for i in subscriptions[self.name].get(event, []):
             try:
-                if asyncio.iscoroutinefunction(i):
-                    _fire_async_event(i(*args, **kwargs))
+                if inspect.iscoroutinefunction(i):
+                    _fire_async_event(i(*args, **kwargs), unsubscribe_func(event, i))
                 elif asyncio.iscoroutine(i):
-                    _fire_async_event(i)
+                    _fire_async_event(i, unsubscribe_func(event, i))
                 else:
-                    i(*args, **kwargs)
+                    result = i(*args, **kwargs)
+                    if result is True:
+                        to_unsubscribe.append(unsubscribe_func(event, i))
+
             except:  # noqa: E722
                 logger.exception("Error in hook %s", event)
+
+        for f in to_unsubscribe:
+            f()
 
 
 hooks: list[Hook] = [
@@ -1055,6 +1048,60 @@ hooks: list[Hook] = [
 
         """,
         _user_hook_func,
+    ),
+    Hook(
+        "locked",
+        """
+        Called when the user session is locked.
+
+        Currently only available on Wayland.
+
+        .. code::
+
+          from libqtile import hook, qtile
+
+          @hook.subscribe.locked
+          def stop_media():
+              qtile.spawn("playerctl --all-players pause")
+
+        """,
+    ),
+    Hook(
+        "unlocked",
+        """
+        Called when the user session is unlocked.
+
+        Currently only available on Wayland.
+
+        .. code::
+
+          from libqtile import hook, qtile
+
+          @hook.subscribe.unlocked
+          def play_resume_sound():
+              qtile.spawn("ffplay resume.wav")
+
+        """,
+    ),
+    Hook(
+        "idle_inhibitor_change",
+        """
+        Called when the backend's idle inhibitor state changes.
+
+        **Arguments**
+
+            ``inhibited`` (bool):  Whether an idle inhibitor is active or not.
+
+        .. code::
+
+          from libqtile import hook
+          from libqtile.log_utils import logger
+
+          @hook.subscribe.idle_inhibitor_change
+          def on_idle_inhibit(inhibited):
+              logger.info(f"Backend inhibitor is {'on' if inhibited else 'off'}")
+
+        """,
     ),
 ]
 

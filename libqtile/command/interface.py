@@ -1,23 +1,3 @@
-# Copyright (c) 2019 Sean Vig
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 """
 The interface to execute commands on the command graph
 """
@@ -30,7 +10,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
 
-from libqtile import ipc
+from libqtile import hook, ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode
 from libqtile.log_utils import logger
@@ -145,6 +125,15 @@ class QtileCommandInterface(CommandInterface):
             against.
         """
         self._command_object = command_object
+        self.locked = False
+        hook.subscribe.locked(self.lock)
+        hook.subscribe.unlocked(self.unlock)
+
+    def lock(self):
+        self.locked = True
+
+    def unlock(self):
+        self.locked = False
 
     def execute(self, call: CommandGraphCall, args: tuple, kwargs: dict) -> Any:
         """Execute the given call, returning the result of the execution
@@ -170,6 +159,9 @@ class QtileCommandInterface(CommandInterface):
 
         if cmd is None:
             return "No such command."
+
+        if self.locked and not getattr(cmd, "_allow_when_locked", False):
+            return "Session is locked."
 
         logger.debug("Command: %s(%s, %s)", call.name, args, kwargs)
         return cmd(self._command_object, *args, **kwargs)
@@ -427,9 +419,12 @@ class IPCCommandServer:
         if not hasattr(cmd, "__self__"):
             args = (obj,) + args
 
+        if self.qtile.locked and not getattr(cmd, "_allow_when_locked", False):
+            return ERROR, f"{name} cannot be called when session is locked."
+
         try:
             return SUCCESS, cmd(*args, **kwargs)
         except CommandError as err:
             return ERROR, err.args[0]
         except Exception:
-            return EXCEPTION, traceback.format_exc()
+            return EXCEPTION, traceback.format_exc().strip().split("\n")[-1]

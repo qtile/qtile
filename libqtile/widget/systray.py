@@ -1,32 +1,3 @@
-# Copyright (c) 2010 Aldo Cortesi
-# Copyright (c) 2010-2011 dequis
-# Copyright (c) 2010, 2012 roger
-# Copyright (c) 2011 Mounier Florian
-# Copyright (c) 2011-2012, 2014 Tycho Andersen
-# Copyright (c) 2012 dmpayton
-# Copyright (c) 2012-2013 Craig Barnes
-# Copyright (c) 2013 hbc
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014 Sean Vig
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 import xcffib
@@ -96,9 +67,7 @@ class Icon(window._Window):
     handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
 
-# Mypy doesn't like the inheritance of height and width as _Widget's
-# properties are read only but _Window's have a getter and setter.
-class Systray(base._Widget, window._Window):  # type: ignore[misc]
+class Systray(base._Widget, window._Window):
     """
     A widget that manages system tray.
 
@@ -243,21 +212,23 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
         return False
 
     def draw(self):
-        offset = self.padding
+        _xoffset = self.offsetx if self.bar.horizontal else self.offsety
+        _yoffset = self.offsety if self.bar.horizontal else self.offsetx
+        xoffset = _xoffset + self.padding
+        yoffset = self.bar.size // 2 - self.icon_size // 2 + _yoffset
         self.drawer.clear(self.background or self.bar.background)
         self.draw_at_default_position()
+
         for pos, icon in enumerate(self.tray_icons):
             icon.window.set_attribute(backpixmap=self.drawer.pixmap)
             if self.bar.horizontal:
-                xoffset = self.offsetx + offset
-                yoffset = self.bar.height // 2 - self.icon_size // 2 + self.offsety
                 step = icon.width
+                icon.place(xoffset, yoffset, icon.width, self.icon_size, 0, None)
             else:
-                xoffset = self.bar.width // 2 - self.icon_size // 2 + self.offsetx
-                yoffset = self.offsety + offset
                 step = icon.height
+                icon.place(yoffset, xoffset, icon.width, self.icon_size, 0, None)
+            xoffset += step + self.padding
 
-            icon.place(xoffset, yoffset, icon.width, self.icon_size, 0, None)
             if icon.hidden:
                 icon.unhide()
                 data = [
@@ -272,8 +243,6 @@ class Systray(base._Widget, window._Window):  # type: ignore[misc]
                     format=32, window=icon.wid, type=self.conn.atoms["_XEMBED"], data=u
                 )
                 self.window.send_event(event)
-
-            offset += step + self.padding
 
     def finalize(self):
         base._Widget.finalize(self)

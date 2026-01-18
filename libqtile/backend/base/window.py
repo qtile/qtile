@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import enum
 import typing
 from abc import ABCMeta, abstractmethod
 
+from libqtile import hook
 from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile.log_utils import logger
+from libqtile.scratchpad import ScratchPad
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -15,16 +17,6 @@ if typing.TYPE_CHECKING:
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
     from libqtile.utils import ColorsType
-
-
-@enum.unique
-class FloatStates(enum.Enum):
-    NOT_FLOATING = 1
-    FLOATING = 2
-    MAXIMIZED = 3
-    FULLSCREEN = 4
-    TOP = 5
-    MINIMIZED = 6
 
 
 class _Window(CommandObject, metaclass=ABCMeta):
@@ -96,9 +88,13 @@ class _Window(CommandObject, metaclass=ABCMeta):
         return False
 
     @property
-    def urgent(self):
+    def urgent(self) -> bool:
         """Whether this window urgently wants focus"""
         return False
+
+    @urgent.setter
+    def urgent(self, urgent: bool) -> None:
+        raise NotImplementedError
 
     @property
     def opacity(self) -> float:
@@ -249,6 +245,7 @@ class Window(_Window, metaclass=ABCMeta):
     # If float_x or float_y are None, the window has never been placed
     float_x: int | None
     float_y: int | None
+    bordercolor: ColorsType | None
 
     def __repr__(self):
         return f"{self.__class__.__name__!s}(name={self.name!r}, wid={self.wid:d})"
@@ -421,10 +418,7 @@ class Window(_Window, metaclass=ABCMeta):
     @abstractmethod
     @expose_command()
     def togroup(
-        self,
-        group_name: str | None = None,
-        switch_group: bool = False,
-        toggle: bool = False,
+        self, group_name: str | None = None, switch_group: bool = False, toggle: bool = False
     ) -> None:
         """Move window to a specified group
 
@@ -537,6 +531,66 @@ class Window(_Window, metaclass=ABCMeta):
             respect_hints=True,
         )
 
+    def activate(self) -> bool:
+        """Focus and raise this window."""
+        if self.group is None:
+            return False
+        # Windows belonging to a scratchpad need to be toggled properly
+        if isinstance(self.group, ScratchPad):
+            for dropdown in self.group.dropdowns.values():
+                if dropdown.window is self:
+                    dropdown.show()
+                    return True
+            return False
+        # Normal window activation
+        self.qtile.current_screen.set_group(self.group)
+        self.group.focus(self)
+        self.bring_to_front()
+        return True
+
+    def activate_by_config(self) -> None:
+        """Activate the window according to focus_on_window_activation setting."""
+        focus_behavior = self.qtile.config.focus_on_window_activation
+        if focus_behavior == "focus" or callable(focus_behavior) and focus_behavior(self):
+            logger.debug("Focusing window (focus_on_window_activation='focus')")
+            self.activate()
+        elif focus_behavior == "smart":
+            if self.group and self.group.screen == self.qtile.current_screen:
+                logger.debug("Focusing window (focus_on_window_activation='smart')")
+                self.activate()
+            else:
+                logger.debug("Setting urgent window (focus_on_window_activation='smart')")
+                self.urgent = True
+                hook.fire("client_urgent_hint_changed", self)
+        elif focus_behavior == "urgent":
+            logger.debug("Setting urgent window (focus_on_window_activation='urgent')")
+            self.urgent = True
+            hook.fire("client_urgent_hint_changed", self)
+        elif focus_behavior == "never":
+            logger.debug("Ignoring focus request (focus_on_window_activation='never')")
+        else:
+            logger.debug("Invalid value for focus_on_window_activation: %s", focus_behavior)
+
+    def add_config_inhibitors(self) -> None:
+        for rule in self.qtile.config.idle_inhibitors:
+            if rule.match is None or rule.match.compare(self):
+                self.add_idle_inhibitor(rule.when)
+
+    @expose_command()
+    def add_idle_inhibitor(self, inhibitor_type: str = "open") -> None:
+        """
+        Create an inhibitor rule for this window.
+
+        ``inhibitor_type`` should be one of ``"open"``, ``"focus"``, ``"fullscreen"``
+        or ``"visible"``. Default value is ``"open"``.
+        """
+        self.qtile.core.idle_inhibitor_manager.add_window_inhibitor(self, inhibitor_type)
+
+    @expose_command()
+    def remove_idle_inhibitor(self) -> None:
+        """Remove inhibitor rule for this window."""
+        self.qtile.core.idle_inhibitor_manager.remove_window_inhibitor(self)
+
 
 class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""
@@ -568,6 +622,12 @@ class Internal(_Window, metaclass=ABCMeta):
 
     def process_key_press(self, keycode: int) -> None:
         """Handle a key press."""
+
+    def paint_borders(self, color: ColorsType, width: int) -> None:
+        """Paint the window borders with the given color(s) and width"""
+
+    def focus(self, warp: bool = True) -> None:
+        """Focus this window and optional warp the pointer to it."""
 
 
 class Static(_Window, metaclass=ABCMeta):

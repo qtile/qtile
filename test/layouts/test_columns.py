@@ -1,22 +1,3 @@
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import pytest
 
 import libqtile.config
@@ -296,3 +277,36 @@ def test_columns_initial_ratio_left(manager):
     manager.c.layout.normalize()
     info = manager.c.window.info()
     assert info["width"] == WIDTH / 2
+
+
+def test_columns_swap():
+    columns = layout.Columns()
+    columns._group = libqtile.group._Group("A")
+
+    columns.add_client("one")
+    columns.add_client("two")
+    columns.add_client("three")
+    columns.focus("one")
+    columns.add_client("four")
+
+    assert columns.get_windows() == ["four", "one", "three", "two"]  # test vertical swap
+
+    columns.swap("four", "one")
+
+    assert columns.get_windows() == ["one", "four", "three", "two"]
+
+    columns.swap("one", "two")
+
+    assert columns.get_windows() == ["two", "four", "three", "one"]  # test horizontal swap
+
+    columns.add_client("five")
+    columns.shuffle_left()
+    columns.swap("five", "three")
+
+    assert columns.get_windows() == [
+        "three",
+        "two",
+        "four",
+        "five",
+        "one",
+    ]  # test swap with three columns

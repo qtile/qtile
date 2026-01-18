@@ -1,23 +1,3 @@
-# Copyright (c) 2015 Ali Mousavi
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import os
 from subprocess import CalledProcessError, Popen
 
@@ -46,7 +26,7 @@ CMD_DICT = {
 CMD_DOC_COMMANDS = "\n".join(f"    * ``'{k}'`` runs ``{v}``" for k, v in CMD_DICT.items())
 
 
-class CheckUpdates(base.ThreadPoolText):
+class CheckUpdates(base.BackgroundPoll):
     # The docstring includes some dynamic content so we need to compile that content
     # first and then set the docstring to that content.
     _doc = f"""
@@ -99,7 +79,7 @@ class CheckUpdates(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, config.pop("initial_text", ""), **config)
+        base.BackgroundPoll.__init__(self, config.pop("initial_text", ""), **config)
         self.add_defaults(CheckUpdates.defaults)
 
         # Helpful to have this as a variable as we can shorten it for testing

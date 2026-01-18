@@ -32,7 +32,7 @@ Python interpreters
 We aim to always support the last three versions of CPython, the reference
 Python interpreter. We usually support the latest stable version of PyPy_ as
 well. You can check the versions and interpreters we currently run our test
-suite against in our `tox configuration file`_.
+suite against in our `CI configuration file`_.
 
 There are not many differences between versions aside from Python features you
 may or may not be able to use in your config. PyPy should be faster at runtime
@@ -40,7 +40,7 @@ than any corresponding CPython version under most circumstances, especially for
 bits of Python code that are run many times. CPython should start up faster than
 PyPy and has better compatibility for external libraries.
 
-.. _`tox configuration file`: https://github.com/qtile/qtile/blob/master/tox.ini
+.. _`CI configuration file`: https://github.com/qtile/qtile/blob/master/.github/workflows/ci.yml
 .. _PyPy: https://www.pypy.org/
 
 
@@ -51,44 +51,43 @@ Here are Qtile's core runtime dependencies and the package names that provide th
 in Ubuntu. Note that Qtile can run with one of two backends -- X11 and Wayland -- so 
 only the dependencies of one of these is required.
 
-+-------------------+-------------------------+-----------------------------------------+
-| Dependency        | Ubuntu Package          |  Needed for                             |
-+===================+=========================+=========================================+
-|                     **Core Dependencies**                                             |
-+-------------------+-------------------------+-----------------------------------------+
-| CFFI_             | python3-cffi            | Bars and popups                         |
-+-------------------+-------------------------+-----------------------------------------+
-| cairocffi_        | python3-cairocffi       | Drawing on bars and popups              |
-+-------------------+-------------------------+-----------------------------------------+
-| libpangocairo     | libpangocairo-1.0-0     | Writing on bars and popups              |
-+-------------------+-------------------------+-----------------------------------------+
-| dbus-fast_        | --                      | Sending notifications with dbus         |
-|                   |                         | (optional).                             |
-+-------------------+-------------------------+-----------------------------------------+
-|                       **X11**                                                         |
-+-------------------+-------------------------+-----------------------------------------+
-| X server          | xserver-xorg            |  X11 backends                           |
-+-------------------+-------------------------+-----------------------------------------+
-| xcffib_           | python3-xcffib          |  required for X11 backend               |
-+-------------------+-------------------------+-----------------------------------------+
-|                      **Wayland**                                                      |
-+-------------------+-------------------------+-----------------------------------------+
-| wlroots_          | libwlroots-dev          |  Wayland backend (see below)            |
-+-------------------+-------------------------+-----------------------------------------+
-| pywlroots_        | --                      |  python bindings for the wlroots library|
-+-------------------+-------------------------+-----------------------------------------+
-| pywayland_        | --                      |  python bindings for the wayland library|
-+-------------------+-------------------------+-----------------------------------------+
-| python-xkbcommon_ | --                      |  required for wayland backeds           |
-+-------------------+-------------------------+-----------------------------------------+
++--------------------+-------------------------+-----------------------------------------+
+| Dependency         | Ubuntu Package          |  Needed for                             |
++====================+=========================+=========================================+
+|                      **Core Dependencies**                                             |
++--------------------+-------------------------+-----------------------------------------+
+| CFFI_              | python3-cffi            | Bars and popups                         |
++--------------------+-------------------------+-----------------------------------------+
+| cairocffi_         | python3-cairocffi       | Drawing on bars and popups              |
++--------------------+-------------------------+-----------------------------------------+
+| libpangocairo      | libpangocairo-1.0-0     | Writing on bars and popups              |
++--------------------+-------------------------+-----------------------------------------+
+| dbus-fast_         | --                      | Sending notifications with dbus         |
+|                    |                         | (optional).                             |
++--------------------+-------------------------+-----------------------------------------+
+|                        **X11**                                                         |
++--------------------+-------------------------+-----------------------------------------+
+| X server           | xserver-xorg            |  X11 backends                           |
++--------------------+-------------------------+-----------------------------------------+
+| xcffib_            | python3-xcffib          |  required for X11 backend               |
++--------------------+-------------------------+-----------------------------------------+
+|                       **Wayland**                                                      |
++--------------------+-------------------------+-----------------------------------------+
+| wlroots_           | libwlroots-dev          |  Wayland backend (see below)            |
++--------------------+-------------------------+-----------------------------------------+
++--------------------+-------------------------+-----------------------------------------+
+| wayland-scanner_   | --                      |  generate C headers (Wayland backend)   |
++--------------------+-------------------------+-----------------------------------------+
++--------------------+-------------------------+-----------------------------------------+
+| wayland-protocols_ | wayland-protocols       |  Additional standard Wayland protocols  |
++--------------------+-------------------------+-----------------------------------------+
 
 .. _CFFI: https://cffi.readthedocs.io/en/latest/installation.html
 .. _xcffib: https://github.com/tych0/xcffib#installation
 .. _wlroots: https://gitlab.freedesktop.org/wlroots/wlroots
-.. _pywlroots: https://github.com/flacjacket/pywlroots
-.. _pywayland: https://pywayland.readthedocs.io/en/latest/install.html
-.. _python-xkbcommon: https://github.com/sde1000/python-xkbcommon
 .. _cairocffi: https://cairocffi.readthedocs.io/en/stable/overview.html
+.. _wayland-scanner: https://wayland-book.com/libwayland/wayland-scanner.html
+.. _wayland-protocols: https://gitlab.freedesktop.org/wayland/wayland-protocols
 .. _dbus-fast: https://dbus-fast.readthedocs.io/en/latest/
 
 
@@ -105,7 +104,6 @@ Or with sets of dependencies:
 
 .. code-block:: bash
 
-   uv tool install qtile[wayland]  # for Wayland dependencies
    uv tool install qtile[widgets]  # for all widget dependencies
    uv tool install qtile[all]      # for all dependencies
 
@@ -116,7 +114,6 @@ Or install qtile-git with:
     git clone https://github.com/qtile/qtile.git
     cd qtile
     uv tool install .
-    uv tool install --reinstall .[wayland]  # reinstall with wayland deps
 
 .. _starting-qtile:
 
@@ -159,12 +156,7 @@ Wayland
 Qtile can be run as a Wayland compositor rather than an X11 window manager. For
 this, Qtile uses wlroots_, a compositor library which is undergoing fast
 development. Be aware that some distributions package outdated versions of
-wlroots. More up-to-date distributions such as Arch Linux may package
-pywayland, pywlroots and python-xkbcommon. Also note that we may not have yet
-caught up with the latest wlroots release ourselves.
-
-.. note::
-   We currently support wlroots>=0.17.0,<0.18.0, pywlroots>=0.17.0,<0.18.0 and pywayland >= 0.4.17.
+wlroots. We are trying our best to keep up with latest wlroots release.
 
 With the Wayland dependencies in place, Qtile can be run either from a TTY, or
 within an existing X11 or Wayland session where it will run inside a nested
@@ -190,22 +182,10 @@ backlight, keyboard backlight, battery charge thresholds) via the kernel's
 exposed sysfs endpoints. However, to make this work, Qtile needs permission to
 write to these files. There is a udev rules file at
 ``/resources/99-qtile.rules`` in the tree, which users installing from source
-will want to install at ``/etc/udev/rules.d/`` on their system. By default,
-this rules file changes the group of the relevant files to the ``sudo`` group,
-and changes the file mode to be g+w (i.e. writable by all members of the sudo
-group). The theory here is that most systems qtile is installed on will also
-have the primary user in the ``sudo`` group. However, you can change this to
-whatever you like with the ``--group`` argument; see the sample udev rules.
-
-Note that this file invokes Qtile's hidden ``udev`` from udevd, so udevd will
-need ``qtile`` in its ``$PATH``. For distro packaging this shouldn't be a
-problem, since /usr/bin is typically in udev's path. Alternatively, users can
-install from source using uv, which will do all the right ``$PYTHONPATH``
-setup etc., so you only need to change the path to the final executable in the
-udev rules:
+will want to install at ``/etc/udev/rules.d/`` on their system. You can
+install it manually with:
 
 .. code-block:: bash
 
-    # copy the in-tree udev rules file to the right place to make udev see it,
-    # and change the rules to point at our wrapper script above.
-    sed "s,qtile,$HOME/.local/bin/qtile,g" ./resources/99-qtile.rules | sudo tee /etc/udev/rules.d/99-qtile.rules
+    # copy the in-tree udev rules file to the right place to make udev see it
+    cat ./resources/99-qtile.rules | sudo tee /etc/udev/rules.d/99-qtile.rules

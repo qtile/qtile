@@ -1,6 +1,5 @@
 import contextlib
 import os
-import textwrap
 
 import pytest
 
@@ -63,21 +62,19 @@ class WaylandBackend(Backend):
 
     def configure(self, manager):
         """This backend needs to get WAYLAND_DISPLAY variable."""
-        success, display = manager.c.eval("self.core.display_name")
-        assert success
-        self.env["WAYLAND_DISPLAY"] = display
+        self.env["WAYLAND_DISPLAY"] = manager.c.eval("self.core.display_name")
+        # Optionally for XWayland tests get the DISPLAY variable
+        self.env["DISPLAY"] = manager.c.eval('os.environ.get("DISPLAY", "")')
+
+    def fake_motion(self, x, y):
+        """Move pointer to the specified coordinates"""
+        self.manager.c.eval(f"self.core.warp_pointer({x}, {y})")
 
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
         # Currently only restacks windows, and does not trigger bindings
-        self.manager.c.eval(
-            textwrap.dedent(
-                f"""
-            self.core.warp_pointer({x}, {y})
-            self.core._focus_by_click()
-        """
-            )
-        )
+        self.fake_motion(x, y)
+        self.manager.c.eval("self.core._focus_by_click()")
 
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""

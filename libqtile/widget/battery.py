@@ -1,34 +1,3 @@
-# Copyright (c) 2011 matt
-# Copyright (c) 2011 Paul Colomiets
-# Copyright (c) 2011-2014 Tycho Andersen
-# Copyright (c) 2012 dmpayton
-# Copyright (c) 2012 hbc
-# Copyright (c) 2012 Tim Neumann
-# Copyright (c) 2012 uberj
-# Copyright (c) 2012-2013 Craig Barnes
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 dequis
-# Copyright (c) 2014 Sebastien Blot
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 import os
@@ -507,7 +476,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         )
 
 
-class Battery(base.ThreadPoolText):
+class Battery(base.InLoopPollText):
     """
     A text-based battery monitoring widget supporting both Linux and FreeBSD.
 
@@ -600,7 +569,7 @@ class Battery(base.ThreadPoolText):
     ]
 
     def __init__(self, **config) -> None:
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, "", **config)
         self.add_defaults(self.defaults)
 
         self._battery = self._load_battery(**config)
@@ -612,7 +581,7 @@ class Battery(base.ThreadPoolText):
             self.low_background = self.background
         self.normal_background = self.background
 
-        base.ThreadPoolText._configure(self, qtile, bar)
+        base.InLoopPollText._configure(self, qtile, bar)
 
     @expose_command()
     def charge_to_full(self):
@@ -775,7 +744,7 @@ class BatteryIcon(base._Widget):
     def setup_images(self) -> None:
         d_imgs = images.Loader(self.theme_path)(*self.icon_names)
 
-        new_height = self.bar.height * self.scale
+        new_height = (self.bar.size - 2) * self.scale
         for key, img in d_imgs.items():
             img.resize(height=new_height)
             self.images[key] = img
@@ -798,7 +767,7 @@ class BatteryIcon(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         image = self.images[self.current_icon]
         self.drawer.ctx.save()
-        self.drawer.ctx.translate(self.padding, (self.bar.height - image.height) // 2)
+        self.drawer.ctx.translate(self.padding, (self.bar.size - image.height) // 2)
         self.drawer.ctx.set_source(image.pattern)
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()

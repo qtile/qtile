@@ -1,22 +1,3 @@
-# Copyright (c) 2023 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import asyncio
 
 import pulsectl_asyncio
@@ -26,7 +7,7 @@ from libqtile import qtile
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import create_task
-from libqtile.widget.volume import Volume
+from libqtile.widget.volume import VolumeBase
 
 lock = asyncio.Lock()
 
@@ -179,7 +160,7 @@ class PulseConnection:
 pulse = PulseConnection()
 
 
-class PulseVolume(Volume):
+class PulseVolume(VolumeBase):
     """
     Volume widget for systems using PulseAudio.
 
@@ -199,14 +180,21 @@ class PulseVolume(Volume):
     ]
 
     def __init__(self, **config):
-        Volume.__init__(self, **config)
+        VolumeBase.__init__(self, **config)
         self.add_defaults(PulseVolume.defaults)
+        self.add_callbacks(
+            {
+                "Button1": self.mute,
+                "Button4": self.increase_vol,
+                "Button5": self.decrease_vol,
+            }
+        )
         self.volume = 0
         self.is_mute = 0
         self._previous_state = (-1.0, -1)
 
     def _configure(self, qtile, bar):
-        Volume._configure(self, qtile, bar)
+        VolumeBase._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
         pulse.subscribe(self.get_vals)
@@ -272,4 +260,4 @@ class PulseVolume(Volume):
     def finalize(self):
         # Close the connection to the server
         pulse.unsubscribe(self.get_vals)
-        Volume.finalize(self)
+        VolumeBase.finalize(self)

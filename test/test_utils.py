@@ -1,30 +1,9 @@
-# Copyright (c) 2008, 2010 Aldo Cortesi
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2011 Anshuman Bhaduri
-# Copyright (c) 2020 Matt Colligan
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
+import asyncio
 import os
 from collections import OrderedDict
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -167,3 +146,65 @@ class TestScanFiles:
         dfiles = utils.scan_files(DATA_DIR, *names)
         for name, length in names.items():
             assert len(dfiles[name]) == length
+
+
+@pytest.mark.asyncio
+async def test_acall_process_pid_tracking():
+    """Test that acall_process tracks PIDs in ASYNC_PIDS and reap_zombies breaks when it finds tracked processes."""
+    waitid_calls = []
+
+    def mock_waitid(idtype, id_or_pid, options):
+        waitid_calls.append((idtype, id_or_pid, options))
+
+        # For the first call (P_ALL check), return a mock result with a PID that's being tracked
+        if idtype == os.P_ALL:
+            if len(waitid_calls) == 1:
+                # Return a tracked PID on the first call
+                mock_result = Mock()
+                mock_result.si_pid = 12345  # Mock PID that we'll add to ASYNC_PIDS
+                return mock_result
+            else:
+                # No more processes to reap
+                return None
+
+        # For P_PID calls (specific PID), just return None (handled)
+        return None
+
+    with patch("os.waitid", side_effect=mock_waitid):
+        utils.ASYNC_PIDS.add(12345)
+
+        utils.reap_zombies()
+
+        # Should only make one call (P_ALL) because it breaks when finding tracked PID
+        assert len(waitid_calls) == 1
+
+        # First call should be P_ALL to check for any zombies
+        first_call = waitid_calls[0]
+        assert first_call[0] == os.P_ALL
+        assert first_call[2] & os.WEXITED
+        assert first_call[2] & os.WNOHANG
+        assert first_call[2] & os.WNOWAIT
+        utils.ASYNC_PIDS.clear()
+
+
+@pytest.mark.asyncio
+async def test_acall_process_adds_removes_pid():
+    """Test that acall_process properly adds and removes PIDs from ASYNC_PIDS."""
+    task = asyncio.create_task(utils.acall_process(["echo", "test"]))
+    result = await task
+
+    assert result.strip() == "test"
+    assert len(utils.ASYNC_PIDS) == 0
+
+
+@pytest.mark.asyncio
+async def test_concurrent_acall_processes():
+    """Test that multiple concurrent acall_process calls track PIDs correctly."""
+    tasks = [asyncio.create_task(utils.acall_process(["echo", f"test{i}"])) for i in range(3)]
+
+    results = await asyncio.gather(*tasks)
+
+    for i, result in enumerate(results):
+        assert result.strip() == f"test{i}"
+
+    assert len(utils.ASYNC_PIDS) == 0

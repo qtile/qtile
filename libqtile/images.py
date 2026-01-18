@@ -1,23 +1,3 @@
-# Copyright (c) 2020, Matt Colligan. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import os
 from collections import namedtuple
 
@@ -199,21 +179,20 @@ class Img:
     height = _PixelSize("height")
 
     def resize(self, width=None, height=None):
-        width0, height0 = self.default_size
-        width_factor, height_factor = None, None
-        if width is not None:
-            width_factor = width / width0
-        if height is not None:
-            height_factor = height / height0
+        if width is None and height is None:
+            raise ValueError("You must supply width or height")
 
-        if width and height:
+        width0, height0 = self.default_size
+        width_factor = width / width0 if width is not None else None
+        height_factor = height / height0 if height is not None else None
+
+        if width_factor is not None and height_factor is not None:
             return self.scale(width_factor, height_factor, lock_aspect_ratio=False)
-        if width or height:
+        else:
             return self.scale(width_factor, height_factor, lock_aspect_ratio=True)
-        raise ValueError("You must supply either width or height!")
 
     def scale(self, width_factor=None, height_factor=None, lock_aspect_ratio=False):
-        if not (width_factor or height_factor):
+        if width_factor is None and height_factor is None:
             raise ValueError("You must supply width_factor or height_factor")
         if lock_aspect_ratio:
             res = self._scale_lock(width_factor, height_factor, self.default_size)
@@ -223,17 +202,13 @@ class Img:
 
     @staticmethod
     def _scale_lock(width_factor, height_factor, initial_size):
-        if width_factor and height_factor:
-            raise ValueError(
-                "Can't rescale with locked aspect ratio "
-                "and give width_factor and height_factor."
-                f" {width_factor}, {height_factor}"
-            )
+        if width_factor is not None and height_factor is not None:
+            raise ValueError("No lock_aspect_ratio scale with width_factor and height_factor")
         width0, height0 = initial_size
-        if width_factor:
+        if width_factor is not None:
             width = width0 * width_factor
             height = height0 / width0 * width
-        else:
+        if height_factor is not None:
             height = height0 * height_factor
             width = width0 / height0 * height
         return _ImgSize(width, height)

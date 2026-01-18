@@ -1,23 +1,3 @@
-# Copyright (c) 2015 dmpayton
-# Copyright (c) 2021 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import os
 from subprocess import CalledProcessError, run
 
@@ -53,14 +33,11 @@ def generate_widget_screenshots():
 
 
 def setup(app):
-    run(["make", "-C", base_dir, "run-ffibuild"])
     generate_keybinding_images()
-    # screenshots will be skipped unless QTILE_BUILD_SCREENSHOTS environment variable is set
-    # Variable is set for ReadTheDocs at https://readthedocs.org/dashboard/qtile/environmentvariables/
-    if os.getenv("QTILE_BUILD_SCREENSHOTS", False):
-        generate_widget_screenshots()
-    else:
+    if os.getenv("QTILE_NO_BUILD_SCREENSHOTS", False):
         print("Skipping screenshot builds...")
+    else:
+        generate_widget_screenshots()
 
     app.add_directive("qtile_class", QtileClass)
     app.add_directive("qtile_hooks", QtileHooks)

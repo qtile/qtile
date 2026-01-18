@@ -85,12 +85,12 @@ returns the required text.
 .. note::
     This loop runs in the event loop so it is important that the poll method does not
     call some blocking function. If this is required, widgets should inherit the
-    ``base.ThreadPoolText`` class (see below).
+    ``base.BackgroundPoll`` class (see below).
 
-ThreadPoolText
+BackgroundPoll
 --------------
 
-The ``base.ThreadPoolText`` class is very similar to the ``base.InLoopPollText`` class.
+The ``base.BackgroundPoll`` class is very similar to the ``base.InLoopPollText`` class.
 The key difference is that the ``poll`` method is run asynchronously and triggers a
 callback once the function completes. This allows widgets to get text from
 long-running functions without blocking Qtile.
@@ -104,28 +104,15 @@ or more mixins to provide some additional functionality to the widget.
 PaddingMixin
 ------------
 
-This provides the ``padding(_x|_y|)`` attributes which can be used to change the appearance
-of the widget.
-
-If you use this mixin in your widget, you need to add the following line to your ``__init__``
-method:
-
-.. code:: python
-
-    self.add_defaults(base.PaddingMixin.defaults)
+This provides the ``padding(_x|_y|)`` attributes which can be used to change the
+appearance of the widget. And ``padding(_side|_top|)`` properties to get the appropriate
+value based on bar orientation.
 
 MarginMixin
 -----------
 
-The ``MarginMixin`` is essentially effectively exactly the same as the ``PaddingMixin`` but,
-instead, it provides the ``margin(_x|_y|)`` attributes.
-
-As above, if you use this mixin in your widget, you need to add the following line to your
-``__init__`` method:
-
-.. code:: python
-
-    self.add_defaults(base.MarginMixin.defaults)
+This is essentially exactly the same as the before, but instead, it provides the
+``margin(_x|_y|)`` attributes. And the bar oriented ``margin(_side|_top|)`` properties.
 
 Configuration
 =============
@@ -224,24 +211,46 @@ Text is displayed by using a ``drawer.TextLayout`` object. If all you are doing 
 displaying text then it's highly recommended that you use the ``base._TextBox``
 superclass as this simplifies adding and updating text.
 
-If you wish to implement this manually then you can create a your own ``drawer.TextLayout``
-by using the ``self.drawer.textlayout`` method of the widget (only available after
-the `_configure` method has been run). object to include in your widget.
+If you wish to implement this manually, you can create your own ``drawer.TextLayout``
+by calling the ``self.drawer.textlayout`` method of the widget (only available after
+the `_configure` method has been run).
 
 Some additional formatting of Text can be displayed using pango markup and ensuring
 the ``markup`` parameter is set to ``True``.
 
 .. code:: python
 
-    self.textlayout = self.drawer.textlayout(
-                         "Text",
-                         "fffff",       # Font colour
-                         "sans",        # Font family
-                         12,            # Font size
-                         None,          # Font shadow
-                         markup=False,  # Pango markup (False by default)
-                         wrap=True      # Wrap long lines (True by default)
-                         )
+    self.layout = self.drawer.textlayout(
+        "Text",
+        "ffffff",      # Font colour
+        "sans",        # Font family
+        12,            # Font size
+        None,          # Font shadow
+        markup=False,  # Pango markup (False by default)
+        wrap=True,     # Wrap long lines (True by default)
+    )
+
+.. note::
+
+    In ``base._TextBox`` inherited widgets, after `_configure` has been run,
+    modifications to the widget's ``font``, ``fontsize``, ``fontshadow``,
+    ``foreground`` and ``markup`` parameters will not be automatically applied
+    to the text layout. You will need to modify these values directly on the
+    ``self.layout.*`` attributes. Since these attributes have different names
+    to the widget parameters, you may use the `set_font` method, available in
+    these widgets, to update the text layout attributes with the advantage of
+    using the same parameter names as with the widget parameters:
+
+    .. code:: python
+
+        # All parameters are optional
+        self.set_font(
+            font="mono",
+            fontsize=14,
+            fontshadow="000000",
+            foreground="ff0000",
+            markup=True
+        )
 
 Displaying icons and images
 ---------------------------
@@ -269,8 +278,8 @@ most commonly used to draw icons but the same method applies to other images.
 
         d_images = images.Loader(self.imagefolder)(*names)  # images.Loader can take more than one folder as an argument
 
+        new_height = self.bar.size - 2
         for name, img in d_images.items():
-            new_height = self.bar.height - 1
             img.resize(height=new_height)   # Resize images to fit widget
             self.surfaces[name] = img.pattern  # Images added to the `surfaces` dictionary
 
@@ -311,7 +320,7 @@ For example, the following code can draw a wifi icon showing signal strength:
         WIFI_HEIGHT = 12
         WIFI_ARC_DEGREES = 90
 
-        y_margin = (self.bar.height - WIFI_HEIGHT) / 2
+        y_margin = (self.bar.size - WIFI_HEIGHT) / 2
         half_arc = WIFI_ARC_DEGREES / 2
 
         # Draw grey background
@@ -353,6 +362,17 @@ background. Usually this is done by including the following line at the start of
 The background can be a single colour or a list of colours which will result in a linear gradient
 from top to bottom.
 
+Vertical Orientation
+--------------------
+
+If you plan to support vertical orientation in your widget, after calling
+``self.drawer.clear`` and ``self.drawer.ctx.save`` place this function
+in the ``draw`` method:
+
+.. code:: python
+
+    self.rotate_drawer()
+
 Updating the widget
 ===================
 
@@ -370,7 +390,7 @@ A non-blocking timer can be called by using the ``self.timeout_add`` method.
 
 .. note::
 
-    Consider using the ``ThreadPoolText`` superclass where you are calling a function
+    Consider using the ``BackgroundPoll`` superclass where you are calling a function
     repeatedly and displaying its output as text.
 
 Hooks
@@ -678,10 +698,3 @@ of the bar then you need a few extra steps:
         # Take a screenshot. Will take screenshot of whole bar unless
         # a `width` parameter is set.
         bar.take_screenshot(target, width=width)
-
-Getting help
-============
-
-If you still need help with developing your widget then please submit a question in the
-`qtile-dev group <https://groups.google.com/forum/#!forum/qtile-dev>`_ or submit an issue
-on the github page if you believe there's an error in the codebase.

@@ -1,31 +1,3 @@
-# Copyright (c) 2012-2014 Tycho Andersen
-# Copyright (c) 2013 xarvh
-# Copyright (c) 2013 roger
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014 ramnes
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 dequis
-# Copyright (c) 2015 Dario Giovannetti
-# Copyright (c) 2015 Alexander Lozovskoy
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -170,6 +142,9 @@ class _Group(CommandObject):
                         # Screen has lost focus so we reset record of focused window so
                         # focus will warp when screen is focused again
                         self.last_focused = None
+        elif self.screen and not self.windows and self.screen == self.qtile.current_screen:
+            # Clear active window when switching to an empty group on the current screen
+            self.qtile.core.clear_focus()
 
     def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
@@ -417,6 +392,8 @@ class _Group(CommandObject):
                 screen.toggle_group(self)
         else:
             screen.set_group(self)
+
+        self.qtile.core.check_screen_fullscreen_background(screen)
 
     def _get_group(self, direction, skip_empty=False, skip_managed=False):
         """Find a group walking the groups list in the specified direction

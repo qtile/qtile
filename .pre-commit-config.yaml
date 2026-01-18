@@ -7,7 +7,7 @@ repos:
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.17.1
     hooks:
       - id: mypy
         additional_dependencies: ["types-python-dateutil", "types-pytz"]
@@ -16,3 +16,7 @@ repos:
     rev: v2.14
     hooks:
       - id: vulture
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.8
+    hooks:
+    - id: clang-format

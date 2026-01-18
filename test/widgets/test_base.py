@@ -1,29 +1,10 @@
-# Copyright (c) 2021-22 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import pytest
 
 import libqtile.bar
 import libqtile.config
 from libqtile.command.base import expose_command
 from libqtile.widget import Spacer, TextBox
-from libqtile.widget.base import ThreadPoolText, _Widget
+from libqtile.widget.base import BackgroundPoll, _Widget
 from test.helpers import BareConfig, Retry
 
 
@@ -50,7 +31,7 @@ class TimerWidget(_Widget):
         return len(active)
 
 
-class PollingWidget(ThreadPoolText):
+class PollingWidget(BackgroundPoll):
     poll_count = 0
 
     def poll(self):
@@ -214,8 +195,7 @@ def test_text_scroll_no_width(manager):
     """
     logs = manager.get_log_buffer()
     assert "WARNING - no_width: You must specify a width when enabling scrolling." in logs
-    _, output = manager.c.widget["no_width"].eval("self.scroll")
-    assert output == "False"
+    assert manager.c.widget["no_width"].eval("self.scroll") == "False"
 
 
 @scrolling_text_config
@@ -230,11 +210,9 @@ def test_text_scroll_short_text(manager):
     assert widget.info()["width"] < 100
 
     # Scrolling is still enabled (but won't do anything)
-    _, output = widget.eval("self.scroll")
-    assert output == "True"
+    assert widget.eval("self.scroll") == "True"
 
-    _, output = widget.eval("self._should_scroll")
-    assert output == "False"
+    assert widget.eval("self._should_scroll") == "False"
 
 
 @scrolling_text_config
@@ -245,8 +223,7 @@ def test_text_scroll_long_text(manager):
 
     @Retry(ignore_exceptions=(AssertionError,))
     def wait_for_scroll(widget):
-        _, scroll_count = widget.eval("self._scroll_offset")
-        assert int(scroll_count) > 5
+        assert int(widget.eval("self._scroll_offset")) > 5
 
     widget = manager.c.widget["longer_text"]
 
@@ -254,11 +231,9 @@ def test_text_scroll_long_text(manager):
     assert widget.info()["width"] == 100
 
     # Scrolling is still enabled
-    _, output = widget.eval("self.scroll")
-    assert output == "True"
+    assert widget.eval("self.scroll") == "True"
 
-    _, output = widget.eval("self._should_scroll")
-    assert output == "True"
+    assert widget.eval("self._should_scroll") == "True"
 
     # Check actually scrolling
     wait_for_scroll(widget)
@@ -268,8 +243,7 @@ def test_text_scroll_long_text(manager):
 def test_scroll_fixed_width(manager):
     widget = manager.c.widget["fixed_width"]
 
-    _, layout = widget.eval("self.layout.width")
-    assert int(layout) < 200
+    assert int(widget.eval("self.layout.width")) < 200
 
     # Widget width is fixed at set width
     assert widget.info()["width"] == 200

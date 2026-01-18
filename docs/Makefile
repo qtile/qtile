@@ -171,6 +171,6 @@ genkeyimg:
 genwidgetscreenshots:
 	rm -rf screenshots/widgets
 	@echo "Generating screenshots for widgets using pytest fixtures."
-	pytest -o python_files="ss_*.py" -o python_functions="ss_*" --backend x11 ../test
+	pytest -o python_files="ss_*.py" -o python_functions="ss_*" --backend x11 ../test/widgets/docs_screenshots
 	@echo
 	@echo "Generated widget screenshots"

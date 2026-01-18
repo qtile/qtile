@@ -45,19 +45,6 @@ Testing with the X11 backend requires Xephyr_ (and xvfb for headless mode) in ad
 dependencies.
 
 
-Building cffi module
-====================
-
-Qtile ships with a small in-tree pangocairo binding built using cffi,
-``pangocffi.py``, and also binds to xcursor with cffi.  The bindings are not
-built at run time and will have to be generated manually when the code is
-downloaded or when any changes are made to the cffi library.  This can be done
-by calling:
-
-.. code-block:: bash
-
-    ./scripts/ffibuild
-
 Setting up the environment
 ==========================
 
@@ -73,21 +60,14 @@ Building the documentation
 To build the documentation, you will also need to install `graphviz
 <https://www.graphviz.org/download/>`_.
 
-Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
+Build the documentation with ``make docs`` from the root directory.
 
-Build the documentation with ``make html``.
-
-Check the result by opening ``_build/html/index.html`` in your browser.
+Check the result by opening ``docs/_build/html/index.html`` in your browser.
 
 .. note::
 
-  To speed up local testing, screenshots are not generated each time the documentation
-  is built.
-
-  You can enable screenshots by setting the ``QTILE_BUILD_SCREENSHOTS`` environmental
-  variable at build time e.g. ``QTILE_BUILD_SCREENSHOTS=1 make html``. You can also
-  export the variable so it will apply to all local builds ``export QTILE_BUILD_SCREENSHOTS=1``
-  (but remember to unset it if you want to skip building screenshots).
+   The screenshots can take a while to build, so you can export
+   ``QTILE_NO_BUILD_SCREENSHOTS`` to disable building them.
 
 Development and testing
 =======================
@@ -223,7 +203,7 @@ and click on ``Mark Directory as -> Sources Root``.
 
 Next, add a Configuration using a Python template with these fields:
 
-- Script path: ``bin/qtile``, or the absolute path to it
+- Script path: ``libqtile/scripts/main.py``, or the absolute path to it
 - Parameters: ``-c libqtile/resources/default_config.py``,
   or nothing if you want to use your own config file in ``~/.config/qtile/config.py``
 - Environment variables: ``PYTHONUNBUFFERED=1;DISPLAY=:1``
@@ -264,7 +244,7 @@ Create a launch.json file with the following lines.
             "name": "Python: Qtile",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/qtile",
+            "program": "${workspaceFolder}/libqtile/scripts/main.py",
             "cwd": "${workspaceFolder}",
             "args": ["-c", "libqtile/resources/default_config.py"],
             "console": "integratedTerminal",

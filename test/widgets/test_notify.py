@@ -1,26 +1,3 @@
-# Copyright (c) 2021 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# NOTE: This test only tests the functionality of the widget and parts of the manager
-# The notification service (in libqtile/notify.py) is tested separately
-# TO DO: notification service test ;)
 import shutil
 import subprocess
 import textwrap
@@ -91,8 +68,7 @@ DEFAULT_TIMEOUT_URGENT = 45
 @pytest.mark.usefixtures("dbus")
 def test_notifications(manager_nospawn, minimal_conf_noscreen):
     def background(obj):
-        _, bground = obj.eval("self.background")
-        return bground
+        return obj.eval("self.background")
 
     notify.Notify.timeout_add = log_timeout
     widget = notify.Notify(
@@ -115,8 +91,7 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     assert obj.info()["text"] == MESSAGE_1
     assert background(obj) == BACKGROUND_NORMAL
 
-    _, timeout = obj.eval("self.delay")
-    assert timeout == "5.0"
+    assert obj.eval("self.delay") == "5.0"
 
     # Send second notification and check time and display time
     notif_2 = [NS]
@@ -125,8 +100,7 @@ def test_notifications(manager_nospawn, minimal_conf_noscreen):
     assert obj.info()["text"] == MESSAGE_2.format(colour=URGENT)
     assert background(obj) == BACKGROUND_URGENT
 
-    _, timeout = obj.eval("self.delay")
-    assert timeout == "10.0"
+    assert obj.eval("self.delay") == "10.0"
 
     # Send third notification
     notif_3 = [NS]
@@ -283,7 +257,7 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     # Create our signal listener
     manager_nospawn.c.eval(handler)
 
-    _, result = manager_nospawn.c.eval("self.signal_listener")
+    result = manager_nospawn.c.eval("self.signal_listener")
 
     # Send first notification and check time and display time
     notif_1 = [NS]
@@ -291,10 +265,10 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
     subprocess.run(notif_1)
 
     # Check that listener hasn't received any signals yet
-    _, result = manager_nospawn.c.eval("self.signal_listener.action_invoked")
+    result = manager_nospawn.c.eval("self.signal_listener.action_invoked")
     assert result == "None"
 
-    _, result = manager_nospawn.c.eval("self.signal_listener.notification_closed")
+    result = manager_nospawn.c.eval("self.signal_listener.notification_closed")
     assert result == "None"
 
     # Clicking on notification dismisses it
@@ -302,18 +276,18 @@ def test_invoke_and_clear(manager_nospawn, minimal_conf_noscreen):
 
     # Signal listener should get the id and close reason
     # id is 1 and dismiss reason is ClosedReason.dismissed which is 2
-    _, result = manager_nospawn.c.eval("self.signal_listener.notification_closed")
+    result = manager_nospawn.c.eval("self.signal_listener.notification_closed")
     assert result == "[1, 2]"
 
     # Send a new notification with defined actions
-    _, res = manager_nospawn.c.eval(notification_with_actions)
+    manager_nospawn.c.eval(notification_with_actions)
 
     # Right-clicking on notification invokes it
     manager_nospawn.c.bar["top"].fake_button_press(0, 0, button=3)
 
     # Signal listener should get the id and close reason
     # id is 2 (as it is the second notification) and action is "default"
-    _, result = manager_nospawn.c.eval("self.signal_listener.action_invoked")
+    result = manager_nospawn.c.eval("self.signal_listener.action_invoked")
     assert result == "[2, 'default']"
 
 
@@ -346,8 +320,7 @@ def test_unregister(manager_nospawn, minimal_conf_noscreen):
     """Short test to check if notifier deregisters correctly."""
 
     def notifier_has_callbacks():
-        _, out = manager_nospawn.c.widget["notify"].eval("notifier.callbacks")
-        return out != "[]"
+        return manager_nospawn.c.widget["notify"].eval("notifier.callbacks") != "[]"
 
     widget = notify.Notify()
     config = minimal_conf_noscreen
@@ -356,7 +329,7 @@ def test_unregister(manager_nospawn, minimal_conf_noscreen):
 
     assert notifier_has_callbacks()
 
-    _ = manager_nospawn.c.widget["notify"].eval("self.finalize()")
+    manager_nospawn.c.widget["notify"].eval("self.finalize()")
 
     assert not notifier_has_callbacks()
 
@@ -385,5 +358,4 @@ def test_notifications_default_timeouts(manager_nospawn, minimal_conf_noscreen, 
     notif.extend(notification("test", "test", urgency=urgency)[1])
     subprocess.run(notif)
 
-    _, delay = obj.eval("self.delay")
-    assert delay == str(timeout)
+    assert obj.eval("self.delay") == str(timeout)

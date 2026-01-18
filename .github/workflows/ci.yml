@@ -11,13 +11,12 @@ jobs:
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
-                # - /tox.ini:[gh-actions]
                 # - /pyproject.toml:[tool.mypy]
                 # If adding new python versions, consider also updating
                 # python version in .readthedocs.yaml
                 # TODO: Add back pypy here and in release.yml once:
                 # https://github.com/pypy/pypy/issues/4956 is resolved
-                python-version: ['3.10', '3.11', '3.12', '3.13']
+                python-version: ['3.12', '3.13', '3.14']
                 backend: ['x11', 'wayland']
         steps:
             - uses: actions/checkout@v4
@@ -25,31 +24,44 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: ${{ matrix.python-version }}
+            - name: Set up uv
+              uses: astral-sh/setup-uv@v6
+              with:
+                  enable-cache: true
+                  cache-dependency-glob: "pyproject.toml"
+                  python-version: ${{ matrix.python-version }}
             - name: Install dependencies
               run: |
                 sudo apt update
+                sudo apt install yq
+                sudo apt install -y --no-install-recommends $(yq -r '.build.apt_packages | join(" ")' .readthedocs.yaml)
                 # Any Wayland-specific Ubuntu system dependencies should be installed from ./scripts/ubuntu_wayland_setup
-                sudo apt install --no-install-recommends \
-                  libdbus-1-dev libgirepository-2.0-dev gir1.2-gtk-3.0 gir1.2-notify-0.7 gir1.2-gudev-1.0 graphviz \
-                  imagemagick git xserver-xephyr xterm xvfb dbus-x11 libnotify-bin \
-                  libxcb-composite0-dev libxcb-icccm4-dev libxcb-res0-dev libxcb-render0-dev libxcb-res0-dev \
-                  libxcb-xfixes0-dev vlc volumeicon-alsa libxkbcommon-dev python-gi-dev tox libcairo2-dev \
-                  gir1.2-gdkpixbuf-2.0 librsvg2-dev
-                pip -q install --break-system-packages tox-gh-actions
+            - name: Cache Wayland dependencies
+              uses: actions/cache@v4
+              with:
+                path: cache
+                key: ${{ runner.os }}-wayland-${{ hashFiles('scripts/ubuntu_wayland_setup') }}
+                restore-keys: |
+                  ${{ runner.os }}-wayland-
             - name: Install wayland
-              if: ${{ matrix.backend == 'wayland' }}
               run: bash -x ./scripts/ubuntu_wayland_setup
+            - name: Clean python version and export to env
+              shell: bash
+              run: |
+                PYTHON_VERSION="${{ matrix.python-version }}"
+                CLEAN_VERSION="${PYTHON_VERSION%-dev}"
+                echo "QTILE_CI_PYTHON=${CLEAN_VERSION}" >> $GITHUB_ENV
             - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
-                tox
-              env:
-                BACKEND: ${{ matrix.backend }}
+                make QTILE_CI_PYTHON=${QTILE_CI_PYTHON} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
+                uv run coverage combine -q
+                uv run coverage report -m
+                uv run coverage xml
             - name: Upload coverage data to coveralls.io
               continue-on-error: true
               run: |
-                pip -q install coveralls >=3.3.0
-                coveralls --service=github
+                uv tool run coveralls --service=github
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}

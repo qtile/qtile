@@ -1,21 +1,3 @@
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import libcst as cst
 import libcst.matchers as m
 
@@ -32,17 +14,17 @@ class RenameWidgetTransformer(RenamerTransformer):
     from_to = ("CurrentLayoutIcon", "CurrentLayout")
 
     @m.leave(m.Call(func=m.Attribute(attr=m.Name("CurrentLayoutIcon"))))
-    def add_draw_kwarg(self, original_node, updated_node) -> cst.Call:
-        """Adds 'icon_first' keyword argument to 'CurrentLayout'."""
+    def add_kwarg_mode(self, original_node, updated_node) -> cst.Call:
+        """Adds 'mode' keyword argument to 'CurrentLayout'."""
         self.lint(
             original_node,
-            "CurrentLayout should add 'icon_first' keyword argument to have "
+            "CurrentLayout should add 'mode' keyword argument to have "
             "the same functionality as previous CurrentLayoutIcon.",
         )
         draw_kwarg = (
             cst.Arg(
-                keyword=cst.Name("icon_first"),
-                value=cst.Name("True"),
+                keyword=cst.Name("mode"),
+                value=cst.SimpleString('"icon"'),
                 equal=EQUALS_NO_SPACE,
             ),
         )
@@ -73,7 +55,7 @@ class RenameCurrentLayoutIcon(_QtileMigrator):
     .. code:: python
 
       widgets=[
-          widget.CurrentLayout(icon_first=True),
+          widget.CurrentLayout(mode="icon"),
           ...
       ],
 
@@ -86,17 +68,17 @@ class RenameCurrentLayoutIcon(_QtileMigrator):
             """
             from libqtile import widget
 
-            widget.CurrentLayoutIcon(scale=1)
+            widget.CurrentLayoutIcon(font="sans")
             widget.CurrentLayoutIcon()
-            widget.CurrentLayout(fontsize=12)
+            widget.CurrentLayout(font="sans")
             widget.CurrentLayout()
             """,
             """
             from libqtile import widget
 
-            widget.CurrentLayout(icon_first=True, scale=1)
-            widget.CurrentLayout(icon_first=True)
-            widget.CurrentLayout(fontsize=12)
+            widget.CurrentLayout(mode="icon", font="sans")
+            widget.CurrentLayout(mode="icon")
+            widget.CurrentLayout(font="sans")
             widget.CurrentLayout()
             """,
         )

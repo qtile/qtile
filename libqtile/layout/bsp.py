@@ -1,20 +1,3 @@
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -190,6 +173,15 @@ class Bsp(Layout):
         self.current = self.root
         if self.margin_on_single is None:
             self.margin_on_single = self.margin
+
+    def swap(self, c1: Window, c2: Window) -> None:
+        node_c1 = self.get_node(c1)
+        node_c2 = self.get_node(c2)
+
+        node_c1.client = c2
+        node_c2.client = c1
+
+        self.group.layout_all()
 
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)

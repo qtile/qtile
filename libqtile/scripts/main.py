@@ -14,16 +14,9 @@ from libqtile.scripts import (
     shell,
     start,
     top,
-    udev,
+    x11_identify_output,
 )
-
-try:
-    # Python>3.7 can get the version from importlib
-    from importlib.metadata import PackageNotFoundError, distribution
-
-    VERSION = distribution("qtile").version
-except PackageNotFoundError:
-    VERSION = "dev"
+from libqtile.utils import VERSION
 
 
 def main():
@@ -64,9 +57,9 @@ def main():
     cmd_obj.add_subcommand(subparsers, [parent_parser])
     check.add_subcommand(subparsers, [parent_parser])
     migrate.add_subcommand(subparsers, [parent_parser])
-    udev.add_subcommand(subparsers, [parent_parser])
     launch.add_subcommand(subparsers, [parent_parser])
     repl.add_subcommand(subparsers, [parent_parser])
+    x11_identify_output.add_subcommand(subparsers, [parent_parser])
 
     # `qtile help` should print help
     def print_help(options):

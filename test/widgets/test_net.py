@@ -1,25 +1,3 @@
-# Copyright (c) 2021 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-# Widget specific tests
-
 import sys
 from importlib import reload
 from types import ModuleType
@@ -118,6 +96,15 @@ def test_net_use_prefix(patch_net):
     """Tests `prefix` configurable option"""
     net6 = patch_net(prefix="M")
     assert net6.poll() == "all: U 0.04MB 440.0kB D 1.2MB 13.2MB T 1.24MB 13.64MB"
+
+
+def test_net_missing_interface(patch_net):
+    """Tests `missing_interface` option"""
+    net7 = patch_net(interface="unknown_interface")
+    assert net7.poll() == "unknown_interface not found"
+
+    net8 = patch_net(interface="unknown_interface", missing_interface="")
+    assert net8.poll() == ""
 
 
 # Untested: 128-129 - generic exception catching

@@ -45,46 +45,18 @@ MOCK_MODULES = [
     "psutil",
     "pulsectl",
     "pulsectl_asyncio",
-    "pywayland",
-    "pywayland.protocol.wayland",
-    "pywayland.protocol.wayland.wl_output",
-    "pywayland.server",
-    "pywayland.utils",
-    "wlroots",
-    "wlroots.helper",
-    "wlroots.util",
-    "wlroots.util.box",
-    "wlroots.util.clock",
-    "wlroots.util.edges",
-    "wlroots.util.region",
-    "wlroots.wlr_types",
-    "wlroots.wlr_types.cursor",
-    "wlroots.wlr_types.foreign_toplevel_management_v1",
-    "wlroots.wlr_types.idle_inhibit_v1",
-    "wlroots.wlr_types.idle_notify_v1",
-    "wlroots.wlr_types.keyboard",
-    "wlroots.wlr_types.layer_shell_v1",
-    "wlroots.wlr_types.output_management_v1",
-    "wlroots.wlr_types.pointer_constraints_v1",
-    "wlroots.wlr_types.output",
-    "wlroots.wlr_types.output_power_management_v1",
-    "wlroots.wlr_types.scene",
-    "wlroots.wlr_types.server_decoration",
-    "wlroots.wlr_types.single_pixel_buffer_v1",
-    "wlroots.wlr_types.virtual_keyboard_v1",
-    "wlroots.wlr_types.virtual_pointer_v1",
-    "wlroots.wlr_types.xdg_shell",
     "xcffib",
     "xcffib.ffi",
     "xcffib.randr",
     "xcffib.render",
+    "xcffib.screensaver",
     "xcffib.wrappers",
     "xcffib.xfixes",
     "xcffib.xinerama",
+    "xcffib.xinput",
     "xcffib.xproto",
     "xcffib.xtest",
     "xdg.IconTheme",
-    "xkbcommon",
 ]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
@@ -129,7 +101,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Qtile"
-copyright = "2008-2021, Aldo Cortesi and contributers"
+copyright = "2008-2026, the Qtile contributors"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -322,7 +294,7 @@ texinfo_documents = [
         "index",
         "Qtile",
         "Qtile Documentation",
-        "Aldo Cortesi",
+        "The Qtile contributors",
         "Qtile",
         "A hackable tiling window manager.",
         "Miscellaneous",
@@ -339,12 +311,6 @@ texinfo_documents = [
 # texinfo_show_urls = 'footnote'
 
 html_theme = "sphinx_rtd_theme"
-
-# only import and set the theme path if we're building docs locally
-if not os.environ.get("READTHEDOCS"):
-    import sphinx_rtd_theme
-
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
 graphviz_dot_args = ["-Lg"]

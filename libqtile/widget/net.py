@@ -1,34 +1,13 @@
-# Copyright (c) 2014 Rock Neurotiko
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 from math import log
 
 import psutil
 
-from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class Net(base.ThreadPoolText):
+class Net(base.InLoopPollText):
     """
     Displays interface down and up speed
 
@@ -60,6 +39,11 @@ class Net(base.ThreadPoolText):
             "Display format of down/upload/total speed of given interfaces",
         ),
         (
+            "missing_interface",
+            "{interface} not found",
+            "Display when interface is missing/unavailable.",
+        ),
+        (
             "interface",
             None,
             "List of interfaces or single NIC as string to monitor, \
@@ -76,7 +60,7 @@ class Net(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, "", **config)
         self.add_defaults(Net.defaults)
 
         self.factor = 1000.0
@@ -145,47 +129,54 @@ class Net(base.ThreadPoolText):
 
     def poll(self):
         ret_stat = []
-        try:
-            new_stats = self.get_stats()
-            for intf in self.interface:
-                down = new_stats[intf]["down"] - self.stats[intf]["down"]
-                up = new_stats[intf]["up"] - self.stats[intf]["up"]
-                total = new_stats[intf]["total"] - self.stats[intf]["total"]
+        new_stats = self.get_stats()
+        for intf in self.interface:
+            if intf not in new_stats:
+                ret_stat.append(self.missing_interface.format(interface=intf))
+                continue
 
-                down = down / self.update_interval
-                up = up / self.update_interval
-                total = total / self.update_interval
-                down, down_suffix = self.convert_b(down, self.prefix)
-                down_cumulative, down_cumulative_suffix = self.convert_b(
-                    new_stats[intf]["down"], self.cumulative_prefix
-                )
-                up, up_suffix = self.convert_b(up, self.prefix)
-                up_cumulative, up_cumulative_suffix = self.convert_b(
-                    new_stats[intf]["up"], self.cumulative_prefix
-                )
-                total, total_suffix = self.convert_b(total, self.prefix)
-                total_cumulative, total_cumulative_suffix = self.convert_b(
-                    new_stats[intf]["total"], self.cumulative_prefix
-                )
+            # This is for any interfaces that appear after the widget has started.
+            # In that scenario, new_stats[intf] will exist but self.stats[intf] would result
+            # in a KeyError, so we populate it now.
+            if intf not in self.stats:
                 self.stats[intf] = new_stats[intf]
-                ret_stat.append(
-                    self.format.format(
-                        interface=intf,
-                        down=down,
-                        down_suffix=down_suffix,
-                        down_cumulative=down_cumulative,
-                        down_cumulative_suffix=down_cumulative_suffix,
-                        up=up,
-                        up_suffix=up_suffix,
-                        up_cumulative=up_cumulative,
-                        up_cumulative_suffix=up_cumulative_suffix,
-                        total=total,
-                        total_suffix=total_suffix,
-                        total_cumulative=total_cumulative,
-                        total_cumulative_suffix=total_cumulative_suffix,
-                    )
-                )
 
-            return " ".join(ret_stat)
-        except Exception:
-            logger.exception("Net widget errored while polling:")
+            down = new_stats[intf]["down"] - self.stats[intf]["down"]
+            up = new_stats[intf]["up"] - self.stats[intf]["up"]
+            total = new_stats[intf]["total"] - self.stats[intf]["total"]
+
+            down = down / self.update_interval
+            up = up / self.update_interval
+            total = total / self.update_interval
+            down, down_suffix = self.convert_b(down, self.prefix)
+            down_cumulative, down_cumulative_suffix = self.convert_b(
+                new_stats[intf]["down"], self.cumulative_prefix
+            )
+            up, up_suffix = self.convert_b(up, self.prefix)
+            up_cumulative, up_cumulative_suffix = self.convert_b(
+                new_stats[intf]["up"], self.cumulative_prefix
+            )
+            total, total_suffix = self.convert_b(total, self.prefix)
+            total_cumulative, total_cumulative_suffix = self.convert_b(
+                new_stats[intf]["total"], self.cumulative_prefix
+            )
+            self.stats[intf] = new_stats[intf]
+            ret_stat.append(
+                self.format.format(
+                    interface=intf,
+                    down=down,
+                    down_suffix=down_suffix,
+                    down_cumulative=down_cumulative,
+                    down_cumulative_suffix=down_cumulative_suffix,
+                    up=up,
+                    up_suffix=up_suffix,
+                    up_cumulative=up_cumulative,
+                    up_cumulative_suffix=up_cumulative_suffix,
+                    total=total,
+                    total_suffix=total_suffix,
+                    total_cumulative=total_cumulative,
+                    total_cumulative_suffix=total_cumulative_suffix,
+                )
+            )
+
+        return " ".join(ret_stat)

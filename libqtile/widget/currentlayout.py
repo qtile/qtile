@@ -1,29 +1,3 @@
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2011 Kenji_Takahashi
-# Copyright (c) 2012 roger
-# Copyright (c) 2012, 2014 Tycho Andersen
-# Copyright (c) 2012 Maximilian Köhl
-# Copyright (c) 2013 Craig Barnes
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Adi Sieker
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import itertools
 import os
 
@@ -55,16 +29,22 @@ class CurrentLayout(base._TextBox):
     """
 
     defaults = [
-        ("icon_first", False, "Should draw icon or text when bar is initialized."),
-        ("scale", 1, "Scale factor relative to the bar height. Defaults to 1"),
+        ("icon_first", True, "When ``mode='both'``, the icon will display before the text."),
+        (
+            "mode",
+            "text",
+            "Display only the name of the layout with ``text`` "
+            "or only the icon of the layout with ``icon``. "
+            "Altenatively display the two in order with ``both``",
+        ),
+        ("scale", 1, "Icon's scale factor relative to the bar height."),
         (
             "custom_icon_paths",
             [],
-            "List of folders where to search icons before"
-            "using built-in icons or icons in ~/.icons dir.  "
-            "This can also be used to provide"
-            "missing icons for custom layouts.  "
-            "Defaults to empty list.",
+            "List of folders where to search icons before "
+            "using built-in icons or icons in ~/.icons dir. "
+            "This can also be used to provide "
+            "missing icons for custom layouts.",
         ),
     ]
 
@@ -76,6 +56,7 @@ class CurrentLayout(base._TextBox):
         self.img_length = 0
 
     def _configure(self, qtile, bar):
+        assert self.mode in ("text", "icon", "both")
         base._TextBox._configure(self, qtile, bar)
         layout_id = self.bar.screen.group.current_layout
         self.text = self.bar.screen.group.layouts[layout_id].name
@@ -98,7 +79,13 @@ class CurrentLayout(base._TextBox):
         return self.text
 
     def calculate_length(self):
-        return self.img_length if self.icon_first else base._TextBox.calculate_length(self)
+        if self.mode == "text":
+            return base._TextBox.calculate_length(self)
+        elif self.mode == "icon":
+            return self.img_length + self.padding * 2
+        # self.mode == "both"
+        # add only one padding because base._TextBox.calculate_length already add two
+        return base._TextBox.calculate_length(self) + self.img_length + self.padding
 
     def hook_response(self, layout, group):
         if group.screen is not None and group.screen == self.bar.screen:
@@ -118,11 +105,16 @@ class CurrentLayout(base._TextBox):
         hook.unsubscribe.layout_change(self.hook_response)
 
     def change_draw_method(self):
-        self.icon_first = not self.icon_first
+        if self.mode == "both":
+            return
+        self.mode = "text" if self.mode != "text" else "icon"
         self.bar.draw()
 
     def draw(self):
-        self.draw_icon() if self.icon_first else base._TextBox.draw(self)
+        if self.mode != "text":
+            self.draw_icon()
+        else:
+            base._TextBox.draw(self)
 
     def draw_icon(self):
         if not self.icons_loaded:
@@ -135,9 +127,49 @@ class CurrentLayout(base._TextBox):
 
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.save()
+        self.rotate_drawer()
+
+        translatex, translatey = self.width, self.height
+
+        if self.mode == "both":
+            y = (self.bar.size - self.layout.height) / 2 + 1
+            if self.bar.horizontal:
+                if self.icon_first:
+                    # padding - icon - padding - text - padding
+                    x = self.padding + self.img_length + self.padding
+                    translatex -= base._TextBox.calculate_length(self) - self.padding
+                else:
+                    # padding - text - padding - icon - padding
+                    x = self.padding
+                    translatex += base._TextBox.calculate_length(self) - self.padding
+            elif self.rotate:
+                if self.icon_first:
+                    # padding - icon - padding - text - padding
+                    x = self.padding + self.img_length + self.padding
+                    translatey -= base._TextBox.calculate_length(self) - self.padding
+                else:
+                    # padding - text - padding - icon - padding
+                    x = self.padding
+                    translatey += base._TextBox.calculate_length(self) - self.padding
+            else:
+                x = 0
+                if self.icon_first:
+                    # padding - icon - padding - text - padding
+                    y = self.padding + self.img_length + self.padding
+                    translatey -= base._TextBox.calculate_length(self) - self.padding
+                else:
+                    # padding - text - padding - icon - padding
+                    y = self.padding
+                    translatey += base._TextBox.calculate_length(self) - self.padding
+
+            self.layout.draw(x, y)
+
+        if not self.bar.horizontal and self.rotate:
+            translatex, translatey = translatey, translatex
+
         self.drawer.ctx.translate(
-            (self.width - surface.width) / 2,
-            (self.height - surface.height) / 2,
+            (translatex - surface.width) / 2,
+            (translatey - surface.height) / 2,
         )
         self.drawer.ctx.set_source(surface.pattern)
         self.drawer.ctx.paint()
@@ -185,9 +217,7 @@ class CurrentLayout(base._TextBox):
         """
         Loads layout icons.
         """
-        width = (self.bar.width - 2) * self.scale if not self.bar.horizontal else None
-        height = (self.bar.height - 2) * self.scale if self.bar.horizontal else None
-
+        new_height = (self.bar.size - 2) * self.scale
         for names in self._get_layout_names():
             layout_name = names[0]
             # Python doesn't have an ordered set but we can use a dictionary instead
@@ -205,9 +235,10 @@ class CurrentLayout(base._TextBox):
 
             img = Img.from_path(icon_file_path)
 
-            img.resize(width=width, height=height)
-            if img.width > self.img_length:
-                self.img_length = img.width + self.actual_padding * 2
+            img.resize(height=new_height)
+            img_length = img.width if self.bar.horizontal else img.height
+            if img_length > self.img_length:
+                self.img_length = img_length
 
             self.surfaces[layout_name] = img
 

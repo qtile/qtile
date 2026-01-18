@@ -1,23 +1,5 @@
-# Copyright (c) 2022 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-import shutil
+import sys
+from pathlib import Path
 
 import pytest
 
@@ -101,15 +83,12 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
 
     @Retry(ignore_exceptions=(AssertionError))
     def wait_for_icons():
-        _, icons = manager_nospawn.c.widget["systray"].eval("len(self.tray_icons)")
-        assert int(icons) == 2
+        assert int(manager_nospawn.c.widget["systray"].eval("len(self.tray_icons)")) == 2
 
     if backend_name == "wayland":
         pytest.skip("Skipping test on Wayland.")
 
-    for prog in ("volumeicon", "vlc"):
-        if shutil.which(prog) is None:
-            pytest.skip(f"{prog} must be installed. Skipping test.")
+    script = Path(__file__).parent.parent / "scripts" / "systray.py"
 
     config = minimal_conf_noscreen
     config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget.Systray()], 40))]
@@ -119,8 +98,8 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
     # No icons at this stage so length is 0
     assert manager_nospawn.c.widget["systray"].info()["widget"]["length"] == 0
 
-    manager_nospawn.c.spawn("volumeicon")
-    manager_nospawn.c.spawn("vlc")
+    manager_nospawn.c.spawn(f"{sys.executable} {script.as_posix()} --name qtile")
+    manager_nospawn.c.spawn(f"{sys.executable} {script.as_posix()} --name systray")
 
     wait_for_icons()
 
@@ -128,13 +107,13 @@ def test_systray_icons(manager_nospawn, minimal_conf_noscreen, backend_name):
     assert manager_nospawn.c.widget["systray"].info()["widget"]["length"] > 0
 
     # Check positioning of icon
-    _, x = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].x")
-    _, y = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].y")
+    x = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].x")
+    y = manager_nospawn.c.widget["systray"].eval("self.tray_icons[0].y")
 
     # Positions are relative to bar
     assert (int(x), int(y)) == (3, 10)
 
     # Icons should be in alphabetical order
-    _, order = manager_nospawn.c.widget["systray"].eval("[i.name for i in self.tray_icons]")
+    order = manager_nospawn.c.widget["systray"].eval("[i.name for i in self.tray_icons]")
 
-    assert order == "['vlc', 'volumeicon']"
+    assert order == "['qtile', 'systray']"

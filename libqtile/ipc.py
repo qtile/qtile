@@ -1,23 +1,3 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 """
 A simple IPC mechanism for communicating between two local processes. We
 use marshal to serialize data - this means that both client and server must
@@ -36,6 +16,7 @@ import socket
 import struct
 from typing import Any
 
+from libqtile import hook
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
 
@@ -207,6 +188,11 @@ class Server:
         self.handler = handler
         self.server = None  # type: asyncio.AbstractServer | None
 
+        # Use a flag to indicate if session is locked
+        self.locked = asyncio.Event()
+        hook.subscribe.locked(self.lock)
+        hook.subscribe.unlocked(self.unlock)
+
         if os.path.exists(socket_path):
             os.unlink(socket_path)
 
@@ -214,6 +200,12 @@ class Server:
         flags = fcntl.fcntl(self.sock.fileno(), fcntl.F_GETFD)
         fcntl.fcntl(self.sock.fileno(), fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
         self.sock.bind(self.socket_path)
+
+    def lock(self):
+        self.locked.set()
+
+    def unlock(self):
+        self.locked.clear()
 
     async def _server_callback(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
@@ -232,7 +224,11 @@ class Server:
         except IPCError:
             logger.warning("Invalid data received, closing connection")
         else:
-            rep = self.handler(req)
+            # Don't handle requests when session is locked
+            if self.locked.is_set():
+                rep = (1, {"error": "Session locked."})
+            else:
+                rep = self.handler(req)
 
             result = _IPC.pack(rep, is_json=is_json)
 

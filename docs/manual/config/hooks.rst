@@ -87,3 +87,9 @@ will run them asynchronously in the event loop:
     @hook.subscribe.focus_change
     async def _():
         ...
+
+Transient hooks
+---------------
+
+Transient hooks can be created by having the hooked function return ``True``. This
+will automtically unsubscribe the hook after is has been run.

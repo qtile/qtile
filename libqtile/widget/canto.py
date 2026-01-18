@@ -1,34 +1,9 @@
-# Copyright (c) 2011 Kenji_Takahashi
-# Copyright (c) 2011 Mounier Florian
-# Copyright (c) 2012, 2014 Tycho Andersen
-# Copyright (c) 2014-2015 Sean Vig
-# Copyright (c) 2014 Adi Sieker
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-from subprocess import call
-
-from libqtile.widget import base
+from libqtile.log_utils import logger
+from libqtile.widget.generic_poll_text import GenPollCommand
 
 
-class Canto(base.ThreadPoolText):
-    """Display RSS feeds updates using the canto console reader
+class Canto(GenPollCommand):
+    """Display RSS feeds updates using the canto remote
 
     Widget requirements: canto_
 
@@ -36,31 +11,46 @@ class Canto(base.ThreadPoolText):
     """
 
     defaults = [
-        ("fetch", False, "Whether to fetch new items on update"),
-        ("feeds", [], "List of feeds to display, empty for all"),
-        ("one_format", "{name}: {number}", "One feed display format"),
-        ("all_format", "{number}", "All feeds display format"),
+        ("tags", [], "List of tags to display, empty for all"),
+        ("one_format", "{name}: {number}", "One tag display format"),
+        ("all_format", "{number}", "All tags display format"),
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        config["cmd"] = ["canto-remote", "status", "--tags"]
+        GenPollCommand.__init__(self, **config)
         self.add_defaults(Canto.defaults)
 
-    def poll(self):
-        if not self.feeds:
-            arg = "-a"
-            if self.fetch:
-                arg += "u"
-            output = self.all_format.format(number=self.call_process(["canto", arg])[:-1])
-            return output
+    def get_info(self, output):
+        output = output.splitlines()
+        if not self.tags:
+            total_items = 0
+            for line in output:
+                if "maintag:" in line:
+                    current_tag_items = line[line.index(":", line.index(":") + 1) + 2 :]
+                    total_items += int(current_tag_items)
+            return total_items
         else:
-            if self.fetch:
-                call(["canto", "-u"])
-            return "".join(
-                [
-                    self.one_format.format(
-                        name=feed, number=self.call_process(["canto", "-n", feed])[:-1]
-                    )
-                    for feed in self.feeds
-                ]
-            )
+            all_tags_output = {}
+            for line in output:
+                second_colon_index = line.index(":", line.index(":") + 1)
+                current_tag_name = line[:second_colon_index].strip()
+                if current_tag_name in self.tags:
+                    current_tag_items = line[second_colon_index + 2 :].strip()
+                    all_tags_output.update({current_tag_name: current_tag_items})
+            return all_tags_output
+
+    def parse(self, output):
+        output = self.get_info(output)
+        if not self.tags:
+            display = self.all_format.format(number=output)
+            return display
+        else:
+            if not output:
+                logger.debug("Canto remote found no tags")
+                return ""
+            display = []
+            for key in output:
+                current_tag_output = self.one_format.format(name=key, number=output[key])
+                display.append(current_tag_output)
+            return "".join(display)

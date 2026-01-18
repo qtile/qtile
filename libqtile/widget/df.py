@@ -1,28 +1,9 @@
-# Copyright (c) 2015, Roger Duran. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import os
 
 from libqtile.widget import base
 
 
-class DF(base.ThreadPoolText):
+class DF(base.InLoopPollText):
     """Disk Free Widget
 
     By default the widget only displays if the space is less than warn_space.
@@ -46,7 +27,7 @@ class DF(base.ThreadPoolText):
     measures = {"G": 1024 * 1024 * 1024, "M": 1024 * 1024, "B": 1024}
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, "", **config)
         self.add_defaults(DF.defaults)
         self.user_free = 0
         self.calc = self.measures[self.measure]
@@ -57,7 +38,7 @@ class DF(base.ThreadPoolText):
         else:
             self.layout.colour = self.foreground
 
-        base.ThreadPoolText.draw(self)
+        base.InLoopPollText.draw(self)
 
     def poll(self):
         statvfs = os.statvfs(self.partition)

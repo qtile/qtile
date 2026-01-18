@@ -1,45 +1,15 @@
-# Copyright (c) 2008-2010 Aldo Cortesi
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2011 Kenji_Takahashi
-# Copyright (c) 2011 Paul Colomiets
-# Copyright (c) 2012 roger
-# Copyright (c) 2012 Craig Barnes
-# Copyright (c) 2012-2015 Tycho Andersen
-# Copyright (c) 2013 dequis
-# Copyright (c) 2013 David R. Andersen
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014-2015 Sean Vig
-# Copyright (c) 2014 Justin Bronder
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 import asyncio
 import copy
+import inspect
 import math
 import subprocess
 from typing import TYPE_CHECKING
 
-from libqtile import bar, configurable, confreader
+from libqtile import bar, configurable, confreader, hook
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile.command.base import CommandObject, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 from libqtile.utils import ColorType, create_task
@@ -159,6 +129,13 @@ class _Widget(CommandObject, configurable.Configurable):
             self.name = config["name"]
 
         configurable.Configurable.__init__(self, **config)
+
+        # Add defaults for Mixins if inherited
+        if isinstance(self, PaddingMixin):
+            self.add_defaults(PaddingMixin.defaults)
+        if isinstance(self, MarginMixin):
+            self.add_defaults(MarginMixin.defaults)
+
         self.add_defaults(_Widget.defaults)
 
         if length in (bar.CALCULATED, bar.STRETCH):
@@ -178,7 +155,11 @@ class _Widget(CommandObject, configurable.Configurable):
     @property
     def length(self):
         if self.length_type == bar.CALCULATED:
-            return int(self.calculate_length())
+            try:
+                return int(self.calculate_length())
+            except Exception:
+                logger.exception(f"error when calculating widget {self.name} length")
+                return 0
         return self._length
 
     @length.setter
@@ -231,6 +212,8 @@ class _Widget(CommandObject, configurable.Configurable):
 
             # Add these to our list of futures so they can be cancelled.
             self._futures.extend([timer, async_timer])
+            if hasattr(self, "force_update"):
+                hook.subscribe.resume(self.force_update)
 
     async def _config_async(self):
         """
@@ -247,6 +230,7 @@ class _Widget(CommandObject, configurable.Configurable):
             future.cancel()
         if hasattr(self, "layout") and self.layout:
             self.layout.finalize()
+            self.layout = None
         self.drawer.finalize()
         self.finalized = True
 
@@ -291,15 +275,6 @@ class _Widget(CommandObject, configurable.Configurable):
     def button_release(self, x, y, button):
         pass
 
-    def get(self, q, name):
-        """
-        Utility function for quick retrieval of a widget by name.
-        """
-        w = q.widgets_map.get(name)
-        if not w:
-            raise CommandError(f"No such widget: {name}")
-        return w
-
     def _items(self, name: str) -> ItemT:
         if name == "bar":
             return True, []
@@ -312,6 +287,24 @@ class _Widget(CommandObject, configurable.Configurable):
             return self.bar
         elif name == "screen":
             return self.bar.screen
+
+    def rotate_drawer_left(self):
+        # Left bar reads bottom to top
+        self.drawer.ctx.rotate(-90 * math.pi / 180.0)
+        self.drawer.ctx.translate(-self.length, 0)
+
+    def rotate_drawer_right(self):
+        # Right bar is top to bottom
+        self.drawer.ctx.translate(self.bar.width, 0)
+        self.drawer.ctx.rotate(90 * math.pi / 180.0)
+
+    def rotate_drawer(self):
+        if self.bar.horizontal:
+            return
+        if self.bar.screen.left is self.bar:
+            self.rotate_drawer_left()
+        elif self.bar.screen.right is self.bar:
+            self.rotate_drawer_right()
 
     def draw_at_default_position(self):
         """Default position to draw the widget in horizontal and vertical bars."""
@@ -386,7 +379,7 @@ class _Widget(CommandObject, configurable.Configurable):
     def _wrapper(self, method, *method_args):
         self._remove_dead_timers()
         try:
-            if asyncio.iscoroutinefunction(method):
+            if inspect.iscoroutinefunction(method):
                 create_task(method(*method_args))
             elif asyncio.iscoroutine(method):
                 create_task(method)
@@ -424,7 +417,7 @@ class _Widget(CommandObject, configurable.Configurable):
     def add_mirror(self, widget: _Widget):
         if not self._mirrors:
             self._old_draw = self.draw
-            self.draw = self._draw_with_mirrors  # type: ignore
+            self.draw = self._draw_with_mirrors
 
         self._mirrors.add(widget)
         if not self.drawer.has_mirrors:
@@ -538,17 +531,12 @@ class _TextBox(_Widget):
     def formatted_text(self):
         return self.fmt.format(self._text)
 
-    @property
-    def actual_padding(self):
-        if self.padding is None:
-            return self.fontsize // 2
-        else:
-            return self.padding
-
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
         if self.fontsize is None:
-            self.fontsize = self.bar.height - self.bar.height / 5
+            self.fontsize = self.bar.size - self.bar.size / 5
+        if self.padding is None:
+            self.padding = self.fontsize // 2
         if self.direction not in ("default", "ttb", "btt"):
             logger.warning(
                 "Invalid value set for direction: %s. Valid values are: 'default', 'ttb', 'btt'. "
@@ -577,7 +565,7 @@ class _TextBox(_Widget):
         # only if scrolling is enabled the layout width will be overwritten
         # because the widget's width is handle by scroll.
         if not self.bar.horizontal and not self.rotate:
-            self.layout.width = self.bar.width - 2 * self.actual_padding
+            self.layout.width = self.bar.width
 
         if self.scroll:
             self.check_width()
@@ -607,71 +595,50 @@ class _TextBox(_Widget):
             self._should_scroll = False
 
     def calculate_length(self):
-        if self.text:
-            if self.bar.horizontal:
-                return min(self.layout.width, self.bar.width) + self.actual_padding * 2
-            else:
-                if self.rotate:
-                    return min(self.layout.width, self.bar.height) + self.actual_padding * 2
-                else:
-                    return self.layout.height + self.actual_padding * 2
-        else:
+        if not self.text:
             return 0
+        if not self.bar.horizontal and not self.rotate:
+            return self.layout.height + self.padding * 2
+        else:
+            return min(self.layout.width, self.bar.length) + self.padding * 2
 
     def can_draw(self):
-        can_draw = (
-            self.layout is not None and not self.layout.finalized() and self.offsetx is not None
-        )  # if the bar hasn't placed us yet
-        return can_draw
+        return self.layout is not None
+
+    def rotate_drawer(self):
+        if self.bar.horizontal or not self.rotate:
+            return
+        # Execute the base method when direction is default
+        if self.direction == "default":
+            _Widget.rotate_drawer(self)
+        # Read bottom to top always with 'btt' direction
+        elif self.direction == "btt":
+            self.rotate_drawer_left()
+        # Read top to bottom always with 'ttb' direction
+        elif self.direction == "ttb":
+            self.rotate_drawer_right()
 
     def draw(self):
         if not self.can_draw():
             return
         self.drawer.clear(self.background or self.bar.background)
-
-        # size = self.bar.height if self.bar.horizontal else self.bar.width
         self.drawer.ctx.save()
-
-        if not self.bar.horizontal and self.rotate:
-            # Left bar reads bottom to top
-            # Can be overriden to read bottom to top all the time with vertical_text_direction
-            if (
-                self.bar.screen.left is self.bar and self.direction == "default"
-            ) or self.direction == "btt":
-                self.drawer.ctx.rotate(-90 * math.pi / 180.0)
-                self.drawer.ctx.translate(-self.length, 0)
-
-            # Right bar is top to bottom
-            # Can be overriden to read top to bottom all the time with vertical_text_direction
-            elif (
-                self.bar.screen.right is self.bar and self.direction == "default"
-            ) or self.direction == "ttb":
-                self.drawer.ctx.translate(self.bar.width, 0)
-                self.drawer.ctx.rotate(90 * math.pi / 180.0)
+        self.rotate_drawer()
 
         # If we're scrolling, we clip the context to the scroll width less the padding
         # Move the text layout position (and we only see the clipped portion)
         if self._should_scroll:
-            self.drawer.ctx.rectangle(
-                self.actual_padding,
-                0,
-                self._scroll_width - 2 * self.actual_padding,
-                self.bar.size,
-            )
+            height = self.bar.size if self.bar.horizontal or self.rotate else self.length
+            self.drawer.ctx.rectangle(0, 0, self._scroll_width, height)
             self.drawer.ctx.clip()
 
-        if self.bar.horizontal:
-            size = self.bar.height
+        if not self.bar.horizontal and not self.rotate:
+            x, y = 0, self.padding
         else:
-            if self.rotate:
-                size = self.bar.width
-            else:
-                size = self.layout.height + self.actual_padding * 2
+            x = self.padding if self.length_type != bar.STATIC else 0
+            y = (self.bar.size - self.layout.height) / 2 + 1
 
-        self.layout.draw(
-            (self.actual_padding or 0) - self._scroll_offset,
-            int(size / 2.0 - self.layout.height / 2.0) + 1,
-        )
+        self.layout.draw(x - self._scroll_offset, y)
         self.drawer.ctx.restore()
 
         self.draw_at_default_position()
@@ -701,8 +668,7 @@ class _TextBox(_Widget):
         # - the final pixel is visible (scroll_clear = False)
         if (self.scroll_clear and self._scroll_offset > self.layout.width) or (
             not self.scroll_clear
-            and (self.layout.width - self._scroll_offset)
-            < (self._scroll_width - 2 * self.actual_padding)
+            and (self.layout.width - self._scroll_offset) < (self._scroll_width)
         ):
             self._is_scrolling = False
 
@@ -735,10 +701,13 @@ class _TextBox(_Widget):
         font: str | None = None,
         fontsize: int = 0,
         fontshadow: ColorType = "",
+        foreground: ColorType = "",
+        markup: bool | None = None,
     ):
         """
-        Change the font used by this widget. If font is None, the current
-        font is used.
+        Change the text layout properties and redraw the widget.
+        This method may also be used sync attributes from the current
+        widget with the text layout.
         """
         if font is not None:
             self.font = font
@@ -746,10 +715,17 @@ class _TextBox(_Widget):
             self.fontsize = fontsize
         if fontshadow != "":
             self.fontshadow = fontshadow
+        if foreground != "":
+            self.foreground = foreground
+        if markup is not None:
+            self.markup = markup
+        # Sync text layout properties
         if self.layout:
             self.layout.font_family = self.font
             self.layout.font_size = self.fontsize
             self.layout.font_shadow = self.fontshadow
+            self.layout.colour = self.foreground
+            self.layout.markup = self.markup
         self.bar.draw()
 
     @expose_command()
@@ -761,7 +737,7 @@ class _TextBox(_Widget):
     def update(self, text):
         """Update the widget text."""
         # Don't try to update text in dead layouts
-        # This is mainly required for ThreadPoolText based widgets as the
+        # This is mainly required for BackgroundPoll based widgets as the
         # polling function cannot be cancelled and so may be called after the widget
         # is finalised.
         if not self.can_draw():
@@ -786,10 +762,10 @@ class _TextBox(_Widget):
 class InLoopPollText(_TextBox):
     """A common interface for polling some 'fast' information, munging it, and
     rendering the result in a text box. You probably want to use
-    ThreadPoolText instead.
+    BackgroundPoll instead.
 
     ('fast' here means that this runs /in/ the event loop, so don't block! If
-    you want to run something nontrivial, use ThreadPoolText.)"""
+    you want to run something nontrivial, use BackgroundPoll.)"""
 
     defaults = [
         (
@@ -825,15 +801,25 @@ class InLoopPollText(_TextBox):
         text = self.poll()
         self.update(text)
 
+    @expose_command()
+    def force_update(self):
+        """Immediately poll the widget. Existing timers are unaffected."""
+        self.tick()
 
-class ThreadPoolText(_TextBox):
+
+class BackgroundPoll(_TextBox):
     """A common interface for wrapping blocking events which when triggered
     will update a textbox.
 
-    The poll method is intended to wrap a blocking function which may take
-    quite a while to return anything.  It will be executed as a future and
-    should return updated text when completed.  It may also return None to
-    disable any further updates.
+    The poll/apoll methods are intended to wrap a blocking function which may
+    take quite a while to return anything. Either method should return the
+    string to update the widget text to. It may also return None to disable
+    any further updates.
+
+    If an `async def apoll()` is defined, that will be used to do the polling.
+
+    For widgets that have not been ported to asyncio and define a `def poll()`
+    method, their poll method will still be run in a thread as it is today.
 
     param: text - Initial text to display.
     """
@@ -848,50 +834,45 @@ class ThreadPoolText(_TextBox):
 
     def __init__(self, text="N/A", **config):
         super().__init__(text, **config)
-        self.add_defaults(ThreadPoolText.defaults)
+        self.add_defaults(BackgroundPoll.defaults)
 
     def timer_setup(self):
-        def on_done(future):
-            try:
-                result = future.result()
-            except Exception:
-                result = None
-                logger.exception("poll() raised exceptions, not rescheduling")
-
-            if result is not None:
-                try:
-                    self.update(result)
-
-                    if self.update_interval is not None:
-                        self.timeout_add(self.update_interval, self.timer_setup)
-
-                except Exception:
-                    logger.exception("Failed to reschedule timer for %s.", self.name)
-            else:
-                logger.warning("%s's poll() returned None, not rescheduling", self.name)
-
-        self.future = self.qtile.run_in_executor(self.poll)
-        self.future.add_done_callback(on_done)
+        create_task(self.do_tick())
 
     def poll(self):
-        pass
+        """An optional non-async-based method for polling. Will be run as an
+        async future."""
+
+    async def apoll(self):
+        """An optional async-based method for polling."""
+
+    async def do_tick(self, requeue=True):
+        if type(self).apoll != BackgroundPoll.apoll:
+            result = await self.apoll()
+        elif type(self).poll != BackgroundPoll.poll:
+            future = self.qtile.run_in_executor(self.poll)
+            result = await future
+        else:
+            raise Exception(f"widget {self.name} has neither apoll() nor poll() overridden?")
+        if result is not None:
+            try:
+                self.update(result)
+            except Exception:
+                logger.exception("Failed to reschedule timer for %s.", self.name)
+            if requeue and self.update_interval is not None:
+                await asyncio.sleep(self.update_interval)
+                create_task(self.do_tick())
+        else:
+            logger.warning("%s's poll() returned None, not rescheduling", self.name)
 
     @expose_command()
     def force_update(self):
         """Immediately poll the widget. Existing timers are unaffected."""
-        self.update(self.poll())
-
-
-# these two classes below look SUSPICIOUSLY similar
+        create_task(self.do_tick(requeue=False))
 
 
 class PaddingMixin(configurable.Configurable):
-    """Mixin that provides padding(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.PaddingMixin.defaults)
-    """
+    """Mixin that provides padding(_x|_y|)."""
 
     defaults = [
         ("padding", 3, "Padding inside the box"),
@@ -902,14 +883,21 @@ class PaddingMixin(configurable.Configurable):
     padding_x = configurable.ExtraFallback("padding_x", "padding")
     padding_y = configurable.ExtraFallback("padding_y", "padding")
 
+    @property
+    def padding_side(self):
+        if self.bar.horizontal:
+            return self.padding_x
+        return self.padding_y
+
+    @property
+    def padding_top(self):
+        if self.bar.horizontal:
+            return self.padding_y
+        return self.padding_x
+
 
 class MarginMixin(configurable.Configurable):
-    """Mixin that provides margin(_x|_y|)
-
-    To use it, subclass and add this to __init__:
-
-        self.add_defaults(base.MarginMixin.defaults)
-    """
+    """Mixin that provides margin(_x|_y|)."""
 
     defaults = [
         ("margin", 3, "Margin inside the box"),
@@ -919,6 +907,18 @@ class MarginMixin(configurable.Configurable):
 
     margin_x = configurable.ExtraFallback("margin_x", "margin")
     margin_y = configurable.ExtraFallback("margin_y", "margin")
+
+    @property
+    def margin_side(self):
+        if self.bar.horizontal:
+            return self.margin_x
+        return self.margin_y
+
+    @property
+    def margin_top(self):
+        if self.bar.horizontal:
+            return self.margin_y
+        return self.margin_x
 
 
 class Mirror(_Widget):

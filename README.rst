@@ -25,7 +25,6 @@ Qtile is supported by a dedicated group of users. If you need any help, please
 don't hesitate to fire off an email to our mailing list or join us on IRC. You
 can also ask questions on the discussions board.
 
-:Mailing List: https://groups.google.com/group/qtile-dev
 :Q&A: https://github.com/qtile/qtile/discussions/categories/q-a
 :IRC: irc://irc.oftc.net:6667/qtile
 :Discord: https://discord.gg/ehh233wCrC (Bridged with IRC)
@@ -61,7 +60,7 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
 .. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
     :alt: PyPI
     :target: https://pypi.org/project/qtile/
-.. |ci| image:: https://github.com/qtile/qtile/workflows/ci/badge.svg?branch=master
+.. |ci| image:: https://github.com/qtile/qtile/actions/workflows/ci.yml/badge.svg?branch=master
     :alt: CI status
     :target: https://github.com/qtile/qtile/actions
 .. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
@@ -77,20 +76,38 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
     :alt: Coverage
     :target: https://coveralls.io/github/qtile/qtile
 
+Acknowledgements
+================
+
+Special thanks to the authors of `SwayWM`_, `LabWC`_, and `DWL`_, whose implementations 
+and source code served as inspiration and reference for protocol implementations and 
+architectural patterns while building the Wayland backend (`wayc`) for Qtile.
+
+.. _`SwayWM`: https://github.com/swaywm/sway/blob/master/LICENSE
+.. _`LabWC`: https://github.com/labwc/labwc/blob/master/LICENSE
+.. _`DWL`: https://codeberg.org/dwl/dwl/src/branch/main/LICENSE
 
 Maintainers
 ===========
 
-| `@tych0`_ GPG: ``3CCA B226 289D E016 0C61 BDB4 18D1 8F1B C464 DCA3``
+| `@tych0`_ GPG: ``3CCA B226 289D E016 0C61  BDB4 18D1 8F1B C464 DCA3``
+| `@elParaguayo`_ GPG: ``A6BA A1E1 7D26 64AD B97B  2C6F 58A9 AA7C 8672 7DF7``
+| `@jwijenbergh`_ GPG: ``B1C8 1CF3 063B 5836 4946  3687 4827 061B D417 C233``
+| `@richcarni`_ GPG: ``FBB5 0201 8A0E 9CCF AF00  A5F0 9317 80BE 8CA8 83B5``
+
+.. _`@tych0`: https://github.com/tych0
+.. _`@elParaguayo`: https://github.com/elparaguayo
+.. _`@jwijenbergh`: https://github.com/jwijenbergh
+.. _`@richcarni`: https://github.com/richcarni
+
+Maintainers Emeritus
+====================
+| `@cortesi`_
 | `@ramnes`_ GPG: ``99CC A84E 2C8C 74F3 2E12  AD53 8C17 0207 0803 487A``
 | `@m-col`_ GPG: ``35D9 2E7C C735 7A81 173E  A1C9 74F9 FDD2 0984 FBEC``
 | `@flacjacket`_ GPG: ``58B5 F350 8339 BFE5 CA93  AC9F 439D 9701 E7EA C588``
-| `@elParaguayo`_ GPG: ``A6BA A1E1 7D26 64AD B97B  2C6F 58A9 AA7C 8672 7DF7``
-| `@jwijenbergh`_ GPG: ``B1C8 1CF3 063B 5836 4946  3687 4827 061B D417 C233``
 
-.. _`@tych0`: https://github.com/tych0
+.. _`@cortesi`: https://github.com/cortesi
 .. _`@ramnes`: https://github.com/ramnes
 .. _`@m-col`: https://github.com/m-col
 .. _`@flacjacket`: https://github.com/flacjacket
-.. _`@elParaguayo`: https://github.com/elparaguayo
-.. _`@jwijenbergh`: https://github.com/jwijenbergh

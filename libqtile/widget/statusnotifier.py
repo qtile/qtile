@@ -1,22 +1,3 @@
-# Copyright (c) 2021 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 from typing import TYPE_CHECKING
 
 from libqtile import bar
@@ -121,22 +102,30 @@ class StatusNotifier(base._Widget):
             self.mouse_callbacks[name]()
 
     def _draw_icon(self, icon, x, y):
-        self.drawer.ctx.set_source_surface(icon, x, y)
+        # Despite scaling the icon down here for compositing, cairo keeps the higher
+        # res snapshot, which will be used when the whole buffer is scaled up later
+        scale = 1 / getattr(self.bar.window, "scale", 1)
+        self.drawer.ctx.save()
+        self.drawer.ctx.translate(x, y)
+        self.drawer.ctx.scale(scale, scale)
+        self.drawer.ctx.set_source_surface(icon, 0, 0)
         self.drawer.ctx.paint()
+        self.drawer.ctx.restore()
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        xoffset = self.padding if self.bar.horizontal else (self.bar.width - self.icon_size) // 2
-        yoffset = (self.bar.height - self.icon_size) // 2 if self.bar.horizontal else self.padding
+        xoffset = self.padding
+        yoffset = (self.bar.size - self.icon_size) // 2
 
+        # Scale icon up by output scale factor
+        scaled_icon_size = int(self.icon_size * getattr(self.bar.window, "scale", 1))
         for item in self.available_icons:
-            icon = item.get_icon(self.icon_size)
-            self._draw_icon(icon, xoffset, yoffset)
-
+            icon = item.get_icon(scaled_icon_size)
             if self.bar.horizontal:
-                xoffset += self.icon_size + self.padding
+                self._draw_icon(icon, xoffset, yoffset)
             else:
-                yoffset += self.icon_size + self.padding
+                self._draw_icon(icon, yoffset, xoffset)
+            xoffset += self.icon_size + self.padding
 
         self.draw_at_default_position()
 

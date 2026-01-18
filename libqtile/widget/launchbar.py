@@ -1,29 +1,5 @@
-# Copyright (c) 2014 Tycho Andersen
-# Copyright (c) 2014 dequis
-# Copyright (c) 2014-2015 Joseph Razik
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2015 reus
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 from __future__ import annotations
 
-import math
 import os.path
 
 import cairocffi
@@ -85,11 +61,6 @@ class LaunchBar(base._Widget):
         ("text_only", False, "Don't use any icons."),
         ("icon_size", None, "Size of icons. ``None`` to fit to bar."),
         (
-            "padding_y",
-            0,
-            "Vertical adjustment for icons (horizontal adjustment on vertical bars).",
-        ),
-        (
             "theme_path",
             None,
             "Path to icon theme to be used by pyxdg for icons. ``None`` will use default icon theme.",
@@ -97,9 +68,7 @@ class LaunchBar(base._Widget):
         ("markup", False, "Whether to allow markup in text label."),
     ]
 
-    def __init__(
-        self, _progs: list[tuple[str, str, str]] | None = None, width=bar.CALCULATED, **config
-    ):
+    def __init__(self, _progs: list[tuple[str, str, str]] | None = None, width=0, **config):
         base._Widget.__init__(self, width, **config)
         self.add_defaults(LaunchBar.defaults)
         self.surfaces: dict[str, Img | TextLayout] = {}
@@ -131,37 +100,19 @@ class LaunchBar(base._Widget):
         self.length_type = bar.STATIC
         self.length = 0
 
-    @property
-    def actual_padding(self):
-        if self.padding is None:
-            return self.fontsize // 2
-        else:
-            return self.padding
-
-    @property
-    def widget_height(self):
-        if self.bar.horizontal:
-            return self.height
-        return self.width
-
-    @property
-    def widget_width(self):
-        if self.bar.horizontal:
-            return self.width
-        return self.height
-
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)
         if self.fontsize is None:
-            self.fontsize = self.widget_height - self.widget_height / 5
+            self.fontsize = self.bar.size - self.bar.size / 5
         self.lookup_icons()
         self.setup_images()
         self.length = self.calculate_length()
 
     def setup_images(self):
         """Create image structures for each icon files."""
-        self._icon_size = self.icon_size if self.icon_size is not None else self.widget_height - 4
-        self._icon_padding = (self.widget_height - self._icon_size) // 2
+        if self.icon_size is None:
+            self.icon_size = self.bar.size - 4
+        self.icon_padding = (self.bar.size - self.icon_size) // 2
 
         for img_name, iconfile in self.icons_files.items():
             if iconfile is None or self.text_only:
@@ -182,7 +133,7 @@ class LaunchBar(base._Widget):
                     self.fontshadow,
                     markup=self.markup,
                 )
-                self.icons_widths[img_name] = textbox.width + 2 * self.actual_padding
+                self.icons_widths[img_name] = textbox.width + 2 * self.padding
                 self.surfaces[img_name] = textbox
                 continue
             else:
@@ -197,7 +148,7 @@ class LaunchBar(base._Widget):
             input_width = img.width
             input_height = img.height
 
-            sp = input_height / (self._icon_size)
+            sp = input_height / (self.icon_size)
             width = int(input_width / sp)
 
             imgpat = cairocffi.SurfacePattern(img.surface)
@@ -250,11 +201,10 @@ class LaunchBar(base._Widget):
         """Determine which icon is clicked according to its position."""
         if self.bar.horizontal:
             pos = x
+        elif self.bar.screen.left is self.bar:
+            pos = self.length - y
         else:
-            if self.bar.screen.left is self.bar:
-                pos = self.widget_width - y
-            else:
-                pos = y
+            pos = y
         for i in self.progs:
             if pos < (
                 self.icons_offsets[i]
@@ -282,19 +232,7 @@ class LaunchBar(base._Widget):
 
         offset = 0
         self.drawer.ctx.save()
-
-        if not self.bar.horizontal:
-            # Left bar reads bottom to top
-            # Can be overriden to read bottom to top all the time with vertical_text_direction
-            if self.bar.screen.left is self.bar:
-                self.drawer.ctx.rotate(-90 * math.pi / 180.0)
-                self.drawer.ctx.translate(-self.length, 0)
-
-            # Right bar is top to bottom
-            # Can be overriden to read top to bottom all the time with vertical_text_direction
-            else:
-                self.drawer.ctx.translate(self.bar.width, 0)
-                self.drawer.ctx.rotate(90 * math.pi / 180.0)
+        self.rotate_drawer()
 
         for i in sorted(self.progs.keys()):
             self.drawer.ctx.save()
@@ -305,14 +243,11 @@ class LaunchBar(base._Widget):
             if isinstance(self.surfaces[name], TextLayout):
                 # display the name if no icon was found and no default icon
                 textbox = self.surfaces[name]
-                textbox.draw(
-                    self.padding + self.actual_padding,
-                    int((self.widget_height - textbox.height) / 2.0) + 1,
-                )
+                textbox.draw(self.padding, int((self.bar.size - textbox.height) / 2) + 1)
             else:
                 # display an icon
                 # Translate to vertically centre the icon
-                self.drawer.ctx.translate(0, self._icon_padding + self.padding_y)
+                self.drawer.ctx.translate(0, self.icon_padding)
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
 
@@ -321,7 +256,6 @@ class LaunchBar(base._Widget):
             offset += icon_width + self.padding
 
         self.drawer.ctx.restore()
-
         self.draw_at_default_position()
 
     def calculate_length(self):

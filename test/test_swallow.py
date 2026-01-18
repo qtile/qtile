@@ -1,22 +1,3 @@
-# Copyright (c) 2021 Jeroen Wijenbergh
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import pytest
 
 import libqtile
@@ -63,18 +44,11 @@ class SwallowConfig(Config):
 # It also looks up the keysym and mask to pass to it
 def send_process_key_event(manager, key):
     keysym, mask = Core.lookup_key(None, key)
-    output = manager.c.eval(f"self.process_key_event({keysym}, {mask})[1]")
-    # Assert if eval successful
-    assert output[0]
-    # Convert the string to a bool
-    return output[1] == "True"
+    return manager.c.eval(f"self.process_key_event({keysym}, {mask})[1]") == "True"
 
 
 def get_test_counter(manager):
-    output = manager.c.eval("self.test_data")
-    # Assert if eval successful
-    assert output[0]
-    return int(output[1])
+    return int(manager.c.eval("self.test_data"))
 
 
 @pytest.mark.parametrize("manager", [SwallowConfig], indirect=True)

@@ -1,22 +1,3 @@
-# Copyright (c) 2021 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import pickle
 import shutil
 import textwrap
@@ -119,7 +100,7 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
     assert manager.restart_calls.value == 1
 
     # Get the path to the state file
-    _, state_file = manager.c.eval("self.lifecycle.state_file")
+    state_file = manager.c.eval("self.lifecycle.state_file")
     assert state_file
 
     # We need a copy of this as the next file will probably overwrite it
@@ -161,7 +142,7 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
         # As before, inject code, restart and get state file
         restarted_manager.c.eval(inject)
         restarted_manager.c.restart()
-        _, restarted_state = restarted_manager.c.eval("self.lifecycle.state_file")
+        restarted_state = restarted_manager.c.eval("self.lifecycle.state_file")
         assert restarted_state
         restarted_manager.c.eval("self._do_stop()")
 

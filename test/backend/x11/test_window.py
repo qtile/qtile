@@ -20,6 +20,7 @@ from test.helpers import (
     WIDTH,
     BareConfig,
     assert_window_died,
+    window_by_name,
 )
 from test.test_images2 import should_skip
 from test.test_manager import ManagerConfig
@@ -856,9 +857,6 @@ def test_window_stacking_order(xmanager):
     """Test basic window stacking controls."""
     conn = xcbq.Connection(xmanager.display)
 
-    def _wnd(name):
-        return xmanager.c.window[{w["name"]: w["id"] for w in xmanager.c.windows()}[name]]
-
     def _clients():
         root = conn.default_screen.root.wid
         q = conn.conn.core.QueryTree(root).reply()
@@ -880,11 +878,11 @@ def test_window_stacking_order(xmanager):
     assert _clients() == ["one", "two", "three", "four", "five"]
 
     # Moving above/below moves above/below next client in the layer
-    _wnd("one").move_up()
+    window_by_name(xmanager.c, "one").move_up()
     assert _clients() == ["two", "one", "three", "four", "five"]
-    _wnd("four").move_up()
+    window_by_name(xmanager.c, "four").move_up()
     assert _clients() == ["two", "one", "three", "five", "four"]
-    _wnd("one").move_down()
+    window_by_name(xmanager.c, "one").move_down()
     assert _clients() == ["one", "two", "three", "five", "four"]
 
     # Keeping above/below moves client to ABOVE/BELOW layer
@@ -892,82 +890,82 @@ def test_window_stacking_order(xmanager):
     # When moving to BELOW, client will be placed at bottom of layer
 
     # BELOW: None, ABOVE: two
-    _wnd("two").keep_above()
+    window_by_name(xmanager.c, "two").keep_above()
     assert _clients() == ["one", "three", "five", "four", "two"]
-    _wnd("five").move_up()
+    window_by_name(xmanager.c, "five").move_up()
     assert _clients() == ["one", "three", "four", "five", "two"]
 
     # BELOW: three, ABOVE: two
-    _wnd("three").keep_below()
+    window_by_name(xmanager.c, "three").keep_below()
     assert _clients() == ["three", "one", "four", "five", "two"]
-    _wnd("four").move_down()
+    window_by_name(xmanager.c, "four").move_down()
     assert _clients() == ["three", "four", "one", "five", "two"]
 
     # BELOW: four, three, ABOVE: two
-    _wnd("four").keep_below()
+    window_by_name(xmanager.c, "four").keep_below()
     assert _clients() == ["four", "three", "one", "five", "two"]
 
     # BELOW: four, three, ABOVE: two, one
-    _wnd("one").keep_above()
+    window_by_name(xmanager.c, "one").keep_above()
     assert _clients() == ["four", "three", "five", "two", "one"]
-    _wnd("five").move_up()
+    window_by_name(xmanager.c, "five").move_up()
     assert _clients() == ["four", "three", "five", "two", "one"]
-    _wnd("five").move_down()
+    window_by_name(xmanager.c, "five").move_down()
     assert _clients() == ["four", "three", "five", "two", "one"]
 
     # BELOW: two, four, three, ABOVE: one
-    _wnd("two").keep_below()
+    window_by_name(xmanager.c, "two").keep_below()
     assert _clients() == ["two", "four", "three", "five", "one"]
 
     # BELOW: two, three, ABOVE: one, four
-    _wnd("four").keep_above()
+    window_by_name(xmanager.c, "four").keep_above()
     assert _clients() == ["two", "three", "five", "one", "four"]
 
     # BELOW: two, three, ABOVE: one
-    _wnd("four").keep_above()
+    window_by_name(xmanager.c, "four").keep_above()
     assert _clients() == ["two", "three", "five", "four", "one"]
-    _wnd("five").move_up()
+    window_by_name(xmanager.c, "five").move_up()
     assert _clients() == ["two", "three", "four", "five", "one"]
 
     # BELOW: two, three, ABOVE: None
-    _wnd("one").keep_above()
+    window_by_name(xmanager.c, "one").keep_above()
     assert _clients() == ["two", "three", "four", "five", "one"]
 
     # BELOW: two, ABOVE: None
-    _wnd("three").keep_below()
+    window_by_name(xmanager.c, "three").keep_below()
     assert _clients() == ["two", "three", "four", "five", "one"]
-    _wnd("one").move_down()
+    window_by_name(xmanager.c, "one").move_down()
     assert _clients() == ["two", "three", "four", "one", "five"]
 
     # BELOW: None ABOVE: None
-    _wnd("two").keep_below()
+    window_by_name(xmanager.c, "two").keep_below()
     assert _clients() == ["two", "three", "four", "one", "five"]
 
     # BELOW: three, ABOVE: None
-    _wnd("three").keep_below()
+    window_by_name(xmanager.c, "three").keep_below()
     assert _clients() == ["three", "two", "four", "one", "five"]
-    _wnd("two").move_down()
+    window_by_name(xmanager.c, "two").move_down()
     assert _clients() == ["three", "two", "four", "one", "five"]
-    _wnd("one").move_down()
+    window_by_name(xmanager.c, "one").move_down()
     assert _clients() == ["three", "two", "one", "four", "five"]
 
-    _wnd("two").move_to_top()
+    window_by_name(xmanager.c, "two").move_to_top()
     assert _clients() == ["three", "one", "four", "five", "two"]
 
     # three is kept_below so moving to bottom is still above that
-    _wnd("five").move_to_bottom()
+    window_by_name(xmanager.c, "five").move_to_bottom()
     assert _clients() == ["three", "five", "one", "four", "two"]
 
     # three is the only window kept_below so this will have no effect
-    _wnd("three").move_to_top()
+    window_by_name(xmanager.c, "three").move_to_top()
     assert _clients() == ["three", "five", "one", "four", "two"]
 
     # Keep three above everything else
-    _wnd("three").keep_above()
+    window_by_name(xmanager.c, "three").keep_above()
     assert _clients() == ["five", "one", "four", "two", "three"]
 
     # This should have no effect as it's the only window kept_above
-    _wnd("three").move_to_bottom()
+    window_by_name(xmanager.c, "three").move_to_bottom()
     assert _clients() == ["five", "one", "four", "two", "three"]
 
 
@@ -975,9 +973,6 @@ def test_window_stacking_order(xmanager):
 def test_floats_kept_above(xmanager):
     """Test config option to pin floats to a higher level."""
     conn = xcbq.Connection(xmanager.display)
-
-    def _wnd(name):
-        return xmanager.c.window[{w["name"]: w["id"] for w in xmanager.c.windows()}[name]]
 
     def _clients():
         root = conn.default_screen.root.wid
@@ -1003,9 +998,6 @@ def test_fullscreen_on_top(xmanager):
     """Test fullscreen, focused windows are on top."""
     conn = xcbq.Connection(xmanager.display)
 
-    def _wnd(name):
-        return xmanager.c.window[{w["name"]: w["id"] for w in xmanager.c.windows()}[name]]
-
     def _clients():
         root = conn.default_screen.root.wid
         q = conn.conn.core.QueryTree(root).reply()
@@ -1021,17 +1013,17 @@ def test_fullscreen_on_top(xmanager):
     assert _clients() == ["two", "one"]
 
     # A fullscreen, focused window should display above windows that are "kept above"
-    _wnd("two").enable_fullscreen()
-    _wnd("two").focus()
+    window_by_name(xmanager.c, "two").enable_fullscreen()
+    window_by_name(xmanager.c, "two").focus()
     assert _clients() == ["one", "two"]
 
     # Focusing the other window should cause the fullscreen window to drop from the highest layer
-    _wnd("one").focus()
+    window_by_name(xmanager.c, "one").focus()
     assert _clients() == ["two", "one"]
 
     # Disabling fullscreen will put the window below the "kept above" window, even if it has focus
-    _wnd("two").focus()
-    _wnd("two").toggle_fullscreen()
+    window_by_name(xmanager.c, "two").focus()
+    window_by_name(xmanager.c, "two").toggle_fullscreen()
     assert _clients() == ["two", "one"]
 
 
@@ -1046,9 +1038,6 @@ class UnpinFloatsConfig(ManagerConfig):
 def test_move_float_above_tiled(xmanager):
     conn = xcbq.Connection(xmanager.display)
 
-    def _wnd(name):
-        return xmanager.c.window[{w["name"]: w["id"] for w in xmanager.c.windows()}[name]]
-
     def _clients():
         root = conn.default_screen.root.wid
         q = conn.conn.core.QueryTree(root).reply()
@@ -1062,8 +1051,30 @@ def test_move_float_above_tiled(xmanager):
     xmanager.test_window("three")
     assert _clients() == ["one", "two", "three"]
 
-    _wnd("two").toggle_floating()
+    window_by_name(xmanager.c, "two").toggle_floating()
     assert _clients() == ["one", "three", "two"]
+
+
+@manager_config
+def test_floats_kept_above_cleared_on_toggle(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+
+    def has_state_above(wid):
+        r = conn.conn.core.GetProperty(
+            False, wid, conn.atoms["_NET_WM_STATE"], conn.atoms["ATOM"], 0, (2**32) - 1
+        ).reply()
+        return conn.atoms["_NET_WM_STATE_ABOVE"] in r.value.to_atoms()
+
+    xmanager.test_window("one")
+    wid = xmanager.c.window.info()["id"]
+
+    assert not has_state_above(wid)
+
+    window_by_name(xmanager.c, "one").toggle_floating()
+    assert has_state_above(wid)
+
+    window_by_name(xmanager.c, "one").toggle_floating()
+    assert not has_state_above(wid)
 
 
 def test_multiple_wm_types(xmanager):

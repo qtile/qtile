@@ -2,9 +2,8 @@
 requires = [
     "cffi>=1.1.0",
     "cairocffi[xcb]>=1.6.0",
-    "setuptools>=60",
+    "setuptools>=61",
     "setuptools-scm>=7.0",
-    "wheel",
 ]
 backend-path=["."]
 build-backend = "builder"
@@ -12,7 +11,13 @@ build-backend = "builder"
 [project]
 name = "qtile"
 description = "A pure-Python tiling window manager."
-dynamic = ["version", "readme", "dependencies", "optional-dependencies"]
+requires-python = ">=3.12"
+dynamic = ["version", "readme"]
+dependencies = [
+    "cairocffi >= 1.7.0",
+    "cffi >= 1.1.0",
+    "xcffib >= 1.4.0",
+]
 license = "MIT"
 license-files = [ "LICENSE" ]
 classifiers = [
@@ -20,8 +25,6 @@ classifiers = [
     "Operating System :: POSIX :: BSD :: FreeBSD",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -39,8 +42,59 @@ classifiers = [
 [project.scripts]
 qtile = "libqtile.scripts.main:main"
 
+[project.optional-dependencies]
+dev = [
+    "coverage",
+    "pytest-cov",
+    "pytest-asyncio>=1.1.0",
+    "pytest-httpbin",
+    "pre-commit",
+    "PyGObject",
+    "pycairo >= 1.25.1",
+    "isort",
+    "pytest >= 6.2.1",
+    "mypy",
+    "anyio",
+    "check-manifest",
+    "twine",
+    "build",
+]
+optional_core = [
+    "dbus-fast",
+    "libcst >= 1.0.0",
+    "setproctitle",
+    "prompt_toolkit",
+]
+widgets = [
+    "imaplib2",
+    "keyring",
+    "mailbox",
+    "psutil",
+    "pulsectl",
+    "pulsectl_asyncio",
+    "python-mpd2",
+    "pytz",
+    "pyxdg",
+    "xmltodict",
+    "aiohttp",
+]
+docs = [
+    "funcparserlib==1.0.0a0",
+    "numpydoc",
+    "libcst>=1.0.0",
+    "readthedocs-sphinx-ext",
+    "setuptools-scm>=7.0",
+    "sphinx_rtd_theme",
+]
+
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 include = ["libqtile*"]
+
+[tool.setuptools.package-data]
+"libqtile.backend.wayland" = ["*.so"]
 
 [tool.setuptools_scm]
 

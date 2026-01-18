@@ -1,31 +1,3 @@
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2011 Anshuman Bhaduri
-# Copyright (c) 2012-2014 Tycho Andersen
-# Copyright (c) 2013 xarvh
-# Copyright (c) 2013 Craig Barnes
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Adi Sieker
-# Copyright (c) 2014 Sebastien Blot
-# Copyright (c) 2020 Mikel Ward
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import logging
 from pathlib import Path
 
@@ -428,7 +400,10 @@ def test_spawn_list(manager):
 
 
 @manager_config
-def test_spawn_in_group(manager):
+def test_spawn_in_group(manager, backend_name):
+    if backend_name == "wayland":
+        pytest.skip("TODO: X11 only for now.")
+
     @Retry(ignore_exceptions=(AssertionError,))
     def wait_for_window(empty=False):
         assert (len(manager.c.windows()) > 0) is not empty
@@ -574,14 +549,12 @@ def test_nextprevgroup_reload(manager_nospawn):
     manager_nospawn.c.reload_config()
     # Check that group has become unmanaged
     manager_nospawn.c.eval("self.new_group = self.current_group")
-    assert "True" == manager_nospawn.c.eval("self.old_group != self.new_group")[1]
+    assert manager_nospawn.c.eval("self.old_group != self.new_group") == "True"
     # Unmanaged group should not change the group in the screen
-    success, message = manager_nospawn.c.eval("self.old_group.screen.next_group()")
-    assert "True" == manager_nospawn.c.eval("self.new_group == self.current_group")[1]
-    assert success, message
-    success, message = manager_nospawn.c.eval("self.old_group.screen.prev_group()")
-    assert "True" == manager_nospawn.c.eval("self.new_group == self.current_group")[1]
-    assert success, message
+    manager_nospawn.c.eval("self.old_group.screen.next_group()")
+    assert manager_nospawn.c.eval("self.new_group == self.current_group") == "True"
+    manager_nospawn.c.eval("self.old_group.screen.prev_group()")
+    assert manager_nospawn.c.eval("self.new_group == self.current_group") == "True"
 
 
 @manager_config
@@ -1110,24 +1083,36 @@ def test_labelgroup(manager):
 
 
 @manager_config
-def test_change_loglevel(manager):
+def test_change_loglevel(manager, backend_name):
     assert manager.c.loglevel() == logging.INFO
     assert manager.c.loglevelname() == "INFO"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_INFO == lib.wlr_log_get_verbosity()") == "True"
     manager.c.debug()
     assert manager.c.loglevel() == logging.DEBUG
     assert manager.c.loglevelname() == "DEBUG"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_DEBUG == lib.wlr_log_get_verbosity()") == "True"
     manager.c.info()
     assert manager.c.loglevel() == logging.INFO
     assert manager.c.loglevelname() == "INFO"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_INFO == lib.wlr_log_get_verbosity()") == "True"
     manager.c.warning()
     assert manager.c.loglevel() == logging.WARNING
     assert manager.c.loglevelname() == "WARNING"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_ERROR == lib.wlr_log_get_verbosity()") == "True"
     manager.c.error()
     assert manager.c.loglevel() == logging.ERROR
     assert manager.c.loglevelname() == "ERROR"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_ERROR == lib.wlr_log_get_verbosity()") == "True"
     manager.c.critical()
     assert manager.c.loglevel() == logging.CRITICAL
     assert manager.c.loglevelname() == "CRITICAL"
+    if backend_name == "wayland":
+        assert manager.c.core.eval("lib.WLR_SILENT == lib.wlr_log_get_verbosity()") == "True"
 
 
 def test_switch_groups_cursor_warp(manager_nospawn):
@@ -1182,21 +1167,21 @@ def test_reload_config(manager_nospawn):
         assert "dd" in manager_nospawn.c.group.info()["windows"]
 
     # Original config
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self.keys_map)") == "1"
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == "1"
     assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
-    assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
+    assert manager_nospawn.c.widget["clock"].eval("self.background") == "None"
     screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
-    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "6")
+    assert manager_nospawn.c.eval("self.dgroups.key_binder") == "None"
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == "6"
     manager_nospawn.test_window("one")
     assert manager_nospawn.c.window.info()["floating"] is True
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
+        assert manager_nospawn.c.eval("self.core.wmname") == "LG3D"
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Spawn dropdown
     assert_dd_appeared()
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Send it to ScratchPad
@@ -1206,23 +1191,23 @@ def test_reload_config(manager_nospawn):
     manager_nospawn.c.eval("self.test_data_config_evaluations = 0")
     manager_nospawn.c.reload_config()
     # should be readed twice (check+read), but no more
-    assert manager_nospawn.c.eval("self.test_data_config_evaluations") == (True, "2")
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "2")
-    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "2")
+    assert manager_nospawn.c.eval("self.test_data_config_evaluations") == "2"
+    assert manager_nospawn.c.eval("len(self.keys_map)") == "2"
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == "2"
     assert "".join(manager_nospawn.c.get_groups().keys()) == "123456789S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 2
-    assert manager_nospawn.c.widget["currentlayout"].eval("self.background") == (True, "#ff0000")
+    assert manager_nospawn.c.widget["currentlayout"].eval("self.background") == "#ff0000"
     screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["top"][3] == 32 and not screens["gaps"]["bottom"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    _, binder = manager_nospawn.c.eval("self.dgroups.key_binder")
+    binder = manager_nospawn.c.eval("self.dgroups.key_binder")
     assert "function simple_key_binder" in binder
-    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "11")
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == "11"
     manager_nospawn.test_window("one")
     assert manager_nospawn.c.window.info()["floating"] is False
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval("self.core.wmname") == (True, "TEST")
+        assert manager_nospawn.c.eval("self.core.wmname") == "TEST"
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown2")  # Spawn second dropdown
     assert_dd_appeared()
     manager_nospawn.c.group["S"].dropdown_toggle("dropdown1")  # Send it to ScratchPad
@@ -1233,22 +1218,22 @@ def test_reload_config(manager_nospawn):
     manager_nospawn.c.eval("del self.test_data")
     manager_nospawn.c.eval("del self.test_data_config_evaluations")
     manager_nospawn.c.reload_config()
-    assert manager_nospawn.c.eval("len(self.keys_map)") == (True, "1")
-    assert manager_nospawn.c.eval("len(self._mouse_map)") == (True, "1")
+    assert manager_nospawn.c.eval("len(self.keys_map)") == "1"
+    assert manager_nospawn.c.eval("len(self._mouse_map)") == "1"
     # The last four groups persist within QtileState
     assert "".join(manager_nospawn.c.get_groups().keys()) == "12345S"
     assert len(manager_nospawn.c.group.info()["layouts"]) == 1
-    assert manager_nospawn.c.widget["clock"].eval("self.background") == (True, "None")
+    assert manager_nospawn.c.widget["clock"].eval("self.background") == "None"
     screens = manager_nospawn.c.get_screens()[0]
     assert screens["gaps"]["bottom"][3] == 24 and not screens["gaps"]["top"]
     assert len(manager_nospawn.c.internal_windows()) == 1
-    assert manager_nospawn.c.eval("self.dgroups.key_binder") == (True, "None")
-    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == (True, "6")
+    assert manager_nospawn.c.eval("self.dgroups.key_binder") == "None"
+    assert manager_nospawn.c.eval("len(self.dgroups.rules)") == "6"
     manager_nospawn.test_window("one")
     assert manager_nospawn.c.window.info()["floating"] is True
     manager_nospawn.c.window.kill()
     if manager_nospawn.backend.name == "x11":
-        assert manager_nospawn.c.eval("self.core.wmname") == (True, "LG3D")
+        assert manager_nospawn.c.eval("self.core.wmname") == "LG3D"
     assert "dd" in manager_nospawn.c.get_groups()["S"]["windows"]  # First dropdown persists
     assert "dd" in manager_nospawn.c.get_groups()["1"]["windows"]  # Second orphans to group
 
@@ -1299,7 +1284,7 @@ duplicate_widgets_config = pytest.mark.parametrize(
 @duplicate_widgets_config
 def test_widget_duplicate_names(manager):
     # Verify every widget is in widgets_map
-    _, result = manager.c.eval("len(self.widgets_map)")
+    result = manager.c.eval("len(self.widgets_map)")
     assert int(result) == len(DuplicateWidgetsConfig.screens[0].bottom.widgets)
 
     # Verify renaming in qtile.widgets_map

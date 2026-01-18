@@ -1,26 +1,7 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 import asyncio
+import copy
 import faulthandler
 import io
 import logging
@@ -32,6 +13,7 @@ import signal
 import socket
 import subprocess
 import tempfile
+import time
 from collections import defaultdict
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -40,6 +22,7 @@ from typing import TYPE_CHECKING
 import libqtile
 from libqtile import bar, hook, ipc, utils
 from libqtile.backend import base
+from libqtile.backend.base.core import Output
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject, expose_command
 from libqtile.command.client import InteractiveCommandClient
@@ -47,7 +30,7 @@ from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Mouse, Rule, Screen, ScreenRect
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.core.lifecycle import lifecycle
-from libqtile.core.loop import LoopContext, QtileEventLoopPolicy
+from libqtile.core.loop import LoopContext
 from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
@@ -58,7 +41,6 @@ from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
 from libqtile.scripts.main import VERSION
 from libqtile.utils import (
-    cancel_tasks,
     create_task,
     get_cache_dir,
     lget,
@@ -106,6 +88,7 @@ class Qtile(CommandObject):
         self.renamed_widgets: list[str]
         self.groups_map: dict[str, _Group] = {}
         self.groups: list[_Group] = []
+        self.hovered_window: base.WindowType | None = None
 
         self.keys_map: dict[tuple[int, int], Key | KeyChord] = {}
         self.chord_stack: list[KeyChord] = []
@@ -113,10 +96,21 @@ class Qtile(CommandObject):
         self.screens: list[Screen] = []
 
         libqtile.init(self)
+        libqtile.event_loop = asyncio.new_event_loop()
 
-        self._stopped_event: asyncio.Event | None = None
+        self._stopped_event: asyncio.Event = asyncio.Event()
 
         self.server = IPCCommandServer(self)
+
+        self.locked = False
+        hook.subscribe.locked(self.lock)
+        hook.subscribe.unlocked(self.unlock)
+
+    def lock(self) -> None:
+        self.locked = True
+
+    def unlock(self) -> None:
+        self.locked = False
 
     def load_config(self, initial: bool = False) -> None:
         try:
@@ -196,6 +190,13 @@ class Qtile(CommandObject):
         # user has used the "suspend" or "resume" hooks in their config.
         inhibitor.start()
 
+        if self.config.idle_inhibitors:
+            self.core.idle_inhibitor_manager.set_hooks()
+
+        self.core.idle_notifier.clear_timers()
+        if self.config.idle_timers:
+            self.core.idle_notifier.start()
+
         if initial:
             hook.fire("startup_complete")
 
@@ -212,7 +213,7 @@ class Qtile(CommandObject):
         return socket_path
 
     def loop(self) -> None:
-        asyncio.run(self.async_loop())
+        asyncio.run(self.async_loop(), loop_factory=lambda: libqtile.event_loop)
 
     async def async_loop(self) -> None:
         """Run the event loop
@@ -220,9 +221,6 @@ class Qtile(CommandObject):
         Finalizes the Qtile instance on exit.
         """
         self._eventloop = asyncio.get_running_loop()
-        # Set the event loop policy to facilitate access to main event loop
-        asyncio.set_event_loop_policy(QtileEventLoopPolicy(self))
-        self._stopped_event = asyncio.Event()
         self.core.qtile = self
         self.load_config(initial=True)
         self.core.setup_listener()
@@ -251,6 +249,8 @@ class Qtile(CommandObject):
                 ),
             ):
                 await self._stopped_event.wait()
+                if lifecycle.behavior != lifecycle.behavior.RESTART:
+                    await self.graceful_shutdown()
         finally:
             self.finalize()
             self.core.remove_listener()
@@ -259,8 +259,26 @@ class Qtile(CommandObject):
         hook.fire("shutdown")
         lifecycle.behavior = lifecycle.behavior.TERMINATE
         lifecycle.exitcode = exitcode
-        self.core.graceful_shutdown()
         self._stop()
+
+    def normal_windows(self) -> list[base.WindowType]:
+        return list(
+            filter(lambda w: isinstance(w, base.Window), self.windows_map.copy().values())
+        )
+
+    async def graceful_shutdown(self) -> None:
+        """Try to close windows gracefully before exiting"""
+        # Copy in case the dictionary changes during the loop
+        for win in self.normal_windows():
+            win.kill()
+
+        # give everyone a little time to exit and write their state. but don't
+        # sleep forever (1s).
+        end = time.time() + 1
+        while time.time() < end:
+            await asyncio.sleep(0.1)
+            if len(self.normal_windows()) == 0:
+                break
 
     @expose_command()
     def restart(self) -> None:
@@ -287,8 +305,7 @@ class Qtile(CommandObject):
 
     def _stop(self) -> None:
         logger.debug("Stopping qtile")
-        if self._stopped_event is not None:
-            self._stopped_event.set()
+        self._stopped_event.set()
 
     def dump_state(self, buf: Any) -> None:
         try:
@@ -332,7 +349,8 @@ class Qtile(CommandObject):
         """
         try:
             for widget in self.widgets_map.values():
-                widget.finalize()
+                if not widget.finalized:
+                    widget.finalize()
             self.widgets_map.clear()
 
             # For layouts we need to finalize each clone of a layout in each group
@@ -342,6 +360,7 @@ class Qtile(CommandObject):
 
             for screen in self.screens:
                 screen.finalize_gaps()
+
         except:  # noqa: E722
             logger.exception("exception during finalize")
         hook.clear()
@@ -350,7 +369,6 @@ class Qtile(CommandObject):
         self._finalize_configurables()
         remove_dbus_rules()
         inhibitor.stop()
-        cancel_tasks()
         self.core.finalize()
 
     def add_autogen_group(self, screen_idx: int) -> _Group:
@@ -377,26 +395,97 @@ class Qtile(CommandObject):
         screens = []
 
         if hasattr(self.config, "fake_screens"):
-            screen_info = [
-                ScreenRect(s.x, s.y, s.width, s.height) for s in self.config.fake_screens
+            output_info = [
+                Output(None, None, ScreenRect(s.x, s.y, s.width, s.height))
+                for s in self.config.fake_screens
             ]
             config = self.config.fake_screens
         else:
             # Alias screens with the same x and y coordinates, taking largest
-            xywh = {}  # type: dict[tuple[int, int], tuple[int, int]]
-            for info in self.core.get_screen_info():
-                pos = (info.x, info.y)
-                width, height = xywh.get(pos, (0, 0))
-                xywh[pos] = (max(width, info.width), max(height, info.height))
+            xywh: dict[tuple[int, int], tuple[int, int, str | None, str | None]] = {}
+            for info in self.core.get_output_info():
+                pos = (info.rect.x, info.rect.y)
+                width, height, serial, name = xywh.get(pos, (0, 0, info.serial, info.name))
+                # if one monitor is wider and one monitor is longer, either
+                # serial number was valid (i.e. we could choose either, since
+                # we're going to project over the whole space). just pick one.
+                xywh[pos] = (
+                    max(width, info.rect.width),
+                    max(height, info.rect.height),
+                    info.serial,
+                    info.name,
+                )
 
-            screen_info = [ScreenRect(x, y, w, h) for (x, y), (w, h) in xywh.items()]
+            output_info = [
+                Output(name, serial, ScreenRect(x, y, w, h))
+                for (x, y), (w, h, serial, name) in xywh.items()
+            ]
             config = self.config.screens
 
-        for i, info in enumerate(screen_info):
-            if i + 1 > len(config):
-                scr = Screen()
-            else:
-                scr = config[i]
+        # wayland parses edid natively, we need an extra library that may or
+        # may not be installed to do it in x11
+        have_serials_from_hardware = self.core.name == "wayland" or any(
+            i.serial is not None for i in output_info
+        )
+
+        for i, info in enumerate(output_info):
+            scr = Screen(serial=info.serial, name=info.name)
+            fresh_screen = True
+
+            # first, try to find a screen that matches this one by serial
+            # number
+            for screen in config:
+                if screen.serial is not None:
+                    if not have_serials_from_hardware:
+                        # if no hardware provided a serial and people provided
+                        # hardware, maybe the hardware didn't have one (e.g.
+                        # common in thinkpads)?
+                        logger.warning(
+                            "serial (%s) specified in config, none found from hardware.",
+                            screen.serial,
+                        )
+                    if screen.serial == info.serial:
+                        scr = screen
+                        fresh_screen = False
+                        logger.debug(
+                            f"using config serial {screen.serial} for output {info.name}"
+                        )
+                        break
+
+                if screen.name is not None:
+                    if screen.name == info.name:
+                        scr = screen
+                        fresh_screen = False
+                        logger.debug(f"using config name {screen.name} for output {info.name}")
+                        break
+
+            # if we didn't find one by serial number, take the ith screen
+            # assuming it exists, ignoring its serial number
+            if fresh_screen and i < len(config):
+                if config[i].serial is not None and config[i].serial != info.serial:
+                    logger.warning(
+                        "using config serial %s for output %s with physical serial %s",
+                        config[i].serial,
+                        info.name,
+                        info.serial,
+                    )
+                    # we need a copy here in case the ith window was a
+                    # previously used serial number
+                    scr = copy.copy(config[i])
+                elif config[i].name is not None and config[i].name != info.name:
+                    logger.warning(
+                        "using config name %s for output %s with physical name %s",
+                        config[i].name,
+                        info.name,
+                        info.name,
+                    )
+                    scr = copy.copy(config[i])
+                else:
+                    scr = config[i]
+                    logger.debug(f"using config at index {i} for output {info.name}")
+
+                scr.serial = info.serial
+                scr.name = info.name
 
             if not hasattr(self, "current_screen") or reloading:
                 self.current_screen = scr
@@ -415,7 +504,8 @@ class Qtile(CommandObject):
             # If the screen has changed position and/or size, or is a new screen then make sure that any gaps/bars
             # are reconfigured
             reconfigure_gaps = (
-                (info.x, info.y, info.width, info.height) != (scr.x, scr.y, scr.width, scr.height)
+                (info.rect.x, info.rect.y, info.rect.width, info.rect.height)
+                != (scr.x, scr.y, scr.width, scr.height)
             ) or (i + 1 > len(self.screens))
 
             if not hasattr(scr, "group"):
@@ -430,10 +520,10 @@ class Qtile(CommandObject):
             scr._configure(
                 self,
                 i,
-                info.x,
-                info.y,
-                info.width,
-                info.height,
+                info.rect.x,
+                info.rect.y,
+                info.rect.width,
+                info.rect.height,
                 grp,
                 reconfigure_gaps=reconfigure_gaps,
             )
@@ -441,9 +531,7 @@ class Qtile(CommandObject):
 
         for screen in self.screens:
             if screen not in screens:
-                for gap in screen.gaps:
-                    if isinstance(gap, bar.Bar) and gap.window:
-                        gap.finalize()
+                screen.finalize_gaps()
 
         self.screens = screens
 
@@ -748,6 +836,9 @@ class Qtile(CommandObject):
             if not win.group and self.current_screen.group:
                 self.current_screen.group.add(win)
 
+            # Check if any user-defined inhibitor rules match the window
+            win.add_config_inhibitors()
+
         hook.fire("client_managed", win)
 
     def unmanage(self, wid: int) -> None:
@@ -763,6 +854,8 @@ class Qtile(CommandObject):
                 if c.group:
                     c.group.remove(c)
             del self.windows_map[wid]
+            if isinstance(c, base.Window):
+                self.core.idle_inhibitor_manager.remove_window_inhibitor(c)
 
     def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""
@@ -830,8 +923,8 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen or self.screens[0]
 
-    def _focus_hovered_window(self) -> None:
-        window = self.core.hovered_window
+    def focus_hovered_window(self) -> None:
+        window = self.hovered_window
         if window:
             if isinstance(window, base.Window):
                 window.focus()
@@ -844,7 +937,7 @@ class Qtile(CommandObject):
 
             if isinstance(m, Click):
                 if self.config.follow_mouse_focus == "click_or_drag_only":
-                    self._focus_hovered_window()
+                    self.focus_hovered_window()
                 for i in m.commands:
                     if i.check(self):
                         status, val = self.server.call(
@@ -857,7 +950,7 @@ class Qtile(CommandObject):
                 isinstance(m, Drag) and self.current_window and not self.current_window.fullscreen
             ):
                 if self.config.follow_mouse_focus == "click_or_drag_only":
-                    self._focus_hovered_window()
+                    self.focus_hovered_window()
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs, False))
@@ -1027,30 +1120,35 @@ class Qtile(CommandObject):
     def debug(self) -> None:
         """Set log level to DEBUG"""
         logger.setLevel(logging.DEBUG)
+        self.core.update_backend_log_level()
         logger.debug("Switching to DEBUG threshold")
 
     @expose_command()
     def info(self) -> None:
         """Set log level to INFO"""
         logger.setLevel(logging.INFO)
+        self.core.update_backend_log_level()
         logger.info("Switching to INFO threshold")
 
     @expose_command()
     def warning(self) -> None:
         """Set log level to WARNING"""
         logger.setLevel(logging.WARNING)
+        self.core.update_backend_log_level()
         logger.warning("Switching to WARNING threshold")
 
     @expose_command()
     def error(self) -> None:
         """Set log level to ERROR"""
         logger.setLevel(logging.ERROR)
+        self.core.update_backend_log_level()
         logger.error("Switching to ERROR threshold")
 
     @expose_command()
     def critical(self) -> None:
         """Set log level to CRITICAL"""
         logger.setLevel(logging.CRITICAL)
+        self.core.update_backend_log_level()
         logger.critical("Switching to CRITICAL threshold")
 
     @expose_command()
@@ -1339,7 +1437,7 @@ class Qtile(CommandObject):
         # std{in,out,err} should be /dev/null
         with open("/dev/null") as null:
             file_actions: list[tuple] = [
-                (os.POSIX_SPAWN_DUP2, 0, null.fileno()),
+                (os.POSIX_SPAWN_DUP2, null.fileno(), 0),
                 (os.POSIX_SPAWN_DUP2, 1, null.fileno()),
                 (os.POSIX_SPAWN_DUP2, 2, null.fileno()),
             ]
@@ -1436,6 +1534,12 @@ class Qtile(CommandObject):
             for i in self.windows_map.values()
             if not isinstance(i, base.Internal | _Widget) and isinstance(i, CommandObject)
         ]
+
+    def lookup_client(self, wid: int) -> base.Window | None:
+        w = self.windows_map.get(wid)
+        if isinstance(w, base.Window):
+            return w
+        return None
 
     @expose_command()
     def internal_windows(self) -> list[dict[str, Any]]:

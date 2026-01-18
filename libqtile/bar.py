@@ -1,23 +1,3 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from __future__ import annotations
 
 import typing
@@ -32,7 +12,7 @@ if typing.TYPE_CHECKING:
     import asyncio
     from typing import Any
 
-    from libqtile.backend.base import Drawer, Internal, WindowType
+    from libqtile.backend.base import Drawer, Internal, Window
     from libqtile.command.base import ItemT
     from libqtile.config import Screen
     from libqtile.core.manager import Qtile
@@ -55,13 +35,9 @@ class Gap:
     """
 
     def __init__(self, size: int) -> None:
-        # 'size' corresponds to the height of a horizontal gap, or the width
-        # of a vertical gap
-        self._size = size
-        self._initial_size = size
-        # '_length' corresponds to the width of a horizontal gap, or the height
-        # of a vertical gap
-        self._length: int = 0
+        self.length: int = 0  # width of a horizontal gap or the height of a vertical gap
+        self.size: int = size  # height of a horizontal gap or the width of a vertical gap
+        self.fullsize: int = size  # sum of 'size' and margins
         self.qtile: Qtile | None = None
         self.screen: Screen | None = None
         self.x: int = 0
@@ -77,41 +53,41 @@ class Gap:
     def _configure(self, qtile: Qtile, screen: Screen, reconfigure: bool = False) -> None:
         self.qtile = qtile
         self.screen = screen
-        self._size = self._initial_size
+        self.fullsize = self.size
         # If both horizontal and vertical gaps are present, screen corners are
         # given to the horizontal ones
         if screen.top is self:
             self.x = screen.x + self.margin[3]
             self.y = screen.y + self.margin[0]
-            self._length = screen.width - self.margin[1] - self.margin[3]
-            self.width = self._length
-            self.height = self._initial_size
+            self.length = screen.width - self.margin[1] - self.margin[3]
+            self.width = self.length
+            self.height = self.size
             self.horizontal = True
-            self._size += self.margin[0] + self.margin[2]
+            self.fullsize += self.margin[0] + self.margin[2]
         elif screen.bottom is self:
             self.x = screen.x + self.margin[3]
             self.y = screen.dy + screen.dheight - self.margin[2]
-            self._length = screen.width - self.margin[1] - self.margin[3]
-            self.width = self._length
-            self.height = self._initial_size
+            self.length = screen.width - self.margin[1] - self.margin[3]
+            self.width = self.length
+            self.height = self.size
             self.horizontal = True
-            self._size += self.margin[0] + self.margin[2]
+            self.fullsize += self.margin[0] + self.margin[2]
         elif screen.left is self:
             self.x = screen.x + self.margin[3]
             self.y = screen.dy + self.margin[0]
-            self._length = screen.dheight - self.margin[0] - self.margin[2]
-            self.width = self._initial_size
-            self.height = self._length
+            self.length = screen.dheight - self.margin[0] - self.margin[2]
+            self.width = self.size
+            self.height = self.length
             self.horizontal = False
-            self._size += self.margin[1] + self.margin[3]
+            self.fullsize += self.margin[1] + self.margin[3]
         else:  # right
             self.x = screen.dx + screen.dwidth - self.margin[1]
             self.y = screen.dy + self.margin[0]
-            self._length = screen.dheight - self.margin[0] - self.margin[2]
-            self.width = self._initial_size
-            self.height = self._length
+            self.length = screen.dheight - self.margin[0] - self.margin[2]
+            self.width = self.size
+            self.height = self.length
             self.horizontal = False
-            self._size += self.margin[1] + self.margin[3]
+            self.fullsize += self.margin[1] + self.margin[3]
 
     def draw(self) -> None:
         pass
@@ -121,11 +97,6 @@ class Gap:
 
     def geometry(self) -> tuple[int, int, int, int]:
         return (self.x, self.y, self.width, self.height)
-
-    @property
-    def size(self) -> int:
-        # Enforce immutability of gap.size/bar.size
-        return self._size
 
     @property
     def position(self) -> str:
@@ -212,7 +183,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self._saved_size = 0
 
         # Previous window when the bar grabs the keyboard
-        self._saved_focus: WindowType | None = None
+        self._saved_focus: Window | None = None
 
         # Track widgets that are receiving input
         self._has_cursor: _Widget | None = None
@@ -224,12 +195,12 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # Hacky solution that shows limitations of typing Configurable. We want the
         # option to accept `int | list[int]` but the attribute to be `list[int]`.
         self.margin: list[int]
-        if isinstance(self.margin, int):  # type: ignore [unreachable]
-            self.margin = [self.margin] * 4  # type: ignore [unreachable]
+        if isinstance(self.margin, int):
+            self.margin = [self.margin] * 4
 
         self.border_width: list[int]
-        if isinstance(self.border_width, int):  # type: ignore [unreachable]
-            self.border_width = [self.border_width] * 4  # type: ignore [unreachable]
+        if isinstance(self.border_width, int):
+            self.border_width = [self.border_width] * 4
 
         self.border_color: ColorsType
 
@@ -259,8 +230,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 if self.horizontal:
                     self.x += margin[3] - self.border_width[3]
                     self.width -= margin[1] + margin[3]
-                    self._length = self.width
-                    self._size += margin[0] + margin[2]
+                    self.length = self.width
+                    self.fullsize += margin[0] + margin[2]
                     if screen.top is self:
                         self.y += margin[0] - self.border_width[0]
                     else:
@@ -269,8 +240,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 else:
                     self.y += margin[0] - self.border_width[0]
                     self.height -= margin[0] + margin[2]
-                    self._length = self.height
-                    self._size += margin[1] + margin[3]
+                    self.length = self.height
+                    self.fullsize += margin[1] + margin[3]
                     if screen.left is self:
                         self.x += margin[3] - self.border_width[3]
                     else:
@@ -363,7 +334,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         self._remove_crashed_widgets(crashed_widgets)
         self.draw()
-        self._resize(self._length, self.widgets)
+        self._resize(self.length, self.widgets)
         self._configured = True
 
     def _configure_widget(self, widget: _Widget) -> bool:
@@ -438,79 +409,135 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     def finalize(self) -> None:
         if self.future:
             self.future.cancel()
-        self.drawer.finalize()
-        del self.drawer
+        for widget in self.widgets:
+            if not widget.finalized:
+                widget.finalize()
+        if hasattr(self, "drawer"):
+            self.drawer.finalize()
+            del self.drawer
         if self.window:
             self.window.kill()
             self.window = None
-        self.widgets.clear()
 
     def _resize(self, length: int, widgets: list[_Widget]) -> None:
-        # We want consecutive stretch widgets to split one 'block' of space between them
-        stretches = []
+        """
+        Resize stretch widgets to fill bar:
+        1 block of spacers uses all available space
+        2 blocks of spacers centre text between blocks
+        3 or more blocks evenly space widgets between blocks.
+        """
+        # 1) Identify stretch group heads and their followers
+        stretches: list[_Widget] = []
         consecutive_stretches: defaultdict[_Widget, list[_Widget]] = defaultdict(list)
         prev_stretch: _Widget | None = None
-        for widget in widgets:
-            if widget.length_type == STRETCH:
-                if prev_stretch:
-                    consecutive_stretches[prev_stretch].append(widget)
+
+        for w in widgets:
+            if w.length_type == STRETCH:
+                if prev_stretch is None:
+                    stretches.append(w)  # start of a new stretch group
+                    prev_stretch = w
                 else:
-                    stretches.append(widget)
-                    prev_stretch = widget
+                    consecutive_stretches[prev_stretch].append(w)  # follower
             else:
                 prev_stretch = None
 
+        # 2) If there are stretch groups, allocate space to them
         if stretches:
-            stretchspace = length - sum(i.length for i in widgets if i.length_type != STRETCH)
-            stretchspace = max(stretchspace, 0)
-            num_stretches = len(stretches)
+            # Total space available to all stretch groups
+            fixed_total = sum(w.length for w in widgets if w.length_type != STRETCH)
+            stretchspace = max(length - fixed_total, 0)
 
-            if num_stretches == 1:
-                stretches[0].length = stretchspace
-            else:
-                block = 0
-                blocks = []
-                for i in widgets:
-                    if i.length_type != STRETCH:
-                        block += i.length
-                    elif i in stretches:  # False for consecutive_stretches
-                        blocks.append(block)
-                        block = 0
-                if block:
-                    blocks.append(block)
-                interval = length // num_stretches
-
-                for idx, i in enumerate(stretches):
-                    if idx == 0:
-                        i.length = interval - blocks[0] - blocks[1] // 2
-                    elif idx == num_stretches - 1:
-                        i.length = interval - blocks[-1] - blocks[-2] // 2
-                    else:
-                        i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
-                    stretchspace -= i.length
-
-                stretches[0].length += stretchspace // 2
-                stretches[-1].length += stretchspace - stretchspace // 2
-
-            for i, followers in consecutive_stretches.items():
-                length = i.length // (len(followers) + 1)
-                rem = i.length - length
-                i.length = length
+            def assign_group_allocation(head: _Widget, group_allocation: int) -> None:
+                """Distribute group_allocation among head + its followers evenly; head keeps any remainder."""
+                followers = consecutive_stretches.get(head, [])
+                count = 1 + len(followers)
+                each = group_allocation // count
+                leftover = group_allocation - each * count
+                head.length = each + leftover
                 for f in followers:
-                    f.length = length
-                    rem -= length
-                i.length += rem
+                    f.length = each
 
+            num_groups = len(stretches)
+            blocks: list[int] = []
+
+            if num_groups == 1:
+                # Single group gets all available space
+                assign_group_allocation(stretches[0], stretchspace)
+
+            elif num_groups == 2:
+                # Special centering: center the fixed content between groups within the bar.
+                acc = 0
+                for w in widgets:
+                    if w.length_type != STRETCH:
+                        acc += w.length
+                    elif w in stretches:  # only group heads
+                        blocks.append(acc)
+                        acc = 0
+                blocks.append(acc)
+
+                start = blocks[0] if blocks else 0
+                end = blocks[-1] if blocks else 0
+
+                # L + R = stretchspace, and start + L == R + end  =>  L = (stretchspace + end - start) // 2
+                left_alloc = (stretchspace + end - start) // 2
+                left_alloc = max(0, min(stretchspace, left_alloc))
+                right_alloc = stretchspace - left_alloc
+
+                assign_group_allocation(stretches[0], left_alloc)
+                assign_group_allocation(stretches[1], right_alloc)
+
+            else:
+                # 3+ groups: block-aware distribution
+                # Centres of blocks of non-stretch widgets are spaced evenly
+                # 1) Compute fixed-width blocks between group heads (and before first / after last)
+                acc = 0
+                for w in widgets:
+                    if w.length_type != STRETCH:
+                        acc += w.length
+                    elif w in stretches:  # count heads only, not followers
+                        blocks.append(acc)
+                        acc = 0
+                blocks.append(acc)  # trailing block after last head
+
+                # 2) Tentative sizes using full bar interval minus adjacent block penalties
+                interval = length // num_groups
+                group_sizes: list[int] = []
+                for idx in range(num_groups):
+                    if idx == 0:
+                        size = interval - blocks[0] - (blocks[1] // 2 if len(blocks) > 1 else 0)
+                    elif idx == num_groups - 1:
+                        size = interval - blocks[-1] - (blocks[-2] // 2 if len(blocks) > 1 else 0)
+                    else:
+                        # halves around the middle groups;
+                        left_half = blocks[idx] / 2 if idx < len(blocks) else 0
+                        right_half = blocks[idx + 1] / 2 if idx + 1 < len(blocks) else 0
+                        size = int(interval - left_half - right_half)
+
+                    group_sizes.append(max(0, size))
+
+                # 3) Remainder from integer math goes to first and last
+                remainder = stretchspace - sum(group_sizes)
+                if remainder:
+                    add_left = remainder // 2
+                    add_right = remainder - add_left
+                    group_sizes[0] += add_left
+                    group_sizes[-1] += add_right
+
+                # 4) Distribute each group to head + followers
+                for head, alloc in zip(stretches, group_sizes):
+                    assign_group_allocation(head, alloc)
+
+        # 3) Set offsets
         if self.horizontal:
             offset = self.border_width[3]
-            for i in widgets:
-                i.offsetx = offset
-                offset += i.length
+            for w in widgets:
+                w.offsetx = offset
+                offset += w.length
         else:
             offset = self.border_width[0]
-            for i in widgets:
-                i.offsety = offset
-                offset += i.length
+            for w in widgets:
+                w.offsety = offset
+                offset += w.length
 
     def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
         if self.horizontal:
@@ -618,7 +645,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
     def _actual_draw(self) -> None:
         self._draw_queued = False
-        self._resize(self._length, self.widgets)
+        self._resize(self.length, self.widgets)
         # We draw the border before the widgets
         if any(self.border_width):
             # The border is drawn "outside" of the bar (i.e. not in the space that the
@@ -667,7 +694,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 )
 
         for i in self.widgets:
-            i.draw()
+            try:
+                i.draw()
+            except Exception:
+                logger.exception("Widget failed to draw")
 
         # We need to check if there is any unoccupied space in the bar
         # This can happen where there are no SPACER-type widgets to fill
@@ -676,13 +706,13 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         # We do this, instead of just filling the bar completely at the start of this
         # method to avoid flickering.
 
-        # Widgets are offset by the top/left border but this is not included in self._length
+        # Widgets are offset by the top/left border but this is not included in self.length
         # so we adjust the end of the bar area for this offset
         if self.horizontal:
-            bar_end = self._length + self.border_width[3]
+            bar_end = self.length + self.border_width[3]
             widget_end = i.offsetx + i.length
         else:
-            bar_end = self._length + self.border_width[0]
+            bar_end = self.length + self.border_width[0]
             widget_end = i.offsety + i.length
 
         if widget_end < bar_end:
@@ -704,8 +734,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     @expose_command()
     def info(self) -> dict[str, Any]:
         return dict(
-            size=self._size,
-            length=self._length,
+            length=self.length,
+            size=self.size,
+            fullsize=self.fullsize,
             width=self.width,
             height=self.height,
             position=self.position,
@@ -714,26 +745,26 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         )
 
     def is_show(self) -> bool:
-        return self._size != 0
+        return self.fullsize != 0
 
     def show(self, is_show: bool = True) -> None:
         if is_show != self.is_show():
             if is_show:
-                self._size = self._saved_size
+                self.fullsize = self._saved_size
                 if self.window:
                     self.window.unhide()
             else:
-                self._saved_size = self._size
-                self._size = 0
+                self._saved_size = self.fullsize
+                self.fullsize = 0
                 if self.window:
                     self.window.hide()
             if self.screen and self.screen.group:
                 self.screen.group.layout_all()
 
     def adjust_reserved_space(self, size: int) -> None:
-        if self._size:
+        if self.fullsize:
             # is this necessary?
-            self._size = self._initial_size
+            self.fullsize = self.size
 
         for i, side in enumerate(NESW):
             if getattr(self.screen, side) is self:

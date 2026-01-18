@@ -1,20 +1,3 @@
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -192,6 +175,26 @@ class Columns(Layout):
                 "Unexpected value for `align`. Must be Columns._left or Columns._right."
             )
             self.align = Columns._right
+
+    def swap(self, c1: Window, c2: Window) -> None:
+        col_c1: tuple[_Column, int]
+        col_c2: tuple[_Column, int]
+
+        for c in self.columns:
+            for i, w in enumerate(c.clients):
+                if w is c1:
+                    col_c1 = (c, i)
+                elif w is c2:
+                    col_c2 = (c, i)
+
+        col_c1[0].clients[col_c1[1]], col_c2[0].clients[col_c2[1]] = c2, c1
+
+        height_c1 = col_c1[0].heights.pop(c1)
+        height_c2 = col_c2[0].heights.pop(c2)
+
+        col_c1[0].heights[c2], col_c2[0].heights[c1] = height_c1, height_c2
+
+        self.group.layout_all()
 
     def clone(self, group: _Group) -> Self:
         c = Layout.clone(self, group)

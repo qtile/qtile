@@ -1,9 +1,68 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    !!! Breaking changes !!!
+      - Removed the cmus and moc widgets. These were GPL licensed, and as such
+        incompatible with our MIT license. They were added to the tree by
+        mistake.
+    * features
+    * bugfixes
+
+Qtile 0.34.1, released 2025-12-14:
+    * bugfixes
+      - many wayc bugfixes
+      - a few x11 bugfixes for floating
+
+Qtile 0.34.0, released 2025-11-22:
+    !!! Breaking changes !!!
+    - The Wayland backend has been completely rewritten in C.
+      The old backend based on `pywlroots` has been removed.
+      Wayland-related dependencies have changed:
+        - Removed python dependencies: pywlroots, pywayland, python-xkbcommon
+        - Upgraded: wlroots 0.17.0 -> 0.19.0
+        - Added system dependencies: wayland-scanner, wayland-protocols
+
+      See the current Wayland backend status:
+      https://docs.qtile.org/en/stable/manual/wayland_status.html
+    - dropped support for python 3.11
+
+    * features
+      - consolidate development infrastructure on uv
+      - rename ThreadPoolText -> BackgroundPoll with a new `async def apoll()`
+        method for widgets to optionally run in the main event loop. There is
+        a migration for this people can run via `qtile migrate`, and old
+        widgets with a `def poll()` will continue use that as the preferred
+        method for polling, running in a separate thread as it always has.
+      - the GenPollUrl widget now uses the asyncio infrastrcutre of
+        BackgroundPoll above, and depends on aiohttp as a result. in-tree
+        widgets that use GenPollUrl also depend on aihottp now.
+      - Add `swap` method to Bsp layout
+      - Add `swap` method to Columns layout
+    * bugfixes
+      - fix which xdg dependency we (optionally) requre xdg -> pyxdg
+      - fix programs launched by spawn() having qtile's stdin as their own,
+        causing hangs sometimes
+      - x11: clear _NET_ACTIVE_WINDOW when no window is focused
+      - port lots of in-loop widgets to asyncio, so that they can not block
+        qtile's main loop if their polling takes a long time
+      - port lots of threaded widgets to asyncio (and aiohttp), so that they
+        do not use lots of resources or cause races in drawing when executing
+        in parallel
+      - x11: don't focus twice in focus_by_click()
+      - x11: use less memory when resolving window attributes
+      - x11: use less memory when resolving which event handler to use
+      - fix stretch widget allocation when there are multiple stretch widgets
+      - fix GroupBox in center_aligned mode
+      - drop use of asyncio.DefaultEventLoopPolicy since it has been removed
+        in python 3.14
+      - drop `qtile udev` and fix udev rules to chmod directly
+
+Qtile 0.33.0, released 2025-07-24:
     !!! breaking changes !!!
       - Remove CurrentLayoutIcon, functionality merged with CurrentLayout
     * features
       - Add support for orientation vertical to the new CurrentLayout widget
+      - Draw icon and text together with the same CurrentLayout widget
     * bugfixes
+      - rearrange default screen ordering to try and match xrandr's
 
 Qtile 0.32.0, released 2025-06-09:
     !!! breaking changes !!!

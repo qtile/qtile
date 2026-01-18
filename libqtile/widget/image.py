@@ -1,24 +1,3 @@
-# Copyright (c) 2013 dequis
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Adi Sieker
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import os
 
 from libqtile import bar
@@ -36,15 +15,12 @@ class Image(base._Widget, base.MarginMixin):
         ("scale", True, "Enable/Disable image scaling"),
         ("rotate", 0.0, "rotate the image in degrees counter-clockwise"),
         ("filename", None, "Image filename. Can contain '~'"),
+        ("margin", 0, "Margin inside the box. Defaults to 0."),
     ]
 
     def __init__(self, length=bar.CALCULATED, **config):
         base._Widget.__init__(self, length, **config)
         self.add_defaults(Image.defaults)
-        self.add_defaults(base.MarginMixin.defaults)
-
-        # make the default 0 instead
-        self._variable_defaults["margin"] = 0
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -68,12 +44,8 @@ class Image(base._Widget, base.MarginMixin):
         img.theta = self.rotate
         if not self.scale:
             return
-        if self.bar.horizontal:
-            new_height = self.bar.height - (self.margin_y * 2)
-            img.resize(height=new_height)
-        else:
-            new_width = self.bar.width - (self.margin_x * 2)
-            img.resize(width=new_width)
+        new_height = self.bar.size - (self.margin_top * 2)
+        img.resize(height=new_height)
 
     def draw(self):
         if self.img is None:
@@ -90,11 +62,8 @@ class Image(base._Widget, base.MarginMixin):
     def calculate_length(self):
         if self.img is None:
             return 0
-
-        if self.bar.horizontal:
-            return self.img.width + (self.margin_x * 2)
-        else:
-            return self.img.height + (self.margin_y * 2)
+        img_length = self.img.width if self.bar.horizontal else self.img.height
+        return img_length + (self.margin_side * 2)
 
     @expose_command()
     def update(self, filename):

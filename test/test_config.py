@@ -1,30 +1,12 @@
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Tycho Andersen
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 from pathlib import Path
 
 import pytest
 
 from libqtile import config, confreader, utils
+from libqtile.backend.base.core import Output
+from libqtile.bar import Bar
+from libqtile.config import Screen, ScreenRect
+from libqtile.widget import TextBox
 
 configs_dir = Path(__file__).resolve().parent / "configs"
 
@@ -114,3 +96,117 @@ def test_screen_underbar_methods():
     assert hash(one) == hash(one)
     assert one != two
     assert one == one
+
+
+def test_screen_serial_ordering_the_order(manager_nospawn, minimal_conf_noscreen, monkeypatch):
+    # no serial numbers in config is ordered in config order
+    minimal_conf_noscreen.screens = [Screen(), Screen()]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output(None, "a", ScreenRect(0, 0, 800, 600)),
+            Output(None, "b", ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].info()["serial"] == "a"
+    assert manager_nospawn.c.screen[1].info()["serial"] == "b"
+
+
+def make_screen(name: str | None = None, serial: str | None = None, text: str = "") -> Screen:
+    return Screen(name=name, serial=serial, top=Bar([TextBox(text)], 10))
+
+
+def test_screen_serial_ordering_one_serial(manager_nospawn, minimal_conf_noscreen, monkeypatch):
+    # one serial number is allowed, serial re-use overwrites to avoid confusion
+    minimal_conf_noscreen.screens = [Screen(), make_screen(serial="one", text="one")]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output(None, "one", ScreenRect(0, 0, 800, 600)),
+            Output(None, "a", ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "one"
+    assert manager_nospawn.c.screen[0].info()["serial"] == "one"
+    assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"
+    assert manager_nospawn.c.screen[1].info()["serial"] == "a"
+
+
+def test_screen_serial_ordering_serials_backwards(
+    manager_nospawn, minimal_conf_noscreen, monkeypatch
+):
+    # when the backend renders serial numbers reverse of config, they should be
+    # in config order
+    minimal_conf_noscreen.screens = [
+        make_screen(serial="one", text="one"),
+        make_screen(serial="two", text="two"),
+    ]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output(None, "two", ScreenRect(0, 0, 800, 600)),
+            Output(None, "one", ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].info()["serial"] == "two"
+    assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "two"
+    assert manager_nospawn.c.screen[1].info()["serial"] == "one"
+    assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"
+
+
+def test_screen_serial_ordering_one_name(manager_nospawn, minimal_conf_noscreen, monkeypatch):
+    # one output name is allowed, output name re-use overwrites to avoid confusion
+    minimal_conf_noscreen.screens = [Screen(), make_screen(name="one", text="one")]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output("one", None, ScreenRect(0, 0, 800, 600)),
+            Output("a", None, ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "one"
+    assert manager_nospawn.c.screen[0].info()["name"] == "one"
+    assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"
+    assert manager_nospawn.c.screen[1].info()["name"] == "a"
+
+
+def test_screen_name_ordering_names_backwards(
+    manager_nospawn, minimal_conf_noscreen, monkeypatch
+):
+    # when the backend renders named outputs reverse of config, they should be
+    # in config order
+    minimal_conf_noscreen.screens = [
+        make_screen(name="one", text="one"),
+        make_screen(name="two", text="two"),
+    ]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output("two", None, ScreenRect(0, 0, 800, 600)),
+            Output("one", None, ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].info()["name"] == "two"
+    assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "two"
+    assert manager_nospawn.c.screen[1].info()["name"] == "one"
+    assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"

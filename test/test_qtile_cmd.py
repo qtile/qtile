@@ -1,27 +1,8 @@
-# Copyright (c) 2020 Guangwang Huang
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import json
 import os
 import re
 import subprocess
+import sys
 
 import pytest
 
@@ -95,8 +76,8 @@ server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True
 
 
 def run_qtile_cmd(args, no_json_loads=False):
-    cmd = os.path.join(os.path.dirname(__file__), "..", "bin", "qtile")
-    argv = [cmd, "cmd-obj"]
+    cmd = os.path.join(os.path.dirname(__file__), "..", "libqtile", "scripts", "main.py")
+    argv = [sys.executable, cmd, "cmd-obj"]
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()
@@ -131,12 +112,18 @@ def test_qtile_cmd(manager):
     assert group["layouts"] == ["stack", "stack", "stack"]
     assert group["focus"] == "foo"
 
+    output_name = None
+    if manager.backend.name == "wayland":
+        output_name = "HEADLESS-1"
+
     assert run_qtile_cmd(f"-s {manager.sockfile} -o screen {0} -f info") == {
         "height": 600,
         "index": 0,
         "width": 800,
         "x": 0,
         "y": 0,
+        "serial": None,
+        "name": output_name,
     }
 
     bar = run_qtile_cmd("-s {} -o bar {} -f info".format(manager.sockfile, "bottom"))

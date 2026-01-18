@@ -1,27 +1,3 @@
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2012-2013 Craig Barnes
-# Copyright (c) 2012 roger
-# Copyright (c) 2012, 2014-2015 Tycho Andersen
-# Copyright (c) 2014 Sean Vig
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import os
 import sys
 import tempfile
@@ -61,8 +37,7 @@ class GBConfig(libqtile.confreader.Config):
                         width=libqtile.bar.STRETCH,
                         type="linefill",
                         border_width=20,
-                        margin_x=1,
-                        margin_y=1,
+                        margin=1,
                     ),
                     libqtile.widget.MemoryGraph(type="line"),
                     libqtile.widget.SwapGraph(type="box"),
@@ -494,15 +469,18 @@ def test_bar_hide_show_with_margin(manager_nospawn):
     manager_nospawn.start(config)
     manager_nospawn.test_window("w")
 
-    assert manager_nospawn.c.bar["top"].info().get("size") == 22
+    assert manager_nospawn.c.bar["top"].info().get("size") == 12
+    assert manager_nospawn.c.bar["top"].info().get("fullsize") == 22
     assert manager_nospawn.c.windows()[0]["y"] == 22
 
     manager_nospawn.c.hide_show_bar("top")
-    assert manager_nospawn.c.bar["top"].info().get("size") == 0
+    assert manager_nospawn.c.bar["top"].info().get("size") == 12
+    assert manager_nospawn.c.bar["top"].info().get("fullsize") == 0
     assert manager_nospawn.c.windows()[0]["y"] == 0
 
     manager_nospawn.c.hide_show_bar("top")
-    assert manager_nospawn.c.bar["top"].info().get("size") == 22
+    assert manager_nospawn.c.bar["top"].info().get("size") == 12
+    assert manager_nospawn.c.bar["top"].info().get("fullsize") == 22
     assert manager_nospawn.c.windows()[0]["y"] == 22
 
 
@@ -671,31 +649,26 @@ def test_bar_border_horizontal(manager_nospawn):
     assert top_info()["width"] == 780
     assert bottom_info()["width"] == 790
 
-    # Bar "height" should still be the value set in the config but "size" is
-    # adjusted for margin and border:
-    # -top bar should have size of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
-    # -bottom bar should have size of 12 + 5 + 5 = 22 (margin and border)
+    # Bar "height" should still be the value set in the config i.e. "size"
+    # but "fullsize" is adjusted for margin and border:
+    # -top bar should have fullsize of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
+    # -bottom bar should have fullsize of 12 + 5 + 5 = 22 (margin and border)
 
     assert top_info()["height"] == 12
-    assert top_info()["size"] == 32
+    assert top_info()["size"] == 12
+    assert top_info()["fullsize"] == 32
     assert bottom_info()["height"] == 12
-    assert bottom_info()["size"] == 22
+    assert bottom_info()["size"] == 12
+    assert bottom_info()["fullsize"] == 22
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
-
-    _, xoffset = manager_nospawn.c.bar["top"].eval("self.widgets[0].offsetx")
-    assert xoffset == "5"
-
-    _, yoffset = manager_nospawn.c.bar["top"].eval("self.widgets[0].offsety")
-    assert xoffset == "5"
+    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsetx") == "5"
+    assert manager_nospawn.c.bar["top"].eval("self.widgets[0].offsety") == "5"
 
     # Where there is no border, this should be 0
-    _, xoffset = manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsetx")
-    assert xoffset == "0"
-
-    _, yoffset = manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsety")
-    assert xoffset == "0"
+    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsetx") == "0"
+    assert manager_nospawn.c.bar["bottom"].eval("self.widgets[0].offsety") == "0"
 
 
 def test_bar_border_vertical(manager_nospawn):
@@ -730,31 +703,26 @@ def test_bar_border_vertical(manager_nospawn):
     assert left_info()["height"] == 580
     assert right_info()["height"] == 590
 
-    # Bar "width" should still be the value set in the config but "size" is
-    # adjusted for margin and border:
-    # -left bar should have size of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
-    # -right bar should have size of 12 + 5 + 5 = 22 (margin and border)
+    # Bar "width" should still be the value set in the config i.e. "size"
+    # but "fullsize" is adjusted for margin and border:
+    # -left bar should have fullsize of 12 + 5 + 5 + 5 + 5 = 32 (margin and border)
+    # -right bar should have fullsize of 12 + 5 + 5 = 22 (margin and border)
 
     assert left_info()["width"] == 12
-    assert left_info()["size"] == 32
+    assert left_info()["size"] == 12
+    assert left_info()["fullsize"] == 32
     assert right_info()["width"] == 12
-    assert right_info()["size"] == 22
+    assert right_info()["size"] == 12
+    assert right_info()["fullsize"] == 22
 
     # Test widget offsets
     # Where there is a border, widget should be offset by that amount
-
-    _, xoffset = manager_nospawn.c.bar["left"].eval("self.widgets[0].offsetx")
-    assert xoffset == "5"
-
-    _, yoffset = manager_nospawn.c.bar["left"].eval("self.widgets[0].offsety")
-    assert xoffset == "5"
+    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsetx") == "5"
+    assert manager_nospawn.c.bar["left"].eval("self.widgets[0].offsety") == "5"
 
     # Where there is no border, this should be 0
-    _, xoffset = manager_nospawn.c.bar["right"].eval("self.widgets[0].offsetx")
-    assert xoffset == "0"
-
-    _, yoffset = manager_nospawn.c.bar["right"].eval("self.widgets[0].offsety")
-    assert xoffset == "0"
+    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsetx") == "0"
+    assert manager_nospawn.c.bar["right"].eval("self.widgets[0].offsety") == "0"
 
 
 def test_unsupported_widget(manager_nospawn):
@@ -817,10 +785,8 @@ def test_dont_reserve_bar(no_reserve_manager, bar_x, bar_y, bar_w, bar_h):
 
     bar = manager.c.bar[manager.bar_position]
     bar_info = bar.info()
-    _, x = bar.eval("self.x")
-    _, y = bar.eval("self.y")
 
-    assert bar_x == int(x)
-    assert bar_y == int(y)
+    assert bar_x == int(bar.eval("self.x"))
+    assert bar_y == int(bar.eval("self.y"))
     assert bar_w == bar_info["width"]
     assert bar_h == bar_info["height"]
