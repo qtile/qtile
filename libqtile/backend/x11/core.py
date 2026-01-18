@@ -168,7 +168,7 @@ class Core(base.Core):
         # The last time we were handling a MotionNotify event
         self._last_motion_time = 0
 
-        self.last_focused: base.Window | None = None
+        self.last_focused: window.Window | None = None
 
         self.idle_inhibitor_manager: IdleInhibitorManager[Inhibitor] = IdleInhibitorManager(self)
         self.idle_notifier = IdleNotifier(self)
@@ -919,7 +919,7 @@ class Core(base.Core):
         """Get the keysym for a key from its name"""
         return keysyms[name.lower()]
 
-    def check_stacking(self, win: base.Window) -> None:
+    def check_stacking(self, win: window.Window) -> None:
         """Triggers restacking if a fullscreen window loses focus."""
         if win is self.last_focused:
             return
