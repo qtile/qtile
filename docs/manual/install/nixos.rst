@@ -137,6 +137,9 @@ This flake can also be tested with a vm:
 
 Gives you a script to run that runs Qemu to test your config. For this to work you have to set a user with a password.
 
+.. seealso::
+
+   For a more granular breakdown of using Qtile with flakes—especially for those new to the Nix ecosystem—refer to `Gurjaka's Qtile Flake Guide <https://gurjaka.codeberg.page/Dotfiles/wiki/qtile-flake.html>`_.
 
 To hack on Qtile with Nix, simply run `nix develop` in a checkout of the repo.
 In the development shell, there are a few useful things:
