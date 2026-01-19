@@ -2,7 +2,7 @@ import time
 from typing import Any
 from urllib.parse import urlencode
 
-from libqtile.widget.generic_poll_text import GenPollUrl
+from libqtile.widget.gen_poll_url import GenPollUrl
 
 # See documentation: https://openweathermap.org/current
 QUERY_URL = "https://api.openweathermap.org/data/2.5/weather?"

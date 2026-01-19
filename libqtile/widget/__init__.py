@@ -22,7 +22,7 @@ widgets = {
     "DF": "df",
     "DoNotDisturb": "do_not_disturb",
     "GenPollText": "generic_poll_text",
-    "GenPollUrl": "generic_poll_text",
+    "GenPollUrl": "gen_poll_url",
     "GenPollCommand": "generic_poll_text",
     "GmailChecker": "gmail_checker",
     "GroupBox": "groupbox",
