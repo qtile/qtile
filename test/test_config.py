@@ -117,7 +117,7 @@ def test_screen_serial_ordering_the_order(manager_nospawn, minimal_conf_noscreen
 
 
 def make_screen(name: str | None = None, serial: str | None = None, text: str = "") -> Screen:
-    return Screen(name=name, serial=serial, top=Bar([TextBox(text)], 10))
+    return Screen(match={"name": name, "serial": serial}, top=Bar([TextBox(text)], 10))
 
 
 def test_screen_serial_ordering_one_serial(manager_nospawn, minimal_conf_noscreen, monkeypatch):
