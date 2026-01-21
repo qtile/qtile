@@ -223,6 +223,8 @@ class Core(base.Core):
         """Assign windows to groups"""
         assert self.qtile is not None
 
+        self.wmname = getattr(self.qtile.config, "wmname", "qtile")
+
         # Ensure that properties are initialised at startup
         self.update_client_lists()
 
