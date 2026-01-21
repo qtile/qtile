@@ -210,3 +210,27 @@ def test_screen_name_ordering_names_backwards(
     assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "two"
     assert manager_nospawn.c.screen[1].info()["name"] == "one"
     assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "one"
+
+
+def test_screen_ordering_duplicate_output_names(
+    manager_nospawn, minimal_conf_noscreen, monkeypatch
+):
+    # when name and serial aren't specified in config, screens should be
+    # in config order
+    minimal_conf_noscreen.screens = [
+        make_screen(text="one"),
+        make_screen(text="two"),
+    ]
+
+    def the_order(self) -> list[Output]:
+        return [
+            Output("one", None, ScreenRect(0, 0, 800, 600)),
+            Output("one", None, ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", the_order
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+    assert manager_nospawn.c.screen[0].bar["top"].widget["textbox"].get() == "one"
+    assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "two"
