@@ -809,12 +809,8 @@ class Core(base.Core):
                 # since the window is dead.
                 pass
             # Clear these atoms as per spec
-            win.window.conn.conn.core.DeleteProperty(
-                win.wid, win.window.conn.atoms["_NET_WM_STATE"]
-            )
-            win.window.conn.conn.core.DeleteProperty(
-                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
-            )
+            self.conn.conn.core.DeleteProperty(win.wid, self.conn.atoms["_NET_WM_STATE"])
+            self.conn.conn.core.DeleteProperty(win.wid, self.conn.atoms["_NET_WM_DESKTOP"])
         self.qtile.unmanage(event.window)
         self.update_client_lists()
         if self.qtile.current_window is None:
