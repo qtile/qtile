@@ -122,9 +122,6 @@ class Qtile(CommandObject):
             logger.exception("Configuration error:")
             send_notification("Configuration error", str(e))
 
-        if hasattr(self.core, "wmname"):
-            self.core.wmname = getattr(self.config, "wmname", "qtile")  # type: ignore
-
         self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
         _Widget.global_defaults = self.config.widget_defaults
