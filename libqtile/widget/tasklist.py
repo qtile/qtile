@@ -493,9 +493,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return None
 
         # If we have a HiDPI display, we want to find icons at the scaled icon size
+        icon_size_scaled = int(self.drawer.output_scale * self.icon_size)
         icons = sorted(
             iter(window.icons.items()),
-            key=lambda x: abs(self.drawer.dpi_scale(self.icon_size) - int(x[0].split("x")[0])),
+            key=lambda x: abs(icon_size_scaled - int(x[0].split("x")[0])),
         )
         icon = icons[0]
         width, height = map(int, icon[0].split("x"))
@@ -577,7 +578,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 img = xdg_img
 
         if img is not None:
-            img.resize(height=self.icon_size)
+            img.resize(height=self.icon_size, output_scale=self.drawer.output_scale)
 
         self._icons_cache[window.wid] = img
         return img
