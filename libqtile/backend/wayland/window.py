@@ -269,8 +269,11 @@ class Base(base._Window):
     def focus(self, warp: bool = True) -> None:
         self.qtile.core.focus_window(self)
 
-        # TODO
-        # Call core.warp_pointer() previously here
+        if warp and self.qtile.config.cursor_warp:
+            self.qtile.core.warp_pointer(
+                self.x + self.width // 2,
+                self.y + self.height // 2,
+            )
 
         if self.urgent:
             self.urgent = False
