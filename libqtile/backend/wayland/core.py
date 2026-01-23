@@ -625,7 +625,7 @@ class Core(base.Core):
     def grab_button(self, mouse: config.Mouse) -> int:
         return translate_masks(mouse.modifiers)
 
-    def warp_pointer(self, x: float, y: float) -> None:
+    def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
         lib.qw_cursor_warp_cursor(self.qw_cursor, x, y)
 
