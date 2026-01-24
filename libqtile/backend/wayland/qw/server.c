@@ -947,12 +947,7 @@ struct qw_server *qw_server_create() {
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     server->xwayland->data = server;
     wlr_xwayland_set_seat(server->xwayland, server->seat);
-
-    // Debug handler for XCB events
-    extern bool qw_xwayland_event_handler(struct wlr_xwayland * wlr_xwayland,
-                                          xcb_generic_event_t * event);
     server->xwayland->user_event_handler = qw_xwayland_event_handler;
-
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
     server->xwayland_ready.notify = qw_server_handle_xwayland_ready;

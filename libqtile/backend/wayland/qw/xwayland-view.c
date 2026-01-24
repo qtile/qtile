@@ -8,11 +8,11 @@
 #include "wayland-util.h"
 #include "wlr/util/log.h"
 #include "xdg-view.h"
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <wlr/xwayland.h>
 #include <xcb/xcb_icccm.h>
+#include <xcb/xproto.h>
 
 // Change xwayland surface activate state
 static void qw_xwayland_view_activate(struct qw_xwayland_view *xwayland_view, bool activate) {
@@ -307,9 +307,9 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
     // For XWayland, we need to check the surface geometry differently
     // clang-format off
     struct wlr_box geom = {
-        .x = qw_xsurface->x, 
-        .y = qw_xsurface->y, 
-        .width = qw_xsurface->width, 
+        .x = qw_xsurface->x,
+        .y = qw_xsurface->y,
+        .width = qw_xsurface->width,
         .height = qw_xsurface->height
     };
     // clang-format on
@@ -1052,8 +1052,6 @@ void qw_server_xwayland_view_new(struct qw_server *server,
 
     xwayland_surface->data = xwayland_view;
 }
-
-#include <xcb/xproto.h>
 
 bool qw_xwayland_event_handler(struct wlr_xwayland *wlr_xwayland, xcb_generic_event_t *event) {
     uint8_t response_type = event->response_type & ~0x80;

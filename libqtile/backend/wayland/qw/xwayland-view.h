@@ -7,6 +7,7 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/xwayland.h>
 #include <wlr/xwayland/shell.h>
+#include <xcb/xcb.h>
 
 struct qw_xwayland_view {
     struct qw_view base;
@@ -49,5 +50,7 @@ void qw_server_xwayland_static_view_new(struct qw_server *server,
                                         struct wlr_xwayland_surface *xwayland_surface);
 void qw_server_xwayland_view_new(struct qw_server *server,
                                  struct wlr_xwayland_surface *xwayland_surface);
+
+bool qw_xwayland_event_handler(struct wlr_xwayland *wlr_xwayland, xcb_generic_event_t *event);
 
 #endif /* QW_XWAYLAND_VIEW */
