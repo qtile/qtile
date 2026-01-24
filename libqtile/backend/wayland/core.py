@@ -240,6 +240,8 @@ def get_wlr_log_level() -> int:
 
 class Core(base.Core):
     supports_restarting: bool = False
+    idle_inhibitor_manager: IdleInhibitorManager
+    idle_notifier: IdleNotifier
 
     def __init__(self) -> None:
         # this Internal window receives keyboard input, e.g. via the Prompt widget.
