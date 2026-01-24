@@ -740,11 +740,6 @@ static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *list
     inhibitor->wlr_inhibitor = wlr_inhibitor;
     wlr_inhibitor->data = server;
 
-    wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);
-
-    inhibitor->destroy.notify = qw_server_handle_kb_shortcuts_inhibitor_destroy;
-    wl_signal_add(&wlr_inhibitor->events.destroy, &inhibitor->destroy);
-
     struct qw_keyboard_shortcuts_inhibitor *existing, *tmp;
     wl_list_for_each_safe(existing, tmp, &server->kb_shortcuts_inhibitors, link) {
         if (existing->wlr_inhibitor->surface == wlr_inhibitor->surface &&
@@ -757,6 +752,11 @@ static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *list
             }
         }
     }
+
+    wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);
+
+    inhibitor->destroy.notify = qw_server_handle_kb_shortcuts_inhibitor_destroy;
+    wl_signal_add(&wlr_inhibitor->events.destroy, &inhibitor->destroy);
 
     // Activate the inhibitor immediately - this tells the client we're honoring it
     wlr_keyboard_shortcuts_inhibitor_v1_activate(wlr_inhibitor);

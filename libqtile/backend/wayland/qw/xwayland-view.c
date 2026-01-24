@@ -836,16 +836,8 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
             wlr_log(WLR_DEBUG, "XWayland surface %p keyboard grab reactivated",
                     (void *)xwayland_surface->surface);
 
-            if (server->add_kb_shortcuts_inhibitor_cb) {
-                bool added = server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
-                                                                   xwayland_surface->surface);
-                if (!added) {
-                    wlr_log(WLR_ERROR,
-                            "Unable to notify Python about XWayland keyboard grab reactivation.");
-                    // Rollback: deactivate the inhibitor since Python doesn't know about it
-                    inhibitor->wlr_inhibitor->active = false;
-                }
-            }
+            // Note: Do not call add_kb_shortcuts_inhibitor_cb again to avoid duplicate callbacks.
+            // The inhibitor is already known to Python from initial creation.
         }
         return;
     }
@@ -1073,7 +1065,6 @@ void qw_server_xwayland_view_new(struct qw_server *server,
 
     xwayland_surface->data = xwayland_view;
 }
-
 bool qw_xwayland_event_handler(struct wlr_xwayland *wlr_xwayland, xcb_generic_event_t *event) {
     uint8_t response_type = event->response_type & ~0x80;
 
@@ -1099,17 +1090,16 @@ bool qw_xwayland_event_handler(struct wlr_xwayland *wlr_xwayland, xcb_generic_ev
                     wlr_log(WLR_DEBUG, "XCB_FOCUS_OUT (Ungrab) for window %u - removing inhibitor",
                             ev->event);
 
+                    // Clear the reference in the view struct before calling the callback to avoid
+                    // use-after-free
+                    if (xsurface->data) {
+                        struct qw_xwayland_view *view = (struct qw_xwayland_view *)xsurface->data;
+                        view->kb_shortcuts_inhibitor = NULL;
+                    }
+
                     // Found the inhibitor for this window. Deactivate and remove it.
                     if (server->remove_kb_shortcuts_inhibitor_cb) {
                         server->remove_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor);
-                    }
-
-                    // Clear the reference in the view struct if possible
-                    if (xsurface->data) {
-                        struct qw_xwayland_view *view = (struct qw_xwayland_view *)xsurface->data;
-                        if (view->kb_shortcuts_inhibitor == inhibitor) {
-                            view->kb_shortcuts_inhibitor = NULL;
-                        }
                     }
 
                     wl_list_remove(&inhibitor->link);

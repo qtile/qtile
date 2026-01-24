@@ -71,13 +71,9 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     if (focused_surface != NULL) {
         struct qw_keyboard_shortcuts_inhibitor *inhibitor;
         wl_list_for_each(inhibitor, &server->kb_shortcuts_inhibitors, link) {
-            wlr_log(WLR_DEBUG, "Checking inhibitor: surface=%p (focused=%p), active=%d",
-                    (void *)inhibitor->wlr_inhibitor->surface, (void *)focused_surface,
-                    inhibitor->wlr_inhibitor->active);
             if (inhibitor->wlr_inhibitor->surface == focused_surface &&
                 inhibitor->wlr_inhibitor->active) {
                 // Shortcuts are inhibited - forward key directly to client
-                wlr_log(WLR_INFO, "Keyboard shortcuts inhibited - forwarding key to client");
                 wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
                 wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
                 return;
