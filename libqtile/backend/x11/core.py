@@ -876,6 +876,18 @@ class Core(base.Core):
         d.state = modmasks
         self.handle_KeyPress(d, simulated=True)
 
+    def _grab_click_on_current_window(self) -> None:
+        """Grab button events on the current window.
+
+        Called before switching screens to ensure clicks on the now-unfocused
+        window will be intercepted to refocus it.
+        """
+        win = self.qtile.current_window
+        if win:
+            # In X11 backend, current_window is always an x11 _Window
+            assert isinstance(win, window._Window)
+            win._grab_click()
+
     def focus_by_click(self, e, window=None):
         """Bring a window to the front
 
@@ -908,8 +920,7 @@ class Core(base.Core):
             # clicked on root window
             screen = qtile.find_screen(e.root_x, e.root_y)
             if screen:
-                if qtile.current_window:
-                    qtile.current_window._grab_click()
+                self._grab_click_on_current_window()
                 qtile.focus_screen(screen.index, warp=False)
 
     def flush(self):
