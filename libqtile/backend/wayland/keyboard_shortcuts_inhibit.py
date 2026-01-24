@@ -33,6 +33,9 @@ class KeyboardShortcutsInhibitor:
             return NotImplemented
         return self.handle == other.handle
 
+    def __hash__(self) -> int:
+        return hash(id(self.handle))
+
 
 class KeyboardShortcutsInhibitorManager:
     """
