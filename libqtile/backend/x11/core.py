@@ -615,12 +615,21 @@ class Core(base.Core):
             i._reset_mask()
 
     def create_internal(
-        self, x: int, y: int, width: int, height: int, desired_depth: int | None = 32
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
     ) -> base.Internal:
         assert self.qtile is not None
 
-        win = self.conn.create_window(x, y, width, height, desired_depth)
-        internal = window.Internal(win, self.qtile, desired_depth)
+        # Try to use a 32-bit depth to allow for transparent colors in
+        # backgrounds. If the Screen doesn't support 32-bit visuals, the code
+        # in create_window() -> _get_depth_and_visual() will fall back to an
+        # appropriate depth.
+        win = self.conn.create_window(x, y, width, height, desired_depth=32)
+        internal = window.Internal(win, self.qtile, desired_depth=32)
+
         internal.place(x, y, width, height, 0, None)
         self.qtile.manage(internal)
         return internal
