@@ -779,27 +779,6 @@ static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *list
     }
 }
 
-// Activate the inhibitor immediately - this tells the client we're honoring it
-wlr_keyboard_shortcuts_inhibitor_v1_activate(wlr_inhibitor);
-
-wlr_log(WLR_DEBUG, "Keyboard shortcuts inhibitor activated for surface %p",
-        (void *)wlr_inhibitor->surface);
-
-if (server->add_kb_shortcuts_inhibitor_cb) {
-    bool added =
-        server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor, wlr_inhibitor->surface);
-    if (!added) {
-        wlr_log(WLR_ERROR, "Unable to notify Python about keyboard shortcuts inhibitor.");
-        // Clean up on failure
-        wlr_keyboard_shortcuts_inhibitor_v1_deactivate(wlr_inhibitor);
-        wl_list_remove(&inhibitor->link);
-        wl_list_remove(&inhibitor->destroy.link);
-        free(inhibitor);
-        return;
-    }
-}
-}
-
 static void qw_server_handle_output_power_set_mode(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, set_output_power_mode);
     struct wlr_output_power_v1_set_mode_event *event = data;

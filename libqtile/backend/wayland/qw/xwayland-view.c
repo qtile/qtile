@@ -894,57 +894,6 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
     }
 }
 
-wlr_log(WLR_DEBUG, "XWayland surface %p requested keyboard grab",
-        (void *)xwayland_surface->surface);
-
-// Create an on-the-fly inhibitor for this XWayland surface
-struct qw_keyboard_shortcuts_inhibitor *inhibitor =
-    calloc(1, sizeof(struct qw_keyboard_shortcuts_inhibitor));
-if (!inhibitor) {
-    wlr_log(WLR_ERROR, "Failed to allocate keyboard shortcuts inhibitor for XWayland");
-    return;
-}
-
-// Allocate a fake wlr_inhibitor just for holding surface and active state.
-// NOTE: Unlike native Wayland inhibitors (managed by wlroots), this is raw memory we allocate
-// ourselves. The events.destroy signal is NOT initialized, so we cannot use a destroy listener.
-// Cleanup is handled explicitly by:
-//   - qw_xwayland_view_handle_unmap() when the view unmaps
-//   - qw_xwayland_event_handler() on XCB_FOCUS_OUT with NotifyUngrab
-//   TODO: Should we centralize this anyway?
-struct wlr_keyboard_shortcuts_inhibitor_v1 *fake_inhibitor =
-    calloc(1, sizeof(struct wlr_keyboard_shortcuts_inhibitor_v1));
-if (!fake_inhibitor) {
-    free(inhibitor);
-    wlr_log(WLR_ERROR, "Failed to allocate fake inhibitor for XWayland");
-    return;
-}
-fake_inhibitor->surface = xwayland_surface->surface;
-fake_inhibitor->active = true;
-fake_inhibitor->data = server;
-inhibitor->wlr_inhibitor = fake_inhibitor;
-
-wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);
-
-// Store reference for cleanup
-xwayland_view->kb_shortcuts_inhibitor = inhibitor;
-
-// Notify Python if callback is set
-if (server->add_kb_shortcuts_inhibitor_cb) {
-    bool added = server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
-                                                       xwayland_surface->surface);
-    if (!added) {
-        wlr_log(WLR_ERROR, "Unable to notify Python about XWayland keyboard shortcuts inhibitor.");
-        // Clean up on failure - note: XWayland fake inhibitors don't have a destroy listener
-        wl_list_remove(&inhibitor->link);
-        free(inhibitor->wlr_inhibitor);
-        free(inhibitor);
-        xwayland_view->kb_shortcuts_inhibitor = NULL;
-        return;
-    }
-}
-}
-
 static void qw_xwayland_view_handle_dissociate(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, dissociate);
@@ -1164,7 +1113,4 @@ bool qw_xwayland_event_handler(struct wlr_xwayland *wlr_xwayland, xcb_generic_ev
     }
 
     return false; // Let wlroots handle it too
-}
-
-return false; // Let wlroots handle it too
 }
