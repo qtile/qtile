@@ -540,8 +540,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         # If we're clicking on a bar that's not on the current screen, focus that screen
         if self.screen and self.screen is not self.qtile.current_screen:
-            if self.qtile.core.name == "x11" and self.qtile.current_window:
-                self.qtile.current_window._grab_click()
             index = self.qtile.screens.index(self.screen)
             self.qtile.focus_screen(index, warp=False)
 
