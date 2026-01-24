@@ -16,6 +16,7 @@ dynamic = ["version", "readme"]
 dependencies = [
     "cairocffi >= 1.7.0",
     "cffi >= 1.1.0",
+    "logger>=1.4",
     "xcffib >= 1.4.0",
 ]
 license = "MIT"

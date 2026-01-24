@@ -66,6 +66,25 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     // Get current keyboard modifiers (shift, ctrl, alt, etc.)
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
 
+    // Check if keyboard shortcuts are inhibited for the focused surface
+    struct wlr_surface *focused_surface = seat->keyboard_state.focused_surface;
+    if (focused_surface != NULL) {
+        struct qw_keyboard_shortcuts_inhibitor *inhibitor;
+        wl_list_for_each(inhibitor, &server->kb_shortcuts_inhibitors, link) {
+            wlr_log(WLR_DEBUG, "Checking inhibitor: surface=%p (focused=%p), active=%d",
+                    (void *)inhibitor->wlr_inhibitor->surface, (void *)focused_surface,
+                    inhibitor->wlr_inhibitor->active);
+            if (inhibitor->wlr_inhibitor->surface == focused_surface &&
+                inhibitor->wlr_inhibitor->active) {
+                // Shortcuts are inhibited - forward key directly to client
+                wlr_log(WLR_INFO, "Keyboard shortcuts inhibited - forwarding key to client");
+                wlr_seat_set_keyboard(seat, keyboard->wlr_keyboard);
+                wlr_seat_keyboard_notify_key(seat, event->time_msec, event->keycode, event->state);
+                return;
+            }
+        }
+    }
+
     // If key is pressed...
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
         // Track key for repeat

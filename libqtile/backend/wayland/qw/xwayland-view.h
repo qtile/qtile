@@ -16,6 +16,7 @@ struct qw_xwayland_view {
     struct wlr_box geom;
     struct wlr_xwayland_surface *xwayland_surface;
     bool initial_commit;
+    struct qw_keyboard_shortcuts_inhibitor *kb_shortcuts_inhibitor; // Tracked for cleanup
 
     // Listeners for various XWayland surface events and requests
     // Private data
@@ -39,6 +40,7 @@ struct qw_xwayland_view {
     struct wl_listener destroy;
     struct wl_listener set_geometry;
     struct wl_listener override_redirect;
+    struct wl_listener grab_focus;
 
     struct wl_listener scene_tree_destroy;
 };

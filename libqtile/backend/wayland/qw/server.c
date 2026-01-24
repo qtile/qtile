@@ -71,6 +71,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->virtual_pointer_new.link);
     wl_list_remove(&server->new_pointer_constraint.link);
     wl_list_remove(&server->new_idle_inhibitor.link);
+    wl_list_remove(&server->new_kb_shortcuts_inhibitor.link);
     wl_list_remove(&server->set_output_power_mode.link);
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
@@ -691,6 +692,73 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
     }
 }
 
+static void qw_server_handle_kb_shortcuts_inhibitor_destroy(struct wl_listener *listener,
+                                                            void *data) {
+    UNUSED(data);
+    struct qw_keyboard_shortcuts_inhibitor *inhibitor =
+        wl_container_of(listener, inhibitor, destroy);
+    struct qw_server *server = inhibitor->server;
+
+    if (inhibitor->wlr_inhibitor->active && server->remove_kb_shortcuts_inhibitor_cb) {
+        bool removed = server->remove_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor);
+        if (!removed) {
+            wlr_log(WLR_ERROR, "Unable to remove keyboard shortcuts inhibitor.");
+        }
+    }
+
+    wl_list_remove(&inhibitor->link);
+    wl_list_remove(&inhibitor->destroy.link);
+
+    free(inhibitor);
+}
+
+static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, new_kb_shortcuts_inhibitor);
+    struct wlr_keyboard_shortcuts_inhibitor_v1 *wlr_inhibitor = data;
+
+    struct qw_keyboard_shortcuts_inhibitor *inhibitor =
+        calloc(1, sizeof(struct qw_keyboard_shortcuts_inhibitor));
+    if (!inhibitor) {
+        wlr_log(WLR_ERROR, "Failed to allocate keyboard shortcuts inhibitor.");
+        return;
+    }
+
+    inhibitor->server = server;
+    inhibitor->wlr_inhibitor = wlr_inhibitor;
+
+    wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);
+
+    inhibitor->destroy.notify = qw_server_handle_kb_shortcuts_inhibitor_destroy;
+    wl_signal_add(&wlr_inhibitor->events.destroy, &inhibitor->destroy);
+
+    struct qw_keyboard_shortcuts_inhibitor *existing, *tmp;
+    wl_list_for_each_safe(existing, tmp, &server->kb_shortcuts_inhibitors, link) {
+        if (existing->wlr_inhibitor->surface == wlr_inhibitor->surface &&
+            existing->wlr_inhibitor->active) {
+            wlr_log(WLR_DEBUG, "Deactivating existing keyboard shortcuts inhibitor for surface %p",
+                    (void *)wlr_inhibitor->surface);
+            existing->wlr_inhibitor->active = false;
+            if (server->remove_kb_shortcuts_inhibitor_cb) {
+                server->remove_kb_shortcuts_inhibitor_cb(server->cb_data, existing);
+            }
+        }
+    }
+
+    // Activate the inhibitor immediately - this tells the client we're honoring it
+    wlr_keyboard_shortcuts_inhibitor_v1_activate(wlr_inhibitor);
+
+    wlr_log(WLR_DEBUG, "Keyboard shortcuts inhibitor activated for surface %p",
+            (void *)wlr_inhibitor->surface);
+
+    if (server->add_kb_shortcuts_inhibitor_cb) {
+        bool added = server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
+                                                           wlr_inhibitor->surface);
+        if (!added) {
+            wlr_log(WLR_ERROR, "Unable to notify Python about keyboard shortcuts inhibitor.");
+        }
+    }
+}
+
 static void qw_server_handle_output_power_set_mode(struct wl_listener *listener, void *data) {
     struct qw_server *server = wl_container_of(listener, server, set_output_power_mode);
     struct wlr_output_power_v1_set_mode_event *event = data;
@@ -867,9 +935,24 @@ struct qw_server *qw_server_create() {
     // Initialize idle timers list
     wl_list_init(&server->idle_timers);
 
+    // Keyboard shortcuts inhibit manager
+    server->kb_shortcuts_inhibit_manager =
+        wlr_keyboard_shortcuts_inhibit_v1_create(server->display);
+    wl_list_init(&server->kb_shortcuts_inhibitors);
+    server->new_kb_shortcuts_inhibitor.notify = qw_server_handle_new_kb_shortcuts_inhibitor;
+    wl_signal_add(&server->kb_shortcuts_inhibit_manager->events.new_inhibitor,
+                  &server->new_kb_shortcuts_inhibitor);
+
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
+    server->xwayland->data = server;
     wlr_xwayland_set_seat(server->xwayland, server->seat);
+
+    // Debug handler for XCB events
+    extern bool qw_xwayland_event_handler(struct wlr_xwayland * wlr_xwayland,
+                                          xcb_generic_event_t * event);
+    server->xwayland->user_event_handler = qw_xwayland_event_handler;
+
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
     server->xwayland_ready.notify = qw_server_handle_xwayland_ready;
