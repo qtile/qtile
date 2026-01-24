@@ -69,6 +69,8 @@ class ExistingWMException(Exception):
 
 
 class Core(base.Core):
+    idle_notifier: IdleNotifier
+
     def __init__(self, display_name: str | None = None) -> None:
         """Setup the X11 core backend
 

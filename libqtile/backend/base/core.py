@@ -14,6 +14,8 @@ if typing.TYPE_CHECKING:
 
     from libqtile import config
     from libqtile.backend.base import Internal
+    from libqtile.backend.base.idle_inhibit import IdleInhibitorManager
+    from libqtile.backend.base.idle_notify import IdleNotifier
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
@@ -30,6 +32,8 @@ class Core(CommandObject, metaclass=ABCMeta):
     painter: Any
     supports_restarting: bool = True
     qtile: Qtile
+    idle_inhibitor_manager: IdleInhibitorManager[Any]
+    idle_notifier: IdleNotifier
 
     @property
     @abstractmethod
