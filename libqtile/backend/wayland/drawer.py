@@ -18,6 +18,8 @@ class Drawer(drawer.Drawer):
     2. Then apply these operations to the windows's underlying ImageSurface.
     """
 
+    _win: Internal
+
     def __init__(self, win: Internal, width: int, height: int):
         drawer.Drawer.__init__(self, win, width, height)
 
