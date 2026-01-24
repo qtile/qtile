@@ -861,7 +861,13 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
         return;
     }
 
-    // Allocate a fake wlr_inhibitor just for holding surface and active state
+    // Allocate a fake wlr_inhibitor just for holding surface and active state.
+    // NOTE: Unlike native Wayland inhibitors (managed by wlroots), this is raw memory we allocate
+    // ourselves. The events.destroy signal is NOT initialized, so we cannot use a destroy listener.
+    // Cleanup is handled explicitly by:
+    //   - qw_xwayland_view_handle_unmap() when the view unmaps
+    //   - qw_xwayland_event_handler() on XCB_FOCUS_OUT with NotifyUngrab
+    //   TODO: Should we centralize this anyway?
     struct wlr_keyboard_shortcuts_inhibitor_v1 *fake_inhibitor =
         calloc(1, sizeof(struct wlr_keyboard_shortcuts_inhibitor_v1));
     if (!fake_inhibitor) {
