@@ -701,7 +701,15 @@ static void qw_server_handle_kb_shortcuts_inhibitor_destroy(struct wl_listener *
     UNUSED(data);
     struct qw_keyboard_shortcuts_inhibitor *inhibitor =
         wl_container_of(listener, inhibitor, destroy);
-    struct qw_server *server = (struct qw_server *)inhibitor->wlr_inhibitor->data;
+    struct qw_server *server =
+        inhibitor->wlr_inhibitor ? (struct qw_server *)inhibitor->wlr_inhibitor->data : NULL;
+    if (!server) {
+        wlr_log(WLR_ERROR, "Keyboard shortcuts inhibitor has no server reference");
+        wl_list_remove(&inhibitor->link);
+        wl_list_remove(&inhibitor->destroy.link);
+        free(inhibitor);
+        return;
+    }
 
     if (inhibitor->wlr_inhibitor->active && server->remove_kb_shortcuts_inhibitor_cb) {
         bool removed = server->remove_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor);

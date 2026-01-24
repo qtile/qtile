@@ -839,6 +839,13 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
             if (server->add_kb_shortcuts_inhibitor_cb) {
                 server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
                                                       xwayland_surface->surface);
+            if (!added) {
+                wlr_log(WLR_ERROR, "Unable to notify Python about keyboard shortcuts inhibitor.");
+                wlr_keyboard_shortcuts_inhibitor_v1_deactivate(wlr_inhibitor);
+                wl_list_remove(&inhibitor->link);
+                wl_list_remove(&inhibitor->destroy.link);
+                free(inhibitor);
+                return;
             }
         }
         return;
