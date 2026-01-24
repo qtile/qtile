@@ -649,9 +649,11 @@ static void qw_server_handle_idle_inhibitor_destroy(struct wl_listener *listener
     UNUSED(data);
     struct qw_idle_inhibitor *inhibitor = wl_container_of(listener, inhibitor, destroy);
     struct qw_server *server = (struct qw_server *)inhibitor->wlr_inhibitor->data;
-    bool removed = server->remove_idle_inhibitor_cb(server->cb_data, inhibitor);
-    if (!removed) {
-        wlr_log(WLR_ERROR, "Unable to remove idle inhibitor.");
+    if (server->remove_idle_inhibitor_cb) {
+        bool removed = server->remove_idle_inhibitor_cb(server->cb_data, inhibitor);
+        if (!removed) {
+            wlr_log(WLR_ERROR, "Unable to remove idle inhibitor.");
+        }
     }
 
     wl_list_remove(&inhibitor->link);
