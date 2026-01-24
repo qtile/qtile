@@ -689,6 +689,10 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
                                                is_layer_surface, is_session_lock_surface);
     if (!added) {
         wlr_log(WLR_ERROR, "Unable to add idle inhibitor.");
+        wl_list_remove(&inhibitor->link);
+        wl_list_remove(&inhibitor->destroy.link);
+        free(inhibitor);
+        return;
     }
 }
 
@@ -755,6 +759,12 @@ static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *list
                                                            wlr_inhibitor->surface);
         if (!added) {
             wlr_log(WLR_ERROR, "Unable to notify Python about keyboard shortcuts inhibitor.");
+            // Clean up on failure
+            wlr_keyboard_shortcuts_inhibitor_v1_deactivate(wlr_inhibitor);
+            wl_list_remove(&inhibitor->link);
+            wl_list_remove(&inhibitor->destroy.link);
+            free(inhibitor);
+            return;
         }
     }
 }
