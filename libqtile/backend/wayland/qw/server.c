@@ -648,7 +648,7 @@ void qw_server_set_inhibited(struct qw_server *server, bool inhibited) {
 static void qw_server_handle_idle_inhibitor_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_idle_inhibitor *inhibitor = wl_container_of(listener, inhibitor, destroy);
-    struct qw_server *server = inhibitor->server;
+    struct qw_server *server = (struct qw_server *)inhibitor->wlr_inhibitor->data;
     bool removed = server->remove_idle_inhibitor_cb(server->cb_data, inhibitor);
     if (!removed) {
         wlr_log(WLR_ERROR, "Unable to remove idle inhibitor.");
@@ -666,8 +666,8 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
 
     struct qw_idle_inhibitor *inhibitor = calloc(1, sizeof(struct qw_idle_inhibitor));
 
-    inhibitor->server = server;
     inhibitor->wlr_inhibitor = wlr_inhibitor;
+    wlr_inhibitor->data = server;
 
     wl_list_insert(&server->idle_inhibitors, &inhibitor->link);
 
@@ -697,7 +697,7 @@ static void qw_server_handle_kb_shortcuts_inhibitor_destroy(struct wl_listener *
     UNUSED(data);
     struct qw_keyboard_shortcuts_inhibitor *inhibitor =
         wl_container_of(listener, inhibitor, destroy);
-    struct qw_server *server = inhibitor->server;
+    struct qw_server *server = (struct qw_server *)inhibitor->wlr_inhibitor->data;
 
     if (inhibitor->wlr_inhibitor->active && server->remove_kb_shortcuts_inhibitor_cb) {
         bool removed = server->remove_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor);
@@ -723,8 +723,8 @@ static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *list
         return;
     }
 
-    inhibitor->server = server;
     inhibitor->wlr_inhibitor = wlr_inhibitor;
+    wlr_inhibitor->data = server;
 
     wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);
 

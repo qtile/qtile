@@ -855,8 +855,6 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
         return;
     }
 
-    inhibitor->server = server;
-
     // Allocate a fake wlr_inhibitor just for holding surface and active state
     struct wlr_keyboard_shortcuts_inhibitor_v1 *fake_inhibitor =
         calloc(1, sizeof(struct wlr_keyboard_shortcuts_inhibitor_v1));
@@ -867,6 +865,7 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
     }
     fake_inhibitor->surface = xwayland_surface->surface;
     fake_inhibitor->active = true;
+    fake_inhibitor->data = server;
     inhibitor->wlr_inhibitor = fake_inhibitor;
 
     wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);

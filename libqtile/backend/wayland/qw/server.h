@@ -299,7 +299,6 @@ struct qw_drag_icon {
 };
 
 struct qw_idle_inhibitor {
-    struct qw_server *server;
     // Private data
     struct wlr_idle_inhibitor_v1 *wlr_inhibitor;
     struct wl_listener destroy;
@@ -307,7 +306,6 @@ struct qw_idle_inhibitor {
 };
 
 struct qw_keyboard_shortcuts_inhibitor {
-    struct qw_server *server;
     // Private data
     struct wlr_keyboard_shortcuts_inhibitor_v1 *wlr_inhibitor;
     struct wl_listener destroy;
