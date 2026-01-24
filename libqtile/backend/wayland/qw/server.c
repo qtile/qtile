@@ -648,10 +648,12 @@ void qw_server_set_inhibited(struct qw_server *server, bool inhibited) {
 static void qw_server_handle_idle_inhibitor_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_idle_inhibitor *inhibitor = wl_container_of(listener, inhibitor, destroy);
-    struct qw_server *server = inhibitor->server;
-    bool removed = server->remove_idle_inhibitor_cb(server->cb_data, inhibitor);
-    if (!removed) {
-        wlr_log(WLR_ERROR, "Unable to remove idle inhibitor.");
+    struct qw_server *server = (struct qw_server *)inhibitor->wlr_inhibitor->data;
+    if (server->remove_idle_inhibitor_cb) {
+        bool removed = server->remove_idle_inhibitor_cb(server->cb_data, inhibitor);
+        if (!removed) {
+            wlr_log(WLR_ERROR, "Unable to remove idle inhibitor.");
+        }
     }
 
     wl_list_remove(&inhibitor->link);
@@ -666,8 +668,8 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
 
     struct qw_idle_inhibitor *inhibitor = calloc(1, sizeof(struct qw_idle_inhibitor));
 
-    inhibitor->server = server;
     inhibitor->wlr_inhibitor = wlr_inhibitor;
+    wlr_inhibitor->data = server;
 
     wl_list_insert(&server->idle_inhibitors, &inhibitor->link);
 
@@ -689,6 +691,10 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
                                                is_layer_surface, is_session_lock_surface);
     if (!added) {
         wlr_log(WLR_ERROR, "Unable to add idle inhibitor.");
+        wl_list_remove(&inhibitor->link);
+        wl_list_remove(&inhibitor->destroy.link);
+        free(inhibitor);
+        return;
     }
 }
 
@@ -697,7 +703,15 @@ static void qw_server_handle_kb_shortcuts_inhibitor_destroy(struct wl_listener *
     UNUSED(data);
     struct qw_keyboard_shortcuts_inhibitor *inhibitor =
         wl_container_of(listener, inhibitor, destroy);
-    struct qw_server *server = inhibitor->server;
+    struct qw_server *server =
+        inhibitor->wlr_inhibitor ? (struct qw_server *)inhibitor->wlr_inhibitor->data : NULL;
+    if (!server) {
+        wlr_log(WLR_ERROR, "Keyboard shortcuts inhibitor has no server reference");
+        wl_list_remove(&inhibitor->link);
+        wl_list_remove(&inhibitor->destroy.link);
+        free(inhibitor);
+        return;
+    }
 
     if (inhibitor->wlr_inhibitor->active && server->remove_kb_shortcuts_inhibitor_cb) {
         bool removed = server->remove_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor);
@@ -723,8 +737,8 @@ static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *list
         return;
     }
 
-    inhibitor->server = server;
     inhibitor->wlr_inhibitor = wlr_inhibitor;
+    wlr_inhibitor->data = server;
 
     wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);
 
@@ -755,6 +769,12 @@ static void qw_server_handle_new_kb_shortcuts_inhibitor(struct wl_listener *list
                                                            wlr_inhibitor->surface);
         if (!added) {
             wlr_log(WLR_ERROR, "Unable to notify Python about keyboard shortcuts inhibitor.");
+            // Clean up on failure
+            wlr_keyboard_shortcuts_inhibitor_v1_deactivate(wlr_inhibitor);
+            wl_list_remove(&inhibitor->link);
+            wl_list_remove(&inhibitor->destroy.link);
+            free(inhibitor);
+            return;
         }
     }
 }
@@ -947,12 +967,7 @@ struct qw_server *qw_server_create() {
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     server->xwayland->data = server;
     wlr_xwayland_set_seat(server->xwayland, server->seat);
-
-    // Debug handler for XCB events
-    extern bool qw_xwayland_event_handler(struct wlr_xwayland * wlr_xwayland,
-                                          xcb_generic_event_t * event);
     server->xwayland->user_event_handler = qw_xwayland_event_handler;
-
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
     server->xwayland_ready.notify = qw_server_handle_xwayland_ready;

@@ -8,11 +8,11 @@
 #include "wayland-util.h"
 #include "wlr/util/log.h"
 #include "xdg-view.h"
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <wlr/xwayland.h>
 #include <xcb/xcb_icccm.h>
+#include <xcb/xproto.h>
 
 // Change xwayland surface activate state
 static void qw_xwayland_view_activate(struct qw_xwayland_view *xwayland_view, bool activate) {
@@ -307,9 +307,9 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
     // For XWayland, we need to check the surface geometry differently
     // clang-format off
     struct wlr_box geom = {
-        .x = qw_xsurface->x, 
-        .y = qw_xsurface->y, 
-        .width = qw_xsurface->width, 
+        .x = qw_xsurface->x,
+        .y = qw_xsurface->y,
+        .width = qw_xsurface->width,
         .height = qw_xsurface->height
     };
     // clang-format on
@@ -837,8 +837,14 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
                     (void *)xwayland_surface->surface);
 
             if (server->add_kb_shortcuts_inhibitor_cb) {
-                server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
-                                                      xwayland_surface->surface);
+                bool added = server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
+                                                                   xwayland_surface->surface);
+                if (!added) {
+                    wlr_log(WLR_ERROR,
+                            "Unable to notify Python about XWayland keyboard grab reactivation.");
+                    // Rollback: deactivate the inhibitor since Python doesn't know about it
+                    inhibitor->wlr_inhibitor->active = false;
+                }
             }
         }
         return;
@@ -855,9 +861,13 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
         return;
     }
 
-    inhibitor->server = server;
-
-    // Allocate a fake wlr_inhibitor just for holding surface and active state
+    // Allocate a fake wlr_inhibitor just for holding surface and active state.
+    // NOTE: Unlike native Wayland inhibitors (managed by wlroots), this is raw memory we allocate
+    // ourselves. The events.destroy signal is NOT initialized, so we cannot use a destroy listener.
+    // Cleanup is handled explicitly by:
+    //   - qw_xwayland_view_handle_unmap() when the view unmaps
+    //   - qw_xwayland_event_handler() on XCB_FOCUS_OUT with NotifyUngrab
+    //   TODO: Should we centralize this anyway?
     struct wlr_keyboard_shortcuts_inhibitor_v1 *fake_inhibitor =
         calloc(1, sizeof(struct wlr_keyboard_shortcuts_inhibitor_v1));
     if (!fake_inhibitor) {
@@ -867,6 +877,7 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
     }
     fake_inhibitor->surface = xwayland_surface->surface;
     fake_inhibitor->active = true;
+    fake_inhibitor->data = server;
     inhibitor->wlr_inhibitor = fake_inhibitor;
 
     wl_list_insert(&server->kb_shortcuts_inhibitors, &inhibitor->link);
@@ -876,8 +887,18 @@ static void qw_xwayland_view_handle_grab_focus(struct wl_listener *listener, voi
 
     // Notify Python if callback is set
     if (server->add_kb_shortcuts_inhibitor_cb) {
-        server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
-                                              xwayland_surface->surface);
+        bool added = server->add_kb_shortcuts_inhibitor_cb(server->cb_data, inhibitor,
+                                                           xwayland_surface->surface);
+        if (!added) {
+            wlr_log(WLR_ERROR,
+                    "Unable to notify Python about XWayland keyboard shortcuts inhibitor.");
+            // Clean up on failure - note: XWayland fake inhibitors don't have a destroy listener
+            wl_list_remove(&inhibitor->link);
+            free(inhibitor->wlr_inhibitor);
+            free(inhibitor);
+            xwayland_view->kb_shortcuts_inhibitor = NULL;
+            return;
+        }
     }
 }
 
@@ -1052,8 +1073,6 @@ void qw_server_xwayland_view_new(struct qw_server *server,
 
     xwayland_surface->data = xwayland_view;
 }
-
-#include <xcb/xproto.h>
 
 bool qw_xwayland_event_handler(struct wlr_xwayland *wlr_xwayland, xcb_generic_event_t *event) {
     uint8_t response_type = event->response_type & ~0x80;
