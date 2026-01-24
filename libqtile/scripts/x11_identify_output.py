@@ -1,23 +1,26 @@
-import libqtile.backend
+import os
 
 
 def identify_output(opts) -> None:
-    kore = libqtile.backend.get_core("x11")
-    output_info = kore.get_output_info()
-    kore.finalize()
+    from libqtile.backend.x11.xcbq import Connection
+
+    conn = Connection(os.environ.get("DISPLAY"))
 
     print("Output Information:")
 
-    for i, info in enumerate(output_info):
-        name = info.name or "Unknown"
-        serial = info.serial or "N/A"
+    try:
+        for i, info in enumerate(conn.pseudoscreens):
+            name = info.name or "Unknown"
+            serial = info.serial or "N/A"
 
-        print(f"Output {i}:")
-        print(f"  Name: {name}")
-        print(f"  Serial Number: {serial}")
-        print(f"  Position: ({info.rect.x}, {info.rect.y})")
-        print(f"  Resolution: {info.rect.width}x{info.rect.height}")
-        print()
+            print(f"Output {i}:")
+            print(f"  Name: {name}")
+            print(f"  Serial Number: {serial}")
+            print(f"  Position: ({info.rect.x}, {info.rect.y})")
+            print(f"  Resolution: {info.rect.width}x{info.rect.height}")
+            print()
+    finally:
+        conn.finalize()
 
 
 def add_subcommand(subparsers, parents):
