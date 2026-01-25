@@ -215,7 +215,7 @@ def parse_serial_from_edid(raw):
         if t[3] == 0xFF:
             serial = content
 
-        if t[3] == 0xFD:
+        if t[3] == 0xFC:
             name = content
 
         # some monitors export *both* the serial and the name as 0xfe, which
