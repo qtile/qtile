@@ -56,7 +56,7 @@ from libqtile.backend.base.core import Output
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
-from libqtile.backend.wayland.window import Internal, Static, Window
+from libqtile.backend.wayland.window import Base, Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import ScreenRect
 from libqtile.images import Img
@@ -477,7 +477,7 @@ class Core(base.Core):
         else:
             return False
 
-    def focus_window(self, win: base.WindowType) -> None:
+    def focus_window(self, win: Base) -> None:
         if self.qw.exclusive_layer != ffi.NULL:
             logger.debug("Keyboard focus withheld: focus is fixed to exclusive layer surface.")
             return
@@ -542,7 +542,7 @@ class Core(base.Core):
             if motion and self.qtile.config.follow_mouse_focus is True:
                 if isinstance(win, Static):
                     self.qtile.focus_screen(win.screen.index, False)
-                elif win is not None:
+                elif isinstance(win, base.Window):
                     if win.group and win.group.current_window != win:
                         win.group.focus(win, False)
                     if (
@@ -558,9 +558,8 @@ class Core(base.Core):
         """Handle view urgency notification"""
         assert self.qtile is not None
         wid = view.wid
-        win = self.qtile.windows_map.get(wid)
-
-        if win:
+        win = self.qtile.lookup_client(wid)
+        if win is not None:
             win.activate_by_config()
 
     def finalize(self) -> None:
