@@ -23,6 +23,7 @@ except ModuleNotFoundError:
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
 if typing.TYPE_CHECKING:
+    from libqtile.backend.wayland.core import Core
     from libqtile.command.base import CommandObject, ItemT
 
 
@@ -42,6 +43,7 @@ class Base(base._Window):
         # TODO: what is this?
         self.defunct = False
         self.group: _Group | None = None
+        self.core: Core = typing.cast("Core", qtile.core)
 
     def reparent(self, layer: int) -> None:
         if self.layer == layer:
@@ -144,11 +146,11 @@ class Base(base._Window):
 
     def hide(self) -> None:
         self._ptr.hide(self._ptr)
-        self.qtile.core.check_inhibited()
+        self.core.check_inhibited()
 
     def unhide(self) -> None:
         self._ptr.unhide(self._ptr)
-        self.qtile.core.check_inhibited()
+        self.core.check_inhibited()
 
     @expose_command()
     def place(
@@ -233,7 +235,7 @@ class Base(base._Window):
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
-        self.qtile.core.focus_window(self)
+        self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
             self.qtile.core.warp_pointer(
@@ -715,7 +717,7 @@ class Window(Base, base.Window):
             screen = None
 
         self.qtile.core.check_screen_fullscreen_background(screen)
-        self.qtile.core.check_inhibited()
+        self.core.check_inhibited()
 
     @property
     def maximized(self) -> bool:
@@ -849,8 +851,8 @@ class Window(Base, base.Window):
             return
 
         if self.group:
-            cx = self.qtile.core.qw_cursor.cursor.x
-            cy = self.qtile.core.qw_cursor.cursor.y
+            cx = self.core.qw_cursor.cursor.x
+            cy = self.core.qw_cursor.cursor.y
             for window in self.group.windows:
                 if (
                     window is not self
