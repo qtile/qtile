@@ -388,7 +388,7 @@ class TestManager:
             # of an input event which cannot be passed to the headless session
             os.environ["GDK_BACKEND"] = "x11"
         if export_sni:
-            args.append("--export_sni_interface")
+            args.append("--export-sni-interface")
         return self._spawn_window(*args)
 
     def test_notification(self, name="notification"):
