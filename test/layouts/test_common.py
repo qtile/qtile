@@ -11,18 +11,6 @@ from test.layouts.layout_utils import (
     assert_focused,
 )
 
-try:
-    # Check to see if we should skip tests using notifications on Wayland
-    import gi
-
-    gi.require_version("Gtk", "3.0")
-    gi.require_version("GtkLayerShell", "0.1")
-    from gi.repository import GtkLayerShell  # noqa: F401
-
-    has_wayland_notifications = True
-except (ImportError, ValueError):
-    has_wayland_notifications = False
-
 
 class AllLayoutsConfig(Config):
     """
@@ -156,7 +144,7 @@ def test_window_order_fullscreen(manager):
 
 @each_layout_config
 def test_window_types(manager):
-    if manager.backend.name == "wayland" and not has_wayland_notifications:
+    if manager.backend.name == "wayland":
         pytest.skip("Notification tests for Wayland need gtk-layer-shell")
 
     manager.test_window("one")
@@ -467,7 +455,7 @@ def test_remove_floating(manager):
 def test_desktop_notifications(manager):
     # Unlike normal floating windows such as dialogs, notifications don't steal
     # focus when they spawn, so test them separately
-    if manager.backend.name == "wayland" and not has_wayland_notifications:
+    if manager.backend.name == "wayland":
         pytest.skip("Notification tests for Wayland need gtk-layer-shell")
 
     # A notification fired in an empty group must not take focus
