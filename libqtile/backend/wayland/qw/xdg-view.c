@@ -256,7 +256,12 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
     }
 
     // Paint borders around the view with given border colors and width
-    qw_view_paint_borders((struct qw_view *)xdg_view, borders, border_count);
+    bool size_changed = xdg_view->base.width != width || xdg_view->base.height != height ||
+                        state.width != width || state.height != height;
+    if (size_changed) {
+        wlr_log(WLR_ERROR, ">>> paint borders");
+        qw_view_paint_borders((struct qw_view *)xdg_view, borders, border_count);
+    }
 
     // Raise view if requested
     if (above != 0) {
@@ -683,6 +688,8 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     // Create a scene tree node for this view inside the main layout tree
     xdg_view->base.content_tree = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xdg_view->base.content_tree->node.data = xdg_view;
+    xdg_view->base.border_tree = wlr_scene_tree_create(xdg_view->base.content_tree);
+    // xdg_view->base.layer = LAYER_LAYOUT;
 
     // If the protocol version supports WM capabilities, set maximize/fullscreen/minimize
     if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
