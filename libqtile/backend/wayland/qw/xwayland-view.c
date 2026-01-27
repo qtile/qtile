@@ -90,8 +90,16 @@ static void static_view_handle_set_geometry(struct wl_listener *listener, void *
     struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, set_geometry);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
 
-    wlr_scene_node_set_position(&static_view->scene_tree->node, xwayland_surface->x,
-                                xwayland_surface->y);
+    if (static_view->parent != NULL) {
+        // If a child, position is relative to parent
+        wlr_scene_node_set_position(
+            &static_view->scene_tree->node,
+            xwayland_surface->x - static_view->parent->base.content_tree->node.x,
+            xwayland_surface->y - static_view->parent->base.content_tree->node.y);
+    } else {
+        wlr_scene_node_set_position(&static_view->scene_tree->node, xwayland_surface->x,
+                                    xwayland_surface->y);
+    }
 }
 
 static void static_view_handle_map(struct wl_listener *listener, void *data) {
@@ -99,13 +107,35 @@ static void static_view_handle_map(struct wl_listener *listener, void *data) {
     struct qw_xwayland_view *static_view = wl_container_of(listener, static_view, map);
     struct wlr_xwayland_surface *xwayland_surface = static_view->xwayland_surface;
 
+    if (!static_view->mapped) {
+        struct wlr_scene_tree *parent_tree;
+        // If a child surface, place in child tree
+        if (xwayland_surface->parent != NULL && xwayland_surface->parent->data != NULL) {
+            static_view->parent = xwayland_surface->parent->data;
+            parent_tree = static_view->parent->base.child_tree;
+        } else {
+            parent_tree = static_view->base.server->scene_windows_layers[LAYER_KEEPABOVE];
+        }
+        static_view->base.content_tree = wlr_scene_tree_create(parent_tree);
+        static_view->base.child_tree = wlr_scene_tree_create(static_view->base.content_tree);
+        static_view->mapped = true;
+    }
+
     // Create a subsurface tree for this view under the content tree.
     static_view->scene_tree =
         wlr_scene_subsurface_tree_create(static_view->base.content_tree, xwayland_surface->surface);
 
     if (static_view->scene_tree != NULL) {
-        wlr_scene_node_set_position(&static_view->scene_tree->node, xwayland_surface->x,
-                                    xwayland_surface->y);
+        if (static_view->parent != NULL) {
+            // If a child, position is relative to parent
+            wlr_scene_node_set_position(
+                &static_view->scene_tree->node,
+                xwayland_surface->x - static_view->parent->base.content_tree->node.x,
+                xwayland_surface->y - static_view->parent->base.content_tree->node.y);
+        } else {
+            wlr_scene_node_set_position(&static_view->scene_tree->node, xwayland_surface->x,
+                                        xwayland_surface->y);
+        }
         wl_signal_add(&xwayland_surface->events.set_geometry, &static_view->set_geometry);
         static_view->set_geometry.notify = static_view_handle_set_geometry;
     }
@@ -225,10 +255,6 @@ void qw_server_xwayland_static_view_new(struct qw_server *server,
 
     static_view->xwayland_surface = xwayland_surface;
     static_view->base.server = server;
-
-    // Create a scene tree node for this view that brings it to front
-    static_view->base.content_tree =
-        wlr_scene_tree_create(server->scene_windows_layers[LAYER_KEEPABOVE]);
 
     wl_signal_add(&xwayland_surface->events.destroy, &static_view->destroy);
     static_view->destroy.notify = static_view_handle_destroy;
@@ -578,6 +604,9 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->scene_tree = wlr_scene_subsurface_tree_create(xwayland_view->base.content_tree,
                                                                  xwayland_surface->surface);
 
+    // Ensure child tree (transients, etc) above all
+    wlr_scene_node_raise_to_top(&xwayland_view->base.child_tree->node);
+
     // Reparent layer if view has keep_above or keep_below set
     if (xwayland_surface->above) {
         qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPABOVE);
@@ -896,9 +925,17 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.shell = "Xwayland";
     xwayland_view->base.view_type = QW_VIEW_XWAYLAND;
     // Create a scene tree node for this view inside the main layout tree
+    // ├── LAYER_LAYOUT
+    // │   ├── base.content_tree
+    // │   │   ├── base.border_tree
+    // │   │   ├── <primary surface tree>
+    // │   │   ├── base.child_tree
+    // │   │   └── <ftl output tracking buffer>
     xwayland_view->base.content_tree =
         wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xwayland_view->base.content_tree->node.data = xwayland_view;
+    xwayland_view->base.border_tree = wlr_scene_tree_create(xwayland_view->base.content_tree);
+    xwayland_view->base.child_tree = wlr_scene_tree_create(xwayland_view->base.content_tree);
     xwayland_view->base.layer = LAYER_LAYOUT;
     xwayland_view->initial_commit = true;
 
