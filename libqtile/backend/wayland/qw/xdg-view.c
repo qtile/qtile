@@ -239,7 +239,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
 
     // Raise view to front if requested
     if (above != 0) {
-        qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
+        qw_view_reparent(&xdg_view->base, LAYER_KEEPABOVE);
     }
 
     // View under the cursor may have changed
@@ -427,8 +427,8 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
     struct qw_server *server = xdg_view->base.server;
     struct wlr_xdg_popup *wlr_popup = data;
 
-    struct qw_xdg_popup *popup = qw_server_xdg_popup_new(
-        wlr_popup, xdg_view, server->scene_windows_layers[LAYER_BRINGTOFRONT]);
+    struct qw_xdg_popup *popup =
+        qw_server_xdg_popup_new(wlr_popup, xdg_view, server->scene_windows_layers[LAYER_KEEPABOVE]);
     if (popup == NULL) {
         return;
     }
