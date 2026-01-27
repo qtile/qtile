@@ -15,6 +15,7 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     wl_list_remove(&cursor->motion_absolute.link);
     wl_list_remove(&cursor->frame.link);
     wl_list_remove(&cursor->button.link);
+    wl_list_remove(&cursor->request_set_cursor_shape.link);
 
     wlr_xcursor_manager_destroy(cursor->mgr);
 
@@ -383,6 +384,11 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     cursor->button.notify = qw_cursor_handle_button;
     wl_signal_add(&cursor->cursor->events.button, &cursor->button);
 
+    cursor->cursor_shape_mgr = wlr_cursor_shape_manager_v1_create(server->display, 1);
+    cursor->request_set_cursor_shape.notify = qw_handle_request_set_cursor_shape;
+    wl_signal_add(&cursor->cursor_shape_mgr->events.request_set_shape,
+                  &cursor->request_set_cursor_shape);
+
     wl_list_init(&cursor->constraint_commit.link);
 
     return cursor;
@@ -643,4 +649,18 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
         wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
         wlr_cursor_warp(cursor->cursor, NULL, cursor->cursor->x, cursor->cursor->y);
     }
+}
+
+void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data) {
+    struct qw_cursor *cursor = wl_container_of(listener, cursor, request_set_cursor_shape);
+    struct wlr_cursor_shape_manager_v1_request_set_shape_event *event = data;
+
+    struct wlr_seat_client *focused_client = cursor->server->seat->pointer_state.focused_client;
+    if (focused_client != event->seat_client) {
+        return;
+    }
+
+    const char *name = wlr_cursor_shape_v1_name(event->shape);
+
+    wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
 }
