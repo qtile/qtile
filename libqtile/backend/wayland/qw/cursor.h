@@ -2,6 +2,7 @@
 #define CURSOR_H
 
 #include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_cursor_shape_v1.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 
@@ -28,8 +29,10 @@ struct qw_cursor {
     struct wl_listener frame;
     struct wl_listener button;
     struct wl_listener constraint_commit;
+    struct wl_listener request_set_cursor_shape;
     struct wlr_xcursor_manager *mgr;
     struct wlr_xcursor_manager *xwayland_mgr;
+    struct wlr_cursor_shape_manager_v1 *cursor_shape_mgr;
     struct wlr_surface *saved_surface;
     uint32_t saved_hotspot_x;
     uint32_t saved_hotspot_y;
@@ -67,6 +70,7 @@ void qw_cursor_pointer_constraint_new(struct qw_cursor *cursor,
                                       struct wlr_pointer_constraint_v1 *constraint);
 
 void qw_cursor_configure_xcursor(struct qw_cursor *cursor);
+void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data);
 
 void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
                                 struct wlr_pointer_constraint_v1 *constraint);
