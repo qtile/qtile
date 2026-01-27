@@ -545,7 +545,11 @@ class Window(_Window, metaclass=ABCMeta):
         # Normal window activation
         self.qtile.current_screen.set_group(self.group)
         self.group.focus(self)
-        self.bring_to_front()
+        if self.qtile.config.bring_front_click == "floating_only":
+            if isinstance(self, Window) and self.floating:
+                self.bring_to_front()
+        else:
+            self.bring_to_front()
         return True
 
     def activate_by_config(self) -> None:
