@@ -204,9 +204,10 @@ class Section(TreeNode):
     def draw(self, layout, top, level=0):
         layout._layout.reset_width()  # no centering
         # draw a horizontal line above the section
-        layout._drawer.draw_hbar(
-            layout.section_fg, 0, layout.panel_width, top, linewidth=layout.section_linewidth
-        )
+        if layout.section_linewidth:
+            layout._drawer.draw_hbar(
+                layout.section_fg, 0, layout.panel_width, top, linewidth=layout.section_linewidth
+            )
         # draw the section title
         layout._layout.font_size = layout.section_fontsize
         layout._layout.text = self.add_superscript(self.title)
