@@ -451,6 +451,8 @@ class Screen(CommandObject):
         self.previous_group: _Group | None = None
         self.serial = serial
         self.name = name
+        self.make: str | None = None
+        self.model: str | None = None
 
     def __eq__(self, other: object) -> bool:
         # When we trigger a reconfigure_screens(), _process_screens()
@@ -711,7 +713,10 @@ class Screen(CommandObject):
             x=self.x,
             y=self.y,
             serial=self.serial,
-            name=self.name,
+            port=self.name,
+            make=self.make,
+            model=self.model,
+            rect=dict(x=self.x, y=self.y, width=self.width, height=self.height),
         )
 
     @expose_command()
