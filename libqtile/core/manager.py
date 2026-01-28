@@ -429,13 +429,13 @@ class Qtile(CommandObject):
         )
 
         for i, info in enumerate(output_info):
-            scr = Screen(serial=info.serial, name=info.name)
+            scr = Screen()
             fresh_screen = True
 
             # first, try to find a screen that matches this one by serial
             # number
             for screen in config:
-                if screen.serial is not None:
+                if screen.match["serial"] is not None:
                     if not have_serials_from_hardware:
                         # if no hardware provided a serial and people provided
                         # hardware, maybe the hardware didn't have one (e.g.
@@ -444,38 +444,43 @@ class Qtile(CommandObject):
                             "serial (%s) specified in config, none found from hardware.",
                             screen.serial,
                         )
-                    if screen.serial == info.serial:
+                    if screen.match["serial"] == info.serial:
                         scr = screen
                         fresh_screen = False
                         logger.debug(
-                            f"using config serial {screen.serial} for output {info.name}"
+                            f"using config serial {screen.match['serial']} for output {info.name}"
                         )
                         break
 
-                if screen.name is not None:
-                    if screen.name == info.name:
+                if screen.match["name"] is not None:
+                    if screen.match["name"] == info.name:
                         scr = screen
                         fresh_screen = False
-                        logger.debug(f"using config name {screen.name} for output {info.name}")
+                        logger.debug(
+                            f"using config name {screen.match['name']} for output {info.name}"
+                        )
                         break
 
             # if we didn't find one by serial number, take the ith screen
             # assuming it exists, ignoring its serial number
             if fresh_screen and i < len(config):
-                if config[i].serial is not None and config[i].serial != info.serial:
+                if (
+                    config[i].match["serial"] is not None
+                    and config[i].match["serial"] != info.serial
+                ):
                     logger.warning(
                         "using config serial %s for output %s with physical serial %s",
-                        config[i].serial,
+                        config[i].match["serial"],
                         info.name,
                         info.serial,
                     )
                     # we need a copy here in case the ith window was a
                     # previously used serial number
                     scr = copy.copy(config[i])
-                elif config[i].name is not None and config[i].name != info.name:
+                elif config[i].match["name"] is not None and config[i].match["name"] != info.name:
                     logger.warning(
                         "using config name %s for output %s with physical name %s",
-                        config[i].name,
+                        config[i].match["name"],
                         info.name,
                         info.name,
                     )
@@ -484,8 +489,8 @@ class Qtile(CommandObject):
                     scr = config[i]
                     logger.debug(f"using config at index {i} for output {info.name}")
 
-                scr.serial = info.serial
-                scr.name = info.name
+            scr.serial = info.serial
+            scr.name = info.name
 
             if not hasattr(self, "current_screen") or reloading:
                 self.current_screen = scr
