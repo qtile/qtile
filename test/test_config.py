@@ -104,8 +104,8 @@ def test_screen_serial_ordering_the_order(manager_nospawn, minimal_conf_noscreen
 
     def the_order(self) -> list[Output]:
         return [
-            Output(None, "a", ScreenRect(0, 0, 800, 600)),
-            Output(None, "b", ScreenRect(800, 0, 800, 600)),
+            Output(None, None, None, "a", ScreenRect(0, 0, 800, 600)),
+            Output(None, None, None, "b", ScreenRect(800, 0, 800, 600)),
         ]
 
     monkeypatch.setattr(
@@ -126,8 +126,8 @@ def test_screen_serial_ordering_one_serial(manager_nospawn, minimal_conf_noscree
 
     def the_order(self) -> list[Output]:
         return [
-            Output(None, "one", ScreenRect(0, 0, 800, 600)),
-            Output(None, "a", ScreenRect(800, 0, 800, 600)),
+            Output(None, None, None, "one", ScreenRect(0, 0, 800, 600)),
+            Output(None, None, None, "a", ScreenRect(800, 0, 800, 600)),
         ]
 
     monkeypatch.setattr(
@@ -152,8 +152,8 @@ def test_screen_serial_ordering_serials_backwards(
 
     def the_order(self) -> list[Output]:
         return [
-            Output(None, "two", ScreenRect(0, 0, 800, 600)),
-            Output(None, "one", ScreenRect(800, 0, 800, 600)),
+            Output(None, None, None, "two", ScreenRect(0, 0, 800, 600)),
+            Output(None, None, None, "one", ScreenRect(800, 0, 800, 600)),
         ]
 
     monkeypatch.setattr(
@@ -172,8 +172,8 @@ def test_screen_serial_ordering_one_name(manager_nospawn, minimal_conf_noscreen,
 
     def the_order(self) -> list[Output]:
         return [
-            Output("one", None, ScreenRect(0, 0, 800, 600)),
-            Output("a", None, ScreenRect(800, 0, 800, 600)),
+            Output("one", None, None, None, ScreenRect(0, 0, 800, 600)),
+            Output("a", None, None, None, ScreenRect(800, 0, 800, 600)),
         ]
 
     monkeypatch.setattr(
@@ -198,8 +198,8 @@ def test_screen_name_ordering_names_backwards(
 
     def the_order(self) -> list[Output]:
         return [
-            Output("two", None, ScreenRect(0, 0, 800, 600)),
-            Output("one", None, ScreenRect(800, 0, 800, 600)),
+            Output("two", None, None, None, ScreenRect(0, 0, 800, 600)),
+            Output("one", None, None, None, ScreenRect(800, 0, 800, 600)),
         ]
 
     monkeypatch.setattr(

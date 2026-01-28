@@ -194,17 +194,27 @@ XCB_BUTTON_RELEASE = 5
 XCB_MOTION_NOTIFY = 6
 
 
-def parse_serial_from_edid(raw):
+def parse_edid(raw):
     # https://en.wikipedia.org/wiki/Extended_Display_Identification_Data#EDID_1.4_data_format
     if sum(map(int, raw)) % 256 != 0:
         raise Exception(f"bad EDID data checksum {raw}")
+
+    # Extract manufacturer ID from bytes 8-9 (3 letters encoded in 5 bits each)
+    mfg_bytes = struct.unpack(">H", raw[8:10])[0]
+    make = "".join(
+        [
+            chr(((mfg_bytes >> 10) & 0x1F) + ord("A") - 1),
+            chr(((mfg_bytes >> 5) & 0x1F) + ord("A") - 1),
+            chr((mfg_bytes & 0x1F) + ord("A") - 1),
+        ]
+    )
 
     # we only care about the serial number/monitor model name, which can occur
     # in any of the four possible timing locations, each of which are 18
     # bytes. We discard everything else.
     timings = struct.unpack("<54x18s18s18s18s2x", raw[:128])
     serial = None
-    name = None
+    model = None
     for t in timings:
         # skip timing info. we could decode this, but we can get it via
         # randr's preferred mode encoding if we eventually care.
@@ -216,23 +226,23 @@ def parse_serial_from_edid(raw):
             serial = content
 
         if t[3] == 0xFC:
-            name = content
+            model = content
 
-        # some monitors export *both* the serial and the name as 0xfe, which
-        # is annoying. if we see this, first set the name, then set the
+        # some monitors export *both* the serial and the model as 0xfe, which
+        # is annoying. if we see this, first set the model, then set the
         # serial and hope for the best. if only they had used, you know, one
-        # of the masks that indicated serial or name!
+        # of the masks that indicated serial or model!
         if t[3] == 0xFE:
             content = t[5:].decode("cp437").strip()
-            if name is None:
-                name = content
+            if model is None:
+                model = content
             else:
                 serial = content
 
     if serial == "000000000000":
         serial = None
 
-    return (serial, name)
+    return (make, model, serial)
 
 
 class MaskMap:
@@ -452,13 +462,15 @@ class RandR:
                 .reply()
                 .data
             )
+            make = None
+            model = None
             serial = None
-            name = None
             if len(edid_raw) > 0:
-                (serial, name) = parse_serial_from_edid(bytes(edid_raw))
+                (make, model, serial) = parse_edid(bytes(edid_raw))
 
+            port = bytes(info.name).decode() if info.name else None
             rect = ScreenRect(crtc_info.x, crtc_info.y, crtc_info.width, crtc_info.height)
-            out = Output(name, serial, rect)
+            out = Output(port, make, model, serial, rect)
 
             # prepend the primary output, append all others in screen
             # resources order
@@ -552,7 +564,7 @@ class Connection:
                     s.width,
                     s.height,
                 )
-                pseudoscreens.append(Output(None, None, rect))
+                pseudoscreens.append(Output(None, None, None, None, rect))
             return pseudoscreens
         raise Exception("no randr or xinerama?")
 

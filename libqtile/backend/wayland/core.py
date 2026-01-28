@@ -586,11 +586,17 @@ class Core(base.Core):
             serial_str = (
                 ffi.string(wlr_output.serial).decode() if wlr_output.serial != ffi.NULL else None
             )
-            name_str = (
+            port_str = (
                 ffi.string(wlr_output.name).decode() if wlr_output.name != ffi.NULL else None
             )
+            make_str = (
+                ffi.string(wlr_output.make).decode() if wlr_output.make != ffi.NULL else None
+            )
+            model_str = (
+                ffi.string(wlr_output.model).decode() if wlr_output.model != ffi.NULL else None
+            )
             rect = ScreenRect(x, y, width, height)
-            outputs.append(Output(name_str, serial_str, rect))
+            outputs.append(Output(port_str, make_str, model_str, serial_str, rect))
 
         lib.qw_server_loop_output_dims(self.qw, loop)
 
