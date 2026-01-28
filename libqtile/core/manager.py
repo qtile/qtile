@@ -395,29 +395,35 @@ class Qtile(CommandObject):
 
         if hasattr(self.config, "fake_screens"):
             output_info = [
-                Output(None, None, ScreenRect(s.x, s.y, s.width, s.height))
+                Output(None, None, None, None, ScreenRect(s.x, s.y, s.width, s.height))
                 for s in self.config.fake_screens
             ]
             config = self.config.fake_screens
         else:
             # Alias screens with the same x and y coordinates, taking largest
-            xywh: dict[tuple[int, int], tuple[int, int, str | None, str | None]] = {}
+            xywh: dict[
+                tuple[int, int], tuple[int, int, str | None, str | None, str | None, str | None]
+            ] = {}
             for info in self.core.get_output_info():
                 pos = (info.rect.x, info.rect.y)
-                width, height, serial, name = xywh.get(pos, (0, 0, info.serial, info.name))
+                width, height, port, make, model, serial = xywh.get(
+                    pos, (0, 0, info.port, info.make, info.model, info.serial)
+                )
                 # if one monitor is wider and one monitor is longer, either
                 # serial number was valid (i.e. we could choose either, since
                 # we're going to project over the whole space). just pick one.
                 xywh[pos] = (
                     max(width, info.rect.width),
                     max(height, info.rect.height),
+                    info.port,
+                    info.make,
+                    info.model,
                     info.serial,
-                    info.name,
                 )
 
             output_info = [
-                Output(name, serial, ScreenRect(x, y, w, h))
-                for (x, y), (w, h, serial, name) in xywh.items()
+                Output(port, make, model, serial, ScreenRect(x, y, w, h))
+                for (x, y), (w, h, port, make, model, serial) in xywh.items()
             ]
             config = self.config.screens
 
@@ -428,7 +434,7 @@ class Qtile(CommandObject):
         )
 
         for i, info in enumerate(output_info):
-            scr = Screen(serial=info.serial, name=info.name)
+            scr = Screen(serial=info.serial, name=info.port)
             fresh_screen = True
 
             # first, try to find a screen that matches this one by serial
@@ -447,15 +453,15 @@ class Qtile(CommandObject):
                         scr = screen
                         fresh_screen = False
                         logger.debug(
-                            f"using config serial {screen.serial} for output {info.name}"
+                            f"using config serial {screen.serial} for output {info.port}"
                         )
                         break
 
                 if screen.name is not None:
-                    if screen.name == info.name:
+                    if screen.name == info.port:
                         scr = screen
                         fresh_screen = False
-                        logger.debug(f"using config name {screen.name} for output {info.name}")
+                        logger.debug(f"using config name {screen.name} for output {info.port}")
                         break
 
             # if we didn't find one by serial number, take the ith screen
@@ -465,26 +471,26 @@ class Qtile(CommandObject):
                     logger.warning(
                         "using config serial %s for output %s with physical serial %s",
                         config[i].serial,
-                        info.name,
+                        info.port,
                         info.serial,
                     )
                     # we need a copy here in case the ith window was a
                     # previously used serial number
                     scr = copy.copy(config[i])
-                elif config[i].name is not None and config[i].name != info.name:
+                elif config[i].name is not None and config[i].name != info.port:
                     logger.warning(
                         "using config name %s for output %s with physical name %s",
                         config[i].name,
-                        info.name,
-                        info.name,
+                        info.port,
+                        info.port,
                     )
                     scr = copy.copy(config[i])
                 else:
                     scr = config[i]
-                    logger.debug(f"using config at index {i} for output {info.name}")
+                    logger.debug(f"using config at index {i} for output {info.port}")
 
                 scr.serial = info.serial
-                scr.name = info.name
+                scr.name = info.port
 
             if not hasattr(self, "current_screen") or reloading:
                 self.current_screen = scr
