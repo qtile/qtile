@@ -141,6 +141,10 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
         server->lock_state = QW_SESSION_LOCK_UNLOCKED;
         qw_session_lock_restore_focus(server);
 
+        // Clear all output lock_surface pointers
+        struct qw_output *output;
+        wl_list_for_each(output, &server->outputs, link) { output->lock_surface = NULL; }
+
     } else if (server->lock_state == QW_SESSION_LOCK_LOCKED && !unlock) {
         wlr_log(WLR_ERROR, "Session lock client vanished without unlocking.");
         server->lock_state = QW_SESSION_LOCK_CRASHED;
