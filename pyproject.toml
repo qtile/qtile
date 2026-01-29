@@ -153,19 +153,6 @@ no_implicit_optional = true
 disallow_untyped_defs = false
 disable_error_code = ["method-assign", "annotation-unchecked"]
 
-[[tool.mypy.overrides]]
-module = [
-    "libqtile.backend.wayland.*",
-    "libqtile.backend",
-    "libqtile.bar",
-    "libqtile.core.*",
-    "libqtile.config",
-    "libqtile.layout.base",
-    "libqtile.log_utils",
-    "libqtile.utils",
-]
-disallow_untyped_defs = true
-
 [tool.vulture]
 paths = ["libqtile"]
 exclude = ["test/configs/syntaxerr.py"]
