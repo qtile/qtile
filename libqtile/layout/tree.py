@@ -204,7 +204,10 @@ class Section(TreeNode):
     def draw(self, layout, top, level=0):
         layout._layout.reset_width()  # no centering
         # draw a horizontal line above the section
-        layout._drawer.draw_hbar(layout.section_fg, 0, layout.panel_width, top, linewidth=1)
+        if layout.section_linewidth:
+            layout._drawer.draw_hbar(
+                layout.section_fg, 0, layout.panel_width, top, linewidth=layout.section_linewidth
+            )
         # draw the section title
         layout._layout.font_size = layout.section_fontsize
         layout._layout.text = self.add_superscript(self.title)
@@ -348,6 +351,7 @@ class TreeTab(Layout):
         ("section_bottom", 6, "Bottom margin of section"),
         ("section_padding", 4, "Bottom of margin section label"),
         ("section_left", 4, "Left margin of section label"),
+        ("section_linewidth", 1, "Width of line above section label"),
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ["Default"], "Titles of section instances"),
         ("previous_on_rm", False, "Focus previous window on close instead of first."),
