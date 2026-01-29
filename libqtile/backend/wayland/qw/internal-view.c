@@ -77,7 +77,7 @@ static void qw_internal_view_place(void *self, int x, int y, int width, int heig
 
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     if (above != 0) {
-        qw_view_reparent(&view->base, LAYER_BRINGTOFRONT);
+        qw_view_reparent(&view->base, LAYER_KEEPABOVE);
     }
     view->base.x = x;
     view->base.y = y;

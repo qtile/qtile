@@ -148,20 +148,19 @@ typedef struct qw_qtile_config *(*get_qtile_config_cb_t)(void *userdata);
 typedef void (*idle_state_change_cb_t)(void *userdata, int seconds, bool is_idle);
 
 enum {
-    LAYER_BACKGROUND,   // background, layer shell
-    LAYER_BOTTOM,       // bottom, layer shell
-    LAYER_KEEPBELOW,    // windows that are marked 'keep below'
-    LAYER_LAYOUT,       // the normal tiled windows in the layout
-    LAYER_KEEPABOVE,    // windows that are marked 'keep above', including floating windows if
-                        // 'floats_kept_above = True'
-    LAYER_MAX,          // windows that are maximized
-    LAYER_FULLSCREEN,   // windows that are fullscreen
-    LAYER_BRINGTOFRONT, // windows that are marked bring to front
-    LAYER_TOP,          // top, layer shell
-    LAYER_OVERLAY,      // overlay, layer shell
-    LAYER_DRAG_ICON,    // drag icon displayed above everything
-    LAYER_LOCK,         // session lock above everything
-    LAYER_END           // keeping track of the end
+    LAYER_BACKGROUND, // background, layer shell
+    LAYER_BOTTOM,     // bottom, layer shell
+    LAYER_KEEPBELOW,  // windows that are marked 'keep below'
+    LAYER_LAYOUT,     // the normal tiled windows in the layout
+    LAYER_KEEPABOVE,  // windows that are marked 'keep above', including floating windows if
+                      // 'floats_kept_above = True'
+    LAYER_MAX,        // windows that are maximized
+    LAYER_FULLSCREEN, // windows that are fullscreen
+    LAYER_TOP,        // top, layer shell
+    LAYER_OVERLAY,    // overlay, layer shell
+    LAYER_DRAG_ICON,  // drag icon displayed above everything
+    LAYER_LOCK,       // session lock above everything
+    LAYER_END         // keeping track of the end
 };
 
 // Mode for drawing wallpaper
