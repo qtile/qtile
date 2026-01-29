@@ -26,6 +26,7 @@
 #include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_keyboard_shortcuts_inhibit_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -142,6 +143,10 @@ typedef bool (*add_idle_inhibitor_cb_t)(void *userdata, void *inhibitor, void *v
 typedef bool (*remove_idle_inhibitor_cb_t)(void *userdata, void *inhibitor);
 typedef bool (*check_inhibited_cb_t)(void *userdata);
 
+// Callbacks for keyboard shortcuts inhibit functions
+typedef bool (*add_kb_shortcuts_inhibitor_cb_t)(void *userdata, void *inhibitor, void *surface);
+typedef bool (*remove_kb_shortcuts_inhibitor_cb_t)(void *userdata, void *inhibitor);
+
 typedef struct qw_qtile_config *(*get_qtile_config_cb_t)(void *userdata);
 
 // Callback for idle state change
@@ -208,6 +213,8 @@ struct qw_server {
     check_inhibited_cb_t check_inhibited_cb;
     get_qtile_config_cb_t get_qtile_config_cb;
     idle_state_change_cb_t idle_state_change_cb;
+    add_kb_shortcuts_inhibitor_cb_t add_kb_shortcuts_inhibitor_cb;
+    remove_kb_shortcuts_inhibitor_cb_t remove_kb_shortcuts_inhibitor_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -265,6 +272,9 @@ struct qw_server {
     struct wlr_idle_notifier_v1 *idle_notifier;
     struct wl_listener new_idle_inhibitor;
     struct wl_list idle_inhibitors;
+    struct wlr_keyboard_shortcuts_inhibit_manager_v1 *kb_shortcuts_inhibit_manager;
+    struct wl_listener new_kb_shortcuts_inhibitor;
+    struct wl_list kb_shortcuts_inhibitors;
     struct wlr_output_power_manager_v1 *output_power_manager;
     struct wl_listener set_output_power_mode;
     struct wl_list idle_timers; // list of qw_idle_timer
@@ -289,11 +299,17 @@ struct qw_drag_icon {
 };
 
 struct qw_idle_inhibitor {
-    struct qw_server *server;
     // Private data
     struct wlr_idle_inhibitor_v1 *wlr_inhibitor;
     struct wl_listener destroy;
     struct wl_list link; // server->idle_inhibitors
+};
+
+struct qw_keyboard_shortcuts_inhibitor {
+    // Private data
+    struct wlr_keyboard_shortcuts_inhibitor_v1 *wlr_inhibitor;
+    struct wl_listener destroy;
+    struct wl_list link; // server->kb_shortcuts_inhibitors
 };
 
 struct qw_idle_timer {

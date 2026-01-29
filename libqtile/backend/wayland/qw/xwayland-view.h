@@ -7,6 +7,7 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/xwayland.h>
 #include <wlr/xwayland/shell.h>
+#include <xcb/xcb.h>
 
 struct qw_xwayland_view {
     struct qw_view base;
@@ -16,6 +17,7 @@ struct qw_xwayland_view {
     struct wlr_box geom;
     struct wlr_xwayland_surface *xwayland_surface;
     bool initial_commit;
+    struct qw_keyboard_shortcuts_inhibitor *kb_shortcuts_inhibitor; // Tracked for cleanup
 
     // Listeners for various XWayland surface events and requests
     // Private data
@@ -39,6 +41,7 @@ struct qw_xwayland_view {
     struct wl_listener destroy;
     struct wl_listener set_geometry;
     struct wl_listener override_redirect;
+    struct wl_listener grab_focus;
 
     struct wl_listener scene_tree_destroy;
 };
@@ -47,5 +50,7 @@ void qw_server_xwayland_static_view_new(struct qw_server *server,
                                         struct wlr_xwayland_surface *xwayland_surface);
 void qw_server_xwayland_view_new(struct qw_server *server,
                                  struct wlr_xwayland_surface *xwayland_surface);
+
+bool qw_xwayland_event_handler(struct wlr_xwayland *wlr_xwayland, xcb_generic_event_t *event);
 
 #endif /* QW_XWAYLAND_VIEW */

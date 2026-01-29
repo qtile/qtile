@@ -56,6 +56,7 @@ from libqtile.backend.base.core import Output
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
+from libqtile.backend.wayland.keyboard_shortcuts_inhibit import KeyboardShortcutsInhibitorManager
 from libqtile.backend.wayland.window import Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import ScreenRect
@@ -228,6 +229,20 @@ def idle_state_change_cb(userdata: ffi.CData, seconds: int, is_idle: bool) -> No
     core.handle_idle_state_change(seconds, is_idle)
 
 
+@ffi.def_extern()
+def add_kb_shortcuts_inhibitor_cb(
+    userdata: ffi.CData, inhibitor: ffi.CData, surface: ffi.CData
+) -> bool:
+    core = ffi.from_handle(userdata)
+    return core.keyboard_shortcuts_inhibitor_manager.add_inhibitor(inhibitor, surface)
+
+
+@ffi.def_extern()
+def remove_kb_shortcuts_inhibitor_cb(userdata: ffi.CData, inhibitor: ffi.CData) -> bool:
+    core = ffi.from_handle(userdata)
+    return core.keyboard_shortcuts_inhibitor_manager.remove_inhibitor(inhibitor)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -277,6 +292,8 @@ class Core(base.Core):
         self.qw.check_inhibited_cb = lib.check_inhibited_cb
         self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
         self.qw.idle_state_change_cb = lib.idle_state_change_cb
+        self.qw.add_kb_shortcuts_inhibitor_cb = lib.add_kb_shortcuts_inhibitor_cb
+        self.qw.remove_kb_shortcuts_inhibitor_cb = lib.remove_kb_shortcuts_inhibitor_cb
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
@@ -285,6 +302,7 @@ class Core(base.Core):
         self._locked = False
         self.idle_inhibitor_manager = IdleInhibitorManager(self)
         self.idle_notifier = IdleNotifier(self)
+        self.keyboard_shortcuts_inhibitor_manager = KeyboardShortcutsInhibitorManager(self)
 
     def update_backend_log_level(self) -> None:
         """Update the wlr log level based on Qtile's log level."""
