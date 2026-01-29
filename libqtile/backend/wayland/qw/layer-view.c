@@ -49,9 +49,8 @@ static void qw_layer_view_handle_unmap(struct wl_listener *listener, void *data)
             wlr_seat_keyboard_clear_focus(layer_view->server->seat);
         }
 
-        double x = layer_view->server->cursor->cursor->x;
-        double y = layer_view->server->cursor->cursor->y;
-        qw_cursor_warp_cursor(layer_view->server->cursor, x, y);
+        // View under the cursor may have changed
+        qw_cursor_update_pointer_focus(layer_view->server->cursor);
     }
 }
 

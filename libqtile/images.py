@@ -1,5 +1,6 @@
 import os
 from collections import namedtuple
+from math import pi
 
 import cairocffi
 import cairocffi.pixbuf
@@ -51,7 +52,6 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     matrix.scale(tr_width, tr_height)
 
     epsilon = 1.0e-6
-    pi = 3.141592653589793
     if abs(theta) > epsilon:
         theta_rad = pi / 180.0 * theta
         mat_rot = cairocffi.Matrix()

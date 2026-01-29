@@ -215,7 +215,7 @@ def parse_serial_from_edid(raw):
         if t[3] == 0xFF:
             serial = content
 
-        if t[3] == 0xFD:
+        if t[3] == 0xFC:
             name = content
 
         # some monitors export *both* the serial and the name as 0xfe, which
@@ -310,25 +310,22 @@ class AtomCache:
         return self.atoms[key]
 
 
-class _Wrapper:
-    def __init__(self, wrapped):
-        self.wrapped = wrapped
-
-    def __getattr__(self, x):
-        return getattr(self.wrapped, x)
-
-
-class Screen(_Wrapper):
+class Screen:
     """
     This represents an actual X screen.
     """
 
-    def __init__(self, conn, screen):
-        _Wrapper.__init__(self, screen)
+    def __init__(self, conn, screen: xcffib.xproto.SCREEN):
+        self.x_screen: xcffib.xproto.SCREEN = screen
         self.default_colormap = Colormap(conn, screen.default_colormap)
-        self.root = window.XWindow(conn, self.root)
+        self.root = window.XWindow(conn, self.x_screen.root)
+        self.root_depth = self.x_screen.root_depth
+        self.allowed_depths = self.x_screen.allowed_depths
+        self.root_visual = self.x_screen.root_visual
+        self.black_pixel = self.x_screen.black_pixel
+        self.white_pixel = self.x_screen.white_pixel
 
-        self._visuals = {}
+        self._visuals: dict[int, xcffib.xproto.VISUALTYPE] = {}
 
         # Get visuals for 32 and 24 bit
         for d in [32, 24, self.root_depth]:
@@ -432,8 +429,8 @@ class RandR:
         self.ext = conn.conn(xcffib.randr.key)
         self.conn = conn
 
-    def query_crtcs(self, root):
-        infos = []
+    def query_crtcs(self, root: int) -> list[Output]:
+        infos: list[Output] = []
         primary = self.ext.GetOutputPrimary(root).reply().output
         for output in self.ext.GetScreenResources(root).reply().outputs:
             info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
@@ -695,15 +692,15 @@ class Painter:
     def __init__(self, display):
         self.conn = xcffib.connect(display=display)
         self.setup = self.conn.get_setup()
-        self.screens = [Screen(self, i) for i in self.setup.roots]
-        self.default_screen = self.screens[self.conn.pref_screen]
+        self.screens: list[Screen] = [Screen(self, i) for i in self.setup.roots]
+        self.default_screen: Screen = self.screens[self.conn.pref_screen]
         self.conn.core.SetCloseDownMode(xcffib.xproto.CloseDown.RetainPermanent)
         self.atoms = AtomCache(self)
         self.width = -1
         self.height = -1
         self.root_pixmap_id = None
 
-    def _get_root_pixmap_and_surface(self, screen):
+    def _get_root_pixmap_and_surface(self, screen) -> tuple[int, cairocffi.xcb.XCBSurface]:
         # Querying the screen dimensions via the xcffib connection does not
         # take account of any screen scaling. We can therefore work out the
         # necessary size of the root window by looking at the

@@ -1,7 +1,7 @@
 import pytest
 
 import libqtile
-from libqtile.widget import generic_poll_text
+from libqtile.widget import gen_poll_url, generic_poll_text
 
 
 def test_gen_poll_text():
@@ -14,17 +14,17 @@ def test_gen_poll_text():
 
 @pytest.mark.asyncio
 async def test_gen_poll_url_not_configured():
-    gpurl = generic_poll_text.GenPollUrl()
+    gpurl = gen_poll_url.GenPollUrl()
     assert await gpurl.apoll() == "Invalid config"
 
 
 def test_gen_poll_url_no_json():
-    gpurl = generic_poll_text.GenPollUrl(json=False)
+    gpurl = gen_poll_url.GenPollUrl(json=False)
     assert "Content-Type" not in gpurl.headers
 
 
 def test_gen_poll_url_headers_and_json():
-    gpurl = generic_poll_text.GenPollUrl(
+    gpurl = gen_poll_url.GenPollUrl(
         headers={"fake-header": "fake-value"},
         data={"argument": "data value"},
         user_agent="qtile test",
@@ -38,9 +38,7 @@ def test_gen_poll_url_headers_and_json():
 
 @pytest.mark.asyncio
 async def test_gen_poll_url_text(httpbin):
-    gpurl = generic_poll_text.GenPollUrl(
-        json=False, parse=lambda x: x, url=f"{httpbin.url}/anything"
-    )
+    gpurl = gen_poll_url.GenPollUrl(json=False, parse=lambda x: x, url=f"{httpbin.url}/anything")
     result = await gpurl.apoll()
     assert isinstance(result, str)
     assert "anything" in result
@@ -48,7 +46,7 @@ async def test_gen_poll_url_text(httpbin):
 
 @pytest.mark.asyncio
 async def test_gen_poll_url_json_with_data(httpbin):
-    gpurl = generic_poll_text.GenPollUrl(
+    gpurl = gen_poll_url.GenPollUrl(
         parse=lambda x: x["data"], data={"test": "value"}, url=f"{httpbin.url}/anything"
     )
     result = await gpurl.apoll()
@@ -57,7 +55,7 @@ async def test_gen_poll_url_json_with_data(httpbin):
 
 @pytest.mark.asyncio
 async def test_gen_poll_url_xml_no_xmltodict(httpbin):
-    gpurl = generic_poll_text.GenPollUrl(
+    gpurl = gen_poll_url.GenPollUrl(
         json=False, xml=True, parse=lambda x: x, url=f"{httpbin.url}/anything"
     )
     result = await gpurl.apoll()
@@ -66,7 +64,7 @@ async def test_gen_poll_url_xml_no_xmltodict(httpbin):
 
 @pytest.mark.asyncio
 async def test_gen_poll_url_broken_parse(httpbin):
-    gpurl = generic_poll_text.GenPollUrl(
+    gpurl = gen_poll_url.GenPollUrl(
         json=False, parse=lambda x: x.foo, url=f"{httpbin.url}/anything"
     )
     result = await gpurl.apoll()
@@ -75,7 +73,7 @@ async def test_gen_poll_url_broken_parse(httpbin):
 
 @pytest.mark.asyncio
 async def test_gen_poll_url_custom_headers(httpbin):
-    gpurl = generic_poll_text.GenPollUrl(
+    gpurl = gen_poll_url.GenPollUrl(
         headers={"X-Custom-Header": "test-value", "X-Another-Header": "another-value"},
         parse=lambda x: x["headers"],
         url=f"{httpbin.url}/headers",

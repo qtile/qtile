@@ -141,6 +141,9 @@ static void static_view_handle_unmap(struct wl_listener *listener, void *data) {
         // Restore focus
         static_view->base.server->focus_current_window_cb(static_view->base.server->cb_data);
     }
+
+    // View under the cursor may have changed
+    qw_cursor_update_pointer_focus(static_view->base.server->cursor);
 }
 
 static void static_view_handle_associate(struct wl_listener *listener, void *data) {
@@ -344,6 +347,9 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
     if (above != 0) {
         qw_xwayland_view_bring_to_front(self);
     }
+
+    // View under the cursor may have changed
+    qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
 }
 
 // Send close event to the xwayland surface (kill the view)
@@ -363,6 +369,9 @@ static void qw_xwayland_view_hide(void *self) {
         xwayland_view->base.server->seat->keyboard_state.focused_surface) {
         wlr_seat_keyboard_clear_focus(xwayland_view->base.server->seat);
     }
+
+    // View under the cursor may have changed
+    qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
 }
 
 // Unhide the xwayland_view by enabling its content_tree scene node if currently disabled
@@ -450,8 +459,31 @@ static void qw_xwayland_view_handle_commit(struct wl_listener *listener, void *d
     // This commit handler can be used for other purposes like updating geometry
     // or handling surface state changes after the view is already managed
 
-    // Update clipping if geometry changed
-    qw_xwayland_view_clip(xwayland_view);
+    struct wlr_xwayland_surface *surface = xwayland_view->xwayland_surface;
+    struct wlr_surface_state *state = &surface->surface->current;
+    struct wlr_box geom = {};
+    geom.width = state->width;
+    geom.height = state->height;
+
+    bool size_changed =
+        xwayland_view->geom.width != geom.width || xwayland_view->geom.height != geom.height;
+
+    // Update clipping if surface size changed
+    if (size_changed) {
+        qw_xwayland_view_clip(xwayland_view);
+
+        // View under the cursor may have changed
+        qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
+    }
+
+    if (xwayland_view->initial_commit) {
+        // The view may have received pointer focus before it was able to update
+        // its cursor.
+        // To force a cursor refresh, we first need to clear pointer focus
+        wlr_seat_pointer_clear_focus(xwayland_view->base.server->seat);
+        qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
+        xwayland_view->initial_commit = false;
+    }
 }
 
 static void qw_xwayland_view_handle_request_fullscreen(struct wl_listener *listener, void *data) {
@@ -632,6 +664,8 @@ static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *da
     qw_view_cleanup_borders((struct qw_view *)xwayland_view);
     xwayland_view->base.server->unmanage_view_cb((struct qw_view *)&xwayland_view->base,
                                                  xwayland_view->base.server->cb_data);
+    qw_xwayland_view_hide(xwayland_view);
+
     wl_list_remove(&xwayland_view->commit.link);
     wl_list_remove(&xwayland_view->request_fullscreen.link);
     wl_list_remove(&xwayland_view->request_minimize.link);
@@ -874,6 +908,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
         wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xwayland_view->base.content_tree->node.data = xwayland_view;
     xwayland_view->base.layer = LAYER_LAYOUT;
+    xwayland_view->initial_commit = true;
 
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
     xwayland_view->destroy.notify = qw_xwayland_view_handle_destroy;

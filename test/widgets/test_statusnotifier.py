@@ -7,8 +7,6 @@ import libqtile.layout
 import libqtile.widget
 from test.helpers import Retry  # noqa: I001
 
-pytest.skip("StatusNotifier tests are currently broken", allow_module_level=True)
-
 
 @Retry(ignore_exceptions=(AssertionError,))
 def wait_for_icon(widget, hidden=True, prop="width"):
@@ -115,27 +113,23 @@ def test_statusnotifier_left_click(manager_nospawn, sni_config):
 
     assert widget.info()["width"] == 0
 
-    try:
-        win = manager_nospawn.test_window("TestSNILeftClick", export_sni=True)
-        wait_for_icon(widget, hidden=False)
+    win = manager_nospawn.test_window("TestSNILeftClick", export_sni=True)
+    wait_for_icon(widget, hidden=False)
 
-        # Check we have window and that it's not fullscreen
-        assert len(windows()) == 1
-        check_fullscreen(windows, False)
+    # Check we have window and that it's not fullscreen
+    assert len(windows()) == 1
+    check_fullscreen(windows, False)
 
-        # Left click will toggle fullscreen
-        manager_nospawn.c.bar["top"].fake_button_press(10, 0, 1)
-        check_fullscreen(windows, True)
+    # Left click will toggle fullscreen
+    manager_nospawn.c.bar["top"].fake_button_press(10, 0, 1)
+    check_fullscreen(windows, True)
 
-        # Left click again will restore window
-        manager_nospawn.c.bar["top"].fake_button_press(10, 0, 1)
-        check_fullscreen(windows, False)
+    # Left click again will restore window
+    manager_nospawn.c.bar["top"].fake_button_press(10, 0, 1)
+    check_fullscreen(windows, False)
 
-        manager_nospawn.kill_window(win)
-        assert not windows()
-
-    except Exception:
-        pytest.xfail("Unsure why test fails, but let's accept a failure for now.")
+    manager_nospawn.kill_window(win)
+    assert not windows()
 
 
 @pytest.mark.usefixtures("dbus")
@@ -151,24 +145,20 @@ def test_statusnotifier_left_click_vertical_bar(manager_nospawn, sni_config):
 
     assert widget.info()["height"] == 0
 
-    try:
-        win = manager_nospawn.test_window("TestSNILeftClick", export_sni=True)
-        wait_for_icon(widget, hidden=False, prop="height")
+    win = manager_nospawn.test_window("TestSNILeftClick", export_sni=True)
+    wait_for_icon(widget, hidden=False, prop="height")
 
-        # Check we have window and that it's not fullscreen
-        assert len(windows()) == 1
-        check_fullscreen(windows, False)
+    # Check we have window and that it's not fullscreen
+    assert len(windows()) == 1
+    check_fullscreen(windows, False)
 
-        # Left click will toggle fullscreen
-        manager_nospawn.c.bar["left"].fake_button_press(0, 10, 1)
-        check_fullscreen(windows, True)
+    # Left click will toggle fullscreen
+    manager_nospawn.c.bar["left"].fake_button_press(0, 10, 1)
+    check_fullscreen(windows, True)
 
-        # Left click again will restore window
-        manager_nospawn.c.bar["left"].fake_button_press(0, 10, 1)
-        check_fullscreen(windows, False)
+    # Left click again will restore window
+    manager_nospawn.c.bar["left"].fake_button_press(0, 10, 1)
+    check_fullscreen(windows, False)
 
-        manager_nospawn.kill_window(win)
-        assert not windows()
-
-    except Exception:
-        pytest.xfail("Unsure why test fails, but let's accept a failure for now.")
+    manager_nospawn.kill_window(win)
+    assert not windows()
