@@ -52,13 +52,12 @@ from typing import TYPE_CHECKING, Any
 
 from libqtile import hook
 from libqtile.backend import base
-from libqtile.backend.base.core import Output
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
 from libqtile.backend.wayland.window import Base, Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
-from libqtile.config import ScreenRect
+from libqtile.config import Output, ScreenRect
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, reap_zombies, rgb
