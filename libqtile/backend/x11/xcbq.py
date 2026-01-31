@@ -22,11 +22,10 @@ import xcffib.xproto
 from xcffib.xfixes import SelectionEventMask
 from xcffib.xproto import CW, EventMask, WindowClass
 
-from libqtile.backend.base.core import Output
 from libqtile.backend.x11 import window
 from libqtile.backend.x11.xcursors import Cursors
 from libqtile.backend.x11.xkeysyms import keysyms
-from libqtile.config import ScreenRect
+from libqtile.config import Output, ScreenRect
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, hex, rgb
 
