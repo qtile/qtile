@@ -373,6 +373,15 @@ class ScreenRect:
         )
 
 
+@dataclass
+class Output:
+    port: str | None
+    make: str | None
+    model: str | None
+    serial: str | None
+    rect: ScreenRect
+
+
 class Screen(CommandObject):
     r"""
     A physical screen, and its associated paraphernalia.
