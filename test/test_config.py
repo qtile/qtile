@@ -3,9 +3,8 @@ from pathlib import Path
 import pytest
 
 from libqtile import config, confreader, utils
-from libqtile.backend.base.core import Output
 from libqtile.bar import Bar
-from libqtile.config import Screen, ScreenRect
+from libqtile.config import Output, Screen, ScreenRect
 from libqtile.widget import TextBox
 
 configs_dir = Path(__file__).resolve().parent / "configs"
