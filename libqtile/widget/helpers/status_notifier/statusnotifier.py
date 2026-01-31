@@ -204,7 +204,7 @@ class StatusNotifierItem:  # noqa: E303
 
         if not self.has_icons:
             logger.warning(
-                "Cannot find icon in current theme and no icon provided by StatusNotifierItem."
+                f"Cannot find icon: {self.last_icon_name!r} in current theme and no icon provided by StatusNotifierItem."
             )
             # No "local" icon and no application-provided icons are available.
             # The "local" icon may be updated at a later time, so "_update_local_icon"
