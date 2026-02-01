@@ -8,9 +8,11 @@ import string
 from collections import deque
 
 from libqtile import hook, pangocffi, utils
+from libqtile.backend.base.window import Window
 from libqtile.command.base import CommandObject, SelectError, expose_command
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import CommandError, QtileCommandInterface
+from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -54,7 +56,7 @@ class NullCompleter(AbstractCompleter):
 
 
 class FileCompleter(AbstractCompleter):
-    def __init__(self, qtile, _testing=False) -> None:
+    def __init__(self, qtile: Qtile, _testing=False) -> None:
         self._testing = _testing
         self.qtile = qtile
         self.thisfinal = None  # type: str | None
@@ -98,7 +100,7 @@ class FileCompleter(AbstractCompleter):
 
 
 class QshCompleter(AbstractCompleter):
-    def __init__(self, qtile: CommandObject) -> None:
+    def __init__(self, qtile: Qtile) -> None:
         q = QtileCommandInterface(qtile)
         self.client = InteractiveCommandClient(q)
         self.thisfinal = None  # type: str | None
@@ -152,7 +154,7 @@ class QshCompleter(AbstractCompleter):
 
 
 class GroupCompleter(AbstractCompleter):
-    def __init__(self, qtile: CommandObject) -> None:
+    def __init__(self, qtile: Qtile) -> None:
         self.qtile = qtile
         self.thisfinal = None  # type: str | None
         self.lookup = None  # type: list[tuple[str, str]] | None
@@ -188,7 +190,7 @@ class GroupCompleter(AbstractCompleter):
 
 
 class WindowCompleter(AbstractCompleter):
-    def __init__(self, qtile: CommandObject) -> None:
+    def __init__(self, qtile: Qtile) -> None:
         self.qtile = qtile
         self.thisfinal = None  # type: str | None
         self.lookup = None  # type: list[tuple[str, str]] | None
@@ -207,8 +209,10 @@ class WindowCompleter(AbstractCompleter):
         if self.lookup is None:
             self.lookup = []
             for wid, window in self.qtile.windows_map.items():
+                if not isinstance(window, Window):
+                    continue
                 if window.group and window.name.lower().startswith(txt):
-                    self.lookup.append((window.name, wid))
+                    self.lookup.append((window.name, str(wid)))
 
             self.lookup.sort()
             self.offset = -1
@@ -232,7 +236,7 @@ class CommandCompleter:
 
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
-    def __init__(self, qtile, _testing=False):
+    def __init__(self, qtile: Qtile, _testing=False):
         self.lookup = None  # type: list[tuple[str, str]] | None
         self.offset = -1
         self.thisfinal = None  # type: str | None

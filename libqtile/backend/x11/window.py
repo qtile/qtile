@@ -1515,12 +1515,13 @@ class Internal(_Window, base.Internal):
 
     def __init__(self, win, qtile, desired_depth=32):
         _Window.__init__(self, win, qtile)
+        self.conn: xcbq.Connection = qtile.core.conn
         win.set_property("QTILE_INTERNAL", 1)
         self._depth = desired_depth
 
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
-        return Drawer(self.qtile, self, width, height)
+        return Drawer(self.conn, self, width, height)
 
     @expose_command()
     def kill(self):
@@ -1535,6 +1536,11 @@ class Internal(_Window, base.Internal):
         self.process_window_expose()
 
     def handle_ButtonPress(self, e):  # noqa: N802
+        # If clicking on an internal window on a different screen, grab clicks
+        # on the current window so it can be refocused by clicking on it
+        screen = self.qtile.find_screen(self.x, self.y)
+        if screen is not self.qtile.current_screen:
+            self.qtile.core._grab_click_on_current_window()
         self.process_button_click(e.event_x, e.event_y, e.detail)
 
     def handle_ButtonRelease(self, e):  # noqa: N802

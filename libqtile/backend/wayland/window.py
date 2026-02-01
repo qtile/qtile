@@ -23,6 +23,7 @@ except ModuleNotFoundError:
     from libqtile.backend.wayland.ffi_stub import ffi, lib
 
 if typing.TYPE_CHECKING:
+    from libqtile.backend.wayland.core import Core
     from libqtile.command.base import CommandObject, ItemT
 
 
@@ -42,6 +43,7 @@ class Base(base._Window):
         # TODO: what is this?
         self.defunct = False
         self.group: _Group | None = None
+        self.core: Core = typing.cast("Core", qtile.core)
 
     def reparent(self, layer: int) -> None:
         if self.layer == layer:
@@ -80,16 +82,10 @@ class Base(base._Window):
 
     @expose_command()
     def move_up(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPBELOW:
-            new_layer = self.get_new_layer(self._float_state)
-            self.reparent(new_layer)
         lib.qw_view_move_up(self._ptr)
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPAOVE:
-            new_layer = self.get_new_layer(self._float_state)
-            self.reparent(new_layer)
         lib.qw_view_move_down(self._ptr)
 
     @expose_command()
@@ -145,44 +141,16 @@ class Base(base._Window):
     def urgent(self, urgent: bool) -> None:
         self._ptr.urgent = urgent
 
-    @expose_command()
-    def info(self) -> dict:
-        """Return a dictionary of info."""
-        # TODO: complete implementation
-        float_info = {
-            "x": self.float_x,
-            "y": self.float_y,
-            "width": self._float_width,
-            "height": self._float_height,
-        }
-        return dict(
-            name=self.name,
-            x=self.x,
-            y=self.y,
-            width=self.width,
-            height=self.height,
-            group=self.group.name if self.group else None,
-            id=self.wid,
-            wm_class=self.get_wm_class(),
-            # shell can be either "XDG" or "XWayland" or "layer"?
-            shell=ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
-            float_info=float_info,
-            floating=self._float_state != FloatStates.NOT_FLOATING,
-            maximized=self._float_state == FloatStates.MAXIMIZED,
-            minimized=self._float_state == FloatStates.MINIMIZED,
-            fullscreen=self._float_state == FloatStates.FULLSCREEN,
-        )
-
     def kill(self) -> None:
         self._ptr.kill(self._ptr)
 
     def hide(self) -> None:
         self._ptr.hide(self._ptr)
-        self.qtile.core.check_inhibited()
+        self.core.check_inhibited()
 
     def unhide(self) -> None:
         self._ptr.unhide(self._ptr)
-        self.qtile.core.check_inhibited()
+        self.core.check_inhibited()
 
     @expose_command()
     def place(
@@ -267,7 +235,7 @@ class Base(base._Window):
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
-        self.qtile.core.focus_window(self)
+        self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
             self.qtile.core.warp_pointer(
@@ -305,7 +273,7 @@ class Internal(Base, base.Internal):
 
     def create_drawer(self, width: int, height: int) -> Drawer:
         """Create a Drawer that draws to this window."""
-        return Drawer(self.qtile, self, width, height)
+        return Drawer(self, width, height)
 
     def set_buffer_with_damage(self, offsetx: int, offsety: int, width: int, height: int) -> None:
         lib.qw_internal_view_set_buffer_with_damage(
@@ -633,6 +601,48 @@ class Window(Base, base.Window):
             return lib.LAYER_FULLSCREEN
         return lib.LAYER_LAYOUT
 
+    @expose_command()
+    def move_up(self, force: bool = False) -> None:
+        if force and self.layer == lib.LAYER_KEEPBELOW:
+            new_layer = self.get_new_layer(self._float_state)
+            self.reparent(new_layer)
+        lib.qw_view_move_up(self._ptr)
+
+    @expose_command()
+    def move_down(self, force: bool = False) -> None:
+        if force and self.layer == lib.LAYER_KEEPAOVE:
+            new_layer = self.get_new_layer(self._float_state)
+            self.reparent(new_layer)
+        lib.qw_view_move_down(self._ptr)
+
+    @expose_command()
+    def info(self) -> dict:
+        """Return a dictionary of info."""
+        # TODO: complete implementation
+        float_info = {
+            "x": self.float_x,
+            "y": self.float_y,
+            "width": self._float_width,
+            "height": self._float_height,
+        }
+        return dict(
+            name=self.name,
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            group=self.group.name if self.group else None,
+            id=self.wid,
+            wm_class=self.get_wm_class(),
+            # shell can be either "XDG" or "XWayland" or "layer"?
+            shell=ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
+            float_info=float_info,
+            floating=self._float_state != FloatStates.NOT_FLOATING,
+            maximized=self._float_state == FloatStates.MAXIMIZED,
+            minimized=self._float_state == FloatStates.MINIMIZED,
+            fullscreen=self._float_state == FloatStates.FULLSCREEN,
+        )
+
     @property
     def floating(self) -> bool:
         return self._float_state != FloatStates.NOT_FLOATING
@@ -707,7 +717,7 @@ class Window(Base, base.Window):
             screen = None
 
         self.qtile.core.check_screen_fullscreen_background(screen)
-        self.qtile.core.check_inhibited()
+        self.core.check_inhibited()
 
     @property
     def maximized(self) -> bool:
@@ -841,8 +851,8 @@ class Window(Base, base.Window):
             return
 
         if self.group:
-            cx = self.qtile.core.qw_cursor.cursor.x
-            cy = self.qtile.core.qw_cursor.cursor.y
+            cx = self.core.qw_cursor.cursor.x
+            cy = self.core.qw_cursor.cursor.y
             for window in self.group.windows:
                 if (
                     window is not self

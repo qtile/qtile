@@ -29,7 +29,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
 
         return self
 
-    async def __aexit__(self, *args) -> None:  # type: ignore
+    async def __aexit__(self, *args) -> None:
         self._stopped = True
 
         await self._cancel_all_tasks()

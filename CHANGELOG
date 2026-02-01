@@ -3,6 +3,11 @@ Qtile x.xx.x, released xxxx-xx-xx:
       - Removed the cmus and moc widgets. These were GPL licensed, and as such
         incompatible with our MIT license. They were added to the tree by
         mistake.
+      - Removed cmd_ prefix fallback. This has been deprecated since 0.23.0,
+        and the core CommandObject code (lazy.*, CommandClient) doesn't use
+        it, so it seems like there are probably no users left. This has the
+        added bonus that we undefine __getattr__, and as a result do a lot
+        more type checking in the core codebase.
     * features
     * bugfixes
 

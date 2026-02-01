@@ -6,7 +6,7 @@ from collections import defaultdict
 from libqtile import configurable, hook
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
-from libqtile.utils import has_transparency, is_valid_colors
+from libqtile.utils import is_valid_colors
 
 if typing.TYPE_CHECKING:
     import asyncio
@@ -266,22 +266,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             # Whereas we won't have a window if we're startup up for the first time or
             # the window has been killed by us no longer using the bar's screen
 
-            # X11 only:
-            # To preserve correct display of SysTray widget, we need a 24-bit
-            # window where the user requests an opaque bar.
-            if qtile.core.name == "x11":
-                depth = (
-                    32
-                    if has_transparency(self.background)
-                    else qtile.core.conn.default_screen.root_depth
-                )
-
-                self.window = qtile.core.create_internal(  # type: ignore [call-arg]
-                    self.x, self.y, width, height, depth
-                )
-
-            else:
-                self.window = qtile.core.create_internal(self.x, self.y, width, height)
+            self.window = qtile.core.create_internal(self.x, self.y, width, height)
 
             self.window.opacity = self.opacity
             self.window.unhide()
@@ -555,8 +540,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
         # If we're clicking on a bar that's not on the current screen, focus that screen
         if self.screen and self.screen is not self.qtile.current_screen:
-            if self.qtile.core.name == "x11" and self.qtile.current_window:
-                self.qtile.current_window._grab_click()
             index = self.qtile.screens.index(self.screen)
             self.qtile.focus_screen(index, warp=False)
 
