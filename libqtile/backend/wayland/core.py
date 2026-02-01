@@ -490,6 +490,7 @@ class Core(base.Core):
 
         # TODO logic imcomplete
         win._ptr.focus(win._ptr, False)  # What is the second argument?
+        win.move_to_top()
 
     def _focus_by_click(self) -> ffi.CData:
         assert self.qtile is not None
