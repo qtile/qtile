@@ -109,17 +109,9 @@ void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *
     struct qw_session_lock_surface *sls = wl_container_of(listener, sls, surface_destroy);
     struct qw_server *server = sls->server;
 
-    if (server->lock != NULL && server->lock->lock != NULL) {
-        struct wlr_session_lock_surface_v1 *lock_surface = sls->lock_surface;
-        if (lock_surface->link.prev != NULL && lock_surface->link.next != NULL) {
-            wl_list_remove(&lock_surface->link);
-            wl_list_init(&lock_surface->link);
-        }
-
-        // Focus shifts if other surfaces remain
-        if (!wl_list_empty(&server->lock->lock->surfaces)) {
-            qw_session_lock_focus_first_lock_surface(server);
-        }
+    if (server->lock != NULL && server->lock->lock != NULL &&
+        !wl_list_empty(&server->lock->lock->surfaces)) {
+        qw_session_lock_focus_first_lock_surface(server);
     }
 
     wl_list_remove(&sls->surface_destroy.link);
