@@ -511,7 +511,8 @@ class Core(base.Core):
             elif isinstance(win, base.Window):
                 if win.group and win.group.screen is not self.qtile.current_screen:
                     self.qtile.focus_screen(win.group.screen.index, warp=False)
-                self.qtile.current_group.focus(win, False)
+                if not win.has_focus:
+                    self.qtile.current_group.focus(win, False)
 
         else:
             screen = self.qtile.find_screen(
