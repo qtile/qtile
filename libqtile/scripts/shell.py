@@ -7,7 +7,7 @@ def qshell(args) -> None:
         socket = ipc.find_sockfile()
     else:
         socket = args.socket
-    client = ipc.Client(socket, is_json=args.is_json)
+    client = ipc.Client(socket)
     cmd_object = interface.IPCCommandInterface(client)
     qsh = sh.QSh(cmd_object)
     if args.command is not None:
@@ -35,13 +35,5 @@ def add_subcommand(subparsers, parents):
         type=str,
         default=None,
         help="Run the specified qshell command and exit.",
-    )
-    parser.add_argument(
-        "-j",
-        "--json",
-        action="store_true",
-        default=False,
-        dest="is_json",
-        help="Use JSON to communicate with Qtile.",
     )
     parser.set_defaults(func=qshell)
