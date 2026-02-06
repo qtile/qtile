@@ -547,7 +547,9 @@ class Qtile(CommandObject):
             for cmd in key.commands:
                 if cmd.check(self):
                     status, val = self.server.call(
-                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False)
+                        ipc.IPCCommandMessage(
+                            cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False
+                        )
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s", cmd.name, val)
@@ -913,7 +915,7 @@ class Qtile(CommandObject):
                 for i in m.commands:
                     if i.check(self):
                         status, val = self.server.call(
-                            (i.selectors, i.name, i.args, i.kwargs, False)
+                            ipc.IPCCommandMessage(i.selectors, i.name, i.args, i.kwargs, False)
                         )
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
@@ -925,7 +927,9 @@ class Qtile(CommandObject):
                     self.focus_hovered_window()
                 if m.start:
                     i = m.start
-                    status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs, False))
+                    status, val = self.server.call(
+                        ipc.IPCCommandMessage(i.selectors, i.name, i.args, i.kwargs, False)
+                    )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse command error %s: %s", i.name, val)
                         continue
@@ -964,7 +968,9 @@ class Qtile(CommandObject):
             for i in cmd:
                 if i.check(self):
                     status, val = self.server.call(
-                        (i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs, False)
+                        ipc.IPCCommandMessage(
+                            i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs, False
+                        )
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse command error %s: %s", i.name, val)

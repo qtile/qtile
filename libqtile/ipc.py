@@ -1,27 +1,29 @@
 """
-A simple IPC mechanism for communicating between two local processes. We
-use marshal to serialize data - this means that both client and server must
-run the same Python version, and that clients must be trusted (as
-un-marshalling untrusted data can result in arbitrary code execution).
+A simple IPC mechanism for communicating between two local processes. Clients
+must be trusted, as IPC commands such as `eval`, or the repl allow arbitrary
+code execution.
 """
 
 from __future__ import annotations
 
 import asyncio
+import enum
 import fcntl
 import json
-import marshal
 import os.path
 import socket
-import struct
-from typing import Any
+import traceback
+from abc import ABCMeta, abstractmethod
+from collections.abc import Callable, Iterator
+from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING, Any, Self
 
 from libqtile import hook
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
 
-HDRFORMAT = "!L"
-HDRLEN = struct.calcsize(HDRFORMAT)
+if TYPE_CHECKING:
+    from libqtile.command.graph import SelectorType
 
 SOCKBASE = "qtilesocket.%s"
 
@@ -69,53 +71,162 @@ def find_sockfile(display: str | None = None):
     raise IPCError("Could not find socket file.")
 
 
+class IPCStatus(enum.IntEnum):
+    SUCCESS = 0
+    ERROR = 1
+    EXCEPTION = 2
+
+
+class MessageType(enum.StrEnum):
+    COMMAND = "command"
+    REPLY = "reply"
+
+
+class IPCMessage(metaclass=ABCMeta):
+    """Abstract base class for all IPC messages"""
+
+    @property
+    @abstractmethod
+    def message_type(self) -> MessageType:
+        """Discrimantor for the message type of the instance"""
+
+    @abstractmethod
+    def to_json(self) -> dict:
+        """Return the message content as a dict suitable for JSON serialization"""
+
+    @classmethod
+    @abstractmethod
+    def from_json(cls, json: dict) -> Self:
+        """Construct the message from a json dict"""
+
+    @abstractmethod
+    def __iter__(self) -> Iterator[Any]:
+        """Enable unpacking syntax for the message"""
+
+
+@dataclass
+class IPCCommandMessage(IPCMessage):
+    """Represents a command invoked via IPC"""
+
+    selectors: list[SelectorType]
+    name: str
+    args: tuple
+    kwargs: dict
+    lifted: bool
+
+    @property
+    def message_type(self) -> MessageType:
+        return MessageType.COMMAND
+
+    def to_json(self):
+        """A simple mapping with the variable names corresponding to the keys"""
+        return asdict(self)
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCCommandMessage:
+        msg = IPCCommandMessage(**json)
+        # Must always lift a message deserialized from JSON
+        msg.lifted = True
+        return msg
+
+    def __iter__(self):
+        return iter((self.selectors, self.name, self.args, self.kwargs, self.lifted))
+
+
+@dataclass
+class IPCReplyMessage(IPCMessage):
+    """Represents a reply sent by the IPC server"""
+
+    status: IPCStatus
+    data: Any
+
+    @property
+    def message_type(self) -> MessageType:
+        return MessageType.REPLY
+
+    def to_json(self) -> dict:
+        return {
+            # DEV: Arguably, for the JSON_TAGGED format
+            # we could use a string representation here
+            "status": int(self.status),
+            "data": self.data,
+        }
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCReplyMessage:
+        return IPCReplyMessage(**json)
+
+    def __iter__(self):
+        return iter((self.status, self.data))
+
+    @staticmethod
+    def success(data: Any) -> IPCReplyMessage:
+        """Construct a reply message with status SUCCESS"""
+        return IPCReplyMessage(status=IPCStatus.SUCCESS, data=data)
+
+    @staticmethod
+    def error(error: Any) -> IPCReplyMessage:
+        """Construct a reply message with status ERROR"""
+        return IPCReplyMessage(status=IPCStatus.ERROR, data=error)
+
+    @staticmethod
+    def exception(exception: Exception) -> IPCReplyMessage:
+        """Construct a reply message from an exception
+        with status EXCEPTION. The exception is formatted to
+        provide useful information to the recipient"""
+        # DEV: The original code only returned the last line
+        # of the traceback, whereas this will return a list
+        # containing the whole traceback
+        data = traceback.format_exception(exception)
+        return IPCReplyMessage(status=IPCStatus.EXCEPTION, data=data)
+
+
 class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
     @staticmethod
-    def unpack(data: bytes, *, is_json: bool | None = None) -> tuple[Any, bool]:
+    def unpack(data: bytes) -> IPCMessage:
         """Unpack the incoming message
 
         Parameters
         ----------
         data: bytes
             The incoming message to unpack
-        is_json: bool | None
-            If the message should be unpacked as json.  By default, try to
-            unpack json and fallback gracefully to marshalled bytes.
 
         Returns
         -------
-        tuple[Any, bool]
-            A tuple of the unpacked object and a boolean denoting if the
-            message was deserialized using json.  If True, the return message
-            should be packed as json.
+        IPCMessage
+            The unpacked message
         """
-        if is_json is None or is_json:
-            try:
-                return json.loads(data.decode()), True
-            except ValueError as e:
-                if is_json:
-                    raise IPCError("Unable to decode json data") from e
-
         try:
-            assert len(data) >= HDRLEN
-            size = struct.unpack(HDRFORMAT, data[:HDRLEN])[0]
-            assert size >= len(data[HDRLEN:])
-            return marshal.loads(data[HDRLEN : HDRLEN + size]), False
-        except AssertionError as e:
-            raise IPCError("error reading reply! (probably the socket was disconnected)") from e
+            obj = json.loads(data.decode())
+            match obj:
+                case {"message_type": MessageType.COMMAND, "content": content}:
+                    return IPCCommandMessage.from_json(content)
+
+                case {"message_type": MessageType.REPLY, "content": content}:
+                    return IPCReplyMessage.from_json(content)
+
+                case {"message_type": typ, "content": _}:
+                    raise IPCError(f"Unknown message type: '{typ}'")
+
+                case _:
+                    raise IPCError(
+                        "Malformed JSON message. Expected dict with 'message_type' and 'content' keys"
+                    )
+
+        except (ValueError, KeyError) as e:
+            raise IPCError("Unable to decode json data") from e
 
     @staticmethod
-    def pack(msg: Any, *, is_json: bool = False) -> bytes:
+    def pack(msg: IPCMessage) -> bytes:
         """Pack the object into a message to pass"""
-        if is_json:
-            json_obj = json.dumps(msg, default=_IPC._json_encoder)
-            return json_obj.encode()
-
-        msg_bytes = marshal.dumps(msg)
-        size = struct.pack(HDRFORMAT, len(msg_bytes))
-        return size + msg_bytes
+        tagged_dict = {
+            "message_type": msg.message_type,
+            "content": msg.to_json(),
+        }
+        json_obj = json.dumps(tagged_dict, default=_IPC._json_encoder)
+        return json_obj.encode()
 
     @staticmethod
     def _json_encoder(field: Any) -> Any:
@@ -126,7 +237,7 @@ class _IPC:
 
 
 class Client:
-    def __init__(self, socket_path: str, is_json=False) -> None:
+    def __init__(self, socket_path: str) -> None:
         """Create a new IPC client
 
         Parameters
@@ -134,16 +245,13 @@ class Client:
         socket_path: str
             The file path to the file that is used to open the connection to
             the running IPC server.
-        is_json: bool
-            Pack and unpack messages as json
         """
         self.socket_path = socket_path
-        self.is_json = is_json
 
-    def call(self, data: Any) -> Any:
+    def call(self, data: tuple) -> IPCReplyMessage:
         return self.send(data)
 
-    def send(self, msg: Any) -> Any:
+    def send(self, msg: tuple) -> IPCReplyMessage:
         """Send the message and return the response from the server
 
         If any exception is raised by the server, that will propogate out of
@@ -151,7 +259,7 @@ class Client:
         """
         return asyncio.run(self.async_send(msg))
 
-    async def async_send(self, msg: Any) -> Any:
+    async def async_send(self, msg: tuple) -> IPCReplyMessage:
         """Send the message to the server
 
         Connect to the server, then pack and send the message to the server,
@@ -165,7 +273,7 @@ class Client:
             raise IPCError(f"Could not open {self.socket_path}")
 
         try:
-            send_data = _IPC.pack(msg, is_json=self.is_json)
+            send_data = _IPC.pack(IPCCommandMessage(*msg))
             writer.write(send_data)
             writer.write_eof()
 
@@ -177,13 +285,16 @@ class Client:
             writer.close()
             await writer.wait_closed()
 
-        data, _ = _IPC.unpack(read_data, is_json=self.is_json)
-
+        data = _IPC.unpack(read_data)
+        if not isinstance(data, IPCReplyMessage):
+            raise IPCError("Expected a reply message from the server")
         return data
 
 
 class Server:
-    def __init__(self, socket_path: str, handler) -> None:
+    def __init__(
+        self, socket_path: str, handler: Callable[[IPCCommandMessage], IPCReplyMessage]
+    ) -> None:
         self.socket_path = socket_path
         self.handler = handler
         self.server = None  # type: asyncio.AbstractServer | None
@@ -220,17 +331,21 @@ class Server:
             data = await reader.read()
             logger.debug("EOF received by server")
 
-            req, is_json = _IPC.unpack(data)
-        except IPCError:
+            req = _IPC.unpack(data)
+            if not isinstance(req, IPCCommandMessage):
+                logger.error("Expected command message from client")
+                return
+        except IPCError as e:
             logger.warning("Invalid data received, closing connection")
+            logger.debug(e)
         else:
             # Don't handle requests when session is locked
             if self.locked.is_set():
-                rep = (1, {"error": "Session locked."})
+                rep = IPCReplyMessage.error({"error": "Session locked."})
             else:
                 rep = self.handler(req)
 
-            result = _IPC.pack(rep, is_json=is_json)
+            result = _IPC.pack(rep)
 
             logger.debug("Sending result on receive EOF")
             writer.write(result)
