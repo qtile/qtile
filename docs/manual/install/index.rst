@@ -113,7 +113,8 @@ Or install qtile-git with:
 
     git clone https://github.com/qtile/qtile.git
     cd qtile
-    uv tool install .
+    uv tool install .                               # for minimal dependencies
+    uv tool install .[dev,widgets,optional-core]    # for all dependencies
 
 .. _starting-qtile:
 
