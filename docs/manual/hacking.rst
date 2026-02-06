@@ -48,11 +48,21 @@ dependencies.
 Setting up the environment
 ==========================
 
-In the root of the project, run ``./dev.sh``.
-It will create a virtualenv called ``venv``.
+In the root of the project, run ``uv venv``.
+It will create a virtualenv called ``.venv``.
 
-Activate this virtualenv with ``. venv/bin/activate``.
+Activate this virtualenv with
+
+* bash, zsh: ``source .venv/bin/activate``
+* fish: ``source .venv/bin/activate.fish``
+
 Deactivate it with the ``deactivate`` command.
+
+To Install every python dependencies that Qtile needs with ``make deps``.
+
+To build wayland backend with ``make build-wayland``.
+
+Install locally into the virtualenv with ``uv pip install .``.
 
 Building the documentation
 ==========================
