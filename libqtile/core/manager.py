@@ -105,6 +105,8 @@ class Qtile(CommandObject):
         self.locked = False
         hook.subscribe.locked(self.lock)
         hook.subscribe.unlocked(self.unlock)
+        self.test_data = None
+        self.test_data_config_evaluations = None
 
     def lock(self) -> None:
         self.locked = True
@@ -119,9 +121,6 @@ class Qtile(CommandObject):
         except Exception as e:
             logger.exception("Configuration error:")
             send_notification("Configuration error", str(e))
-
-        if hasattr(self.core, "wmname"):
-            self.core.wmname = getattr(self.config, "wmname", "qtile")  # type: ignore
 
         self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 

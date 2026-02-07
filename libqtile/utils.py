@@ -11,7 +11,7 @@ from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from random import randint
 from shutil import which
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 try:
     from dbus_fast import AuthError, Message, Variant
@@ -134,13 +134,14 @@ def has_transparency(colour: ColorsType) -> bool:
     return any(has_transparency(c) for c in colour)
 
 
-def remove_transparency(colour: ColorsType):  # type: ignore
+def remove_transparency(colour: ColorsType) -> ColorsType:
     """
     Returns a tuple of (r, g, b) with no alpha.
     """
     if isinstance(colour, str | tuple):
-        return tuple(x * 255.0 for x in rgb(colour)[:3])
-    return [remove_transparency(c) for c in colour]
+        r, g, b, _ = rgb(colour)
+        return (int(r * 255), int(g * 255), int(b * 255))
+    return [cast(ColorType, remove_transparency(c)) for c in colour]
 
 
 def is_valid_colors(color: ColorsType) -> bool:

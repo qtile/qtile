@@ -83,6 +83,9 @@ class _X11LayoutBackend(_BaseLayoutBackend):
 
 class _WaylandLayoutBackend(_BaseLayoutBackend):
     def __init__(self, qtile: Qtile) -> None:
+        from libqtile.backend.wayland import core as waylandcore
+
+        assert isinstance(qtile.core, waylandcore.Core)
         self.set_keymap = qtile.core.set_keymap
         self._layout: str = ""
 

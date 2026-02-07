@@ -1063,14 +1063,14 @@ class Match(_Match):
             return lambda other: other == value
         elif name == "wm_class":
 
-            def predicate(other) -> bool:  # type: ignore
+            def predicate(other) -> bool:
                 match = getattr(other, "match", lambda v: v == other)
                 return value and any(match(v) for v in value)
 
             return predicate
         else:
 
-            def predicate(other) -> bool:  # type: ignore
+            def predicate(other) -> bool:
                 match = getattr(other, "match", lambda v: v == other)
                 return match(value)
 

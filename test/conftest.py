@@ -115,7 +115,7 @@ def fake_window():
         window = _NestedWindow()
 
         def create_drawer(self, width, height):
-            return drawer.Drawer(None, self, width, height)
+            return drawer.Drawer(self, width, height)
 
     return FakeWindow()
 

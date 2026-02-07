@@ -69,6 +69,8 @@ class ExistingWMException(Exception):
 
 
 class Core(base.Core):
+    idle_notifier: IdleNotifier
+
     def __init__(self, display_name: str | None = None) -> None:
         """Setup the X11 core backend
 
@@ -168,7 +170,7 @@ class Core(base.Core):
         # The last time we were handling a MotionNotify event
         self._last_motion_time = 0
 
-        self.last_focused: base.Window | None = None
+        self.last_focused: window.Window | None = None
 
         self.idle_inhibitor_manager: IdleInhibitorManager[Inhibitor] = IdleInhibitorManager(self)
         self.idle_notifier = IdleNotifier(self)
@@ -222,6 +224,8 @@ class Core(base.Core):
     def on_config_load(self, initial) -> None:
         """Assign windows to groups"""
         assert self.qtile is not None
+
+        self.wmname = getattr(self.qtile.config, "wmname", "qtile")
 
         # Ensure that properties are initialised at startup
         self.update_client_lists()
@@ -613,12 +617,21 @@ class Core(base.Core):
             i._reset_mask()
 
     def create_internal(
-        self, x: int, y: int, width: int, height: int, desired_depth: int | None = 32
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
     ) -> base.Internal:
         assert self.qtile is not None
 
-        win = self.conn.create_window(x, y, width, height, desired_depth)
-        internal = window.Internal(win, self.qtile, desired_depth)
+        # Try to use a 32-bit depth to allow for transparent colors in
+        # backgrounds. If the Screen doesn't support 32-bit visuals, the code
+        # in create_window() -> _get_depth_and_visual() will fall back to an
+        # appropriate depth.
+        win = self.conn.create_window(x, y, width, height, desired_depth=32)
+        internal = window.Internal(win, self.qtile, desired_depth=32)
+
         internal.place(x, y, width, height, 0, None)
         self.qtile.manage(internal)
         return internal
@@ -809,12 +822,8 @@ class Core(base.Core):
                 # since the window is dead.
                 pass
             # Clear these atoms as per spec
-            win.window.conn.conn.core.DeleteProperty(
-                win.wid, win.window.conn.atoms["_NET_WM_STATE"]
-            )
-            win.window.conn.conn.core.DeleteProperty(
-                win.wid, win.window.conn.atoms["_NET_WM_DESKTOP"]
-            )
+            self.conn.conn.core.DeleteProperty(win.wid, self.conn.atoms["_NET_WM_STATE"])
+            self.conn.conn.core.DeleteProperty(win.wid, self.conn.atoms["_NET_WM_DESKTOP"])
         self.qtile.unmanage(event.window)
         self.update_client_lists()
         if self.qtile.current_window is None:
@@ -869,6 +878,18 @@ class Core(base.Core):
         d.state = modmasks
         self.handle_KeyPress(d, simulated=True)
 
+    def _grab_click_on_current_window(self) -> None:
+        """Grab button events on the current window.
+
+        Called before switching screens to ensure clicks on the now-unfocused
+        window will be intercepted to refocus it.
+        """
+        win = self.qtile.current_window
+        if win:
+            # In X11 backend, current_window is always an x11 _Window
+            assert isinstance(win, window._Window)
+            win._grab_click()
+
     def focus_by_click(self, e, window=None):
         """Bring a window to the front
 
@@ -901,8 +922,7 @@ class Core(base.Core):
             # clicked on root window
             screen = qtile.find_screen(e.root_x, e.root_y)
             if screen:
-                if qtile.current_window:
-                    qtile.current_window._grab_click()
+                self._grab_click_on_current_window()
                 qtile.focus_screen(screen.index, warp=False)
 
     def flush(self):
@@ -919,7 +939,7 @@ class Core(base.Core):
         """Get the keysym for a key from its name"""
         return keysyms[name.lower()]
 
-    def check_stacking(self, win: base.Window) -> None:
+    def check_stacking(self, win: window.Window) -> None:
         """Triggers restacking if a fullscreen window loses focus."""
         if win is self.last_focused:
             return
