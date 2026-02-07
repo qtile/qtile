@@ -239,7 +239,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
 
     // Raise view to front if requested
     if (above != 0) {
-        qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
+        qw_view_reparent(&xdg_view->base, LAYER_KEEPABOVE);
     }
 
     // View under the cursor may have changed
@@ -427,8 +427,11 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
     struct qw_server *server = xdg_view->base.server;
     struct wlr_xdg_popup *wlr_popup = data;
 
-    struct qw_xdg_popup *popup = qw_server_xdg_popup_new(
-        wlr_popup, xdg_view, server->scene_windows_layers[LAYER_BRINGTOFRONT]);
+    // wlr_log(WLR_ERROR, "parent: %p", xdg_view->xdg_toplevel->
+    struct qw_xdg_popup *popup =
+        // qw_server_xdg_popup_new(wlr_popup, xdg_view,
+        // server->scene_windows_layers[LAYER_KEEPABOVE]);
+        qw_server_xdg_popup_new(wlr_popup, xdg_view, xdg_view->base.child_tree);
     if (popup == NULL) {
         return;
     }
@@ -440,8 +443,9 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
 
     int lx, ly;
     wlr_scene_node_coords(&popup->xdg_view->base.content_tree->node, &lx, &ly);
-    wlr_scene_node_set_position(&popup->scene_tree->node, lx + total_border_width,
-                                ly + total_border_width);
+    // wlr_scene_node_set_position(&popup->scene_tree->node, lx + total_border_width,
+    //                             ly + total_border_width);
+    wlr_scene_node_set_position(&popup->scene_tree->node, total_border_width, total_border_width);
     // TODO: do we need to be concerned about the width/height of other window decorations?
 }
 
@@ -660,6 +664,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     // Create a scene tree node for this view inside the main layout tree
     xdg_view->base.content_tree = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xdg_view->base.content_tree->node.data = xdg_view;
+    xdg_view->base.border_tree = wlr_scene_tree_create(xdg_view->base.content_tree);
     xdg_view->base.layer = LAYER_LAYOUT;
 
     // If the protocol version supports WM capabilities, set maximize/fullscreen/minimize
@@ -680,6 +685,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->scene_tree =
         wlr_scene_xdg_surface_create(xdg_view->base.content_tree, xdg_toplevel->base);
     xdg_toplevel->base->data = xdg_view;
+    xdg_view->base.child_tree = wlr_scene_tree_create(xdg_view->base.content_tree);
 
     // Assign function pointers for base view operations
     xdg_view->base.get_tree_node = qw_xdg_view_get_tree_node;

@@ -149,7 +149,7 @@ void qw_server_set_output_fullscreen_background(struct qw_server *server, int x,
     wout = wlr_output_layout_output_at(server->output_layout, x, y);
     if (wout != NULL) {
         struct qw_output *output = wout->data;
-        qw_output_toggle_fullscreen_background(output, enabled);
+        // qw_output_toggle_fullscreen_background(output, enabled);
     }
 }
 
@@ -972,7 +972,6 @@ static char *LAYER_NAMES[] = {[LAYER_BACKGROUND] = "LAYER_BACKGROUND",
                               [LAYER_KEEPABOVE] = "LAYER_KEEPABOVE",
                               [LAYER_MAX] = "LAYER_MAX",
                               [LAYER_FULLSCREEN] = "LAYER_FULLSCREEN",
-                              [LAYER_BRINGTOFRONT] = "LAYER_BRINGTOFRONT",
                               [LAYER_TOP] = "LAYER_TOP",
                               [LAYER_OVERLAY] = "LAYER_OVERLAY",
                               [LAYER_DRAG_ICON] = "LAYER_DRAG_ICON",
