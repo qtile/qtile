@@ -16,7 +16,7 @@ from libqtile.command.base import CommandError, CommandException, SelectError
 from libqtile.command.client import CommandClient
 from libqtile.command.graph import CommandGraphRoot
 from libqtile.command.interface import IPCCommandInterface
-from libqtile.ipc import Client, find_sockfile
+from libqtile.ipc import Client, IPCWireFormat, find_sockfile
 
 
 class KeyValDictAdd(argparse.Action):
@@ -156,7 +156,9 @@ def cmd_obj(args) -> None:
 
     if args.obj_spec:
         sock_file = args.socket or find_sockfile()
-        ipc_client = Client(sock_file, is_json=args.json or False)
+        ipc_client = Client(
+            sock_file, wire_format=IPCWireFormat.JSON_RAW if args.json else IPCWireFormat.BYTES
+        )
         cmd_object = IPCCommandInterface(ipc_client)
         cmd_client = CommandClient(cmd_object)
         obj = get_object(cmd_client, args.obj_spec)
@@ -238,9 +240,6 @@ def add_subcommand(subparsers, parents):
     # Perhaps just keep the longhand `--json`, and remove the shorthand
     # to avoid confusion
     parser.add_argument(
-        "--json",
-        "-j",
-        action="store_true",
-        help="Use JSON as the IPC wire format"
+        "--json", "-j", action="store_true", help="Use JSON as the IPC wire format"
     )
     parser.set_defaults(func=cmd_obj)
