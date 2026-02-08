@@ -581,19 +581,18 @@ static bool xcursor_manager_is_named(const struct wlr_xcursor_manager *manager, 
 
 void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
     unsigned cursor_size = 24;
-    const char *cursor_theme = NULL; // Defaults prob not necessary here?
+    const char *cursor_theme = NULL;
 
     struct qw_server *server = cursor->server;
     struct qw_qtile_config *config = server->get_qtile_config_cb(server->cb_data);
     cursor_size = config->wl_xcursor_size;
     cursor_theme = config->wl_xcursor_theme;
 
-    char cursor_size_fmt[16];
-    snprintf(cursor_size_fmt, sizeof(cursor_size_fmt), "%u", cursor_size);
-    setenv("XCURSOR_SIZE", cursor_size_fmt, 1);
-    if (cursor_theme != NULL) {
-        setenv("XCURSOR_THEME", cursor_theme, 1);
-    }
+    // Note: XCURSOR_SIZE and XCURSOR_THEME environment variables are now set
+    // from Python (Core.on_config_load) to avoid calling setenv() from C code.
+    // setenv() is not thread-safe with respect to concurrent getenv() calls
+    // (e.g. from fontconfig/pango initialization), which caused intermittent
+    // segfaults. See https://github.com/qtile/qtile/issues/5818
 
 #if WLR_HAS_XWAYLAND
     if (server->xwayland != NULL &&
@@ -604,7 +603,7 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
         wlr_xcursor_manager_destroy(cursor->xwayland_mgr);
 
         cursor->xwayland_mgr = wlr_xcursor_manager_create(cursor_theme, cursor_size);
-        if (cursor->mgr == NULL) {
+        if (cursor->xwayland_mgr == NULL) {
             wlr_log(WLR_ERROR, "Cannot create XCursor manager for theme '%s'", cursor_theme);
         }
         wlr_xcursor_manager_load(cursor->xwayland_mgr, 1);
