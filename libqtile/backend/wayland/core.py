@@ -319,6 +319,15 @@ class Core(base.Core):
         if self.qtile.config.wl_input_rules:
             inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
 
+        # Set xcursor environment variables from Python before calling into C.
+        # This avoids calling setenv() from C code, which is not thread-safe with
+        # respect to getenv() calls that may happen concurrently (e.g. from
+        # fontconfig/pango initialization in a glib worker thread). See #5818.
+        os.environ["XCURSOR_SIZE"] = str(self.qtile.config.wl_xcursor_size)
+        theme = self.qtile.config.wl_xcursor_theme
+        if theme is not None:
+            os.environ["XCURSOR_THEME"] = theme
+
         # Apply xcursor settings
         lib.qw_cursor_configure_xcursor(self.qw_cursor)
 
