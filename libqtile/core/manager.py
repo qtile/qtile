@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import copy
 import faulthandler
 import io
 import logging
@@ -399,108 +398,62 @@ class Qtile(CommandObject):
                 return group
         return None
 
-    def _process_screens(self, reloading: bool = False) -> None:
-        current_groups = [s.group for s in self.screens]
-        screens = []
-
-        if hasattr(self.config, "fake_screens"):
-            output_info = [
+    def get_output_info(self) -> list[Output]:
+        if self.config.fake_screens is not None:
+            return [
                 Output(None, None, None, None, ScreenRect(s.x, s.y, s.width, s.height))
                 for s in self.config.fake_screens
             ]
-            config = self.config.fake_screens
-        else:
-            # Alias screens with the same x and y coordinates, taking largest
-            xywh: dict[
-                tuple[int, int], tuple[int, int, str | None, str | None, str | None, str | None]
-            ] = {}
-            for info in self.core.get_output_info():
-                pos = (info.rect.x, info.rect.y)
-                width, height, port, make, model, serial = xywh.get(
-                    pos, (0, 0, info.port, info.make, info.model, info.serial)
-                )
-                # if one monitor is wider and one monitor is longer, either
-                # serial number was valid (i.e. we could choose either, since
-                # we're going to project over the whole space). just pick one.
-                xywh[pos] = (
-                    max(width, info.rect.width),
-                    max(height, info.rect.height),
-                    info.port,
-                    info.make,
-                    info.model,
-                    info.serial,
-                )
 
-            output_info = [
-                Output(port, make, model, serial, ScreenRect(x, y, w, h))
-                for (x, y), (w, h, port, make, model, serial) in xywh.items()
-            ]
-            config = self.config.screens
+        # Alias screens with the same x and y coordinates, taking largest
+        xywh: dict[
+            tuple[int, int], tuple[int, int, str | None, str | None, str | None, str | None]
+        ] = {}
+        for info in self.core.get_output_info():
+            pos = (info.rect.x, info.rect.y)
+            width, height, port, make, model, serial = xywh.get(
+                pos, (0, 0, info.port, info.make, info.model, info.serial)
+            )
+            # if one monitor is wider and one monitor is longer, either
+            # serial number was valid (i.e. we could choose either, since
+            # we're going to project over the whole space). just pick one.
+            xywh[pos] = (
+                max(width, info.rect.width),
+                max(height, info.rect.height),
+                info.port,
+                info.make,
+                info.model,
+                info.serial,
+            )
 
-        # wayland parses edid natively, we need an extra library that may or
-        # may not be installed to do it in x11
-        have_serials_from_hardware = self.core.name == "wayland" or any(
-            i.serial is not None for i in output_info
-        )
+        return [
+            Output(port, make, model, serial, ScreenRect(x, y, w, h))
+            for (x, y), (w, h, port, make, model, serial) in xywh.items()
+        ]
+
+    def get_screens_from_config(self, output_info: list[Output]) -> list[Screen]:
+        if self.config.fake_screens:
+            return self.config.fake_screens
+
+        if self.config.generate_screens is not None:
+            return self.config.generate_screens(output_info)
+
+        return self.config.screens
+
+    def _process_screens(self, reloading: bool = False) -> None:
+        current_groups = [s.group for s in self.screens]
+        output_info = self.get_output_info()
+        config_screens = self.get_screens_from_config(output_info)
+        new_screens: list[Screen] = []
 
         for i, info in enumerate(output_info):
-            scr = Screen(serial=info.serial, name=info.port)
-            fresh_screen = True
-
-            # first, try to find a screen that matches this one by serial
-            # number
-            for screen in config:
-                if screen.serial is not None:
-                    if not have_serials_from_hardware:
-                        # if no hardware provided a serial and people provided
-                        # hardware, maybe the hardware didn't have one (e.g.
-                        # common in thinkpads)?
-                        logger.warning(
-                            "serial (%s) specified in config, none found from hardware.",
-                            screen.serial,
-                        )
-                    if screen.serial == info.serial:
-                        scr = screen
-                        fresh_screen = False
-                        logger.debug(
-                            f"using config serial {screen.serial} for output {info.port}"
-                        )
-                        break
-
-                if screen.name is not None:
-                    if screen.name == info.port:
-                        scr = screen
-                        fresh_screen = False
-                        logger.debug(f"using config name {screen.name} for output {info.port}")
-                        break
-
-            # if we didn't find one by serial number, take the ith screen
-            # assuming it exists, ignoring its serial number
-            if fresh_screen and i < len(config):
-                if config[i].serial is not None and config[i].serial != info.serial:
-                    logger.warning(
-                        "using config serial %s for output %s with physical serial %s",
-                        config[i].serial,
-                        info.port,
-                        info.serial,
-                    )
-                    # we need a copy here in case the ith window was a
-                    # previously used serial number
-                    scr = copy.copy(config[i])
-                elif config[i].name is not None and config[i].name != info.port:
-                    logger.warning(
-                        "using config name %s for output %s with physical name %s",
-                        config[i].name,
-                        info.port,
-                        info.port,
-                    )
-                    scr = copy.copy(config[i])
-                else:
-                    scr = config[i]
-                    logger.debug(f"using config at index {i} for output {info.port}")
-
-                scr.serial = info.serial
-                scr.name = info.port
+            if i < len(config_screens):
+                scr = config_screens[i]
+                logger.debug(f"using config at index {i} for output {info.port}")
+            else:
+                # user didn't supply enough screens, create one
+                scr = Screen()
+            scr.output = info
 
             if not hasattr(self, "current_screen") or reloading:
                 self.current_screen = scr
@@ -542,13 +495,13 @@ class Qtile(CommandObject):
                 grp,
                 reconfigure_gaps=reconfigure_gaps,
             )
-            screens.append(scr)
+            new_screens.append(scr)
 
         for screen in self.screens:
-            if screen not in screens:
+            if screen not in new_screens:
                 screen.finalize_gaps()
 
-        self.screens = screens
+        self.screens = new_screens
 
     @expose_command()
     def reconfigure_screens(self, *_: list[Any], **__: dict[Any, Any]) -> None:

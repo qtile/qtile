@@ -3,7 +3,7 @@ from __future__ import annotations
 import os.path
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING
 
 from libqtile import configurable, hook, utils
@@ -379,7 +379,9 @@ class Output:
     make: str | None
     model: str | None
     serial: str | None
-    rect: ScreenRect
+    # Do not consider geometry when comparing outputs: we want to know if the
+    # underlying physical hardware is the same, the geometry doesn't matter.
+    rect: ScreenRect = field(compare=False)
 
 
 class Screen(CommandObject):
@@ -410,20 +412,12 @@ class Screen(CommandObject):
     the performance should already be okay. However, to limit these events
     further you can use this variable and e.g. set it to your monitor refresh
     rate. 60 would mean that we handle a drag event 60 times per second.
-
-    ``serial`` is optionally the serial number of the monitor this Screen's
-    config should be bound to. You can find this via ``get-edid -b $BUS |
-    parse-edid``, or by looking at the sticker on the back of your monitor :).
-    This is mostly useful for people with multi-monitor configs.
-
-    ``name`` is optionally the output name of the monitor this Screen's config
-    should be bound to. You can find this using utilities like ``wlr-randr``.
-    This is mostly useful for people using the wayland backend with
-    multi-monitor configs (on X11 names may not be stable across boots).
     """
 
     group: _Group
     index: int
+    # This is populated in manager.py's _process_screens()
+    output: Output
 
     def __init__(
         self,
@@ -439,8 +433,6 @@ class Screen(CommandObject):
         y: int | None = None,
         width: int | None = None,
         height: int | None = None,
-        serial: str | None = None,
-        name: str | None = None,
     ) -> None:
         self.top = top
         self.bottom = bottom
@@ -458,8 +450,7 @@ class Screen(CommandObject):
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
         self.previous_group: _Group | None = None
-        self.serial = serial
-        self.name = name
+        self.output = Output(None, None, None, None, ScreenRect(0, 0, 0, 0))
 
     def __eq__(self, other: object) -> bool:
         # When we trigger a reconfigure_screens(), _process_screens()
@@ -482,16 +473,18 @@ class Screen(CommandObject):
         if not isinstance(other, Screen):
             return False
 
-        # prefer serial numbers: if a monitor has its geometry changed, this
-        # still allows us to reason correctly about focus.
+        # Use output matching if we have identifying info (port, make, model, or serial).
+        # This allows us to reason correctly about focus when monitor geometry changes.
         if (
-            self.serial is not None
-            and other.serial is not None
-            and self.serial.strip() != "000000000000"
+            self.output.port is not None
+            or self.output.make is not None
+            or self.output.model is not None
+            or self.output.serial is not None
         ):
-            return self.serial == other.serial
+            return self.output == other.output
 
-        # but if not, fall back to what we have: geometry.
+        # Fall back to geometry comparison when output info isn't available
+        # (e.g., in xephyr, which doesn't export any edid info)
         return (
             other.x == self.x
             and other.y == self.y
@@ -719,8 +712,7 @@ class Screen(CommandObject):
             height=self.height,
             x=self.x,
             y=self.y,
-            serial=self.serial,
-            name=self.name,
+            **asdict(self.output),
         )
 
     @expose_command()

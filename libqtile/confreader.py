@@ -6,10 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from types import FunctionType
     from typing import Any, Literal
 
-    from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Rule, Screen
+    from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
     from libqtile.layout.base import Layout
 
 
@@ -55,6 +56,8 @@ class Config:
     wl_xcursor_size: int
     idle_timers: list[IdleTimer]
     idle_inhibitors: list[IdleInhibitor]
+    fake_screens: list[Screen] | None
+    generate_screens: Callable[[list[Output]], list[Screen]] | None
 
     def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
@@ -65,18 +68,15 @@ class Config:
         self.file_path = file_path
         self.update(**settings)
 
-    def update(self, *, fake_screens=None, **settings):
+    def update(self, **settings):
         from libqtile.resources import default_config
-
-        if fake_screens:
-            self.fake_screens = fake_screens
 
         default = vars(default_config)
         for key in self.__annotations__.keys():
             try:
                 value = settings[key]
             except KeyError:
-                value = getattr(self, key, default[key])
+                value = getattr(self, key, default.get(key, None))
             setattr(self, key, value)
 
     def _reload_config_submodules(self, path: Path) -> None:
