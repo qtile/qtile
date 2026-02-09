@@ -266,7 +266,6 @@ class ScratchPad(group._Group):
             if match.compare(client):
                 name = n
                 break
-
         if name is not None:
             self._spawned.pop(name)
             if not self._spawned:

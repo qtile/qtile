@@ -110,8 +110,8 @@ class Floating(Layout):
                 new_y = min(new_y, new_screen.y + new_screen.height - win.height)
                 new_y = max(new_y, new_screen.y)
 
-                win.float_x = new_x
-                win.float_y = new_y
+                # win.float_x = new_x
+                # win.float_y = new_y
             win.group = new_screen.group
 
     def focus_first(self, group=None):
@@ -233,15 +233,19 @@ class Floating(Layout):
             if client.float_x is None or client.float_y is None:
                 # this window hasn't been placed before, let's put it in a sensible spot
                 above = self.compute_client_position(client, screen_rect)
+                # else:
+                client._float_width = client.width
+                client._float_height = client.height
 
             # TODO: wayland has no z-layering
             # Put the floating focused client above always
-            if self.group.qtile.core.name == "wayland":
-                above = True
+            # if self.group.qtile.core.name == "wayland":
+            #     above = True
 
+            assert client.group is not None and client.group.screen is not None
             client.place(
-                client.float_x,
-                client.float_y,
+                client.group.screen.x + client.float_x,
+                client.group.screen.y + client.float_y,
                 client._float_width,
                 client._float_height,
                 bw,

@@ -21,9 +21,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
-from libqtile.backend.base import WindowStates
 
 if TYPE_CHECKING:
     from libqtile.backend.base import Window
@@ -65,6 +65,9 @@ class Fullscreen(_SimpleLayoutBase):
             client.unhide()
         else:
             client.hide()
+
+    # def focus(self, client: Window) -> None:
+    #     self.focused = client
 
     @expose_command("previous")
     def up(self):

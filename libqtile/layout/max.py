@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
@@ -29,6 +30,7 @@ class Max(_SimpleLayoutBase):
 
     def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
+        self._manages_win_state = WindowStates.MAXIMIZED
         self.add_defaults(Max.defaults)
 
     def add_client(self, client: Window) -> None:  # type: ignore[override]
@@ -55,6 +57,9 @@ class Max(_SimpleLayoutBase):
                 client.move_to_top()
         else:
             client.hide()
+
+    # def focus(self, client: Window) -> None:
+    #     self.focused = client
 
     @expose_command("previous")
     def up(self):

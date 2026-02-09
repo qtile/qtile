@@ -2268,6 +2268,18 @@ class Window(_Window, base.Window):
         self.floating = False
 
     @expose_command()
+    def toggle_tiling(self) -> None:
+        self.tiling = not self.tiling
+
+    @expose_command()
+    def enable_tiling(self) -> None:
+        self.tiling = True
+
+    @expose_command()
+    def disable_tiling(self) -> None:
+        self.tiling = True
+
+    @expose_command()
     def toggle_maximize(self):
         self.maximized = not self.maximized
 

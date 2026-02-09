@@ -4,6 +4,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile import hook
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
@@ -28,6 +29,13 @@ class _Window(CommandObject, metaclass=ABCMeta):
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
         self._can_steal_focus: bool = True
+        self._win_state: WindowStates | None = None
+        self.tiling: bool
+
+        self.base_x: int | None = None
+        self.base_y: int | None = None
+        self.base_width: int | None = None
+        self.base_height: int | None = None
 
     @property
     @abstractmethod
@@ -122,6 +130,24 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
     def _select(self, name, sel):
         return None
+
+    def _save_geometry(self):
+        """Save current window geometry."""
+        self.base_x = self.x
+        self.base_y = self.y
+        self.base_width = self.width
+        self.base_height = self.height
+
+    def _restore_geometry(self):
+        """Restore previously saved window geometry."""
+        if self.base_x is not None:
+            self.x = self.base_x
+        if self.base_y is not None:
+            self.y = self.base_y
+        if self.base_width is not None:
+            self.width = self.base_width
+        if self.base_height is not None:
+            self.height = self.base_height
 
     @abstractmethod
     @expose_command()
@@ -222,6 +248,8 @@ class Window(_Window, metaclass=ABCMeta):
     # If float_x or float_y are None, the window has never been placed
     float_x: int | None
     float_y: int | None
+    _float_width: int
+    _float_height: int
     bordercolor: ColorsType | None
 
     def __repr__(self):

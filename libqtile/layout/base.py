@@ -244,7 +244,8 @@ class _ClientList:
 
     @current_client.setter
     def current_client(self, client: Window) -> None:
-        self._current_idx = self.clients.index(client)
+        if client in self.clients:
+            self._current_idx = self.clients.index(client)
 
     def focus(self, client: Window) -> None:
         """
