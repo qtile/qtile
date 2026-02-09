@@ -54,6 +54,13 @@ jobs:
             - name: Run Tests
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
+                dump_cores() {
+                  echo "=== Listing coredumps ==="
+                  coredumpctl list || true
+                  echo "=== Stack trace for last coredump ==="
+                  coredumpctl debug --debugger-arguments="-batch -ex 'set pagination off' -ex 'bt full' -ex 'quit'" || true
+                }
+                trap dump_cores ERR
                 make QTILE_CI_PYTHON=${QTILE_CI_PYTHON} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
                 uv run coverage combine -q
                 uv run coverage report -m
