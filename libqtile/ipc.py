@@ -313,7 +313,7 @@ class _IPC:
 
 
 class Client:
-    def __init__(self, socket_path: str, wire_format=IPCWireFormat.BYTES) -> None:
+    def __init__(self, socket_path: str, is_json=False) -> None:
         """Create a new IPC client
 
         Parameters
@@ -321,11 +321,11 @@ class Client:
         socket_path: str
             The file path to the file that is used to open the connection to
             the running IPC server.
-        wire_format: IPCWireFormat
-            The format to use to communicate via IPC
+        is_json: bool
+            Pack and unpack messages as json
         """
         self.socket_path = socket_path
-        self.wire_format = wire_format
+        self.wire_format = IPCWireFormat.JSON_TAGGED if is_json else IPCWireFormat.BYTES
 
     def call(self, data: tuple) -> IPCReplyMessage:
         return self.send(data)

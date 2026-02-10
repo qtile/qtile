@@ -9,7 +9,7 @@ def qshell(args) -> None:
         socket = args.socket
     client = ipc.Client(
         socket,
-        wire_format=ipc.IPCWireFormat.JSON_RAW if args.is_json else ipc.IPCWireFormat.BYTES,
+        is_json=args.is_json or False,
     )
     cmd_object = interface.IPCCommandInterface(client)
     qsh = sh.QSh(cmd_object)
