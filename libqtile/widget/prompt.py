@@ -301,7 +301,29 @@ class CommandCompleter:
 class Prompt(base._TextBox):
     """A widget that prompts for user input
 
+    This widget is used when any one of
+    ``lazy.spawncmd()``, ``lazy.findwindow()``, ``lazy.labelgroup()``,
+    ``lazy.qtilecmd()``, ``lazy.spawncmd()``, ``lazy.switchgroup()``,
+    ``lazy.togroup()``
+    is called.
+
     Input should be started using the ``.start_input()`` method on this class.
+    A minimal example of a custom prompt using this method is provided below.
+
+    .. code-block:: python
+
+        from libqtile.lazy import lazy
+
+        def my_action(input_text):
+            # Do something with the entered text here.
+        
+        @lazy.function
+        def my_prompt(qtile):
+            qtile.widgets_map["prompt"].start_input("my action", my_action)
+
+        keys = [
+            Key([mod], "s", my_prompt)
+        ]
     """
 
     completers = {
@@ -452,7 +474,7 @@ class Prompt(base._TextBox):
         complete :
             completer to use.
         strict_completer :
-            When True the return value wil be the exact completer result where
+            When True the return value will be the exact completer result where
             available.
         allow_empty_input :
             When True, an empty value will still call the callback function
@@ -674,7 +696,7 @@ class Prompt(base._TextBox):
             return self.keyhandlers[k]
 
     def process_key_press(self, keysym: int):
-        """Key press handler for the minibuffer.
+        """Key press handler for the prompt widget.
 
         Currently only supports ASCII characters.
         """
@@ -687,6 +709,7 @@ class Prompt(base._TextBox):
 
     @expose_command()
     def fake_keypress(self, key: str) -> None:
+        """Send a key press to the widget."""
         self.process_key_press(self.qtile.core.keysym_from_name(key))
 
     @expose_command()
