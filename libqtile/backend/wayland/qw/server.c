@@ -156,6 +156,7 @@ void qw_server_set_output_fullscreen_background(struct qw_server *server, int x,
 // Handle changes in the output layout (like monitor arrangement).
 // Updates output configuration accordingly.
 static void qw_server_handle_output_layout_change(struct wl_listener *listener, void *data) {
+    wlr_log(WLR_ERROR, "start qw_server_handle_output_layout_change");
     UNUSED(data);
 
     struct qw_server *server = wl_container_of(listener, server, output_layout_change);
@@ -198,6 +199,7 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         }
 
         // TODO: lock surface
+        wlr_log(WLR_ERROR, "calling lock output change for: %s", o->wlr_output->name);
         qw_session_lock_output_change(o);
 
         qw_output_arrange_layers(o);
@@ -265,7 +267,8 @@ static void qw_server_output_manager_reconfigure(struct qw_server *server,
     wlr_output_configuration_v1_destroy(config);
     if (apply) {
         qw_cursor_configure_xcursor(server->cursor);
-        qw_server_handle_output_layout_change(&server->output_layout_change, NULL);
+        wlr_log(WLR_ERROR, "(call qw_server_handle_output_layout_change)");
+        // qw_server_handle_output_layout_change(&server->output_layout_change, NULL);
     }
 }
 
