@@ -19,7 +19,7 @@ import traceback
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from libqtile import hook
 from libqtile.log_utils import logger
@@ -95,12 +95,17 @@ class IPCStatus(enum.IntEnum):
     EXCEPTION = 2
 
 
+class MessageType(enum.StrEnum):
+    COMMAND = "command"
+    REPLY = "reply"
+
+
 class IPCMessage(metaclass=ABCMeta):
     """Abstract base class for all IPC messages"""
 
     @property
     @abstractmethod
-    def message_type(self) -> Literal["command"] | Literal["reply"]:
+    def message_type(self) -> MessageType:
         """Discrimantor for the message type of the instance"""
 
     @abstractmethod
@@ -127,8 +132,8 @@ class IPCCommandMessage(IPCMessage):
     lifted: bool
 
     @property
-    def message_type(self) -> Literal["command"] | Literal["reply"]:
-        return "command"
+    def message_type(self) -> MessageType:
+        return MessageType.COMMAND
 
     def to_list(self):
         """Follows the original IPC format"""
@@ -150,8 +155,8 @@ class IPCReplyMessage(IPCMessage):
     data: Any
 
     @property
-    def message_type(self) -> Literal["command"] | Literal["reply"]:
-        return "reply"
+    def message_type(self) -> MessageType:
+        return MessageType.REPLY
 
     def to_list(self) -> list:
         """Follows the original IPC format"""
@@ -278,12 +283,12 @@ class _IPC:
         # There could be more type validation done here
         # before trying to unpack content
         match message_type:
-            case "command":
+            case MessageType.COMMAND:
                 msg = IPCCommandMessage(**content)
                 # Must always lift a message deserialized from JSON
                 msg.lifted = True
                 return msg
-            case "reply":
+            case MessageType.REPLY:
                 return IPCReplyMessage(**content)
             case _:
                 raise IPCError(f"Unknown message type: {message_type}")
