@@ -13,7 +13,9 @@ import libqtile.widget
 from libqtile.command.base import expose_command
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
+from libqtile.utils import guess_terminal
 
+terminal = guess_terminal()
 
 class ServerConfig(Config):
     class KwargWidget(libqtile.widget.base._TextBox):
@@ -23,8 +25,8 @@ class ServerConfig(Config):
 
     auto_fullscreen = True
     keys = [
-        libqtile.config.Key(["mod4"], "Return", lazy.spawn("xterm")),
-        libqtile.config.Key(["mod4"], "t", lazy.spawn("xterm"), desc="dummy description"),
+        libqtile.config.Key(["mod4"], "Return", lazy.spawn(terminal)),
+        libqtile.config.Key(["mod4"], "t", lazy.spawn(terminal), desc="dummy description"),
         libqtile.config.Key([], "y", desc="noop"),
         libqtile.config.KeyChord(
             ["mod4"],
@@ -143,9 +145,9 @@ def test_display_kb(manager):
     pprint(table)
     assert table.count("\n") >= 2
     assert re.match(r"(?m)^Mode\s{3,}KeySym\s{3,}Mod\s{3,}Command\s{3,}Desc\s*$", table)
-    assert re.search(r"(?m)^<root>\s{3,}Return\s{3,}mod4\s{3,}spawn\('xterm'\)\s*$", table)
+    assert re.search(r"(?m)^<root>\s{3,}Return\s{3,}mod4\s{3,}spawn\('" + terminal + r"'\)\s*$", table)
     assert re.search(
-        r"(?m)^<root>\s{3,}t\s{3,}mod4\s{3,}spawn\('xterm'\)\s{3,}dummy description\s*$", table
+        r"(?m)^<root>\s{3,}t\s{3,}mod4\s{3,}spawn\('" + terminal + r"'\)\s{3,}dummy description\s*$", table
     )
     assert re.search(r"(?m)^<root>\s{3,}q\s{3,}mod4\s{13,}Enter named mode\s*$", table)
     assert re.search(r"(?m)^named\s{3,}q\s{13,}Enter <unnamed> mode\s*$", table)

@@ -15,12 +15,14 @@ from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.group import _Group
 from libqtile.lazy import lazy
+from libqtile.utils import guess_terminal
 from test.conftest import dualmonitor, multimonitor
 from test.helpers import BareConfig, Retry, assert_window_died
 from test.layouts.layout_utils import assert_focused
 
 configs_dir = Path(__file__).resolve().parent / "configs"
 
+terminal = guess_terminal()
 
 class ManagerConfig(Config):
     auto_fullscreen = True
@@ -408,14 +410,14 @@ def test_spawn_in_group(manager, backend_name):
     def wait_for_window(empty=False):
         assert (len(manager.c.windows()) > 0) is not empty
 
-    manager.c.spawn("xterm")
+    manager.c.spawn(terminal)
     wait_for_window()
     assert manager.c.group["a"].info()["windows"]
     assert not manager.c.group["b"].info()["windows"]
     manager.c.window.kill()
     wait_for_window(empty=True)
 
-    manager.c.spawn("xterm", group="b")
+    manager.c.spawn(terminal, group="b")
     wait_for_window()
     assert manager.c.group["b"].info()["windows"]
     assert not manager.c.group["a"].info()["windows"]
