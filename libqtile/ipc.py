@@ -252,7 +252,7 @@ class _IPC:
     def _from_list(data: list) -> IPCMessage:
         """Construct message from an untagged list"""
         match data:
-            case [selectors, name, args, kwargs, lifted]:
+            case [selectors, name, args, kwargs, _lifted]:
                 return IPCCommandMessage(
                     selectors=selectors,
                     name=name,
@@ -260,7 +260,9 @@ class _IPC:
                     # so we convert it just in case
                     args=tuple(args),
                     kwargs=kwargs,
-                    lifted=lifted,
+                    # Must always lift a message deserialized
+                    # from JSON
+                    lifted=True,
                 )
             case [status, data]:
                 if status not in IPCStatus:
@@ -277,7 +279,10 @@ class _IPC:
         # before trying to unpack content
         match message_type:
             case "command":
-                return IPCCommandMessage(**content)
+                msg = IPCCommandMessage(**content)
+                # Must always lift a message deserialized from JSON
+                msg.lifted = True
+                return msg
             case "reply":
                 return IPCReplyMessage(**content)
             case _:
@@ -292,7 +297,11 @@ class _IPC:
                 return json_obj.encode()
 
             case IPCWireFormat.JSON_TAGGED:
-                json_obj = json.dumps(msg.to_dict(), default=_IPC._json_encoder)
+                tagged_dict = {
+                    "message_type": msg.message_type,
+                    "content": msg.to_dict(),
+                }
+                json_obj = json.dumps(tagged_dict, default=_IPC._json_encoder)
                 return json_obj.encode()
 
             case IPCWireFormat.BYTES:
