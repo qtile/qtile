@@ -110,6 +110,8 @@ def test_restart_hook_and_state(manager_nospawn, request, backend, backend_name)
     # Stop the manager
     manager.c.eval("self._do_stop()")
 
+    manager.proc.join(10)
+
     # Manager should have shutdown now so trying to access it will raise an error
     with pytest.raises((IPCError, ConnectionResetError)):
         assert manager.c.status()
