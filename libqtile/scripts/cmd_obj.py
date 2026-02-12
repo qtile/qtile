@@ -156,7 +156,7 @@ def cmd_obj(args) -> None:
 
     if args.obj_spec:
         sock_file = args.socket or find_sockfile()
-        ipc_client = Client(sock_file, is_json=args.json or False)
+        ipc_client = Client(sock_file)
         cmd_object = IPCCommandInterface(ipc_client)
         cmd_client = CommandClient(cmd_object)
         obj = get_object(cmd_client, args.obj_spec)
@@ -234,10 +234,4 @@ def add_subcommand(subparsers, parents):
         help="With both --object and --function args prints documentation for function.",
     )
     parser.add_argument("--socket", "-s", help="Use specified socket for IPC.")
-    # Helpful for debugging, but I'm not sure this should stay
-    # Perhaps just keep the longhand `--json`, and remove the shorthand
-    # to avoid confusion
-    parser.add_argument(
-        "--json", "-j", action="store_true", help="Use JSON as the IPC wire format"
-    )
     parser.set_defaults(func=cmd_obj)
