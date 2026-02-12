@@ -11,10 +11,8 @@ import asyncio
 import enum
 import fcntl
 import json
-import marshal
 import os.path
 import socket
-import struct
 import traceback
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator
@@ -27,9 +25,6 @@ from libqtile.utils import get_cache_dir
 
 if TYPE_CHECKING:
     from libqtile.command.graph import SelectorType
-
-HDRFORMAT = "!L"
-HDRLEN = struct.calcsize(HDRFORMAT)
 
 SOCKBASE = "qtilesocket.%s"
 
@@ -77,18 +72,6 @@ def find_sockfile(display: str | None = None):
     raise IPCError("Could not find socket file.")
 
 
-class IPCWireFormat(enum.StrEnum):
-    JSON_RAW = "json_raw"
-    """Formats the message data directly as a tuple/list in json"""
-
-    JSON_TAGGED = "json_tagged"
-    """Formats the message as a dict, contained within a top level
-    object that includes a 'message_type'"""
-
-    BYTES = "bytes"
-    """Uses python's marshall module to en/decode the message"""
-
-
 class IPCStatus(enum.IntEnum):
     SUCCESS = 0
     ERROR = 1
@@ -107,10 +90,6 @@ class IPCMessage(metaclass=ABCMeta):
     @abstractmethod
     def message_type(self) -> MessageType:
         """Discrimantor for the message type of the instance"""
-
-    @abstractmethod
-    def to_list(self) -> list:
-        """Return the message content as a flat list (used by the JSON_RAW format)"""
 
     @abstractmethod
     def to_dict(self) -> dict:
@@ -135,10 +114,6 @@ class IPCCommandMessage(IPCMessage):
     def message_type(self) -> MessageType:
         return MessageType.COMMAND
 
-    def to_list(self):
-        """Follows the original IPC format"""
-        return [self.selectors, self.name, self.args, self.kwargs, self.lifted]
-
     def to_dict(self):
         """A simple mapping with the variable names corresponding to the keys"""
         return asdict(self)
@@ -157,10 +132,6 @@ class IPCReplyMessage(IPCMessage):
     @property
     def message_type(self) -> MessageType:
         return MessageType.REPLY
-
-    def to_list(self) -> list:
-        """Follows the original IPC format"""
-        return [int(self.status), self.data]
 
     def to_dict(self) -> dict:
         return {
@@ -199,124 +170,51 @@ class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
     @staticmethod
-    def unpack(
-        data: bytes, *, wire_format: IPCWireFormat | None = None
-    ) -> tuple[IPCMessage, IPCWireFormat]:
+    def unpack(data: bytes) -> IPCMessage:
         """Unpack the incoming message
 
         Parameters
         ----------
         data: bytes
             The incoming message to unpack
-        format: IPCWireFormat | None
-            The format the message should be unpacked as. If None,
-            try unpacking as json first. If unsuccessful, try to fall back
-            to marshalled bytes.
 
         Returns
         -------
-        tuple[Any, bool]
-            A tuple of the unpacked message and the format used
+        IPCMessage
+            The unpacked message
         """
-        if wire_format != IPCWireFormat.BYTES:
-            try:
-                obj = json.loads(data.decode())
-                match obj:
-                    # JSON_TAGGED format
-                    case {"message_type": message_type, "content": content}:
-                        msg = _IPC._from_tagged_dict(message_type, content)
-                        return msg, IPCWireFormat.JSON_TAGGED
-
-                    # JSON_RAW format
-                    case list():
-                        msg = _IPC._from_list(obj)
-                        return msg, IPCWireFormat.JSON_RAW
-
-                    # Valid json, but invalid data
-                    case _:
-                        raise IPCError(
-                            f"Malformed JSON message. Expected dict with 'message_type' "
-                            f"or list, got: {type(obj)}"
-                        )
-
-            except (ValueError, KeyError) as e:
-                if wire_format in [IPCWireFormat.JSON_RAW, IPCWireFormat.JSON_TAGGED]:
-                    raise IPCError("Unable to decode json data") from e
-
         try:
-            assert len(data) >= HDRLEN
-            size = struct.unpack(HDRFORMAT, data[:HDRLEN])[0]
-            assert size >= len(data[HDRLEN:])
-            message = marshal.loads(data[HDRLEN : HDRLEN + size])
-            # List encoding to preserve the old format of marshalled messages
-            return _IPC._from_list(message), IPCWireFormat.BYTES
-        except AssertionError as e:
-            raise IPCError("error reading reply! (probably the socket was disconnected)") from e
+            obj = json.loads(data.decode())
+            match obj:
+                case {"message_type": MessageType.COMMAND, "content": content}:
+                    msg = IPCCommandMessage(**content)
+                    # Must always lift a message deserialized from JSON
+                    msg.lifted = True
+                    return msg
+
+                case {"message_type": MessageType.REPLY, "content": content}:
+                    return IPCReplyMessage(**content)
+
+                case {"message_type": typ, "content": _}:
+                    raise IPCError(f"Unknown message type: '{typ}'")
+
+                case _:
+                    raise IPCError(
+                        "Malformed JSON message. Expected dict with 'message_type' and 'content' keys"
+                    )
+
+        except (ValueError, KeyError) as e:
+            raise IPCError("Unable to decode json data") from e
 
     @staticmethod
-    def _from_list(data: list) -> IPCMessage:
-        """Construct message from an untagged list"""
-        match data:
-            case [selectors, name, args, kwargs, _lifted]:
-                return IPCCommandMessage(
-                    selectors=selectors,
-                    name=name,
-                    # For json, args is gonna be a list,
-                    # so we convert it just in case
-                    args=tuple(args),
-                    kwargs=kwargs,
-                    # Must always lift a message deserialized
-                    # from JSON
-                    lifted=True,
-                )
-            case [status, data]:
-                if status not in IPCStatus:
-                    raise IPCError(f"Invalid status in reply message: {status}")
-                return IPCReplyMessage(status=status, data=data)
-            case _:
-                raise IPCError(
-                    f"Malformed list message. Expected 2 or 5 elements, got: {len(data)}"
-                )
-
-    @staticmethod
-    def _from_tagged_dict(message_type: str, content: dict) -> IPCMessage:
-        # There could be more type validation done here
-        # before trying to unpack content
-        match message_type:
-            case MessageType.COMMAND:
-                msg = IPCCommandMessage(**content)
-                # Must always lift a message deserialized from JSON
-                msg.lifted = True
-                return msg
-            case MessageType.REPLY:
-                return IPCReplyMessage(**content)
-            case _:
-                raise IPCError(f"Unknown message type: {message_type}")
-
-    @staticmethod
-    def pack(msg: IPCMessage, *, wire_format=IPCWireFormat.BYTES) -> bytes:
+    def pack(msg: IPCMessage) -> bytes:
         """Pack the object into a message to pass"""
-        match wire_format:
-            case IPCWireFormat.JSON_RAW:
-                json_obj = json.dumps(msg.to_list(), default=_IPC._json_encoder)
-                return json_obj.encode()
-
-            case IPCWireFormat.JSON_TAGGED:
-                tagged_dict = {
-                    "message_type": msg.message_type,
-                    "content": msg.to_dict(),
-                }
-                json_obj = json.dumps(tagged_dict, default=_IPC._json_encoder)
-                return json_obj.encode()
-
-            case IPCWireFormat.BYTES:
-                # List encoding to preserve the old format of marshalled messages
-                msg_bytes = marshal.dumps(msg.to_list())
-                size = struct.pack(HDRFORMAT, len(msg_bytes))
-                return size + msg_bytes
-
-            case _:
-                raise ValueError(f"Invalid wire format: {wire_format}")
+        tagged_dict = {
+            "message_type": msg.message_type,
+            "content": msg.to_dict(),
+        }
+        json_obj = json.dumps(tagged_dict, default=_IPC._json_encoder)
+        return json_obj.encode()
 
     @staticmethod
     def _json_encoder(field: Any) -> Any:
@@ -327,7 +225,7 @@ class _IPC:
 
 
 class Client:
-    def __init__(self, socket_path: str, is_json=False) -> None:
+    def __init__(self, socket_path: str) -> None:
         """Create a new IPC client
 
         Parameters
@@ -339,7 +237,6 @@ class Client:
             Pack and unpack messages as json
         """
         self.socket_path = socket_path
-        self.wire_format = IPCWireFormat.JSON_TAGGED if is_json else IPCWireFormat.BYTES
 
     def call(self, data: tuple) -> IPCReplyMessage:
         return self.send(data)
@@ -366,7 +263,7 @@ class Client:
             raise IPCError(f"Could not open {self.socket_path}")
 
         try:
-            send_data = _IPC.pack(IPCCommandMessage(*msg), wire_format=self.wire_format)
+            send_data = _IPC.pack(IPCCommandMessage(*msg))
             writer.write(send_data)
             writer.write_eof()
 
@@ -378,7 +275,7 @@ class Client:
             writer.close()
             await writer.wait_closed()
 
-        data, _ = _IPC.unpack(read_data, wire_format=self.wire_format)
+        data = _IPC.unpack(read_data)
         if not isinstance(data, IPCReplyMessage):
             raise IPCError("Expected a reply message from the server")
         return data
@@ -424,7 +321,7 @@ class Server:
             data = await reader.read()
             logger.debug("EOF received by server")
 
-            req, wire_format = _IPC.unpack(data)
+            req = _IPC.unpack(data)
             if not isinstance(req, IPCCommandMessage):
                 logger.error("Expected command message from client")
                 return
@@ -438,7 +335,7 @@ class Server:
             else:
                 rep = self.handler(req)
 
-            result = _IPC.pack(rep, wire_format=wire_format)
+            result = _IPC.pack(rep)
 
             logger.debug("Sending result on receive EOF")
             writer.write(result)
