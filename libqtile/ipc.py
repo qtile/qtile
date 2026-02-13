@@ -92,8 +92,8 @@ class IPCMessage(metaclass=ABCMeta):
         """Discrimantor for the message type of the instance"""
 
     @abstractmethod
-    def to_dict(self) -> dict:
-        """Return the message content as a dict (used by the JSON_TAGGED)"""
+    def to_json(self) -> dict:
+        """Return the message content as a dict suitable for JSON serialization"""
 
     @abstractmethod
     def __iter__(self) -> Iterator[Any]:
@@ -114,7 +114,7 @@ class IPCCommandMessage(IPCMessage):
     def message_type(self) -> MessageType:
         return MessageType.COMMAND
 
-    def to_dict(self):
+    def to_json(self):
         """A simple mapping with the variable names corresponding to the keys"""
         return asdict(self)
 
@@ -133,7 +133,7 @@ class IPCReplyMessage(IPCMessage):
     def message_type(self) -> MessageType:
         return MessageType.REPLY
 
-    def to_dict(self) -> dict:
+    def to_json(self) -> dict:
         return {
             # DEV: Arguably, for the JSON_TAGGED format
             # we could use a string representation here
@@ -211,7 +211,7 @@ class _IPC:
         """Pack the object into a message to pass"""
         tagged_dict = {
             "message_type": msg.message_type,
-            "content": msg.to_dict(),
+            "content": msg.to_json(),
         }
         json_obj = json.dumps(tagged_dict, default=_IPC._json_encoder)
         return json_obj.encode()
