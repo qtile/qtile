@@ -202,7 +202,7 @@ class _IPC:
             The unpacked message
         """
         try:
-            obj = json.loads(data.decode())
+            obj = json.loads(data.decode(), object_hook=_IPC._json_tuple_object_hook)
             match obj:
                 case {"message_type": MessageType.COMMAND, "content": content}:
                     return IPCCommandMessage.from_json(content)
@@ -228,15 +228,31 @@ class _IPC:
             "message_type": msg.message_type,
             "content": msg.to_json(),
         }
-        json_obj = json.dumps(tagged_dict, default=_IPC._json_encoder)
+        json_obj = _IPC._HintTuplesJsonEncoder().encode(tagged_dict)
         return json_obj.encode()
 
+    class _HintTuplesJsonEncoder(json.JSONEncoder):
+        def encode(self, o):
+            def hint_tuple(o):
+                if isinstance(o, tuple):
+                    return {"$tuple": list(o)}
+                if isinstance(o, list):
+                    return [hint_tuple(i) for i in o]
+                if isinstance(o, dict):
+                    return {key: hint_tuple(val) for key, val in o.items()}
+                # This is to retain the old `_json_encoder` behavior
+                # of converting a set to a list for serialization
+                if isinstance(o, set):
+                    return hint_tuple(list(o))
+                return o
+
+            return json.JSONEncoder.encode(self, hint_tuple(o))
+
     @staticmethod
-    def _json_encoder(field: Any) -> Any:
-        """Convert non-serializable types to ones understood by stdlib json module"""
-        if isinstance(field, set):
-            return list(field)
-        raise ValueError(f"Tried to JSON serialize unsupported type {type(field)}: {field}")
+    def _json_tuple_object_hook(o):
+        if "$tuple" in o and len(o) == 1:
+            return tuple(o["$tuple"])
+        return o
 
 
 class Client:
