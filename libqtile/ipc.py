@@ -19,6 +19,8 @@ from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any
 
+from typing_extensions import Self
+
 from libqtile import hook
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
@@ -95,6 +97,11 @@ class IPCMessage(metaclass=ABCMeta):
     def to_json(self) -> dict:
         """Return the message content as a dict suitable for JSON serialization"""
 
+    @classmethod
+    @abstractmethod
+    def from_json(cls, json: dict) -> Self:
+        """Construct the message from a json dict"""
+
     @abstractmethod
     def __iter__(self) -> Iterator[Any]:
         """Enable unpacking syntax for the message"""
@@ -118,6 +125,13 @@ class IPCCommandMessage(IPCMessage):
         """A simple mapping with the variable names corresponding to the keys"""
         return asdict(self)
 
+    @classmethod
+    def from_json(cls, json: dict) -> IPCCommandMessage:
+        msg = IPCCommandMessage(**json)
+        # Must always lift a message deserialized from JSON
+        msg.lifted = True
+        return msg
+
     def __iter__(self):
         return iter((self.selectors, self.name, self.args, self.kwargs, self.lifted))
 
@@ -140,6 +154,10 @@ class IPCReplyMessage(IPCMessage):
             "status": int(self.status),
             "data": self.data,
         }
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCReplyMessage:
+        return IPCReplyMessage(**json)
 
     def __iter__(self):
         return iter((self.status, self.data))
@@ -187,13 +205,10 @@ class _IPC:
             obj = json.loads(data.decode())
             match obj:
                 case {"message_type": MessageType.COMMAND, "content": content}:
-                    msg = IPCCommandMessage(**content)
-                    # Must always lift a message deserialized from JSON
-                    msg.lifted = True
-                    return msg
+                    return IPCCommandMessage.from_json(content)
 
                 case {"message_type": MessageType.REPLY, "content": content}:
-                    return IPCReplyMessage(**content)
+                    return IPCReplyMessage.from_json(content)
 
                 case {"message_type": typ, "content": _}:
                     raise IPCError(f"Unknown message type: '{typ}'")
