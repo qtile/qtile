@@ -50,6 +50,10 @@ PROTOS = [
         "pointer-constraints-unstable-v1-protocol.h",
         f"{WAYLAND_PROTOCOLS}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml",
     ],
+    [
+        "cursor-shape-v1-protocol.h",
+        f"{WAYLAND_PROTOCOLS}/staging/cursor-shape/cursor-shape-v1.xml",
+    ],
 ]
 
 QW_PROTO_OUT_PATH = QW_PATH / "proto"

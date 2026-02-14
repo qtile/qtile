@@ -282,6 +282,7 @@ class Core(base.Core):
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
+        self.cursor_shape_manager = self.qw_cursor.cursor_shape_mgr
 
         self.painter = Painter(self)
         self._locked = False
