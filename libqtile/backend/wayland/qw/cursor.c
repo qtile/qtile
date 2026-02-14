@@ -360,6 +360,9 @@ static void qw_cursor_handle_frame(struct wl_listener *listener, void *data) {
     wlr_seat_pointer_notify_frame(cursor->server->seat);
 }
 
+// forward declaration
+static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data);
+
 struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     // Allocate memory for qw_cursor
     struct qw_cursor *cursor = calloc(1, sizeof(*cursor));
@@ -673,7 +676,7 @@ void qw_cursor_fake_click(struct qw_cursor *cursor) {
     qw_cursor_handle_button(&cursor->button, &event);
 }
 
-void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data) {
+static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, request_set_cursor_shape);
     struct wlr_cursor_shape_manager_v1_request_set_shape_event *event = data;
 
