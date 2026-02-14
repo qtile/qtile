@@ -13,6 +13,7 @@ import fcntl
 import json
 import os.path
 import socket
+import struct
 import traceback
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator
@@ -252,6 +253,53 @@ class _IPC:
         return o
 
 
+class IPCStreamIO:
+    """Wraps an asyncio `StreamReader` and `StreamWriter` and implements
+    a simple framing protocol to handle sending and receiving IPCMessages
+    """
+
+    FRAME_HEADER_FORMAT = "!L"
+    FRAME_HEADER_LENGTH = struct.calcsize(FRAME_HEADER_FORMAT)
+
+    def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+        self.reader = reader
+        self.writer = writer
+
+    async def write_frame(self, data: bytes):
+        """Prepends the data with the frame header (length) and writes it to the writer"""
+        frame_header = struct.pack(self.FRAME_HEADER_FORMAT, len(data))
+        self.writer.write(frame_header)
+        self.writer.write(data)
+        await self.writer.drain()
+
+    async def read_frame(self) -> bytes:
+        """Reads the the frame header (length) and then reads and returns the expected
+        number of bytes"""
+        try:
+            frame_header = await self.reader.readexactly(self.FRAME_HEADER_LENGTH)
+            frame_length = struct.unpack(self.FRAME_HEADER_FORMAT, frame_header)[0]
+            data = await self.reader.readexactly(frame_length)
+            return data
+        except asyncio.IncompleteReadError:
+            raise IPCError("Invalid message framing, couldn't read the data")
+
+    async def write_message(self, message: IPCMessage):
+        await self.write_frame(_IPC.pack(message))
+
+    async def read_message(self, *, timeout: float | None = None) -> IPCMessage:
+        message_bytes = await asyncio.wait_for(self.read_frame(), timeout=timeout)
+        return _IPC.unpack(message_bytes)
+
+    def at_eof(self) -> bool:
+        """Returns `reader.at_eof()`"""
+        return self.reader.at_eof()
+
+    async def close(self):
+        """Closes the connection"""
+        self.writer.close()
+        await self.writer.wait_closed()
+
+
 class Client:
     def __init__(self, socket_path: str) -> None:
         """Create a new IPC client
@@ -287,26 +335,21 @@ class Client:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_unix_connection(path=self.socket_path), timeout=3
             )
+            stream = IPCStreamIO(reader, writer)
         except (ConnectionRefusedError, FileNotFoundError):
             raise IPCError(f"Could not open {self.socket_path}")
 
         try:
-            send_data = _IPC.pack(IPCCommandMessage(*msg))
-            writer.write(send_data)
-            writer.write_eof()
-
-            read_data = await asyncio.wait_for(reader.read(), timeout=10)
+            await stream.write_message(IPCCommandMessage(*msg))
+            response = await stream.read_message(timeout=10.0)
         except asyncio.TimeoutError:
             raise IPCError("Server not responding")
         finally:
-            # see the note in Server._server_callback()
-            writer.close()
-            await writer.wait_closed()
+            await stream.close()
 
-        data = _IPC.unpack(read_data)
-        if not isinstance(data, IPCReplyMessage):
+        if not isinstance(response, IPCReplyMessage):
             raise IPCError("Expected a reply message from the server")
-        return data
+        return response
 
 
 class Server:
@@ -344,12 +387,12 @@ class Server:
         Read the data sent from the client, execute the requested command, and
         send the reply back to the client.
         """
+        stream = IPCStreamIO(reader, writer)
         try:
             logger.debug("Connection made to server")
-            data = await reader.read()
-            logger.debug("EOF received by server")
+            # TODO: Add timeout
+            req = await stream.read_message()
 
-            req = _IPC.unpack(data)
             if not isinstance(req, IPCCommandMessage):
                 logger.error("Expected command message from client")
                 return
@@ -363,15 +406,11 @@ class Server:
             else:
                 rep = self.handler(req)
 
-            result = _IPC.pack(rep)
-
-            logger.debug("Sending result on receive EOF")
-            writer.write(result)
-            logger.debug("Closing connection on receive EOF")
-            writer.write_eof()
+            logger.debug("Sending result")
+            await stream.write_message(rep)
         finally:
-            writer.close()
-            await writer.wait_closed()
+            logger.debug("Closing connection")
+            await stream.close()
 
     async def __aenter__(self) -> Server:
         """Start and return the server"""
