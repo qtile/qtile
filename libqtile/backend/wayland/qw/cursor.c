@@ -352,6 +352,9 @@ static void qw_cursor_handle_frame(struct wl_listener *listener, void *data) {
     wlr_seat_pointer_notify_frame(cursor->server->seat);
 }
 
+// forward declaration
+static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data);
+
 struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     // Allocate memory for qw_cursor
     struct qw_cursor *cursor = calloc(1, sizeof(*cursor));
@@ -388,6 +391,8 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     cursor->request_set_cursor_shape.notify = qw_handle_request_set_cursor_shape;
     wl_signal_add(&cursor->cursor_shape_mgr->events.request_set_shape,
                   &cursor->request_set_cursor_shape);
+
+    cursor->current_shape_name = NULL;
 
     wl_list_init(&cursor->constraint_commit.link);
 
@@ -651,7 +656,7 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
     }
 }
 
-void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data) {
+static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data) {
     struct qw_cursor *cursor = wl_container_of(listener, cursor, request_set_cursor_shape);
     struct wlr_cursor_shape_manager_v1_request_set_shape_event *event = data;
 
@@ -663,4 +668,22 @@ void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data
     const char *name = wlr_cursor_shape_v1_name(event->shape);
 
     wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+}
+
+void qw_cursor_set_shape(struct qw_cursor *cursor, enum wp_cursor_shape_device_v1_shape shape) {
+    if (!cursor)
+        return;
+
+    const char *name = wlr_cursor_shape_v1_name(shape);
+
+    cursor->current_shape_name = name;
+
+    if (cursor->server && cursor->server->seat) {
+        struct wlr_seat *seat = cursor->server->seat;
+        struct wlr_seat_client *focused_client = seat->pointer_state.focused_client;
+
+        if (focused_client) {
+            wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+        }
+    }
 }
