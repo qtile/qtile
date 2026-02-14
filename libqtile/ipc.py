@@ -127,10 +127,7 @@ class IPCCommandMessage(IPCMessage):
 
     @classmethod
     def from_json(cls, json: dict) -> IPCCommandMessage:
-        msg = IPCCommandMessage(**json)
-        # Must always lift a message deserialized from JSON
-        msg.lifted = True
-        return msg
+        return IPCCommandMessage(**json)
 
     def __iter__(self):
         return iter((self.selectors, self.name, self.args, self.kwargs, self.lifted))
