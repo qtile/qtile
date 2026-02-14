@@ -16,6 +16,7 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     wl_list_remove(&cursor->frame.link);
     wl_list_remove(&cursor->button.link);
     wl_list_remove(&cursor->request_set_cursor_shape.link);
+    free(cursor->current_shape_name);
 
     wlr_xcursor_manager_destroy(cursor->mgr);
 
@@ -389,6 +390,8 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     wl_signal_add(&cursor->cursor_shape_mgr->events.request_set_shape,
                   &cursor->request_set_cursor_shape);
 
+    cursor->current_shape_name = NULL;
+
     wl_list_init(&cursor->constraint_commit.link);
 
     return cursor;
@@ -663,4 +666,23 @@ void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data
     const char *name = wlr_cursor_shape_v1_name(event->shape);
 
     wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+}
+
+void qw_cursor_set_shape(struct qw_cursor *cursor, uint32_t shape) {
+    if (!cursor)
+        return;
+
+    const char *name = wlr_cursor_shape_v1_name(shape);
+
+    free(cursor->current_shape_name);
+    cursor->current_shape_name = name ? strdup(name) : NULL;
+
+    if (cursor->server && cursor->server->seat) {
+        struct wlr_seat *seat = cursor->server->seat;
+        struct wlr_seat_client *focused_client = seat->pointer_state.focused_client;
+
+        if (focused_client) {
+            wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+        }
+    }
 }
