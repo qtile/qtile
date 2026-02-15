@@ -1,8 +1,7 @@
 """
-A simple IPC mechanism for communicating between two local processes. We
-use marshal to serialize data - this means that both client and server must
-run the same Python version, and that clients must be trusted (as
-un-marshalling untrusted data can result in arbitrary code execution).
+A simple IPC mechanism for communicating between two local processes. Clients
+must be trusted, as IPC commands such as `eval`, or the repl allow arbitrary
+code execution.
 """
 
 from __future__ import annotations
