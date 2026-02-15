@@ -328,25 +328,70 @@ class Client:
         Connect to the server, then pack and send the message to the server,
         then wait for and return the response from the server.
         """
+        async with AsyncClient(self.socket_path) as c:
+            return await c.send(IPCCommandMessage(*msg))
+
+
+class AsyncClient:
+    def __init__(self, socket_path: str) -> None:
+        """Create a new asynchronous IPC client
+
+        Parameters
+        ----------
+        socket_path: str
+            The file path to the file that is used to open the connection to
+            the running IPC server.
+        """
+        self.socket_path = socket_path
+        self.stream: IPCStreamIO | None = None
+
+    async def connect(self):
+        """Open the unix domain socket connection to the IPC server"""
         try:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_unix_connection(path=self.socket_path), timeout=3
             )
-            stream = IPCStreamIO(reader, writer)
+            self.stream = IPCStreamIO(reader, writer)
         except (ConnectionRefusedError, FileNotFoundError):
             raise IPCError(f"Could not open {self.socket_path}")
+        except asyncio.TimeoutError:
+            raise IPCError("Connection to server timed out")
+
+    async def send(self, message: IPCCommandMessage) -> IPCReplyMessage:
+        """Send the message to the server using the existing connection.
+        `connect` must have been called, it is recommended to use async with:
+
+        ```
+        async with AsyncClient(sock_path) as c:
+            c.send(my_message)
+        ```
+        """
+        if self.stream is None:
+            raise IPCError("AsyncClient is not connected, use 'async with' or call 'connect'")
 
         try:
-            await stream.write_message(IPCCommandMessage(*msg))
-            response = await stream.read_message(timeout=10.0)
+            await self.stream.write_message(message)
+
+            response = await self.stream.read_message(timeout=10.0)
+            if not isinstance(response, IPCReplyMessage):
+                raise IPCError("Expected a reply message from the server")
+
+            return response
         except asyncio.TimeoutError:
             raise IPCError("Server not responding")
-        finally:
-            await stream.close()
 
-        if not isinstance(response, IPCReplyMessage):
-            raise IPCError("Expected a reply message from the server")
-        return response
+    async def close(self):
+        if self.stream is not None:
+            await self.stream.close()
+            self.stream = None
+
+    async def __aenter__(self):
+        await self.connect()
+        return self
+
+    async def __aexit__(self, _exc_type, _exc, _tb):
+        assert self.stream is not None
+        await self.stream.close()
 
 
 class Server:
@@ -385,26 +430,35 @@ class Server:
         send the reply back to the client.
         """
         stream = IPCStreamIO(reader, writer)
-        try:
-            logger.debug("Connection made to server")
-            # TODO: Add timeout
-            req = await stream.read_message()
+        logger.debug("Connection made to server")
 
-            if not isinstance(req, IPCCommandMessage):
-                logger.error("Expected command message from client")
-                return
+        try:
+            while not stream.at_eof():
+                # There is no timeout here to enable long lived connections
+                # by clients, without having to implement a heartbeat protocol
+                # which would impose a huge burden on the current implementation.
+                # Clients are assumed to be trusted, although there is no actual
+                # verification mechanism for this
+                req = await stream.read_message()
+                if not isinstance(req, IPCCommandMessage):
+                    logger.error("Expected command message from client")
+                    break
+
+                # Don't handle requests when session is locked
+                if self.locked.is_set():
+                    rep = IPCReplyMessage.error({"error": "Session locked."})
+                else:
+                    # The handler shouldn't throw, but return an
+                    # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
+                    rep = self.handler(req)
+
+                logger.debug("Sending result")
+                await stream.write_message(rep)
+        # Consider trying to send the client an
+        # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
         except IPCError as e:
             logger.warning("Invalid data received, closing connection")
             logger.debug(e)
-        else:
-            # Don't handle requests when session is locked
-            if self.locked.is_set():
-                rep = IPCReplyMessage.error({"error": "Session locked."})
-            else:
-                rep = self.handler(req)
-
-            logger.debug("Sending result")
-            await stream.write_message(rep)
         finally:
             logger.debug("Closing connection")
             await stream.close()
