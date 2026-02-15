@@ -309,8 +309,6 @@ class Client:
         socket_path: str
             The file path to the file that is used to open the connection to
             the running IPC server.
-        is_json: bool
-            Pack and unpack messages as json
         """
         self.socket_path = socket_path
 
