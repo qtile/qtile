@@ -106,9 +106,6 @@ void qw_view_move_up(struct qw_view *view) {
         if (child == &view->content_tree->node) {
             found_child = true;
         } else if (found_child) {
-            if (!child->enabled) {
-                continue;
-            }
             struct wlr_surface *other_surface = qw_view_get_surface_from_tree(child);
 
             if (other_surface == NULL) {
@@ -143,10 +140,6 @@ void qw_view_move_down(struct qw_view *view) {
     }
 
     wl_list_for_each(child, &view->server->scene_windows_layers[view->layer]->children, link) {
-        if (!child->enabled) {
-            continue;
-        }
-
         struct wlr_surface *other_surface = qw_view_get_surface_from_tree(child);
         if (other_surface == NULL) {
             continue;

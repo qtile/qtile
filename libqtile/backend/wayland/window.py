@@ -70,11 +70,12 @@ class Base(base._Window):
         is_enabled = self.layer == lib.LAYER_KEEPBELOW
         if enable is None:
             enable = not is_enabled
-
         if enable:
             self.reparent(lib.LAYER_KEEPBELOW)
+            self.move_to_bottom()
         else:
             self.reparent(lib.LAYER_LAYOUT)
+            self.move_to_bottom()
 
     @expose_command()
     def move_to_top(self) -> None:
@@ -967,6 +968,6 @@ class Static(Base, base.Static):
         """Return a dictionary of info."""
         info = base.Static.info(self)
         info["shell"] = (
-            ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
+            ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else ""
         )
         return info
