@@ -271,27 +271,29 @@ class IPCStreamIO:
         self.writer.write(data)
         await self.writer.drain()
 
-    async def read_frame(self) -> bytes:
+    async def read_frame(self) -> bytes | None:
         """Reads the the frame header (length) and then reads and returns the expected
-        number of bytes"""
+        number of bytes. Returns None if underlying stream has closed"""
         try:
             frame_header = await self.reader.readexactly(self.FRAME_HEADER_LENGTH)
             frame_length = struct.unpack(self.FRAME_HEADER_FORMAT, frame_header)[0]
             data = await self.reader.readexactly(frame_length)
             return data
-        except asyncio.IncompleteReadError:
-            raise IPCError("Invalid message framing, couldn't read the data")
+        except asyncio.IncompleteReadError as e:
+            if self.reader.at_eof():
+                return None
+            else:
+                logger.debug(f"Received partial bytes: {e.partial!r}")
+                raise IPCError("Invalid message framing, couldn't read the data")
 
     async def write_message(self, message: IPCMessage):
         await self.write_frame(_IPC.pack(message))
 
-    async def read_message(self, *, timeout: float | None = None) -> IPCMessage:
+    async def read_message(self, *, timeout: float | None = None) -> IPCMessage | None:
         message_bytes = await asyncio.wait_for(self.read_frame(), timeout=timeout)
+        if message_bytes is None:
+            return None
         return _IPC.unpack(message_bytes)
-
-    def at_eof(self) -> bool:
-        """Returns `reader.at_eof()`"""
-        return self.reader.at_eof()
 
     async def close(self):
         """Closes the connection"""
@@ -433,13 +435,18 @@ class Server:
         logger.debug("Connection made to server")
 
         try:
-            while not stream.at_eof():
+            while True:
                 # There is no timeout here to enable long lived connections
                 # by clients, without having to implement a heartbeat protocol
                 # which would impose a huge burden on the current implementation.
                 # Clients are assumed to be trusted, although there is no actual
                 # verification mechanism for this
                 req = await stream.read_message()
+                # EOF
+                if req is None:
+                    logger.debug("Client disconnected")
+                    break
+
                 if not isinstance(req, IPCCommandMessage):
                     logger.error("Expected command message from client")
                     break
