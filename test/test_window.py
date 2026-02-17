@@ -567,3 +567,61 @@ def test_floats_kept_above(manager):
     # Open a different floating window. This should be above the first floating one.
     manager.test_window("three", floating=True)
     assert _clients() == ["two", "one", "three"]
+
+
+@manager_config
+def test_fullscreen_on_top(manager):
+    """Test fullscreen, focused windows are on top."""
+
+    if manager.backend.name == "wayland":
+        pytest.skip("TODO: Fix Wayland failing")
+
+    def _clients():
+        stack = manager.backend.get_all_windows()
+        wins = [(w["name"], stack.index(w["id"])) for w in manager.c.windows()]
+        wins.sort(key=lambda x: x[1])
+        return [x[0] for x in wins]
+
+    manager.test_window("one", floating=True)
+    manager.test_window("two")
+
+    # window "one" is kept_above, "two" is norm
+    assert _clients() == ["two", "one"]
+
+    # A fullscreen, focused window should display above windows that are "kept above"
+    window_by_name(manager.c, "two").enable_fullscreen()
+    window_by_name(manager.c, "two").focus()
+    assert _clients() == ["one", "two"]
+
+    # Focusing the other window should cause the fullscreen window to drop from the highest layer
+    window_by_name(manager.c, "one").focus()
+    assert _clients() == ["two", "one"]
+
+    # Disabling fullscreen will put the window below the "kept above" window, even if it has focus
+    window_by_name(manager.c, "two").focus()
+    window_by_name(manager.c, "two").toggle_fullscreen()
+    assert _clients() == ["two", "one"]
+
+
+class UnpinFloatsConfig(ManagerConfig):
+    # New floating windows not set to "keep_above"
+    floats_kept_above = False
+
+
+# Floating windows should be moved above tiled windows when first floated, regardless
+# of whether `floats_kept_above` is True
+@pytest.mark.parametrize("manager", [ManagerConfig, UnpinFloatsConfig], indirect=True)
+def test_move_float_above_tiled(manager):
+    def _clients():
+        stack = manager.backend.get_all_windows()
+        wins = [(w["name"], stack.index(w["id"])) for w in manager.c.windows()]
+        wins.sort(key=lambda x: x[1])
+        return [x[0] for x in wins]
+
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    assert _clients() == ["one", "two", "three"]
+
+    window_by_name(manager.c, "two").toggle_floating()
+    assert _clients() == ["one", "three", "two"]

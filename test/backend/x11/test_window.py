@@ -853,68 +853,6 @@ def test_net_wm_state_focused(xmanager, conn):
 
 
 @manager_config
-def test_fullscreen_on_top(xmanager):
-    """Test fullscreen, focused windows are on top."""
-    conn = xcbq.Connection(xmanager.display)
-
-    def _clients():
-        root = conn.default_screen.root.wid
-        q = conn.conn.core.QueryTree(root).reply()
-        stack = list(q.children)
-        wins = [(w["name"], stack.index(w["id"])) for w in xmanager.c.windows()]
-        wins.sort(key=lambda x: x[1])
-        return [x[0] for x in wins]
-
-    xmanager.test_window("one", floating=True)
-    xmanager.test_window("two")
-
-    # window "one" is kept_above, "two" is norm
-    assert _clients() == ["two", "one"]
-
-    # A fullscreen, focused window should display above windows that are "kept above"
-    window_by_name(xmanager.c, "two").enable_fullscreen()
-    window_by_name(xmanager.c, "two").focus()
-    assert _clients() == ["one", "two"]
-
-    # Focusing the other window should cause the fullscreen window to drop from the highest layer
-    window_by_name(xmanager.c, "one").focus()
-    assert _clients() == ["two", "one"]
-
-    # Disabling fullscreen will put the window below the "kept above" window, even if it has focus
-    window_by_name(xmanager.c, "two").focus()
-    window_by_name(xmanager.c, "two").toggle_fullscreen()
-    assert _clients() == ["two", "one"]
-
-
-class UnpinFloatsConfig(ManagerConfig):
-    # New floating windows not set to "keep_above"
-    floats_kept_above = False
-
-
-# Floating windows should be moved above tiled windows when first floated, regardless
-# of whether `floats_kept_above` is True
-@pytest.mark.parametrize("xmanager", [ManagerConfig, UnpinFloatsConfig], indirect=True)
-def test_move_float_above_tiled(xmanager):
-    conn = xcbq.Connection(xmanager.display)
-
-    def _clients():
-        root = conn.default_screen.root.wid
-        q = conn.conn.core.QueryTree(root).reply()
-        stack = list(q.children)
-        wins = [(w["name"], stack.index(w["id"])) for w in xmanager.c.windows()]
-        wins.sort(key=lambda x: x[1])
-        return [x[0] for x in wins]
-
-    xmanager.test_window("one")
-    xmanager.test_window("two")
-    xmanager.test_window("three")
-    assert _clients() == ["one", "two", "three"]
-
-    window_by_name(xmanager.c, "two").toggle_floating()
-    assert _clients() == ["one", "three", "two"]
-
-
-@manager_config
 def test_floats_kept_above_cleared_on_toggle(xmanager):
     conn = xcbq.Connection(xmanager.display)
 
