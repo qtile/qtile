@@ -17,9 +17,7 @@ import traceback
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Self
 
 from libqtile import hook
 from libqtile.log_utils import logger
