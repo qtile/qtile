@@ -13,9 +13,10 @@ import json
 import os.path
 import socket
 import struct
+import threading
 import traceback
 from abc import ABCMeta, abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Coroutine, Iterator
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Self
 
@@ -299,7 +300,7 @@ class IPCStreamIO:
         await self.writer.wait_closed()
 
 
-class Client:
+class ReconnectingClient:
     def __init__(self, socket_path: str) -> None:
         """Create a new IPC client
 
@@ -332,6 +333,50 @@ class Client:
             return await c.send(IPCCommandMessage(*msg))
 
 
+class PersistentClient:
+    def __init__(self, socket_path: str) -> None:
+        self._loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(target=self._loop.run_forever, daemon=True)
+        self._thread.start()
+        self._client = AsyncClient(socket_path)
+
+    def _run[T](self, coro: Coroutine[Any, Any, T]) -> T:
+        future = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return future.result()
+
+    def connect(self) -> None:
+        self._run(self._client.connect())
+
+    def close(self) -> None:
+        self._run(self._client.close())
+
+    def send(self, msg: tuple) -> IPCReplyMessage:
+        # Since the PersistentClient retains the connection,
+        # the user should be aware of the need to close it.
+        # This can be done manually via `self.close()`, or
+        # using a with block. However, to remain compatible
+        # with the old `Client` implementation, we're gonna
+        # call `connect` ourselves here
+        if not self._client.is_connected():
+            # This should probably be a warning, but since none of the code
+            # using an IPC client is aware of closing right now, that would
+            # clutter the logs enormously
+            logger.debug("send called on PersistenClient that's not connected")
+            self._run(self._client.connect())
+
+        message = IPCCommandMessage(*msg)
+        return self._run(self._client.send(message))
+
+    def __enter__(self):
+        self.connect()
+
+    def __exit__(self, _exc_type, _exc, _tb):
+        self.close()
+
+
+Client = ReconnectingClient
+
+
 class AsyncClient:
     def __init__(self, socket_path: str) -> None:
         """Create a new asynchronous IPC client
@@ -356,6 +401,9 @@ class AsyncClient:
             raise IPCError(f"Could not open {self.socket_path}")
         except asyncio.TimeoutError:
             raise IPCError("Connection to server timed out")
+
+    def is_connected(self) -> bool:
+        return self.stream is not None
 
     async def send(self, message: IPCCommandMessage) -> IPCReplyMessage:
         """Send the message to the server using the existing connection.
