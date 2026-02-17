@@ -546,3 +546,24 @@ def test_window_stacking_order(manager):
     # This should have no effect as it's the only window kept_above
     window_by_name(manager.c, "three").move_to_bottom()
     assert _clients() == ["five", "one", "four", "two", "three"]
+
+
+@manager_config
+def test_floats_kept_above(manager):
+    """Test config option to pin floats to a higher level."""
+
+    def _clients():
+        stack = manager.backend.get_all_windows()
+        wins = [(w["name"], stack.index(w["id"])) for w in manager.c.windows()]
+        wins.sort(key=lambda x: x[1])
+        return [x[0] for x in wins]
+
+    manager.test_window("one", floating=True)
+    manager.test_window("two")
+
+    # Confirm floating window is above window that was opened later
+    assert _clients() == ["two", "one"]
+
+    # Open a different floating window. This should be above the first floating one.
+    manager.test_window("three", floating=True)
+    assert _clients() == ["two", "one", "three"]

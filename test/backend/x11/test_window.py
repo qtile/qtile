@@ -853,30 +853,6 @@ def test_net_wm_state_focused(xmanager, conn):
 
 
 @manager_config
-def test_floats_kept_above(xmanager):
-    """Test config option to pin floats to a higher level."""
-    conn = xcbq.Connection(xmanager.display)
-
-    def _clients():
-        root = conn.default_screen.root.wid
-        q = conn.conn.core.QueryTree(root).reply()
-        stack = list(q.children)
-        wins = [(w["name"], stack.index(w["id"])) for w in xmanager.c.windows()]
-        wins.sort(key=lambda x: x[1])
-        return [x[0] for x in wins]
-
-    xmanager.test_window("one", floating=True)
-    xmanager.test_window("two")
-
-    # Confirm floating window is above window that was opened later
-    assert _clients() == ["two", "one"]
-
-    # Open a different floating window. This should be above the first floating one.
-    xmanager.test_window("three", floating=True)
-    assert _clients() == ["two", "one", "three"]
-
-
-@manager_config
 def test_fullscreen_on_top(xmanager):
     """Test fullscreen, focused windows are on top."""
     conn = xcbq.Connection(xmanager.display)
