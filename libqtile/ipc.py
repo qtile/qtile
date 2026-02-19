@@ -90,7 +90,7 @@ class IPCMessage(metaclass=ABCMeta):
     @property
     @abstractmethod
     def message_type(self) -> MessageType:
-        """Discrimantor for the message type of the instance"""
+        """Discriminator for the message type of the instance"""
 
     @abstractmethod
     def to_json(self) -> dict:
@@ -318,7 +318,7 @@ class ReconnectingClient:
     def send(self, msg: tuple) -> IPCReplyMessage:
         """Send the message and return the response from the server
 
-        If any exception is raised by the server, that will propogate out of
+        If any exception is raised by the server, that will propagate out of
         this call.
         """
         return asyncio.run(self.async_send(msg))
@@ -361,7 +361,7 @@ class PersistentClient:
             # This should probably be a warning, but since none of the code
             # using an IPC client is aware of closing right now, that would
             # clutter the logs enormously
-            logger.debug("send called on PersistenClient that's not connected")
+            logger.debug("send called on PersistentClient that's not connected")
             self._run(self._client.connect())
 
         message = IPCCommandMessage(*msg)
