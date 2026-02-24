@@ -663,7 +663,7 @@ class Window(Base, base.Window):
             # shell can be either "XDG" or "XWayland" or "layer"?
             shell=ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else "",
             float_info=float_info,
-            floating=self._win_state != WindowStates.TILED,
+            floating=self._win_state == WindowStates.FLOATING,
             maximized=self._win_state == WindowStates.MAXIMIZED,
             minimized=self._win_state == WindowStates.MINIMIZED,
             fullscreen=self._win_state == WindowStates.FULLSCREEN,
