@@ -113,7 +113,13 @@ static void static_view_handle_map(struct wl_listener *listener, void *data) {
     }
 
     if (wlr_xwayland_surface_override_redirect_wants_focus(xwayland_surface)) {
-        qw_xwayland_view_focus(static_view, true);
+        struct wlr_seat *seat = static_view->base.server->seat;
+        struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
+        if (keyboard) {
+            wlr_seat_keyboard_notify_enter(seat, static_view->xwayland_surface->surface,
+                                           keyboard->keycodes, keyboard->num_keycodes,
+                                           &keyboard->modifiers);
+        }
     }
 }
 
