@@ -430,8 +430,7 @@ class Screen(CommandObject):
         y: int | None = None,
         width: int | None = None,
         height: int | None = None,
-        serial: str | None = None,
-        name: str | None = None,
+        match: dict[str, str | None] | None = None,
     ) -> None:
         self.top = top
         self.bottom = bottom
@@ -449,8 +448,9 @@ class Screen(CommandObject):
         self.width = width if width is not None else 0
         self.height = height if height is not None else 0
         self.previous_group: _Group | None = None
-        self.serial = serial
-        self.name = name
+        self.serial: str | None = None
+        self.name: str | None = None
+        self.match = match if match is not None else {"serial": None, "name": None}
 
     def __eq__(self, other: object) -> bool:
         # When we trigger a reconfigure_screens(), _process_screens()
