@@ -20,7 +20,8 @@ class ConfigError(Exception):
 config_pyi_header = """
 from typing import Any
 from typing import Literal
-from libqtile.config import Group, Key, Mouse, Rule, Screen
+from types import FunctionType
+from libqtile.config import Group, IdleInhibitor, Key, Mouse, Rule, Screen
 from libqtile.layout.base import Layout
 
 """
