@@ -823,6 +823,12 @@ class Qtile(CommandObject):
         if win.wid in self.windows_map:
             return
 
+        if self.current_screen and isinstance(win, base.Window):
+            # Window may already be bound to a group.
+            if win.group and not getattr(self.config, "auto_group", True):
+                win.group.remove(win)
+                win.group = None
+
         hook.fire("client_new", win)
 
         # Window may be defunct because

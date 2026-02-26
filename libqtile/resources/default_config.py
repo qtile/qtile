@@ -191,6 +191,10 @@ reconfigure_screens = True
 # focus, should we respect this or not?
 auto_minimize = True
 
+# If things like browsers want to start in their previous workspaces,
+# should we respect this or not?
+auto_group = True
+
 # When using the Wayland backend, this can be used to configure input devices.
 wl_input_rules = None
 
