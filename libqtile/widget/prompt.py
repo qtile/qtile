@@ -316,7 +316,7 @@ class Prompt(base._TextBox):
 
         def my_action(input_text):
             # Do something with the entered text here.
-        
+
         @lazy.function
         def my_prompt(qtile):
             qtile.widgets_map["prompt"].start_input("my action", my_action)

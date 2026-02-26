@@ -35,7 +35,7 @@ def test_prompt_focus(manager_nospawn, minimal_conf_noscreen):
     unfocus_info = pwidget.info()
     assert unfocus_info["text"] == ""
     assert unfocus_info["width"] == 0
-    assert unfocus_info["active"] == False
+    assert not unfocus_info["active"]
 
     # Start the input to the widget.
     pwidget.eval('self.start_input("test", lambda _: True)')
@@ -43,7 +43,7 @@ def test_prompt_focus(manager_nospawn, minimal_conf_noscreen):
     # Test if the widget is visible and active.
     focus_info = pwidget.info()
     assert focus_info["width"] != 0
-    assert focus_info["active"] == True
+    assert focus_info["active"]
 
 
 @pytest.mark.parametrize("cursor_type", ["line", "block", "bar", "none"])
