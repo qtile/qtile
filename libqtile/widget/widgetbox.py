@@ -151,3 +151,13 @@ class WidgetBox(base._TextBox):
         """Close the widgetbox."""
         if self.box_is_open:
             self.toggle()
+
+    def finalize(self):
+        # The bar will finalise any widgets in it but WidgetBox
+        # needs to finalise any widgets that it owns that aren't currently
+        # shown in the bar.
+        for widget in self.widgets:
+            if widget not in self.bar.widgets and not widget.finalized:
+                widget.finalize()
+
+        base._TextBox.finalize(self)

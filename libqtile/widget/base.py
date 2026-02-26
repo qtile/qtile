@@ -232,6 +232,13 @@ class _Widget(CommandObject, configurable.Configurable):
             self.layout.finalize()
             self.layout = None
         self.drawer.finalize()
+
+        # Remove finalised widget from the widgets_map
+        for name in list(self.qtile.widgets_map.keys()):
+            if self.qtile.widgets_map[name] is self:
+                del self.qtile.widgets_map[name]
+                break
+
         self.finalized = True
 
         # Reset configuration status so the widget can be reconfigured
