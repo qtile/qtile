@@ -233,7 +233,7 @@ class Floating(Layout):
             if client.float_x is None or client.float_y is None:
                 # this window hasn't been placed before, let's put it in a sensible spot
                 above = self.compute_client_position(client, screen_rect)
-                # else:
+                # and get its dimensions
                 client._float_width = client.width
                 client._float_height = client.height
 

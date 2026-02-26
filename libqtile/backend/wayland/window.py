@@ -191,27 +191,13 @@ class Base(base._Window):
 
         # TODO: respect hints
 
-        if hasattr(self, "floating"):
-            floating = self.floating
-        else:
-            floating = False
-        if self.group is not None and self.group.screen is not None:
-            if floating:
-                self.float_x = x - self.group.screen.x
-                self.float_y = y - self.group.screen.y
-                self._float_width = width
-                self._float_height = height
-
-            if self.float_x is None or self.float_y is None:
-                self.float_x = x - self.group.screen.x
-                self.float_y = y - self.group.screen.y
-                # self._float_width = self.width
-                # self._float_height = self.height
-
-        # TODO: if window size has not been manually adjusted, follow tiled size
-        if hasattr(self, "_win_state_follows") and self._win_state_follows:
-            self._float_width = width
-            self._float_height = height
+        # floating = getattr(self, "floating", False)
+        if isinstance(self, Window):
+            if self.float_x is None or self.float_y is None or self.floating:
+                # save x and y float offset
+                if self.group is not None and self.group.screen is not None:
+                    self.float_x = x - self.group.screen.x
+                    self.float_y = y - self.group.screen.y
 
         n = 0
         c_layers = ffi.NULL
@@ -695,20 +681,20 @@ class Window(Base, base.Window):
                 if not self._float_width:  # These might start as 0
                     self._float_width = self.width
                     self._float_height = self.height
-                # self.place(
-                #     screen.x + self.float_x, screen.y + self.float_y, self._float_width, self._float_height, self.borderwidth, self.bordercolor, above=True, respect_hints=True
-                # )
-                self.x = screen.x + self.float_x
-                self.y = screen.y + self.float_y
-                # self.float_x = self.x
-                # self.float_y = self.y
-                # import time
-                # time.sleep(2)
+
+                if self.group and self.group.layout:
+                    if self._win_state == self.group.layout._manages_win_state:
+                        self.float_x = self.x - screen.x
+                        self.float_y = self.y - screen.y
 
             self._prev_win_state = self._win_state
             # if we are setting floating early, e.g. from a hook, we don't have a screen yet
             if self.group and self.group.screen:
                 self.group.mark_floating(self)
+
+            self.move_to_top()
+            # TODO: reparent if necessary
+
             # If going from fullscreen to float, remove fullscreen background
             if self._prev_win_state == WindowStates.FULLSCREEN:
                 self._update_fullscreen(False)
@@ -889,20 +875,24 @@ class Window(Base, base.Window):
             self.group.remove(self, force=True)
             screen.group.add(self, force=True)
             self.qtile.focus_screen(screen.index)
+
         if self.group and screen is not None:
-            self.float_x = x - self.group.screen.x
-            self.float_y = y - self.group.screen.y
-            self.width = w
-            self.height = h
             self._float_width = w
             self._float_height = h
 
         if self._win_state != WindowStates.FLOATING:
             self.floating = True
-            # self._float_state = new_float_state
 
-        if self.group is not None:
-            self.group.floating_layout.configure(self, self.group.screen.get_rect())
+        self.place(x, y, w, h, self.borderwidth, self.bordercolor, above=True, respect_hints=True)
+
+        # Remove from layouts if follows floating layout
+        if (
+            self.group
+            and self.group.layout._manages_win_state == WindowStates.FLOATING
+            and self._win_state_follows
+        ):
+            self.group.remove_from_layouts(self)
+            self._win_state_follows = False
 
     @expose_command()
     def move_floating(self, dx: int, dy: int) -> None:

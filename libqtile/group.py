@@ -171,6 +171,11 @@ class _Group(CommandObject):
         elif self.layout._manages_win_state == WindowStates.MAXIMIZED:
             self.maximized_layout.add_client(client)
         elif self.layout._manages_win_state == WindowStates.FLOATING:
+            # Use tiled position and dimensions
+            client.float_x = client.x - self.screen.x
+            client.float_y = client.y - self.screen.y
+            client._float_width = client.width
+            client._float_height = client.height
             self.floating_layout.add_client(client)
         client._win_state = self.layout._manages_win_state
 
