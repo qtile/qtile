@@ -539,6 +539,14 @@ class Window(Base, base.Window):
         if switch_group:
             group.toscreen(toggle=toggle)
 
+        # Since this may be called while moving a fullscreen window to a another
+        # screen, we should check/update the fullscreen background
+        #
+        # Ideally this would be in the toscreen function but that is in base and
+        # fullscreen background is currently wayland only
+        if self.fullscreen:
+            self.qtile.core.check_screen_fullscreen_background(None)
+
     def _items(self, name: str) -> ItemT:
         if name == "group":
             return True, []
