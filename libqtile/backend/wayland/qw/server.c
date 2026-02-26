@@ -21,7 +21,6 @@
 #include "util.h"
 #include "view.h"
 #include "wayland-server-core.h"
-#include "wayland-server-protocol.h"
 #include "wayland-util.h"
 #include "wlr/util/log.h"
 #include "xdg-view.h"
@@ -735,7 +734,7 @@ static void qw_server_handle_output_power_set_mode(struct wl_listener *listener,
 }
 
 // Create and initialize the server object with all components and listeners.
-struct qw_server *qw_server_create() {
+struct qw_server *qw_server_create(void) {
     struct qw_server *server = calloc(1, sizeof(*server));
     if (!server) {
         wlr_log(WLR_ERROR, "failed to create qw_server struct");
