@@ -397,16 +397,16 @@ def test_focus_change(manager_nospawn):
     assert_inc_calls(9)
 
 
-def test_float_change(manager_nospawn):
+def test_window_state_change(manager_nospawn):
     @Retry(ignore_exceptions=(AssertionError))
     def assert_inc_calls(num: int):
-        assert manager_nospawn.float_change_calls.value == num
+        assert manager_nospawn.window_state_change_calls.value == num
 
-    def inc_float_change_calls():
-        manager_nospawn.float_change_calls.value += 1
+    def inc_window_state_change_calls():
+        manager_nospawn.window_state_change_calls.value += 1
 
-    manager_nospawn.float_change_calls = Value("i", 0)
-    hook.subscribe.float_change(inc_float_change_calls)
+    manager_nospawn.window_state_change_calls = Value("i", 0)
+    hook.subscribe.window_state_change(inc_window_state_change_calls)
 
     manager_nospawn.start(BareConfig)
     manager_nospawn.test_window("Test Window")

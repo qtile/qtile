@@ -714,7 +714,7 @@ class Window(Base, base.Window):
                 return
             self.set_property_from_prev_win_state(default=WindowStates.TILED)
 
-        hook.fire("float_change")
+        hook.fire("window_state_change")
 
     def set_property_by_state(self, state: WindowStates) -> None:
         if state == WindowStates.TILED:
@@ -797,6 +797,9 @@ class Window(Base, base.Window):
     @maximized.setter
     def maximized(self, do_maximize: bool) -> None:
         if do_maximize:
+            if self.maximized:
+                return
+
             self._prev_win_state = self._win_state
             # screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
             #     self.x, self.y
@@ -816,12 +819,15 @@ class Window(Base, base.Window):
             # )
             self.move_to_top()
         else:
+            if not self.maximized:
+                return
             self.set_property_from_prev_win_state(default=WindowStates.TILED)
             # if self._win_state == WindowStates.MAXIMIZED:
             #     self._restore_geometry()
             #     self.floating = False
 
         self._update_maximized(do_maximize)
+        hook.fire("window_state_change")
 
     def _update_maximized(self, do_max: bool) -> None:
         if do_max != (self._win_state == WindowStates.MAXIMIZED):

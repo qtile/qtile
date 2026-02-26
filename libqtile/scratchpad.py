@@ -238,7 +238,7 @@ class ScratchPad(group._Group):
     def _check_unsubscribe(self):
         if not self.dropdowns:
             hook.unsubscribe.client_killed(self.on_client_killed)
-            hook.unsubscribe.float_change(self.on_float_change)
+            hook.unsubscribe.window_state_change(self.on_window_state_change)
 
     def _spawn(self, ddconfig):
         """
@@ -280,7 +280,7 @@ class ScratchPad(group._Group):
                 self._to_hide.remove(name)
             if len(self.dropdowns) == 1:
                 hook.subscribe.client_killed(self.on_client_killed)
-                hook.subscribe.float_change(self.on_float_change)
+                hook.subscribe.window_state_change(self.on_window_state_change)
 
     def on_client_killed(self, client, *args, **kwargs):
         """
@@ -294,7 +294,7 @@ class ScratchPad(group._Group):
                 break
         self._check_unsubscribe()
 
-    def on_float_change(self, *args, **kwargs):
+    def on_window_state_change(self, *args, **kwargs):
         """
         hook method which is called if window float state is changed.
         If the current associated window is not floated (any more) the window
@@ -404,6 +404,6 @@ class ScratchPad(group._Group):
         if not restart and self.dropdowns:
             # We're only reloading so don't have these hooked via self.on_client_new
             hook.subscribe.client_killed(self.on_client_killed)
-            hook.subscribe.float_change(self.on_float_change)
+            hook.subscribe.window_state_change(self.on_window_state_change)
 
         return orphans

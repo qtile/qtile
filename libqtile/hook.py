@@ -463,9 +463,9 @@ hooks: list[Hook] = [
         """,
     ),
     Hook(
-        "float_change",
+        "window_state_change",
         """
-        Called when a change in float state is made (e.g. toggle floating,
+        Called when a change in window state is made (e.g. toggle floating,
         minimised and fullscreen states)
 
         **Arguments**
@@ -480,9 +480,9 @@ hooks: list[Hook] = [
           from libqtile.utils import send_notification
 
 
-          @hook.subscribe.float_change
-          def float_change():
-              send_notification("qtile", "Window float state changed.")
+          @hook.subscribe.window_state_change
+          def window_state_change():
+              send_notification("qtile", "Window window state changed.")
 
         """,
     ),
