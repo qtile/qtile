@@ -684,6 +684,9 @@ class Window(Base, base.Window):
     @floating.setter
     def floating(self, do_float: bool) -> None:
         if do_float:
+            if self.floating:
+                return
+
             if self.is_placed():
                 screen = self.group.screen  # type: ignore[union-attr] # see is_placed()
                 if not self._float_width:  # These might start as 0
@@ -707,7 +710,10 @@ class Window(Base, base.Window):
             if self._prev_win_state == WindowStates.FULLSCREEN:
                 self._update_fullscreen(False)
         else:
+            if not self.floating:
+                return
             self.set_property_from_prev_win_state(default=WindowStates.TILED)
+
         hook.fire("float_change")
 
     def set_property_by_state(self, state: WindowStates) -> None:
