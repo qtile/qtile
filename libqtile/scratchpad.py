@@ -202,9 +202,17 @@ class DropDownToggler(WindowVisibilityToggler):
             y = int(screen.dy + self.y * screen.dheight)
             win.float_x = x
             win.float_y = y
-            width = int(screen.dwidth * self.width) - 2 * self.border_width
-            height = int(screen.dheight * self.height) - 2 * self.border_width
-            win.place(x, y, width, height, self.border_width, win.bordercolor, respect_hints=True)
+            win._float_width = int(screen.dwidth * self.width) - 2 * self.border_width
+            win._float_height = int(screen.dheight * self.height) - 2 * self.border_width
+            win.place(
+                x,
+                y,
+                win._float_width,
+                win._float_height,
+                self.border_width,
+                win.bordercolor,
+                respect_hints=True,
+            )
             # Toggle the dropdown
             WindowVisibilityToggler.show(self)
 
