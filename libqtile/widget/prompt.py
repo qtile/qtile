@@ -305,7 +305,29 @@ class CommandCompleter:
 class Prompt(base._TextBox):
     """A widget that prompts for user input
 
+    This widget is used when any one of
+    ``lazy.spawncmd()``, ``lazy.findwindow()``, ``lazy.labelgroup()``,
+    ``lazy.qtilecmd()``, ``lazy.spawncmd()``, ``lazy.switchgroup()``,
+    ``lazy.togroup()``
+    is called.
+
     Input should be started using the ``.start_input()`` method on this class.
+    A minimal example of a custom prompt using this method is provided below.
+
+    .. code-block:: python
+
+        from libqtile.lazy import lazy
+
+        def my_action(input_text):
+            # Do something with the entered text here.
+
+        @lazy.function
+        def my_prompt(qtile):
+            qtile.widgets_map["prompt"].start_input("my action", my_action)
+
+        keys = [
+            Key([mod], "s", my_prompt)
+        ]
     """
 
     completers = {
@@ -320,6 +342,15 @@ class Prompt(base._TextBox):
     defaults = [
         ("cursor", True, "Show a cursor"),
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
+        (
+            "cursor_type",
+            "line",
+            "The visual appearance of the cursor. Possible values: "
+            + "'line': A line under the selected character. "
+            + "'block': A block in the place of the selected character. "
+            + "'bar': A vertical bar. Only looks good at the end of text. "
+            + "'none': Only the color appears.",
+        ),
         ("cursor_color", "bef098", "Color for the cursor and text over it."),
         ("prompt", "{prompt}: ", "Text displayed at the prompt"),
         ("record_history", True, "Keep a record of executed commands"),
@@ -447,7 +478,7 @@ class Prompt(base._TextBox):
         complete :
             completer to use.
         strict_completer :
-            When True the return value wil be the exact completer result where
+            When True the return value will be the exact completer result where
             available.
         allow_empty_input :
             When True, an empty value will still call the callback function
@@ -483,27 +514,42 @@ class Prompt(base._TextBox):
             self.timeout_add(self.cursorblink, self._blink)
 
     def _highlight_text(self, text) -> str:
+        self.cursor_type: str
         color = utils.hex(self.cursor_color)
-        text = f'<span foreground="{color}">{text}</span>'
-        if self.show_cursor:
-            text = f"<u>{text}</u>"
+        if self.cursor_type == "block":
+            if self.show_cursor:
+                text = f'<span background="{color}" foreground="#00000000">{text}</span>'
+            else:
+                text = f'<span foreground="{color}">{text}</span>'
+        elif self.cursor_type == "line":
+            text = f'<span foreground="{color}">{text}</span>'
+            if self.show_cursor:
+                text = f"<u>{text}</u>"
+        elif self.cursor_type == "bar":
+            if self.show_cursor:
+                text = f'<span foreground="{color}">▏</span>{text}'
+            else:
+                text = f" {text}"
+        elif self.cursor_type == "none" or self.cursor_type is None:
+            text = f'<span foreground="{color}">{text}</span>'
         return text
 
     def _update(self) -> None:
         if self.active:
             self.text = self.archived_input or self.user_input
-            cursor = pangocffi.markup_escape_text(" ")
             if self.cursor_position < len(self.text):
+                # Escaping after slicing to preserve the cursor position
                 txt1 = self.text[: self.cursor_position]
+                txt1 = pangocffi.markup_escape_text(txt1)
                 txt2 = self.text[self.cursor_position]
-                txt3 = self.text[self.cursor_position + 1 :]
-                for text in (txt1, txt2, txt3):
-                    text = pangocffi.markup_escape_text(text)
+                txt2 = pangocffi.markup_escape_text(txt2)
                 txt2 = self._highlight_text(txt2)
-                self.text = f"{txt1}{txt2}{txt3}{cursor}"
+                txt3 = self.text[self.cursor_position + 1 :]
+                txt3 = pangocffi.markup_escape_text(txt3)
+                self.text = f"{txt1}{txt2}{txt3}"
             else:
                 self.text = pangocffi.markup_escape_text(self.text)
-                self.text += self._highlight_text(cursor)
+                self.text += self._highlight_text(" ")
             self.text = self.display + self.text
         else:
             self.text = ""
@@ -654,7 +700,7 @@ class Prompt(base._TextBox):
             return self.keyhandlers[k]
 
     def process_key_press(self, keysym: int):
-        """Key press handler for the minibuffer.
+        """Key press handler for the prompt widget.
 
         Currently only supports ASCII characters.
         """
@@ -667,6 +713,7 @@ class Prompt(base._TextBox):
 
     @expose_command()
     def fake_keypress(self, key: str) -> None:
+        """Send a key press to the widget."""
         self.process_key_press(self.qtile.core.keysym_from_name(key))
 
     @expose_command()
