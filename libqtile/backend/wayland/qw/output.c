@@ -29,6 +29,7 @@ static void qw_output_handle_frame(struct wl_listener *listener, void *data) {
 static void qw_output_handle_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_output *output = wl_container_of(listener, output, destroy);
+    wlr_log(WLR_ERROR, "handle output destroy: %s", output->wlr_output->name);
 
     wl_list_remove(&output->frame.link);
     wl_list_remove(&output->request_state.link);
@@ -123,6 +124,7 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
         wlr_log(WLR_ERROR, "failed to create qw_output struct");
         return;
     }
+    wlr_log(WLR_ERROR, "new output: %s", wlr_output->name);
 
     wlr_output_init_render(wlr_output, server->allocator, server->renderer);
 

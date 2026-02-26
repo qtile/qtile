@@ -1,5 +1,5 @@
 /*
- * Session Lock Implementation (wlroots protocol: wlr_session_lock_v1)
+ * Session yock Implementation (wlroots protocol: wlr_session_lock_v1)
  * see: https://wayland.app/protocols/ext-session-lock-v1
  */
 #include "session-lock.h"
@@ -107,19 +107,20 @@ void qw_session_lock_crashed_update_rects(struct qw_server *server) {
 void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_session_lock_surface *sls = wl_container_of(listener, sls, surface_destroy);
+    wlr_log(WLR_ERROR, "handle destroy surface: %p", sls);
     struct qw_server *server = sls->server;
+    // struct wlr_session_lock_surface_v1 *lock_surface = sls->lock_surface;
 
-    if (server->lock != NULL && server->lock->lock != NULL) {
-        struct wlr_session_lock_surface_v1 *lock_surface = sls->lock_surface;
-        if (lock_surface->link.prev != NULL && lock_surface->link.next != NULL) {
-            wl_list_remove(&lock_surface->link);
-            wl_list_init(&lock_surface->link);
-        }
+    // if (lock_surface->output != NULL && lock_surface->output->data != NULL) {
+    //     struct qw_output *output = lock_surface->output->data;
+    //     if (output->lock_surface == lock_surface) {
+    //         output->lock_surface = NULL;
+    //     }
+    // }
 
-        // Focus shifts if other surfaces remain
-        if (!wl_list_empty(&server->lock->lock->surfaces)) {
-            qw_session_lock_focus_first_lock_surface(server);
-        }
+    if (server->lock != NULL && server->lock->lock != NULL &&
+        !wl_list_empty(&server->lock->lock->surfaces)) {
+        qw_session_lock_focus_first_lock_surface(server);
     }
 
     wl_list_remove(&sls->surface_destroy.link);
@@ -140,6 +141,10 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
 
         server->lock_state = QW_SESSION_LOCK_UNLOCKED;
         qw_session_lock_restore_focus(server);
+
+        // Clear all output lock_surface pointers
+        struct qw_output *output;
+        wl_list_for_each(output, &server->outputs, link) { output->lock_surface = NULL; }
 
     } else if (server->lock_state == QW_SESSION_LOCK_LOCKED && !unlock) {
         wlr_log(WLR_ERROR, "Session lock client vanished without unlocking.");
@@ -209,6 +214,7 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
     struct qw_session_lock_surface *sls = calloc(1, sizeof(*sls));
     sls->server = lock->server;
     sls->lock_surface = lock_surface;
+    wlr_log(WLR_ERROR, "handle new surface: %p for %s", sls, sls->lock_surface->output->name);
 
     sls->surface_destroy.notify = qw_session_lock_surface_handle_destroy;
     wl_signal_add(&lock_surface->surface->events.destroy, &sls->surface_destroy);
