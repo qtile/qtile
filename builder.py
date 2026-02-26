@@ -1,4 +1,5 @@
 import sys
+import traceback
 
 from setuptools import build_meta as _orig
 from setuptools.build_meta import *  # noqa: F401,F403
@@ -31,6 +32,7 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
             ffi_compile(verbose=bool(wayland_requested))
         except Exception as e:
             if wayland_requested:
+                traceback.print_exc()
                 sys.exit(f"Wayland backend requested but backend could not be built: {e}")
             else:
                 print(f"Wayland backend was not built: {e}")
