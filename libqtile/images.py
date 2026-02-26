@@ -31,6 +31,13 @@ def get_cairo_surface(bytes_img, width=None, height=None):
         return _SurfaceInfo(surf, fmt)
 
 
+def get_cairo_surface_for_data(image_buffer):
+    surf = cairocffi.ImageSurface.create_for_data(
+        image_buffer.data, image_buffer.format, image_buffer.width, image_buffer.height
+    )
+    return _SurfaceInfo(surf, image_buffer.format)
+
+
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     """Return a SurfacePattern from an ImageSurface.
 
@@ -119,10 +126,19 @@ class _Rotation(_Resetter):
 _ImgSize = namedtuple("_ImgSize", ("width", "height"))
 
 
+# Container for raw pixel data
+class ImageBuffer:
+    def __init__(self, data, format, width, height):
+        self.data = data
+        self.format = format
+        self.width = width
+        self.height = height
+
+
 class Img:
     """Img is a class which creates & manipulates cairo SurfacePatterns from an image
 
-    There are two constructors Img(...) and Img.from_path(...)
+    There are three constructors Img(...), Img.from_path(...) and Img.from_data(...)
 
     The cairo surface pattern is at img.pattern.
     Changing any of the attributes width, height, or theta will update the pattern.
@@ -135,8 +151,10 @@ class Img:
 
     def __init__(self, bytes_img, name="", path=""):
         self.bytes_img = bytes_img
+        self.image_buffer = None
         self.name = name
         self.path = path
+        self._output_scale = 1
 
     def _reset(self):
         if hasattr(self, "surface"):
@@ -145,6 +163,14 @@ class Img:
         if hasattr(self, "pattern"):
             # patterns do not need to be finish()ed, only surfaces do
             del self.pattern
+
+    @classmethod
+    def from_data(cls, data, format, width, height):
+        "Create an Img instance from image data"
+        image_buffer = ImageBuffer(data, format, width, height)
+        img = cls(None)
+        img.image_buffer = image_buffer
+        return img
 
     @classmethod
     def from_path(cls, image_path):
@@ -160,7 +186,10 @@ class Img:
         try:
             return self._default_surface
         except AttributeError:
-            surf, fmt = get_cairo_surface(self.bytes_img)
+            if self.bytes_img:
+                surf, fmt = get_cairo_surface(self.bytes_img)
+            elif self.image_buffer:
+                surf, fmt = get_cairo_surface_for_data(self.image_buffer)
             self._default_surface = surf
             return surf
 
@@ -178,9 +207,16 @@ class Img:
     width = _PixelSize("width")
     height = _PixelSize("height")
 
-    def resize(self, width=None, height=None):
+    def resize(self, width=None, height=None, output_scale=None):
         if width is None and height is None:
             raise ValueError("You must supply width or height")
+
+        if output_scale is not None:
+            if width is not None:
+                width *= output_scale
+            if height is not None:
+                height *= output_scale
+            self._output_scale = output_scale
 
         width0, height0 = self.default_size
         width_factor = width / width0 if width is not None else None
@@ -225,7 +261,10 @@ class Img:
         try:
             return self._surface
         except AttributeError:
-            surf, fmt = get_cairo_surface(self.bytes_img, self.width, self.height)
+            if self.bytes_img:
+                surf, fmt = get_cairo_surface(self.bytes_img, self.width, self.height)
+            elif self.image_buffer:
+                surf, fmt = get_cairo_surface_for_data(self.image_buffer)
             self._surface = surf
             return surf
 
@@ -261,6 +300,20 @@ class Img:
         s0 = (self.bytes_img, self.theta, self.width, self.height)
         s1 = (other.bytes_img, other.theta, other.width, other.height)
         return s0 == s1
+
+    def draw(self, drawer, offsetx=0, offsety=0):
+        # If an output scale was specified, image will have been upscaled when resized.
+        # Rasterize image as a cairo Pattern
+        pattern = self.pattern
+
+        # Translate and downscale image if required
+        drawer.ctx.save()
+        drawer.ctx.translate(offsetx, offsety)
+        scale = self._output_scale
+        drawer.ctx.scale(1 / scale, 1 / scale)
+        drawer.ctx.set_source(pattern)
+        drawer.ctx.paint()
+        drawer.ctx.restore()
 
 
 class Loader:

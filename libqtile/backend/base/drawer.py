@@ -330,6 +330,10 @@ class Drawer:
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
 
+    @property
+    def output_scale(self):
+        return getattr(self._win, "scale", 1)
+
 
 class TextLayout:
     def __init__(
