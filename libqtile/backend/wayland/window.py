@@ -206,6 +206,7 @@ class Base(base._Window):
                 # multiple border colors
                 if all(isinstance(x, str) or isinstance(x, tuple) for x in bordercolor):
                     colors = bordercolor
+
                 else:
                     pass
                     # TODO: Check validation logic, handle this case
@@ -703,8 +704,9 @@ class Window(Base, base.Window):
             if self.group and self.group.screen:
                 self.group.mark_floating(self)
 
+            if self.layer != lib.LAYER_KEEPABOVE and self.qtile.config.floats_kept_above:
+                self.keep_above(enable=True)
             self.move_to_top()
-            # TODO: reparent if necessary
 
             # If going from fullscreen to float, remove fullscreen background
             if self._prev_win_state == WindowStates.FULLSCREEN:
