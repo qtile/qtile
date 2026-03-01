@@ -19,6 +19,7 @@ from libqtile.backend.base.idle_inhibit import IdleInhibitorManager, Inhibitor
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.idle_notify import IdleNotifier
 from libqtile.backend.x11.xkeysyms import keysyms
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -948,3 +949,7 @@ class Core(base.Core):
             self.last_focused.change_layer()
 
         self.last_focused = win
+
+    @expose_command
+    def idle_notify_activity(self) -> None:
+        self._fake_input(xcbq.XCB_MOTION_NOTIFY, 0, 0, 0)
