@@ -874,6 +874,10 @@ class Core(base.Core):
             self._inhibited = value
             hook.fire("idle_inhibitor_change", value)
 
+    @expose_command
+    def idle_notify_activity(self) -> None:
+        lib.qw_server_idle_notify_activity(self.qw)
+
 
 class Painter:
     """
