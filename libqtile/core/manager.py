@@ -11,7 +11,6 @@ import shlex
 import shutil
 import signal
 import socket
-import subprocess
 import tempfile
 import time
 from collections import defaultdict
@@ -1415,7 +1414,7 @@ class Qtile(CommandObject):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
-            cmd = subprocess.list2cmdline(args)
+            cmd = shlex.join(args)
 
         to_lookup = args[0]
         if shell:
