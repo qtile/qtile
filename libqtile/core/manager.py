@@ -49,7 +49,8 @@ from libqtile.utils import (
 from libqtile.widget.base import _Widget
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
+    from os import PathLike
     from typing import Any, Literal
 
     from libqtile.command.base import ItemT
@@ -1381,7 +1382,7 @@ class Qtile(CommandObject):
     @expose_command()
     def spawn(
         self,
-        cmd: list[str] | str,
+        cmd: list[str] | str | Sequence[str | PathLike],
         shell: bool = False,
         env: dict[str, str] = dict(),
         group: str | None = None,
@@ -1410,10 +1411,16 @@ class Qtile(CommandObject):
 
             spawn("screenshot | xclip", shell=True)
         """
-        if isinstance(cmd, str):
-            args = shlex.split(cmd)
+
+        def expand(arg: str | PathLike) -> str:
+            if isinstance(arg, Path):
+                arg = arg.expanduser()
+            return os.fspath(arg)
+
+        if isinstance(cmd, str | os.PathLike):
+            args = shlex.split(expand(cmd))
         else:
-            args = list(cmd)
+            args = [expand(c) for c in cmd]
             cmd = shlex.join(args)
 
         to_lookup = args[0]
