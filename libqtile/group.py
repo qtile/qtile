@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import hook, utils
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.backend.base import WindowStates
+from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile.config import ScreenRect
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
@@ -24,11 +26,14 @@ class _Group(CommandObject):
         self.name = name
         self.label = name if label is None else label
         self.custom_layout = layout  # will be set on _configure
-        self.windows = []
+        self.previous_in_layout = []
         self.tiled_windows = set()
+        self.windows = []
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
+        self.fullscreen_layout = None
+        self.maximized_layout = None
         # self.focus_history lists the group's windows in the order they
         # received focus, from the oldest (first item) to the currently
         # focused window (last item); NB the list does *not* contain any
@@ -40,14 +45,16 @@ class _Group(CommandObject):
         self.last_focused = None
         self.persist = persist
 
-    def _configure(self, layouts, floating_layout, qtile):
+    def _configure(self, layouts, floating_layout, fullscreen_layout, maximized_layout, qtile):
         self.screen = None
         self.current_layout = 0
         self.focus_history = []
         self.windows = []
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
-        self.floating_layout = floating_layout
+        self.floating_layout = floating_layout.clone(self)
+        self.fullscreen_layout = fullscreen_layout.clone(self)
+        self.maximized_layout = maximized_layout.clone(self)
         if self.custom_layout is not None:
             self.layout = self.custom_layout
             self.custom_layout = None
@@ -82,7 +89,15 @@ class _Group(CommandObject):
 
     @property
     def layout(self):
-        return self.layouts[self.current_layout]
+        # TODO: Do these if statements in use_layout instead
+        curr = self.layouts[self.current_layout]
+        if curr._manages_win_state == WindowStates.FLOATING:
+            return self.floating_layout
+        if curr._manages_win_state == WindowStates.FULLSCREEN:
+            return self.fullscreen_layout
+        if curr._manages_win_state == WindowStates.MAXIMIZED:
+            return self.maximized_layout
+        return curr
 
     @layout.setter
     def layout(self, layout):
@@ -102,10 +117,22 @@ class _Group(CommandObject):
         assert -len(self.layouts) <= index < len(self.layouts), "layout index out of bounds"
         self.layout.hide()
         self.current_layout = index % len(self.layouts)
-        hook.fire("layout_change", self.layouts[self.current_layout], self)
+        hook.fire("layout_change", self.layout, self)
+        for x in self.windows:
+            # Make sure the client is in the right layer
+            # This happens for clients that are "tiling"
+            # And also for floating,fullscreen,maximized windows that are only that because the current layout manages these windows
+            # This makes it so that any windows which had the state manually set by the user will not be fiddled with (e.g. manually toggled fullscreen windows with toggle_fullscreen() will stay fullscreen when a switch happened to tiling windows)
+            # But windows that are only fullscreen because the previous layout was fullscreen will switch to tiling
+            if x._win_state_follows and x._win_state != self.layout._manages_win_state:
+                self.switch_layer_noninteractive(x)
+        # Make sure the active client visible
+        # TODO: should this be conditional?
+        if self.last_focused is not None:
+            self.focus(self.last_focused)
         self.layout_all()
         if self.screen is not None:
-            screen_rect = self.screen.get_rect()
+            screen_rect = self.get_screen_rect()
             self.layout.show(screen_rect)
 
     def use_next_layout(self):
@@ -113,6 +140,34 @@ class _Group(CommandObject):
 
     def use_previous_layout(self):
         self.use_layout((self.current_layout - 1) % (len(self.layouts)))
+
+    def get_screen_rect(self, force_full=None) -> ScreenRect:
+        if force_full is None:
+            force_full = self.layout._manages_win_state == WindowStates.FULLSCREEN
+        if force_full:
+            return ScreenRect(self.screen.x, self.screen.y, self.screen.width, self.screen.height)
+        return self.screen.get_rect()
+
+    def switch_layer_noninteractive(self, client):
+        # Remove from alt layouts if exists
+        self.remove_alt_layouts(client)
+        # We will set the win state to the managed layout
+        # If we switch to a tiling layout, add the window
+        if self.layout._manages_win_state == WindowStates.TILED:
+            # This already checks if it's not in there already
+            self.add_to_layouts(client)
+        elif self.layout._manages_win_state == WindowStates.FULLSCREEN:
+            self.fullscreen_layout.add_client(client)
+        elif self.layout._manages_win_state == WindowStates.MAXIMIZED:
+            self.maximized_layout.add_client(client)
+        elif self.layout._manages_win_state == WindowStates.FLOATING:
+            # Use tiled position and dimensions
+            client.float_x = client.x - self.screen.x
+            client.float_y = client.y - self.screen.y
+            client._float_width = client.width
+            client._float_height = client.height
+            self.floating_layout.add_client(client)
+        client._win_state = self.layout._manages_win_state
 
     def layout_all(self, warp=False, focus=True):
         """Layout the floating layer, then the current layout.
@@ -125,19 +180,39 @@ class _Group(CommandObject):
         """
         if self.screen and self.windows:
             with self.qtile.core.masked():
-                normal = [x for x in self.windows if not x.floating]
-                floating = [x for x in self.windows if x.floating and not x.minimized]
-                screen_rect = self.screen.get_rect()
-                if normal:
+                mainers = []
+                floaters = []
+                fullers = []
+                maxers = []
+                for x in self.windows:
+                    # This is the main layer
+                    if x._win_state == self.layout._manages_win_state and not x.minimized:
+                        mainers.append(x)
+                    # The other layers are used if the window is that state but the current layout does not manage that state
+                    elif x.floating and not x.minimized:
+                        floaters.append(x)
+                    elif x.fullscreen and not x.minimized:
+                        fullers.append(x)
+                    elif x.maximized and not x.minimized:
+                        maxers.append(x)
+                screen_rect = self.get_screen_rect()
+                if mainers:
                     try:
-                        self.layout.layout(normal, screen_rect)
+                        self.layout.layout(mainers, screen_rect)
                     except Exception:
                         logger.exception("Exception in layout %s", self.layout.name)
-                if floating:
-                    self.floating_layout.layout(floating, screen_rect)
+                if floaters:
+                    self.floating_layout.layout(floaters, screen_rect)
+                if fullers:
+                    self.fullscreen_layout.layout(fullers, self.get_screen_rect(force_full=True))
+                if maxers:
+                    self.maximized_layout.layout(maxers, self.get_screen_rect(force_full=False))
                 if focus:
                     if self.current_window and self.screen == self.qtile.current_screen:
+                        # if not self.current_window.minimized:
                         self.current_window.focus(warp)
+                        # else:
+                        #     self.next_window().focus(warp)
                     else:
                         # Screen has lost focus so we reset record of focused window so
                         # focus will warp when screen is focused again
@@ -155,7 +230,7 @@ class _Group(CommandObject):
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
             self.layout_all(warp=warp and self.qtile.config.cursor_warp)
-            screen_rect = self.screen.get_rect()
+            screen_rect = self.get_screen_rect()
             self.floating_layout.show(screen_rect)
             self.layout.show(screen_rect)
         else:
@@ -199,12 +274,22 @@ class _Group(CommandObject):
 
             self.current_window = win
             self.last_focused = self.current_window
-            if win.floating:
+            if win.fullscreen:
+                for layout in self.layouts:
+                    layout.blur()
+                self.fullscreen_layout.focus(win)
+            elif win.maximized:
+                for layout in self.layouts:
+                    layout.blur()
+                self.maximized_layout.focus(win)
+            elif win.floating:
                 for layout in self.layouts:
                     layout.blur()
                 self.floating_layout.focus(win)
             else:
                 self.floating_layout.blur()
+                self.fullscreen_layout.blur()
+                self.maximized_layout.blur()
                 for layout in self.layouts:
                     layout.focus(win)
             hook.fire("focus_change")
@@ -217,12 +302,14 @@ class _Group(CommandObject):
             name=self.name,
             label=self.label,
             focus=self.current_window.name if self.current_window else None,
-            tiled_windows={i.name for i in self.tiled_windows},
+            tiled_windows=[i.name for i in self.windows if i.tiling],
             windows=[i.name for i in self.windows],
             focus_history=[i.name for i in self.focus_history],
             layout=self.layout.name,
             layouts=[i.name for i in self.layouts],
             floating_info=self.floating_layout.info(),
+            fullscreen_info=self.fullscreen_layout.info(),
+            maximized_info=self.maximized_layout.info(),
             screen=self.screen.index if self.screen else None,
         )
 
@@ -231,16 +318,32 @@ class _Group(CommandObject):
         if win not in self.windows:
             self.windows.append(win)
         win.group = self
+        # Tiling windows follow the current layout's window state
+        follow_layer = True
+        if win._win_state is None or win.tiling:
+            win._win_state = self.layout._manages_win_state
         if self.qtile.config.auto_fullscreen and win.wants_to_fullscreen:
-            win.fullscreen = True
-        elif self.floating_layout.match(win) and not win.fullscreen:
-            win.floating = True
-        if win.floating and not win.fullscreen:
+            win._win_state = WindowStates.FULLSCREEN
+            follow_layer = False
+        elif self.floating_layout.match(win):
+            win._win_state = WindowStates.FLOATING
+            if self.qtile.config.floats_kept_above:
+                win.keep_above(enable=True)
+            follow_layer = False
+        if win.floating:
             self.floating_layout.add_client(win)
+        if win.fullscreen:
+            self.fullscreen_layout.add_client(win)
+        if win.maximized:
+            self.maximized_layout.add_client(win)
+        if win.tiling:
+            self.add_to_layouts(win)
+        # If some other layer is set due to some config option,
+        # make sure that the current layer is kept unless some manual involvement happens
+        if not follow_layer:
+            win._win_state_follows = False
         else:
-            self.tiled_windows.add(win)
-            for i in self.layouts:
-                i.add_client(win)
+            win._win_state_follows = True
         if win.can_steal_focus:
             self.focus(win, warp=True, force=force)
         else:
@@ -263,19 +366,10 @@ class _Group(CommandObject):
         self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
+        nextfocus = None
 
-        if win.floating:
-            nextfocus = self.floating_layout.remove(win)
-
-            nextfocus = (
-                previous_win
-                or nextfocus
-                or self.current_window
-                or self.layout.focus_first()
-                or self.floating_layout.focus_first(group=self)
-            )
-        # Remove from the tiled layouts if it was not floating or fullscreen
-        if not win.floating or win.fullscreen:
+        # Remove from the tiled layouts if present
+        if win in self.tiled_windows:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(win)
@@ -290,8 +384,41 @@ class _Group(CommandObject):
                 or self.layout.focus_first()
             )
 
-            if win in self.tiled_windows:
-                self.tiled_windows.remove(win)
+            self.tiled_windows.remove(win)
+
+        if win.floating:
+            nextfocus = self.floating_layout.remove(win)
+
+            nextfocus = (
+                previous_win
+                or nextfocus
+                or self.current_window
+                or self.layout.focus_first()
+                or self.floating_layout.focus_first(group=self)
+                or self.fullscreen_layout.focus_first()
+            )
+        elif win.fullscreen:
+            nextfocus = self.fullscreen_layout.remove(win)
+
+            nextfocus = (
+                previous_win
+                or nextfocus
+                or self.floating_layout.focus_first(group=self)
+                or self.current_window
+                or self.layout.focus_first()
+                or self.fullscreen_layout.focus_first()
+            )
+
+        elif win.maximized:
+            nextfocus = self.maximized_layout.remove(win)
+            nextfocus = (
+                previous_win
+                or nextfocus
+                or self.floating_layout.focus_first(group=self)
+                or self.current_window
+                or self.layout.focus_first()
+                or self.fullscreen_layout.focus_first()
+            )
 
         # a notification may not have focus
         if hadfocus:
@@ -302,34 +429,115 @@ class _Group(CommandObject):
         elif self.screen:
             self.layout_all()
 
-    def mark_floating(self, win, floating):
-        if floating:
-            if win in self.floating_layout.find_clients(self):
-                # already floating
-                pass
-            else:
-                # Remove from the tiled windows list if the window is not fullscreen
-                if not win.fullscreen:
-                    self.tiled_windows.remove(win)
-                    # Remove the window from the layout if it is not fullscreen
-                    for i in self.layouts:
-                        i.remove(win)
-                        if win is self.current_window:
-                            i.blur()
-                    self.floating_layout.add_client(win)
-                    if win is self.current_window:
-                        self.floating_layout.focus(win)
-        else:
-            self.floating_layout.remove(win)
+    def remove_alt_layouts(self, win, pseudo=False):
+        if win.fullscreen:
+            self.fullscreen_layout.remove(win)
+            self.fullscreen_layout.blur()
+        if win.maximized:
+            if not pseudo:
+                self.maximized_layout.remove(win)
+            self.maximized_layout.blur()
+        if win.floating:
+            if not pseudo:
+                self.floating_layout.remove(win)
             self.floating_layout.blur()
-            # A window that was fullscreen should only be added if it was not a tiled window
-            if win not in self.tiled_windows:
-                for i in self.layouts:
-                    i.add_client(win)
-                self.tiled_windows.add(win)
-            if win is self.current_window:
-                for i in self.layouts:
+
+    def mark_fullscreen(self, win):
+        if win.fullscreen:
+            return
+        win._win_state_follows = self.layout._manages_win_state == WindowStates.FULLSCREEN
+        # if self.layout is not self.floating_layout:
+
+        # if self.fullscreen and self._win_state == WindowStates.FULLSCREEN:
+        #     state = self.group.layout._manages_win_state
+
+        # Only remove from alt layouts if not following the main layout
+        # if win._win_state_follows:
+        if win._win_state == self.layout._manages_win_state:
+            self.remove_alt_layouts(win, pseudo=True)
+        else:
+            self.remove_alt_layouts(win, pseudo=False)
+        self.remove_from_layouts(win, pseudo=True)
+        self.fullscreen_layout.add_client(win)
+        if win is self.current_window:
+            self.fullscreen_layout.focus(win)
+        win._win_state = WindowStates.FULLSCREEN
+        self.layout_all()
+
+    def mark_maximized(self, win):
+        if win.maximized:
+            return
+        win._win_state_follows = self.layout._manages_win_state == WindowStates.MAXIMIZED
+        if win._win_state == self.layout._manages_win_state:
+            self.remove_alt_layouts(win, pseudo=True)
+        else:
+            self.remove_alt_layouts(win, pseudo=False)
+        self.remove_from_layouts(win, pseudo=True)
+        # self.maximized_layout.add_client(win)
+        self.add_to_alt_layout(self.maximized_layout, win)
+
+        if win is self.current_window:
+            self.maximized_layout.focus(win)
+        win._win_state = WindowStates.MAXIMIZED
+        self.layout_all()
+
+    def mark_minimized(self, win):
+        if win.minimized:
+            return
+        # self.remove_from_layouts(win, pseudo=True)
+        self.remove_alt_layouts(win)
+        self.remove_from_layouts(win)
+        win._win_state = WindowStates.MINIMIZED
+        self.layout_all()
+
+    def mark_tiling(self, win):
+        if win.tiling:
+            return
+        if self.layout._manages_win_state != WindowStates.TILED:
+            raise CommandError("The current layout does not support tiling windows")
+        win._win_state_follows = self.layout._manages_win_state == WindowStates.TILED
+        self.remove_alt_layouts(win)
+        self.add_to_layouts(win)
+        win._win_state = WindowStates.TILED
+        self.layout_all()
+
+    def add_to_layouts(self, win):
+        if win not in self.tiled_windows:
+            for i in self.layouts:
+                i.add_client(win)
+                if win is self.current_window:
                     i.focus(win)
+                self.tiled_windows.add(win)
+            hook.fire("group_window_add", self, win)
+
+    def add_to_alt_layout(self, layout, win):
+        if win not in layout.get_windows():
+            layout.add_client(win)
+
+    def remove_from_layouts(self, win, pseudo=False):
+        if win in self.tiled_windows:
+            for i in self.layouts:
+                if not pseudo:
+                    i.remove(win)
+                if win is self.current_window:
+                    i.blur()
+            if not pseudo:
+                self.tiled_windows.remove(win)
+            hook.fire("group_window_remove", self, win)
+
+    def mark_floating(self, win):
+        if win.floating:
+            return
+        win._win_state_follows = self.layout._manages_win_state == WindowStates.FLOATING
+        # Only remove from alt layouts if not following the main layout
+        self.remove_alt_layouts(win)
+        self.remove_from_layouts(win)
+        # if not win.fullscreen:
+        # self.floating_layout.add_client(win)
+        self.add_to_alt_layout(self.floating_layout, win)
+        if win is self.current_window:
+            self.floating_layout.focus(win)
+        win._win_state = WindowStates.FLOATING
         self.layout_all()
 
     def _items(self, name) -> ItemT:
@@ -440,6 +648,7 @@ class _Group(CommandObject):
             win.minimized = False
         self.layout_all()
 
+    # TODO: make sense of next and prev window logic!!
     @expose_command()
     def next_window(self):
         """
@@ -451,7 +660,21 @@ class _Group(CommandObject):
         """
         if not self.windows:
             return
-        if self.current_window.floating:
+        if self.current_window.fullscreen:
+            nxt = (
+                self.fullscreen_layout.focus_next(self.current_window)
+                or self.floating_layout.focus_first(group=self)
+                or self.layout.focus_first()
+                or self.fullscreen_layout.focus_first(group=self)
+            )
+        elif self.current_window.maximized:
+            nxt = (
+                self.maximized_layout.focus_next(self.current_window)
+                or self.floating_layout.focus_first(group=self)
+                or self.layout.focus_first()
+                or self.maximized_layout.focus_first(group=self)
+            )
+        elif self.current_window.floating:
             nxt = (
                 self.floating_layout.focus_next(self.current_window)
                 or self.layout.focus_first()
@@ -476,7 +699,21 @@ class _Group(CommandObject):
         """
         if not self.windows:
             return
-        if self.current_window.floating:
+        if self.current_window.fullscreen:
+            nxt = (
+                self.fullscreen_layout.focus_previous(self.current_window)
+                or self.floating_layout.focus_last(group=self)
+                or self.layout.focus_last()
+                or self.fullscreen_layout.focus_last(group=self)
+            )
+        elif self.current_window.maximized:
+            nxt = (
+                self.maximized_layout.focus_previous(self.current_window)
+                or self.floating_layout.focus_last(group=self)
+                or self.layout.focus_last()
+                or self.maximized_layout.focus_last(group=self)
+            )
+        elif self.current_window.floating:
             nxt = (
                 self.floating_layout.focus_previous(self.current_window)
                 or self.layout.focus_last()

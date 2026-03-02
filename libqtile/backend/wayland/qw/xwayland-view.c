@@ -351,7 +351,9 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
 
     // Raise view to front if requested
     if (above != 0) {
-        qw_xwayland_view_bring_to_front(self);
+        qw_view_reparent(&xwayland_view->base, LAYER_BRINGTOFRONT);
+    } else {
+        qw_view_reparent(&xwayland_view->base, LAYER_LAYOUT);
     }
 
     // View under the cursor may have changed

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import expose_command
 from libqtile.config import Match, _Match
 from libqtile.layout.base import Layout
@@ -40,8 +41,6 @@ class Floating(Layout):
         ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
         ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
-        ("max_border_width", 0, "Border width for maximize."),
-        ("fullscreen_border_width", 0, "Border width for fullscreen."),
     ]
 
     def __init__(
@@ -76,6 +75,7 @@ class Floating(Layout):
         correct location on the screen.
         """
         Layout.__init__(self, **config)
+        self._manages_win_state = WindowStates.FLOATING
         self.clients: list[Window] = []
         self.focused: Window | None = None
 
@@ -97,26 +97,21 @@ class Floating(Layout):
     def to_screen(self, group, new_screen):
         """Adjust offsets of clients within current screen"""
         for win in self.find_clients(group):
-            if win.maximized:
-                win.maximized = True
-            elif win.fullscreen:
-                win.fullscreen = True
-            else:
-                # If the window hasn't been floated before, it will be configured in
-                # .configure()
-                if win.float_x is not None and win.float_y is not None:
-                    # By default, place window at same offset from top corner
-                    new_x = new_screen.x + win.float_x
-                    new_y = new_screen.y + win.float_y
-                    # make sure window isn't off screen left/right...
-                    new_x = min(new_x, new_screen.x + new_screen.width - win.width)
-                    new_x = max(new_x, new_screen.x)
-                    # and up/down
-                    new_y = min(new_y, new_screen.y + new_screen.height - win.height)
-                    new_y = max(new_y, new_screen.y)
+            # If the window hasn't been floated before, it will be configured in
+            # .configure()
+            if win.float_x is not None and win.float_y is not None:
+                # By default, place window at same offset from top corner
+                new_x = new_screen.x + win.float_x
+                new_y = new_screen.y + win.float_y
+                # make sure window isn't off screen left/right...
+                new_x = min(new_x, new_screen.x + new_screen.width - win.width)
+                new_x = max(new_x, new_screen.x)
+                # and up/down
+                new_y = min(new_y, new_screen.y + new_screen.height - win.height)
+                new_y = max(new_y, new_screen.y)
 
-                    win.x = new_x
-                    win.y = new_y
+                # win.float_x = new_x
+                # win.float_y = new_y
             win.group = new_screen.group
 
     def focus_first(self, group=None):
@@ -180,8 +175,8 @@ class Floating(Layout):
 
         if client.has_user_set_position() and not self.on_screen(client, screen_rect):
             # move to screen
-            client.x = screen_rect.x + client.x
-            client.y = screen_rect.y + client.y
+            client.float_x = screen_rect.x + client.x
+            client.float_y = screen_rect.y + client.y
         if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
             # client has not been properly placed before or it is off screen
             transient_for = client.is_transient_for()
@@ -206,22 +201,25 @@ class Floating(Layout):
             # or top
             y = max(y, screen_rect.y)
 
-            client.x = int(round(x))
-            client.y = int(round(y))
+            client.float_x = int(round(x))
+            client.float_y = int(round(y))
         return above
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
-        if client.has_focus:
-            bc = self.border_focus
-        else:
-            bc = self.border_normal
+        # If current layout is Floating use its config, otherwise default to config
+        # for floating_layout
+        layout_for_config = self
+        if client.group is not None:
+            current_layout = client.group.layouts[client.group.current_layout]
+            if isinstance(current_layout, Floating):
+                layout_for_config = current_layout
 
-        if client.maximized:
-            bw = self.max_border_width
-        elif client.fullscreen:
-            bw = self.fullscreen_border_width
+        if client.has_focus:
+            bc = layout_for_config.border_focus
         else:
-            bw = self.border_width
+            bc = layout_for_config.border_normal
+
+        bw = layout_for_config.border_width
 
         # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
         # don't reposition it anywhere, let Java app to control it
@@ -243,12 +241,21 @@ class Floating(Layout):
             if client.float_x is None or client.float_y is None:
                 # this window hasn't been placed before, let's put it in a sensible spot
                 above = self.compute_client_position(client, screen_rect)
+                # and get its dimensions
+                client._float_width = client.width
+                client._float_height = client.height
 
+            # TODO: wayland has no z-layering
+            # Put the floating focused client above always
+            # if self.group.qtile.core.name == "wayland":
+            #     above = True
+
+            assert client.group is not None and client.group.screen is not None
             client.place(
-                client.x,
-                client.y,
-                client.width,
-                client.height,
+                client.group.screen.x + client.float_x,
+                client.group.screen.y + client.float_y,
+                client._float_width,
+                client._float_height,
                 bw,
                 bc,
                 above,

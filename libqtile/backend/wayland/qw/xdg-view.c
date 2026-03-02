@@ -240,6 +240,8 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
     // Raise view to front if requested
     if (above != 0) {
         qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
+    } else {
+        qw_view_reparent(&xdg_view->base, LAYER_LAYOUT);
     }
 
     // View under the cursor may have changed

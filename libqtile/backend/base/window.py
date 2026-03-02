@@ -4,6 +4,7 @@ import typing
 from abc import ABCMeta, abstractmethod
 
 from libqtile import hook
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import CommandError, CommandObject, expose_command
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
@@ -28,6 +29,8 @@ class _Window(CommandObject, metaclass=ABCMeta):
         # Window object from being managed, now that a Static is being used instead
         self.defunct: bool = False
         self._can_steal_focus: bool = True
+        self._win_state: WindowStates | None = None
+        self.tiling: bool
 
         self.base_x: int | None = None
         self.base_y: int | None = None
@@ -245,6 +248,8 @@ class Window(_Window, metaclass=ABCMeta):
     # If float_x or float_y are None, the window has never been placed
     float_x: int | None
     float_y: int | None
+    _float_width: int
+    _float_height: int
     bordercolor: ColorsType | None
 
     def __repr__(self):
@@ -379,6 +384,21 @@ class Window(_Window, metaclass=ABCMeta):
     @expose_command()
     def toggle_floating(self) -> None:
         """Toggle the floating state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def toggle_tiling(self) -> None:
+        """Toggle the tiling state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def enable_tiling(self) -> None:
+        """Toggle the tiling state of the window."""
+
+    @abstractmethod
+    @expose_command()
+    def disable_tiling(self) -> None:
+        """Toggle the tiling state of the window."""
 
     @abstractmethod
     @expose_command()
