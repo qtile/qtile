@@ -904,17 +904,9 @@ class Window(Base, base.Window):
 
         if self._win_state != WindowStates.FLOATING:
             self.floating = True
+            self._win_state_follows = False
 
         self.place(x, y, w, h, self.borderwidth, self.bordercolor, above=True, respect_hints=True)
-
-        # Remove from layouts if follows floating layout
-        if (
-            self.group
-            and self.group.layout._manages_win_state == WindowStates.FLOATING
-            and self._win_state_follows
-        ):
-            self.group.remove_from_layouts(self)
-            self._win_state_follows = False
 
     @expose_command()
     def move_floating(self, dx: int, dy: int) -> None:

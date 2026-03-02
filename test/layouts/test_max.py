@@ -21,12 +21,26 @@ class MaxConfig(Config):
         layout.Max(margin=5, border_width=5),
     ]
     floating_layout = libqtile.resources.default_config.floating_layout
+    maximized_layout = layout.Max(border_width=10)
+    keys = []
+    mouse = []
+    screens = []
+
+
+class TileConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        libqtile.config.Group("a"),
+    ]
+    layouts = [layout.Tile()]
+    maximized_layout = layout.Max(border_width=10)
     keys = []
     mouse = []
     screens = []
 
 
 max_config = pytest.mark.parametrize("manager", [MaxConfig], indirect=True)
+tile_config = pytest.mark.parametrize("manager", [TileConfig], indirect=True)
 
 
 class MaxLayeredConfig(Config):
@@ -189,3 +203,23 @@ def test_max_window_margins_and_borders(manager):
         assert screen["width"] == window["width"] + margin[0] + margin[2] + border * 2
         assert screen["height"] == window["height"] + margin[1] + margin[3] + border * 2
         manager.c.next_layout()
+
+
+@tile_config
+def test_max_layout_border_width(manager):
+    manager.test_window("one")
+
+    # Default geometry
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == 798
+    assert info["height"] == 598
+
+    # Maximized
+    manager.c.window.toggle_maximize()
+    info = manager.c.window.info()
+    assert info["x"] == 0
+    assert info["y"] == 0
+    assert info["width"] == 780
+    assert info["height"] == 580

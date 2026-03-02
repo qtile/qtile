@@ -52,14 +52,25 @@ class Fullscreen(_SimpleLayoutBase):
         return super().add_client(client, 1)
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
+        # If current layout is Fullscreen use its config, otherwise default to config
+        # for fullscreen_layout
+        layout_for_config = self
+        if client.group is not None:
+            current_layout = client.group.layouts[client.group.current_layout]
+            if isinstance(current_layout, Fullscreen):
+                layout_for_config = current_layout
+
+        border = layout_for_config.border
+        border_width = layout_for_config.border_width
+
         if client is self.clients.current_client:
             client.place(
                 screen_rect.x,
                 screen_rect.y,
-                screen_rect.width - self.border_width * 2,
-                screen_rect.height - self.border_width * 2,
-                self.border_width,
-                self.border,
+                screen_rect.width - border_width * 2,
+                screen_rect.height - border_width * 2,
+                border_width,
+                border,
                 above=True,
             )
             client.unhide()

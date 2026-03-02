@@ -206,12 +206,20 @@ class Floating(Layout):
         return above
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
-        if client.has_focus:
-            bc = self.border_focus
-        else:
-            bc = self.border_normal
+        # If current layout is Floating use its config, otherwise default to config
+        # for floating_layout
+        layout_for_config = self
+        if client.group is not None:
+            current_layout = client.group.layouts[client.group.current_layout]
+            if isinstance(current_layout, Floating):
+                layout_for_config = current_layout
 
-        bw = self.border_width
+        if client.has_focus:
+            bc = layout_for_config.border_focus
+        else:
+            bc = layout_for_config.border_normal
+
+        bw = layout_for_config.border_width
 
         # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
         # don't reposition it anywhere, let Java app to control it

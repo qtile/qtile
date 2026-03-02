@@ -46,25 +46,15 @@ class _Group(CommandObject):
         self.persist = persist
 
     def _configure(self, layouts, floating_layout, fullscreen_layout, maximized_layout, qtile):
-        from libqtile.layout import Floating, Max
-
         self.screen = None
         self.current_layout = 0
         self.focus_history = []
         self.windows = []
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
-        _floating_layout = next(
-            (x for x in layouts if isinstance(x, Floating)), floating_layout.clone(self)
-        )
-        # self.floating_layout = floating_layout.clone(self)
-        self.floating_layout = _floating_layout.clone(self)
+        self.floating_layout = floating_layout.clone(self)
         self.fullscreen_layout = fullscreen_layout.clone(self)
-        _maximized_layout = next(
-            (x for x in layouts if isinstance(x, Max)), maximized_layout.clone(self)
-        )
-        # self.maximized_layout = maximized_layout.clone(self)
-        self.maximized_layout = _maximized_layout.clone(self)
+        self.maximized_layout = maximized_layout.clone(self)
         if self.custom_layout is not None:
             self.layout = self.custom_layout
             self.custom_layout = None
