@@ -14,7 +14,6 @@ from xcffib.xproto import EventMask
 
 from libqtile import config, hook, utils
 from libqtile.backend import base
-from libqtile.backend.base.core import Output
 from libqtile.backend.base.idle_inhibit import IdleInhibitorManager, Inhibitor
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.idle_notify import IdleNotifier
@@ -189,7 +188,7 @@ class Core(base.Core):
             delattr(self, "qtile")
         self.conn.finalize()
 
-    def get_output_info(self) -> list[Output]:
+    def get_output_info(self) -> list[config.Output]:
         return self.conn.pseudoscreens
 
     @property

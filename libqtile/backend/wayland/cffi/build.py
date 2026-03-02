@@ -121,6 +121,8 @@ struct wlr_cursor {
 
 struct wlr_output {
 	char *name;
+	char *make;
+	char *model;
 	char *serial;
 	...;
 };
