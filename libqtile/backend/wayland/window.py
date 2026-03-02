@@ -855,6 +855,7 @@ class Window(Base, base.Window):
             #     self.floating = False
 
         self._update_minimized(do_minimize)
+        hook.fire("window_state_change")
 
     def _update_minimized(self, do_min: bool) -> None:
         if do_min != (self._win_state == WindowStates.MINIMIZED):
