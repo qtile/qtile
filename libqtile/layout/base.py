@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, overload
 
 from libqtile import configurable
 from libqtile.backend.base import Window, WindowStates
+from libqtile.backend.x11.window import Window as X11Window
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.command.interface import CommandError
 from libqtile.config import ScreenRect
@@ -43,6 +44,10 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
             # Set the window to the correct window state
             # e.g. if we just switched to a floating layout and we layout
             # windows should get an internal floating state
+            if isinstance(i, X11Window):
+                # Sync fullscreen state
+                # TODO: Use win_state setter to handle this
+                i.update_fullscreen_wm_state(self._manages_win_state == WindowStates.FULLSCREEN)
             i._win_state = self._manages_win_state
             self.configure(i, screen_rect)
 
