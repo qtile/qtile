@@ -613,7 +613,8 @@ def remove_dbus_rules() -> None:
 
         # We need to manually close the socket until https://github.com/altdesktop/python-dbus-next/pull/148
         # gets merged. There's no error on multiple calls to 'close()'.
-        bus._sock.close()
+        if bus._sock is not None:
+            bus._sock.close()
 
 
 ASYNC_PIDS: set[int] = set()
