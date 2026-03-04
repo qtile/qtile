@@ -63,6 +63,7 @@ class RenameUnspecified(_QtileMigrator):
     TESTS = [
         Check(
             """
+            from typing import TYPE_CHECKING
             from libqtile.widget.base import UNSPECIFIED, ORIENTATION_BOTH
             from libqtile.widget import TextBox
             from libqtile.layout import Tile
@@ -70,11 +71,12 @@ class RenameUnspecified(_QtileMigrator):
             tb = TextBox(text="hello")
             # just to use ORIENTATION_BOTH and force us to delete only the
             # right thing
-            if False:
+            if TYPE_CHECKING:
                 tb.orientations = ORIENTATION_BOTH
                 tb.set_font(font=UNSPECIFIED, fontsize=12)
             """,
             """
+            from typing import TYPE_CHECKING
             from libqtile.widget.base import ORIENTATION_BOTH
             from libqtile.widget import TextBox
             from libqtile.layout import Tile
@@ -82,7 +84,7 @@ class RenameUnspecified(_QtileMigrator):
             tb = TextBox(text="hello")
             # just to use ORIENTATION_BOTH and force us to delete only the
             # right thing
-            if False:
+            if TYPE_CHECKING:
                 tb.orientations = ORIENTATION_BOTH
                 tb.set_font(fontsize=12)
             """,
