@@ -87,7 +87,7 @@
       });
     in
     {
-      formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
 
       checks = forAllSystems (pkgs: pkgs.python3Packages.qtile.passthru.tests);
 
