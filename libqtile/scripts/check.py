@@ -72,8 +72,9 @@ def type_check_config_vars(tempdir, config_name):
 
 
 def type_check_config_args(config_file):
+    newenv = environ.copy()
     try:
-        subprocess.check_call(["mypy", config_file])
+        subprocess.check_call(["mypy", config_file], env=newenv)
         print("Config file type checking succeeded!")
     except subprocess.CalledProcessError as e:
         print(f"Config file type checking failed: {e}")
@@ -93,6 +94,7 @@ def check_deps() -> None:
 
 
 def check_config(args):
+    args.configfile = path.abspath(args.configfile)
     print(f"Checking Qtile config at: {args.configfile}")
     print("Checking if config is valid python...")
 
@@ -115,7 +117,24 @@ def check_config(args):
         print("Type checking config file...")
         valid = True
         with tempfile.TemporaryDirectory() as tempdir:
-            shutil.copytree(path.dirname(args.configfile), tempdir, dirs_exist_ok=True)
+            shutil.copytree(
+                path.dirname(args.configfile),
+                tempdir,
+                dirs_exist_ok=True,
+                symlinks=True,
+                ignore=shutil.ignore_patterns(
+                    ".git",
+                    ".venv",
+                    ".venv*",
+                    "__pycache__",
+                    ".mypy_cache",
+                    ".ruff_cache",
+                    "test",
+                    "docs",
+                    "nix",
+                    "stubs",
+                ),
+            )
             tmp_path = path.join(tempdir, path.basename(args.configfile))
 
             # are the top level config variables the right type?
@@ -134,7 +153,7 @@ def check_config(args):
         if valid:
             print("Your config can be loaded by Qtile.")
         else:
-            print(
+            sys.exit(
                 "Your config is valid python but has type checking errors. This may result in unexpected behaviour."
             )
 
