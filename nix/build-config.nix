@@ -19,7 +19,7 @@ let
     }
     {
       varname = "XCBCURSOR";
-      pkg = pkgs.xorg.xcbutilcursor;
+      pkg = pkgs.libxcb-cursor;
       libname = "libxcb-cursor.so";
     }
   ];

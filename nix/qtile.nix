@@ -22,15 +22,6 @@ let
     in
     "${symver}+${flakever}.flake";
 
-  removeOldDeps =
-    dep:
-    !(pkgs.lib.hasAttr "pname" dep)
-    || (
-      dep.pname != pkgs.python3Packages.pywlroots.pname
-      && dep.pname != pkgs.python3Packages.pywayland.pname
-      && dep.pname != pkgs.python3Packages.xkbcommon.pname
-    );
-
   qtile-override-func =
     qtile-prev:
     {
@@ -42,16 +33,6 @@ let
     }
     // {
       env = build-config.resolved-env-vars;
-
-      propagatedBuildInputs =
-        (with pkgs; [
-          wayland-scanner
-          wayland-protocols
-          python3Packages.cffi
-          python3Packages.xcffib
-          python3Packages.aiohttp
-        ])
-        ++ (lib.filter removeOldDeps qtile-prev.propagatedBuildInputs);
 
       pypaBuildFlags = [ "--config-setting=backend=wayland" ] ++ build-config.resolved-config-settings;
     }
