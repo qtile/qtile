@@ -678,7 +678,7 @@ def test_float_max_min_combo(manager):
     assert manager.c.window.info()["floating"] is False
 
     manager.c.window.toggle_maximize()
-    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["floating"] is False
     assert manager.c.window.info()["maximized"] is True
     assert manager.c.window.info()["width"] == 800
     assert manager.c.window.info()["height"] == 580
@@ -687,7 +687,7 @@ def test_float_max_min_combo(manager):
 
     manager.c.window.toggle_minimize()
     assert manager.c.group.info()["focus"] == "one"
-    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["floating"] is False
     assert manager.c.window.info()["minimized"] is True
     assert manager.c.window.info()["width"] == 800
     assert manager.c.window.info()["height"] == 580
@@ -696,11 +696,11 @@ def test_float_max_min_combo(manager):
 
     manager.c.window.toggle_floating()
     assert manager.c.group.info()["focus"] == "one"
-    assert manager.c.window.info()["floating"] is False
+    assert manager.c.window.info()["floating"] is True
     assert manager.c.window.info()["minimized"] is False
     assert manager.c.window.info()["maximized"] is False
-    assert manager.c.window.info()["width"] == 398
-    assert manager.c.window.info()["height"] == 578
+    assert manager.c.window.info()["width"] == 100
+    assert manager.c.window.info()["height"] == 100
     assert manager.c.window.info()["x"] == 400
     assert manager.c.window.info()["y"] == 0
 
@@ -726,7 +726,7 @@ def test_toggle_fullscreen(manager):
     assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_fullscreen()
-    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["floating"] is False
     assert manager.c.window.info()["maximized"] is False
     assert manager.c.window.info()["fullscreen"] is True
     assert manager.c.window.info()["width"] == 800
@@ -765,7 +765,7 @@ def test_toggle_max(manager):
     assert manager.c.window.info()["y"] == 0
 
     manager.c.window.toggle_maximize()
-    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["floating"] is False
     assert manager.c.window.info()["maximized"] is True
     assert manager.c.window.info()["width"] == 800
     assert manager.c.window.info()["height"] == 580
@@ -803,7 +803,7 @@ def test_toggle_min(manager):
 
     manager.c.window.toggle_minimize()
     assert manager.c.group.info()["focus"] == "one"
-    assert manager.c.window.info()["floating"] is True
+    assert manager.c.window.info()["floating"] is False
     assert manager.c.window.info()["minimized"] is True
     assert manager.c.window.info()["width"] == 398
     assert manager.c.window.info()["height"] == 578

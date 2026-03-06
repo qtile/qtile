@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import expose_command
 from libqtile.layout.base import _SimpleLayoutBase
 
@@ -29,25 +30,40 @@ class Max(_SimpleLayoutBase):
 
     def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
+        self._manages_win_state = WindowStates.MAXIMIZED
         self.add_defaults(Max.defaults)
 
     def add_client(self, client: Window) -> None:  # type: ignore[override]
         return super().add_client(client, 1)
 
     def configure(self, client: Window, screen_rect: ScreenRect) -> None:
-        if not self.only_focused or (self.clients and client is self.clients.current_client):
+        # If current layout is Max use its config, otherwise default to config
+        # for maximized_layout
+        layout_for_config = self
+        if client.group is not None:
+            current_layout = client.group.layouts[client.group.current_layout]
+            if isinstance(current_layout, Max):
+                layout_for_config = current_layout
+
+        margin = layout_for_config.margin
+        border_focus = layout_for_config.border_focus
+        border_normal = layout_for_config.border_normal
+        border_width = layout_for_config.border_width
+        only_focused = layout_for_config.only_focused
+
+        if not only_focused or (self.clients and client is self.clients.current_client):
             client.place(
                 screen_rect.x,
                 screen_rect.y,
-                screen_rect.width - self.border_width * 2,
-                screen_rect.height - self.border_width * 2,
-                self.border_width,
-                self.border_focus if client.has_focus else self.border_normal,
-                margin=self.margin,
+                screen_rect.width - border_width * 2,
+                screen_rect.height - border_width * 2,
+                border_width,
+                border_focus if client.has_focus else border_normal,
+                margin=margin,
             )
             client.unhide()
             if (
-                not self.only_focused
+                not only_focused
                 and self.clients
                 and client is self.clients.current_client
                 and len(self.clients) > 1
@@ -55,6 +71,9 @@ class Max(_SimpleLayoutBase):
                 client.move_to_top()
         else:
             client.hide()
+
+    # def focus(self, client: Window) -> None:
+    #     self.focused = client
 
     @expose_command("previous")
     def up(self):

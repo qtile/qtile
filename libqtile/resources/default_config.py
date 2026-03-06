@@ -170,6 +170,8 @@ follow_mouse_focus = True
 bring_front_click = False
 floats_kept_above = True
 cursor_warp = False
+fullscreen_layout = layout.Fullscreen()
+maximized_layout = layout.Max()
 floating_layout = layout.Floating(
     float_rules=[
         # Run the utility of `xprop` to see the wm class and name of an X client.

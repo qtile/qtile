@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import config, group, hook
-from libqtile.backend.base import FloatStates
+from libqtile.backend.base import WindowStates
 from libqtile.command.base import expose_command
 from libqtile.config import Match, _Match
 
@@ -97,7 +97,7 @@ class WindowVisibilityToggler:
             win = self.window
             # always set the floating state before changing group
             # to avoid disturbance of tiling layout
-            win._float_state = FloatStates.TOP
+            win._win_state = WindowStates.TOP
             # add to group and bring it to front.
             win.togroup()
             win.bring_to_front()
@@ -202,9 +202,17 @@ class DropDownToggler(WindowVisibilityToggler):
             y = int(screen.dy + self.y * screen.dheight)
             win.float_x = x
             win.float_y = y
-            width = int(screen.dwidth * self.width) - 2 * self.border_width
-            height = int(screen.dheight * self.height) - 2 * self.border_width
-            win.place(x, y, width, height, self.border_width, win.bordercolor, respect_hints=True)
+            win._float_width = int(screen.dwidth * self.width) - 2 * self.border_width
+            win._float_height = int(screen.dheight * self.height) - 2 * self.border_width
+            win.place(
+                x,
+                y,
+                win._float_width,
+                win._float_height,
+                self.border_width,
+                win.bordercolor,
+                respect_hints=True,
+            )
             # Toggle the dropdown
             WindowVisibilityToggler.show(self)
 
@@ -238,7 +246,7 @@ class ScratchPad(group._Group):
     def _check_unsubscribe(self):
         if not self.dropdowns:
             hook.unsubscribe.client_killed(self.on_client_killed)
-            hook.unsubscribe.float_change(self.on_float_change)
+            hook.unsubscribe.window_state_change(self.on_window_state_change)
 
     def _spawn(self, ddconfig):
         """
@@ -266,7 +274,6 @@ class ScratchPad(group._Group):
             if match.compare(client):
                 name = n
                 break
-
         if name is not None:
             self._spawned.pop(name)
             if not self._spawned:
@@ -281,7 +288,7 @@ class ScratchPad(group._Group):
                 self._to_hide.remove(name)
             if len(self.dropdowns) == 1:
                 hook.subscribe.client_killed(self.on_client_killed)
-                hook.subscribe.float_change(self.on_float_change)
+                hook.subscribe.window_state_change(self.on_window_state_change)
 
     def on_client_killed(self, client, *args, **kwargs):
         """
@@ -295,7 +302,7 @@ class ScratchPad(group._Group):
                 break
         self._check_unsubscribe()
 
-    def on_float_change(self, *args, **kwargs):
+    def on_window_state_change(self, *args, **kwargs):
         """
         hook method which is called if window float state is changed.
         If the current associated window is not floated (any more) the window
@@ -405,6 +412,6 @@ class ScratchPad(group._Group):
         if not restart and self.dropdowns:
             # We're only reloading so don't have these hooked via self.on_client_new
             hook.subscribe.client_killed(self.on_client_killed)
-            hook.subscribe.float_change(self.on_float_change)
+            hook.subscribe.window_state_change(self.on_window_state_change)
 
         return orphans

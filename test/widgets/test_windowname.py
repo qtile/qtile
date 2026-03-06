@@ -58,7 +58,7 @@ def test_window_names(manager):
 
     # Load a window
     proc = manager.test_window("one")
-    assert widget_text_on_screen(0) == "one"
+    assert widget_text_on_screen(0) == "[] one"
     assert widget_text_on_screen(0) == widget_text_on_screen(1)
 
     # Maximize window
@@ -86,5 +86,5 @@ def test_window_names(manager):
     manager.c.to_screen(1)
     proc = manager.test_window("one")
     assert widget_text_on_screen(0) == " "
-    assert widget_text_on_screen(1) == "one"
+    assert widget_text_on_screen(1) == "[] one"
     manager.kill_window(proc)
