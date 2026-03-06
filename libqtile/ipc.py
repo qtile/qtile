@@ -1,27 +1,31 @@
 """
-A simple IPC mechanism for communicating between two local processes. We
-use marshal to serialize data - this means that both client and server must
-run the same Python version, and that clients must be trusted (as
-un-marshalling untrusted data can result in arbitrary code execution).
+A simple IPC mechanism for communicating between two local processes. Clients
+must be trusted, as IPC commands such as `eval`, or the repl allow arbitrary
+code execution.
 """
 
 from __future__ import annotations
 
 import asyncio
+import enum
 import fcntl
 import json
-import marshal
 import os.path
 import socket
 import struct
-from typing import Any
+import threading
+import traceback
+from abc import ABCMeta, abstractmethod
+from collections.abc import Callable, Coroutine, Iterator
+from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING, Any, Self
 
 from libqtile import hook
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
 
-HDRFORMAT = "!L"
-HDRLEN = struct.calcsize(HDRFORMAT)
+if TYPE_CHECKING:
+    from libqtile.command.graph import SelectorType
 
 SOCKBASE = "qtilesocket.%s"
 
@@ -69,64 +73,235 @@ def find_sockfile(display: str | None = None):
     raise IPCError("Could not find socket file.")
 
 
+class IPCStatus(enum.IntEnum):
+    SUCCESS = 0
+    ERROR = 1
+    EXCEPTION = 2
+
+
+class MessageType(enum.StrEnum):
+    COMMAND = "command"
+    REPLY = "reply"
+
+
+class IPCMessage(metaclass=ABCMeta):
+    """Abstract base class for all IPC messages"""
+
+    @property
+    @abstractmethod
+    def message_type(self) -> MessageType:
+        """Discriminator for the message type of the instance"""
+
+    @abstractmethod
+    def to_json(self) -> dict:
+        """Return the message content as a dict suitable for JSON serialization"""
+
+    @classmethod
+    @abstractmethod
+    def from_json(cls, json: dict) -> Self:
+        """Construct the message from a json dict"""
+
+    @abstractmethod
+    def __iter__(self) -> Iterator[Any]:
+        """Enable unpacking syntax for the message"""
+
+
+@dataclass
+class IPCCommandMessage(IPCMessage):
+    """Represents a command invoked via IPC"""
+
+    selectors: list[SelectorType]
+    name: str
+    args: tuple
+    kwargs: dict
+    lifted: bool
+
+    @property
+    def message_type(self) -> MessageType:
+        return MessageType.COMMAND
+
+    def to_json(self):
+        """A simple mapping with the variable names corresponding to the keys"""
+        return asdict(self)
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCCommandMessage:
+        return IPCCommandMessage(**json)
+
+    def __iter__(self):
+        return iter((self.selectors, self.name, self.args, self.kwargs, self.lifted))
+
+
+@dataclass
+class IPCReplyMessage(IPCMessage):
+    """Represents a reply sent by the IPC server"""
+
+    status: IPCStatus
+    data: Any
+
+    @property
+    def message_type(self) -> MessageType:
+        return MessageType.REPLY
+
+    def to_json(self) -> dict:
+        return {
+            # DEV: Arguably, for the JSON_TAGGED format
+            # we could use a string representation here
+            "status": int(self.status),
+            "data": self.data,
+        }
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCReplyMessage:
+        return IPCReplyMessage(**json)
+
+    def __iter__(self):
+        return iter((self.status, self.data))
+
+    @staticmethod
+    def success(data: Any) -> IPCReplyMessage:
+        """Construct a reply message with status SUCCESS"""
+        return IPCReplyMessage(status=IPCStatus.SUCCESS, data=data)
+
+    @staticmethod
+    def error(error: Any) -> IPCReplyMessage:
+        """Construct a reply message with status ERROR"""
+        return IPCReplyMessage(status=IPCStatus.ERROR, data=error)
+
+    @staticmethod
+    def exception(exception: Exception) -> IPCReplyMessage:
+        """Construct a reply message from an exception
+        with status EXCEPTION. The exception is formatted to
+        provide useful information to the recipient"""
+        # DEV: The original code only returned the last line
+        # of the traceback, whereas this will return a list
+        # containing the whole traceback
+        data = traceback.format_exception(exception)
+        return IPCReplyMessage(status=IPCStatus.EXCEPTION, data=data)
+
+
 class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
     @staticmethod
-    def unpack(data: bytes, *, is_json: bool | None = None) -> tuple[Any, bool]:
+    def unpack(data: bytes) -> IPCMessage:
         """Unpack the incoming message
 
         Parameters
         ----------
         data: bytes
             The incoming message to unpack
-        is_json: bool | None
-            If the message should be unpacked as json.  By default, try to
-            unpack json and fallback gracefully to marshalled bytes.
 
         Returns
         -------
-        tuple[Any, bool]
-            A tuple of the unpacked object and a boolean denoting if the
-            message was deserialized using json.  If True, the return message
-            should be packed as json.
+        IPCMessage
+            The unpacked message
         """
-        if is_json is None or is_json:
-            try:
-                return json.loads(data.decode()), True
-            except ValueError as e:
-                if is_json:
-                    raise IPCError("Unable to decode json data") from e
-
         try:
-            assert len(data) >= HDRLEN
-            size = struct.unpack(HDRFORMAT, data[:HDRLEN])[0]
-            assert size >= len(data[HDRLEN:])
-            return marshal.loads(data[HDRLEN : HDRLEN + size]), False
-        except AssertionError as e:
-            raise IPCError("error reading reply! (probably the socket was disconnected)") from e
+            obj = json.loads(data.decode(), object_hook=_IPC._json_tuple_object_hook)
+            match obj:
+                case {"message_type": MessageType.COMMAND, "content": content}:
+                    return IPCCommandMessage.from_json(content)
+
+                case {"message_type": MessageType.REPLY, "content": content}:
+                    return IPCReplyMessage.from_json(content)
+
+                case {"message_type": typ, "content": _}:
+                    raise IPCError(f"Unknown message type: '{typ}'")
+
+                case _:
+                    raise IPCError(
+                        "Malformed JSON message. Expected dict with 'message_type' and 'content' keys"
+                    )
+
+        except (ValueError, KeyError) as e:
+            raise IPCError("Unable to decode json data") from e
 
     @staticmethod
-    def pack(msg: Any, *, is_json: bool = False) -> bytes:
+    def pack(msg: IPCMessage) -> bytes:
         """Pack the object into a message to pass"""
-        if is_json:
-            json_obj = json.dumps(msg, default=_IPC._json_encoder)
-            return json_obj.encode()
+        tagged_dict = {
+            "message_type": msg.message_type,
+            "content": msg.to_json(),
+        }
+        json_obj = _IPC._HintTuplesJsonEncoder().encode(tagged_dict)
+        return json_obj.encode()
 
-        msg_bytes = marshal.dumps(msg)
-        size = struct.pack(HDRFORMAT, len(msg_bytes))
-        return size + msg_bytes
+    class _HintTuplesJsonEncoder(json.JSONEncoder):
+        def encode(self, o):
+            def hint_tuple(o):
+                if isinstance(o, tuple):
+                    return {"$tuple": list(o)}
+                if isinstance(o, list):
+                    return [hint_tuple(i) for i in o]
+                if isinstance(o, dict):
+                    return {key: hint_tuple(val) for key, val in o.items()}
+                # This is to retain the old `_json_encoder` behavior
+                # of converting a set to a list for serialization
+                if isinstance(o, set):
+                    return hint_tuple(list(o))
+                return o
+
+            return json.JSONEncoder.encode(self, hint_tuple(o))
 
     @staticmethod
-    def _json_encoder(field: Any) -> Any:
-        """Convert non-serializable types to ones understood by stdlib json module"""
-        if isinstance(field, set):
-            return list(field)
-        raise ValueError(f"Tried to JSON serialize unsupported type {type(field)}: {field}")
+    def _json_tuple_object_hook(o):
+        if "$tuple" in o and len(o) == 1:
+            return tuple(o["$tuple"])
+        return o
 
 
-class Client:
-    def __init__(self, socket_path: str, is_json=False) -> None:
+class IPCStreamIO:
+    """Wraps an asyncio `StreamReader` and `StreamWriter` and implements
+    a simple framing protocol to handle sending and receiving IPCMessages
+    """
+
+    FRAME_HEADER_FORMAT = "!L"
+    FRAME_HEADER_LENGTH = struct.calcsize(FRAME_HEADER_FORMAT)
+
+    def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+        self.reader = reader
+        self.writer = writer
+
+    async def write_frame(self, data: bytes):
+        """Prepends the data with the frame header (length) and writes it to the writer"""
+        frame_header = struct.pack(self.FRAME_HEADER_FORMAT, len(data))
+        self.writer.write(frame_header)
+        self.writer.write(data)
+        await self.writer.drain()
+
+    async def read_frame(self) -> bytes | None:
+        """Reads the the frame header (length) and then reads and returns the expected
+        number of bytes. Returns None if underlying stream has closed"""
+        try:
+            frame_header = await self.reader.readexactly(self.FRAME_HEADER_LENGTH)
+            frame_length = struct.unpack(self.FRAME_HEADER_FORMAT, frame_header)[0]
+            data = await self.reader.readexactly(frame_length)
+            return data
+        except asyncio.IncompleteReadError as e:
+            if self.reader.at_eof():
+                return None
+            else:
+                logger.debug(f"Received partial bytes: {e.partial!r}")
+                raise IPCError("Invalid message framing, couldn't read the data")
+
+    async def write_message(self, message: IPCMessage):
+        await self.write_frame(_IPC.pack(message))
+
+    async def read_message(self, *, timeout: float | None = None) -> IPCMessage | None:
+        message_bytes = await asyncio.wait_for(self.read_frame(), timeout=timeout)
+        if message_bytes is None:
+            return None
+        return _IPC.unpack(message_bytes)
+
+    async def close(self):
+        """Closes the connection"""
+        self.writer.close()
+        await self.writer.wait_closed()
+
+
+class ReconnectingClient:
+    def __init__(self, socket_path: str) -> None:
         """Create a new IPC client
 
         Parameters
@@ -134,56 +309,143 @@ class Client:
         socket_path: str
             The file path to the file that is used to open the connection to
             the running IPC server.
-        is_json: bool
-            Pack and unpack messages as json
         """
         self.socket_path = socket_path
-        self.is_json = is_json
 
-    def call(self, data: Any) -> Any:
+    def call(self, data: tuple) -> IPCReplyMessage:
         return self.send(data)
 
-    def send(self, msg: Any) -> Any:
+    def send(self, msg: tuple) -> IPCReplyMessage:
         """Send the message and return the response from the server
 
-        If any exception is raised by the server, that will propogate out of
+        If any exception is raised by the server, that will propagate out of
         this call.
         """
         return asyncio.run(self.async_send(msg))
 
-    async def async_send(self, msg: Any) -> Any:
+    async def async_send(self, msg: tuple) -> IPCReplyMessage:
         """Send the message to the server
 
         Connect to the server, then pack and send the message to the server,
         then wait for and return the response from the server.
         """
+        async with AsyncClient(self.socket_path) as c:
+            return await c.send(IPCCommandMessage(*msg))
+
+
+class PersistentClient:
+    def __init__(self, socket_path: str) -> None:
+        self._loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(target=self._loop.run_forever, daemon=True)
+        self._thread.start()
+        self._client = AsyncClient(socket_path)
+
+    def _run[T](self, coro: Coroutine[Any, Any, T]) -> T:
+        future = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return future.result()
+
+    def connect(self) -> None:
+        self._run(self._client.connect())
+
+    def close(self) -> None:
+        self._run(self._client.close())
+
+    def send(self, msg: tuple) -> IPCReplyMessage:
+        # Since the PersistentClient retains the connection,
+        # the user should be aware of the need to close it.
+        # This can be done manually via `self.close()`, or
+        # using a with block. However, to remain compatible
+        # with the old `Client` implementation, we're gonna
+        # call `connect` ourselves here
+        if not self._client.is_connected():
+            # This should probably be a warning, but since none of the code
+            # using an IPC client is aware of closing right now, that would
+            # clutter the logs enormously
+            logger.debug("send called on PersistentClient that's not connected")
+            self._run(self._client.connect())
+
+        message = IPCCommandMessage(*msg)
+        return self._run(self._client.send(message))
+
+    def __enter__(self):
+        self.connect()
+
+    def __exit__(self, _exc_type, _exc, _tb):
+        self.close()
+
+
+Client = ReconnectingClient
+
+
+class AsyncClient:
+    def __init__(self, socket_path: str) -> None:
+        """Create a new asynchronous IPC client
+
+        Parameters
+        ----------
+        socket_path: str
+            The file path to the file that is used to open the connection to
+            the running IPC server.
+        """
+        self.socket_path = socket_path
+        self.stream: IPCStreamIO | None = None
+
+    async def connect(self):
+        """Open the unix domain socket connection to the IPC server"""
         try:
             reader, writer = await asyncio.wait_for(
                 asyncio.open_unix_connection(path=self.socket_path), timeout=3
             )
+            self.stream = IPCStreamIO(reader, writer)
         except (ConnectionRefusedError, FileNotFoundError):
             raise IPCError(f"Could not open {self.socket_path}")
+        except asyncio.TimeoutError:
+            raise IPCError("Connection to server timed out")
+
+    def is_connected(self) -> bool:
+        return self.stream is not None
+
+    async def send(self, message: IPCCommandMessage) -> IPCReplyMessage:
+        """Send the message to the server using the existing connection.
+        `connect` must have been called, it is recommended to use async with:
+
+        ```
+        async with AsyncClient(sock_path) as c:
+            c.send(my_message)
+        ```
+        """
+        if self.stream is None:
+            raise IPCError("AsyncClient is not connected, use 'async with' or call 'connect'")
 
         try:
-            send_data = _IPC.pack(msg, is_json=self.is_json)
-            writer.write(send_data)
-            writer.write_eof()
+            await self.stream.write_message(message)
 
-            read_data = await asyncio.wait_for(reader.read(), timeout=10)
+            response = await self.stream.read_message(timeout=10.0)
+            if not isinstance(response, IPCReplyMessage):
+                raise IPCError("Expected a reply message from the server")
+
+            return response
         except asyncio.TimeoutError:
             raise IPCError("Server not responding")
-        finally:
-            # see the note in Server._server_callback()
-            writer.close()
-            await writer.wait_closed()
 
-        data, _ = _IPC.unpack(read_data, is_json=self.is_json)
+    async def close(self):
+        if self.stream is not None:
+            await self.stream.close()
+            self.stream = None
 
-        return data
+    async def __aenter__(self):
+        await self.connect()
+        return self
+
+    async def __aexit__(self, _exc_type, _exc, _tb):
+        assert self.stream is not None
+        await self.stream.close()
 
 
 class Server:
-    def __init__(self, socket_path: str, handler) -> None:
+    def __init__(
+        self, socket_path: str, handler: Callable[[IPCCommandMessage], IPCReplyMessage]
+    ) -> None:
         self.socket_path = socket_path
         self.handler = handler
         self.server = None  # type: asyncio.AbstractServer | None
@@ -215,30 +477,44 @@ class Server:
         Read the data sent from the client, execute the requested command, and
         send the reply back to the client.
         """
+        stream = IPCStreamIO(reader, writer)
+        logger.debug("Connection made to server")
+
         try:
-            logger.debug("Connection made to server")
-            data = await reader.read()
-            logger.debug("EOF received by server")
+            while True:
+                # There is no timeout here to enable long lived connections
+                # by clients, without having to implement a heartbeat protocol
+                # which would impose a huge burden on the current implementation.
+                # Clients are assumed to be trusted, although there is no actual
+                # verification mechanism for this
+                req = await stream.read_message()
+                # EOF
+                if req is None:
+                    logger.debug("Client disconnected")
+                    break
 
-            req, is_json = _IPC.unpack(data)
-        except IPCError:
+                if not isinstance(req, IPCCommandMessage):
+                    logger.error("Expected command message from client")
+                    break
+
+                # Don't handle requests when session is locked
+                if self.locked.is_set():
+                    rep = IPCReplyMessage.error({"error": "Session locked."})
+                else:
+                    # The handler shouldn't throw, but return an
+                    # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
+                    rep = self.handler(req)
+
+                logger.debug("Sending result")
+                await stream.write_message(rep)
+        # Consider trying to send the client an
+        # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
+        except IPCError as e:
             logger.warning("Invalid data received, closing connection")
-        else:
-            # Don't handle requests when session is locked
-            if self.locked.is_set():
-                rep = (1, {"error": "Session locked."})
-            else:
-                rep = self.handler(req)
-
-            result = _IPC.pack(rep, is_json=is_json)
-
-            logger.debug("Sending result on receive EOF")
-            writer.write(result)
-            logger.debug("Closing connection on receive EOF")
-            writer.write_eof()
+            logger.debug(e)
         finally:
-            writer.close()
-            await writer.wait_closed()
+            logger.debug("Closing connection")
+            await stream.close()
 
     async def __aenter__(self) -> Server:
         """Start and return the server"""
