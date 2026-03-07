@@ -4,7 +4,6 @@ import asyncio
 import glob
 import importlib
 import os
-import traceback
 from collections import defaultdict
 from collections.abc import Sequence
 from importlib.metadata import PackageNotFoundError, distribution
@@ -226,10 +225,13 @@ def import_class(
         module = importlib.import_module(module_path, __package__)
         return getattr(module, class_name)
     except ImportError:
-        logger.exception("Unmet dependencies for '%s.%s':", module_path, class_name)
         if fallback:
-            logger.debug("%s", traceback.format_exc())
+            logger.error(
+                "Unmet dependencies for '%s.%s'. Using fallback.", module_path, class_name
+            )
             return fallback(module_path, class_name)
+
+        logger.exception("Unmet dependencies for '%s.%s':", module_path, class_name)
         raise
 
 
