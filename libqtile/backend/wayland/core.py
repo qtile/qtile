@@ -52,13 +52,12 @@ from typing import TYPE_CHECKING, Any
 
 from libqtile import hook
 from libqtile.backend import base
-from libqtile.backend.base.core import Output
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
 from libqtile.backend.wayland.window import Base, Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
-from libqtile.config import ScreenRect
+from libqtile.config import Output, ScreenRect
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError, reap_zombies, rgb
@@ -586,11 +585,17 @@ class Core(base.Core):
             serial_str = (
                 ffi.string(wlr_output.serial).decode() if wlr_output.serial != ffi.NULL else None
             )
-            name_str = (
+            port_str = (
                 ffi.string(wlr_output.name).decode() if wlr_output.name != ffi.NULL else None
             )
+            make_str = (
+                ffi.string(wlr_output.make).decode() if wlr_output.make != ffi.NULL else None
+            )
+            model_str = (
+                ffi.string(wlr_output.model).decode() if wlr_output.model != ffi.NULL else None
+            )
             rect = ScreenRect(x, y, width, height)
-            outputs.append(Output(name_str, serial_str, rect))
+            outputs.append(Output(port_str, make_str, model_str, serial_str, rect))
 
         lib.qw_server_loop_output_dims(self.qw, loop)
 

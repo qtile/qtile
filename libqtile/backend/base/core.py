@@ -3,11 +3,10 @@ from __future__ import annotations
 import contextlib
 import typing
 from abc import ABCMeta, abstractmethod
-from dataclasses import dataclass
 
 from libqtile import hook
 from libqtile.command.base import CommandObject, expose_command
-from libqtile.config import Screen, ScreenRect
+from libqtile.config import Screen
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -19,13 +18,6 @@ if typing.TYPE_CHECKING:
     from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
     from libqtile.group import _Group
-
-
-@dataclass
-class Output:
-    name: str | None
-    serial: str | None
-    rect: ScreenRect
 
 
 class Core(CommandObject, metaclass=ABCMeta):
@@ -67,7 +59,7 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Set the current desktops of the window manager"""
 
     @abstractmethod
-    def get_output_info(self) -> list[Output]:
+    def get_output_info(self) -> list[config.Output]:
         """Get the output information"""
 
     @abstractmethod
