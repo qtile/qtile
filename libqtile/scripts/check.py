@@ -7,6 +7,7 @@ from os import environ, path
 
 from libqtile import confreader
 from libqtile.utils import get_config_file
+from libqtile.widget.import_error import ImportErrorWidget
 
 
 class CheckError(Exception):
@@ -106,6 +107,25 @@ def check_config(args):
     except Exception:
         print(traceback.format_exc())
         sys.exit("Errors found in config. Exiting check.")
+
+    print("Checking widget dependencies...")
+    widgets = []
+    for screen in config.screens:
+        for bar_name in ("top", "bottom", "left", "right"):
+            bar = getattr(screen, bar_name, None)
+            if bar and hasattr(bar, "widgets"):
+                widgets.extend(bar.widgets)
+
+    errors = {
+        w.widget_class: w.missing_dependencies
+        for w in widgets
+        if isinstance(w, ImportErrorWidget)
+    }
+
+    if errors:
+        print("The following widgets have import errors:")
+    for widget, deps in errors.items():
+        print(f" {widget}: {', '.join(deps)}")
 
     try:
         check_deps()

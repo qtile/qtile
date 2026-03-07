@@ -27,3 +27,5 @@ def test_importerrorwidget(monkeypatch, manager_nospawn, minimal_conf_noscreen, 
     # Check that the widget has been replaced with an ImportError
     assert w["name"] == "importerrorwidget"
     assert w["text"] == "Import Error: TextBox"
+    assert len(w["missing_dependencies"]) > 1
+    assert "libqtile" in w["missing_dependencies"]
