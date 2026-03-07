@@ -1,6 +1,3 @@
-import ast
-import importlib
-import importlib.util
 import shutil
 import subprocess
 import sys
@@ -15,57 +12,6 @@ from libqtile.widget.import_error import ImportErrorWidget
 
 class CheckError(Exception):
     pass
-
-
-def missing_imports_from_file(file_path):
-    missing = set()
-
-    with open(file_path) as f:
-        source = f.read()
-
-    tree = ast.parse(source, filename=file_path)
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for name in node.names:
-                module = name.name
-                root = module.split(".")[0]
-
-                try:
-                    importlib.import_module(root)
-                except ImportError:
-                    missing.add(root)
-
-        elif isinstance(node, ast.ImportFrom):
-            module = node.module
-            if not module:
-                continue
-
-            root = module.split(".")[0]
-
-            try:
-                importlib.import_module(root)
-            except ImportError:
-                missing.add(root)
-
-    return missing
-
-
-def find_missing_widget_dependencies(widget_instances):
-    results = {}
-
-    for w in widget_instances:
-        if isinstance(w, ImportErrorWidget):
-            spec = importlib.util.find_spec(w.module_path)
-            if not spec or not spec.origin:
-                continue
-
-            missing = missing_imports_from_file(spec.origin)
-
-            if missing:
-                results[w.widget_class] = sorted(missing)
-
-    return results
 
 
 def type_check_config_vars(tempdir, config_name):
@@ -168,11 +114,15 @@ def check_config(args):
             if bar and hasattr(bar, "widgets"):
                 widgets.extend(bar.widgets)
 
-    missing = find_missing_widget_dependencies(widgets)
+    errors = {
+        w.widget_class: w.missing_dependencies
+        for w in widgets
+        if isinstance(w, ImportErrorWidget)
+    }
 
-    if missing:
+    if errors:
         print("The following widgets have import errors:")
-    for widget, deps in missing.items():
+    for widget, deps in errors.items():
         print(f" {widget}: {', '.join(deps)}")
 
     try:
