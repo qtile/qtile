@@ -76,7 +76,11 @@ static struct wlr_surface *qw_view_get_surface_from_tree(struct wlr_scene_node *
 }
 
 void qw_view_reparent(struct qw_view *view, int layer) {
+    if (layer == view->layer) {
+        return;
+    }
     wlr_scene_node_reparent(&view->content_tree->node, view->server->scene_windows_layers[layer]);
+    view->prev_layer = view->layer;
     view->layer = layer;
 }
 

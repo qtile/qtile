@@ -71,6 +71,7 @@ struct qw_border {
 struct qw_view {
     struct qw_server *server;
     int layer;
+    int prev_layer;
     int x;
     int y;
     int width;
