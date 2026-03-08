@@ -75,9 +75,20 @@ static struct wlr_surface *qw_view_get_surface_from_tree(struct wlr_scene_node *
     }
 }
 
+int qw_view_get_layer(struct qw_view *view) {
+    struct wlr_scene_node *layer_node = &view->content_tree->node.parent->node;
+
+    for (int i = 0; i < LAYER_END; i++) {
+        if (&view->server->scene_windows_layers[i]->node == layer_node) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 void qw_view_reparent(struct qw_view *view, int layer) {
     wlr_scene_node_reparent(&view->content_tree->node, view->server->scene_windows_layers[layer]);
-    view->layer = layer;
 }
 
 void qw_view_raise_to_top(struct qw_view *view) {
@@ -102,7 +113,8 @@ void qw_view_move_up(struct qw_view *view) {
         return;
     }
 
-    wl_list_for_each(child, &view->server->scene_windows_layers[view->layer]->children, link) {
+    int layer = qw_view_get_layer(view);
+    wl_list_for_each(child, &view->server->scene_windows_layers[layer]->children, link) {
         if (child == &view->content_tree->node) {
             found_child = true;
         } else if (found_child) {
@@ -139,7 +151,8 @@ void qw_view_move_down(struct qw_view *view) {
         return;
     }
 
-    wl_list_for_each(child, &view->server->scene_windows_layers[view->layer]->children, link) {
+    int layer = qw_view_get_layer(view);
+    wl_list_for_each(child, &view->server->scene_windows_layers[layer]->children, link) {
         struct wlr_surface *other_surface = qw_view_get_surface_from_tree(child);
         if (other_surface == NULL) {
             continue;
