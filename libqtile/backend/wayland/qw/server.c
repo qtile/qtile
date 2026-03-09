@@ -774,6 +774,7 @@ struct qw_server *qw_server_create() {
     wlr_export_dmabuf_manager_v1_create(server->display);
     wlr_screencopy_manager_v1_create(server->display);
     wlr_data_control_manager_v1_create(server->display);
+    wlr_ext_data_control_manager_v1_create(server->display, 1);
     wlr_primary_selection_v1_device_manager_create(server->display);
     wlr_viewporter_create(server->display);
     wlr_single_pixel_buffer_manager_v1_create(server->display);
