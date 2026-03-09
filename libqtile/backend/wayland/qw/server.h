@@ -367,4 +367,6 @@ bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
 void qw_server_add_idle_timer(struct qw_server *server, int seconds);
 void qw_server_remove_idle_timer(struct qw_server *server, int seconds);
 
+void qw_server_add_dummy_keyboard(struct qw_server *server);
+
 #endif /* SERVER_H */

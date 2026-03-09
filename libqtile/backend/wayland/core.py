@@ -878,6 +878,9 @@ class Core(base.Core):
     def idle_notify_activity(self) -> None:
         lib.qw_server_idle_notify_activity(self.qw)
 
+    def add_dummy_keyboard(self) -> None:
+        lib.qw_server_add_dummy_keyboard(self.qw)
+
 
 class Painter:
     """
