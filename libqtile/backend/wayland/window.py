@@ -50,7 +50,7 @@ class Base(base._Window):
             return
         lib.qw_view_reparent(self._ptr, layer)
 
-    @property
+    @expose_command()
     def layer(self) -> int:
         return self._ptr.layer
 
