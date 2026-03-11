@@ -144,7 +144,6 @@ default-section = "third-party"
 
 [tool.mypy]
 mypy_path = "stubs"
-python_version = "3.13"
 warn_unused_configs = true
 warn_unused_ignores = true
 warn_unreachable = true
