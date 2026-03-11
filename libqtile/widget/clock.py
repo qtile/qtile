@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import time
-from datetime import datetime, timedelta, timezone, tzinfo
+from datetime import UTC, datetime, timedelta, tzinfo
 
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
@@ -81,9 +81,9 @@ class Clock(base.InLoopPollText):
     # like (x-1).999 instead of x.000
     def poll(self):
         if self.timezone:
-            now = datetime.now(timezone.utc).astimezone(self.timezone)
+            now = datetime.now(UTC).astimezone(self.timezone)
         else:
-            now = datetime.now(timezone.utc).astimezone()
+            now = datetime.now(UTC).astimezone()
         return (now + self.DELTA).strftime(self.format)
 
     @expose_command
