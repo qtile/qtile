@@ -170,7 +170,7 @@ class Client:
             writer.write_eof()
 
             read_data = await asyncio.wait_for(reader.read(), timeout=10)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise IPCError("Server not responding")
         finally:
             # see the note in Server._server_callback()

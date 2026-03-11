@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from libqtile.confreader import ConfigError
 from libqtile.widget import base
@@ -98,9 +98,9 @@ class VerticalClock(Clock):
     # like (x-1).999 instead of x.000
     def poll(self):
         if self.timezone:
-            now = datetime.now(timezone.utc).astimezone(self.timezone)
+            now = datetime.now(UTC).astimezone(self.timezone)
         else:
-            now = datetime.now(timezone.utc).astimezone()
+            now = datetime.now(UTC).astimezone()
         return now + self.DELTA
 
     def draw(self):
