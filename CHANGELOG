@@ -9,6 +9,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
         added bonus that we undefine __getattr__, and as a result do a lot
         more type checking in the core codebase.
     * features
+    - Add `auto_group` config variable
     * bugfixes
 
 Qtile 0.34.1, released 2025-12-14:
