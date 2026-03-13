@@ -237,9 +237,9 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
     // Paint borders around the view with given border colors and width
     qw_view_paint_borders((struct qw_view *)xdg_view, borders, border_count);
 
-    // Raise view to front if requested
+    // Raise view if requested
     if (above != 0) {
-        qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
+        qw_view_raise_to_top(&xdg_view->base);
     }
 
     // View under the cursor may have changed
