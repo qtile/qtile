@@ -448,7 +448,6 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
 // Handle map event: when the xdg_view becomes visible/mapped
 static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     UNUSED(data);
-
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, map);
     xdg_view->mapped = true;
 
@@ -460,6 +459,14 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
 
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
+
+    // check if this window has a parent (i.e., it's a dialog)
+    bool is_dialog = (xdg_toplevel->parent != NULL);
+    struct qw_xdg_view *parent_view = NULL;
+
+    if (is_dialog) {
+        parent_view = xdg_toplevel->parent->base->data;
+    }
 
     // Create foreign toplevel manager and listeners
     if (xdg_view->base.ftl_handle == NULL) {
@@ -487,6 +494,11 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
 
     xdg_view->base.server->manage_view_cb((struct qw_view *)&xdg_view->base,
                                           xdg_view->base.server->cb_data);
+
+    // after python has configured the window, force dialogs to BRINGTOFRONT
+    if (is_dialog && parent_view != NULL) {
+        qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
+    }
 
     // Add listeners with Python callbacks after the view has been managed
     xdg_view->request_maximize.notify = qw_xdg_view_handle_request_maximize;
