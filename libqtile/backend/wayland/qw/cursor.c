@@ -485,8 +485,8 @@ static void check_constraint_region(struct qw_cursor *cursor) {
             int nboxes;
             pixman_box32_t *boxes = pixman_region32_rectangles(region, &nboxes);
             if (nboxes > 0) {
-                double sx = (boxes[0].x1 + boxes[0].x2) / 2.;
-                double sy = (boxes[0].y1 + boxes[0].y2) / 2.;
+                sx = (boxes[0].x1 + boxes[0].x2) / 2.;
+                sy = (boxes[0].y1 + boxes[0].y2) / 2.;
 
                 wlr_cursor_warp_closest(cursor->cursor, NULL, sx - view->x, sy - view->y);
 
