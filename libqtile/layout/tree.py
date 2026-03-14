@@ -431,6 +431,7 @@ class TreeTab(Layout):
         self._panel = self.group.qtile.core.create_internal(
             screen_rect.x, screen_rect.y, self.panel_width, 100
         )
+        self._panel.keep_below(enable=True)
         self._create_drawer(screen_rect)
         self._panel.process_window_expose = self.draw_panel
         self._panel.process_button_click = self.process_button_click
