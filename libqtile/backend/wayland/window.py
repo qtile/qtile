@@ -828,8 +828,8 @@ class Window(Base, base.Window):
         screen = self.qtile.find_closest_screen(x + w // 2, y + h // 2)
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
-            screen.group.add(self, force=True)
             self.qtile.focus_screen(screen.index)
+            screen.group.add(self, force=True)
 
         self._reconfigure_floating(x, y, w, h)
 
