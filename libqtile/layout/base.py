@@ -5,7 +5,8 @@ from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, overload
 
 from libqtile import configurable
-from libqtile.backend.base import Window
+from libqtile.backend.base import Window, WindowStates
+from libqtile.backend.x11.window import Window as X11Window
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.command.interface import CommandError
 from libqtile.config import ScreenRect
@@ -35,9 +36,19 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         self.add_defaults(Layout.defaults)
 
         self._group: _Group | None = None
+        # by default a layout manages tiling windows
+        self._manages_win_state = WindowStates.TILED
 
     def layout(self, windows: Sequence[Window], screen_rect: ScreenRect) -> None:
         for i in windows:
+            # Set the window to the correct window state
+            # e.g. if we just switched to a floating layout and we layout
+            # windows should get an internal floating state
+            if isinstance(i, X11Window):
+                # Sync fullscreen state
+                # TODO: Use win_state setter to handle this
+                i.update_fullscreen_wm_state(self._manages_win_state == WindowStates.FULLSCREEN)
+            i._win_state = self._manages_win_state
             self.configure(i, screen_rect)
 
     def finalize(self) -> None:
@@ -238,7 +249,8 @@ class _ClientList:
 
     @current_client.setter
     def current_client(self, client: Window) -> None:
-        self._current_idx = self.clients.index(client)
+        if client in self.clients:
+            self._current_idx = self.clients.index(client)
 
     def focus(self, client: Window) -> None:
         """

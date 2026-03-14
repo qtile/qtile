@@ -36,13 +36,13 @@ class WindowName(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         hook.subscribe.client_name_updated(self.hook_response)
         hook.subscribe.focus_change(self.hook_response)
-        hook.subscribe.float_change(self.hook_response)
+        hook.subscribe.window_state_change(self.hook_response)
         hook.subscribe.current_screen_change(self.hook_response_current_screen)
 
     def remove_hooks(self):
         hook.unsubscribe.client_name_updated(self.hook_response)
         hook.unsubscribe.focus_change(self.hook_response)
-        hook.unsubscribe.float_change(self.hook_response)
+        hook.unsubscribe.window_state_change(self.hook_response)
         hook.unsubscribe.current_screen_change(self.hook_response_current_screen)
 
     def hook_response(self, *args):

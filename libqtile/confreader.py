@@ -40,6 +40,8 @@ class Config:
     cursor_warp: bool
     layouts: list[Layout]
     floating_layout: Layout
+    fullscreen_layout: Layout
+    maximized_layout: Layout
     screens: list[Screen]
     auto_fullscreen: bool
     widget_defaults: dict[str, Any]
