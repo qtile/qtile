@@ -222,7 +222,7 @@ int mac_get_focused_window(struct mac_window *win) {
     if (err != kAXErrorSuccess)
         return 1;
 
-    win->ptr = focusedWin;
+    win->ptr = (void *)(uintptr_t)focusedWin;
     win->wid = stable_wid(focusedWin);
     return 0;
 }
@@ -363,13 +363,12 @@ void mac_window_focus(struct mac_window *win) {
     pid_t pid = 0;
     AXUIElementGetPid((AXUIElementRef)win->ptr, &pid);
     NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
-    // activateWithOptions: was deprecated in macOS 14 (Sonoma).
-    // Use [app activate] on macOS 14+ as the replacement API.
-    if (@available(macOS 14.0, *)) {
-        [app activate];
-    } else {
-        [app activateWithOptions:NSApplicationActivateIgnoringOtherApps];
-    }
+    // activateWithOptions: is deprecated in macOS 14+ but is the only
+    // activate API that compiles reliably against all SDK versions.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [app activateWithOptions:NSApplicationActivateIgnoringOtherApps];
+#pragma clang diagnostic pop
 }
 
 void mac_window_bring_to_front(struct mac_window *win) {

@@ -37,7 +37,7 @@ async def run_debug():
 
     try:
         await asyncio.wait_for(q._stopped_event.wait(), timeout=10)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         print("Timeout reached, stopping...")
     finally:
         q.stop()
