@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 CORES = {
     "wayland": (),
     "x11": ("xcffib",),
+    "macos": (),
 }
 
 
