@@ -1,0 +1,37 @@
+# Use Debian Sid (unstable) to get the latest wlroots 0.19 required by Qtile master
+FROM debian:sid-slim AS base
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH=/root/.local/bin:/uv/bin:$PATH
+
+# Install base tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    wget \
+    build-essential \
+    sudo \
+    python3 \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv for Python management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uv/bin/
+
+# Set up workspace
+WORKDIR /app
+COPY . .
+
+# Install system dependencies using the shared script
+# This ensures consistency between Docker and Host
+RUN ./scripts/install-deps $(cat scripts/deps)
+
+# Install Qtile
+ARG PYTHON_VERSION=3.12
+ARG QTILE_REPO=https://github.com/qtile/qtile
+ARG QTILE_BRANCH=master
+RUN ./scripts/install-qtile ${PYTHON_VERSION}
+
+# Default command: run tests
+CMD ["./scripts/run-all-tests"]

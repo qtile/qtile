@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+
+export LC_TYPE=en_US.UTF-8
+
+# Run macos unit tests
+uv run python -m pytest test/backend/macos/test_unit_*.py -n 4 -x -q --tb=short || export FAIL=1
+
+if [[ $FAIL -eq 1 ]]; then exit 1; fi

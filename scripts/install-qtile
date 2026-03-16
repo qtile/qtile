@@ -1,0 +1,24 @@
+#!/bin/bash
+export SETUPTOOLS_SCM_PRETEND_VERSION="0.0.0"
+
+set -ex
+
+# Use the provided python version or default to 3.12
+PYTHON_VERSION="${1:-3.12}"
+
+export UV_HTTP_TIMEOUT=300
+
+# Install qtile dependencies
+uv sync --python="$PYTHON_VERSION" --all-extras
+uv run ./libqtile/backend/wayland/cffi/build.py
+
+# Install qtile as a tool with wayland support and optional dbus-fast
+uv tool install . --with ".[wayland],dbus-fast" --python "$PYTHON_VERSION" --force
+
+# Add runner to video group if it exists
+if getent group video >/dev/null; then
+  sudo usermod -aG video runner || true
+fi
+
+# Ensure qtile is available and report version
+qtile --version

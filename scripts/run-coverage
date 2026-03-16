@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Set up Xvfb for Qtile
+export DISPLAY=:99
+sudo Xvfb -ac $DISPLAY -screen 0 1280x1024x24 &>/dev/null &
+
+# Set up cache for socket in a writable location
+export XDG_CACHE_HOME="/tmp/qtile-test-cache-$$"
+mkdir -p "$XDG_CACHE_HOME/qtile"
+
+cleanup() {
+    echo "Cleaning up processes..."
+    sudo pkill -9 -f "Xvfb $DISPLAY" || true
+    rm -rf "$XDG_CACHE_HOME"
+}
+trap cleanup EXIT
+
+# Run pytest with coverage
+uv run python -m pytest test/ --cov=libqtile --cov-report=xml -n auto
+
+FAIL=$?
+
+if [[ $FAIL -ne 0 ]]; then exit $FAIL; fi

@@ -4,11 +4,16 @@ on:
     push:
     pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     build:
-        runs-on: ubuntu-24.04
+        runs-on: ${{ matrix.os }}
         name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
         strategy:
+            fail-fast: true
             matrix:
                 # If you change one of these, be sure to update:
                 # - /pyproject.toml:[tool.mypy]
@@ -18,6 +23,14 @@ jobs:
                 # https://github.com/pypy/pypy/issues/4956 is resolved
                 python-version: ['3.12', '3.13', '3.14']
                 backend: ['x11', 'wayland']
+                os: ['ubuntu-24.04']
+                include:
+                    - backend: macos
+                      os: macos-latest
+                      python-version: '3.12'
+                    - backend: macos
+                      os: macos-latest
+                      python-version: '3.13'
         steps:
             - uses: actions/checkout@v4
             - name: Set up python ${{ matrix.python-version }}
@@ -30,13 +43,17 @@ jobs:
                   enable-cache: true
                   cache-dependency-glob: "pyproject.toml"
                   python-version: ${{ matrix.python-version }}
+
+            # ── Linux (x11 / wayland) ────────────────────────────────────────
             - name: Install dependencies
+              if: matrix.backend != 'macos'
               run: |
                 sudo apt update
                 sudo apt install yq
                 sudo apt install -y --no-install-recommends $(yq -r '.build.apt_packages | join(" ")' .readthedocs.yaml)
                 # Any Wayland-specific Ubuntu system dependencies should be installed from ./scripts/ubuntu_wayland_setup
             - name: Cache Wayland dependencies
+              if: matrix.backend != 'macos'
               uses: actions/cache@v4
               with:
                 path: cache
@@ -44,14 +61,17 @@ jobs:
                 restore-keys: |
                   ${{ runner.os }}-wayland-
             - name: Install wayland
+              if: matrix.backend != 'macos'
               run: bash -x ./scripts/ubuntu_wayland_setup
             - name: Clean python version and export to env
+              if: matrix.backend != 'macos'
               shell: bash
               run: |
                 PYTHON_VERSION="${{ matrix.python-version }}"
                 CLEAN_VERSION="${PYTHON_VERSION%-dev}"
                 echo "QTILE_CI_PYTHON=${CLEAN_VERSION}" >> $GITHUB_ENV
             - name: Run Tests
+              if: matrix.backend != 'macos'
               run: |
                 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
                 dump_cores() {
@@ -66,6 +86,7 @@ jobs:
                 uv run coverage report -m
                 uv run coverage xml
             - name: Upload coverage data to coveralls.io
+              if: matrix.backend != 'macos'
               continue-on-error: true
               run: |
                 uv tool run coveralls --service=github
@@ -74,6 +95,21 @@ jobs:
                 COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
                 COVERALLS_PARALLEL: true
                 COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
+
+            # ── macOS ────────────────────────────────────────────────────────
+            - name: Install macOS dependencies
+              if: matrix.backend == 'macos'
+              run: |
+                uv pip install --system -e ".[dev]"
+                uv pip install --system cffi setuptools
+            - name: Build macOS native extension
+              if: matrix.backend == 'macos'
+              run: |
+                python libqtile/backend/macos/cffi/build.py
+            - name: Run macOS unit tests
+              if: matrix.backend == 'macos'
+              run: |
+                python -m pytest test/backend/macos/test_unit_*.py -x -q --tb=short
 
     coverage:
         name: Finalize Coverage

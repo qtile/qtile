@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "=== Running x11 tests ==="
+./run-x11-tests
+
+echo "=== Running wayland tests ==="
+./run-wl-tests
+
+echo "=== Running macos tests ==="
+./run-macos-tests
+
+echo "All tests passed!"

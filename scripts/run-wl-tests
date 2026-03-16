@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -e
+
+export LC_TYPE=en_US.UTF-8
+export XDG_RUNTIME_DIR=/tmp
+export WLR_BACKENDS=headless
+export WLR_HEADLESS_OUTPUTS=1
+export WLR_LIBINPUT_NO_DEVICES=1
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+export WLR_RENDERER=pixman
+
+# Set up cache for socket in a writable location
+export XDG_CACHE_HOME="/tmp/qtile-test-cache-$$"
+mkdir -p "$XDG_CACHE_HOME/qtile"
+
+cleanup() {
+    echo "Cleaning up processes..."
+    rm -rf "$XDG_CACHE_HOME"
+}
+trap cleanup EXIT
+
+# Run wayland tests
+uv run python -m pytest test/ --backend=wayland -n 4 --timeout=30 || export FAIL=1
+
+if [[ $FAIL -eq 1 ]]; then exit 1; fi
