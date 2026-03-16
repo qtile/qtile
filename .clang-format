@@ -242,5 +242,13 @@ WhitespaceSensitiveMacros:
   - NS_SWIFT_NAME
   - PP_STRINGIZE
   - STRINGIZE
+---
+Language:        ObjC
+BasedOnStyle: LLVM
+ColumnLimit: 100
+IndentWidth: 4
+ObjCBlockIndentWidth: 4
+ObjCSpaceAfterProperty: false
+ObjCSpaceBeforeProtocolList: true
 ...
 

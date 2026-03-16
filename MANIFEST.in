@@ -8,8 +8,27 @@ include libqtile/backend/wayland/proto/*.xml
 include libqtile/backend/wayland/qw/*.h
 include libqtile/backend/wayland/qw/*.c
 include builder.py
+include conftest.py
 
+recursive-include libqtile/backend/macos *.c
+recursive-include libqtile/backend/macos *.h
+recursive-include libqtile/backend/macos *.m
+
+exclude .dockerignore
+exclude Dockerfile.test
+exclude deps
+exclude install-deps
+exclude install-qtile
+exclude run-all-tests
+exclude run-coverage
+exclude run-macos-tests
+exclude run-wl-tests
+exclude run-x11-tests
+exclude plan.md
+exclude plan-update.md
 exclude .coveragerc
+
+prune todos
 exclude .pylintrc
 exclude flake.nix
 exclude flake.lock

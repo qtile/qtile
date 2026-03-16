@@ -12,6 +12,8 @@ MANIFEST
 libqtile/_ffi_pango.py
 libqtile/backend/x11/_ffi_xcursors.py
 libqtile/backend/wayland/_ffi.c
+libqtile/backend/macos/_ffi.c
+libqtile/backend/macos/src/build/
 # build library paths
 libqtile/_build_config.py
 libqtile/backend/wayland/qw/proto
