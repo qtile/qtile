@@ -130,7 +130,7 @@ class IdleInhibitorManager(Generic[TInhibitor]):
     def add_window_inhibitor(self, window: Window, inhibitor_type: str) -> None:
         itype = inhibitor_map.get(inhibitor_type)
         if itype is None:
-            logger.error("Unexpected inhibitor type {inhibitor_type}.")
+            logger.error(f"Unexpected inhibitor type {inhibitor_type}.")
             return
 
         inhibitor = Inhibitor(qtile=self.core.qtile, window=window, inhibitor_type=itype)
