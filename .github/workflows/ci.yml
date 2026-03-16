@@ -82,6 +82,7 @@ jobs:
                 }
                 trap dump_cores ERR
                 make QTILE_CI_PYTHON=${QTILE_CI_PYTHON} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
+                uv run coverage run -a -m pytest test/backend/macos/test_unit_*.py --noconftest -q --tb=short
                 uv run coverage combine -q
                 uv run coverage report -m
                 uv run coverage xml
