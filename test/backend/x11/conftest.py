@@ -78,6 +78,36 @@ def stop_x11(proc, display, display_file):
         pass
 
 
+import fcntl  # noqa: E402
+
+
+def safe_find_display():
+    display = 10
+    while True:
+        lock_path = f"/tmp/.X{display}-lock"
+        sock_path = f"/tmp/.X11-unix/X{display}"
+
+        # Check if socket already exists (stale or active)
+        if os.path.exists(sock_path):
+            display += 1
+            continue
+
+        try:
+            f = open(lock_path, "w+")
+            try:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return display, f
+            except OSError:
+                f.close()
+        except OSError:
+            pass
+
+        display += 1
+
+
+xcffib.testing.find_display = safe_find_display
+
+
 class Xephyr:
     """Spawn Xephyr instance
 
