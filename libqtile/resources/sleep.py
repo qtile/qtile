@@ -144,8 +144,6 @@ class Inhibitor:
         """Closes the file descriptor to release the inhibitor."""
         if self.fd >= 0:
             os.close(self.fd)
-        else:
-            logger.warning("No inhibitor available to release.")
 
         try:
             os.fstat(self.fd)
