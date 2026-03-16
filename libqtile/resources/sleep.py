@@ -117,7 +117,7 @@ class Inhibitor:
         """Create an inhibitor."""
         # Shouldn't happen but, if we already have an inhibitor in place,
         # close it before requesting a new one
-        if self.fd > 0:
+        if self.fd >= 0:
             self.release()
 
         # Check that inhibitor was released
@@ -142,7 +142,7 @@ class Inhibitor:
 
     def release(self) -> None:
         """Closes the file descriptor to release the inhibitor."""
-        if self.fd > 0:
+        if self.fd >= 0:
             os.close(self.fd)
         else:
             logger.warning("No inhibitor available to release.")
@@ -186,7 +186,7 @@ class Inhibitor:
         if not has_dbus or self.bus is None:
             return
 
-        if self.fd > 0:
+        if self.fd >= 0:
             self.release()
 
         if self.sleep or self.resume:
