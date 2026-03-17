@@ -170,9 +170,12 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
     }
 }
 
-void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y) {
+void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y, bool motion) {
     wlr_cursor_warp_closest(cursor->cursor, NULL, x, y);
-    qw_cursor_process_motion(cursor, 0, NULL, 0, 0, 0, 0);
+    qw_cursor_update_pointer_focus(cursor);
+    if (motion) {
+        cursor->server->cursor_motion_cb(cursor->server->cb_data);
+    }
 }
 
 static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void *data) {

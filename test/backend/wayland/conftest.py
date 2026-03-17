@@ -68,7 +68,7 @@ class WaylandBackend(Backend):
 
     def fake_motion(self, x, y):
         """Move pointer to the specified coordinates"""
-        self.manager.c.eval(f"self.core.warp_pointer({x}, {y})")
+        self.manager.c.eval(f"self.core.warp_pointer({x}, {y}, motion=True)")
 
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
