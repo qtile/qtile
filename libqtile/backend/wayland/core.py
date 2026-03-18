@@ -507,6 +507,7 @@ class Core(base.Core):
 
         if view != ffi.NULL:
             win = self.qtile.windows_map.get(view.wid)
+            hook.fire("client_mouse_click", win)
 
             if win is not None and self.qtile.config.bring_front_click is True:
                 win.move_to_top()

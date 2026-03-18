@@ -658,6 +658,28 @@ hooks: list[Hook] = [
         """,
     ),
     Hook(
+        "client_mouse_click",
+        """
+        Called when a mouse button is clicked on a client
+
+        **Arguments**
+
+            * ``Window`` of window clicked
+
+        Example:
+
+        .. code:: python
+
+            from libqtile import hook
+            from libqtile.utils import send_notification
+
+            @hook.subscribe.client_mouse_click
+            def client_mouse_click(client):
+                send_notification("qtile", f"Mouse was clicked on {client.name}")
+
+        """,
+    ),
+    Hook(
         "client_name_updated",
         """
         Called when the client name changes

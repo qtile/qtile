@@ -902,6 +902,8 @@ class Core(base.Core):
         assert qtile is not None
 
         if window:
+            hook.fire("client_mouse_click", window)
+
             if qtile.config.bring_front_click and (
                 qtile.config.bring_front_click != "floating_only"
                 or getattr(window, "floating", False)
