@@ -82,6 +82,147 @@ Wayland
 The Wayland backend supports the wlr-output-management protocol for configuration of
 outputs by tools such as `Kanshi <https://github.com/emersion/kanshi>`_.
 
+Dynamic Screen Configuration
+============================
+
+Instead of defining ``screens`` as a static list, you can define a
+``generate_screens`` function that is called with the list of currently
+connected outputs and returns the appropriate list of ``Screen`` objects. This
+lets you adapt your bar layout to different hardware setups, e.g. a laptop on
+its own, docked with a second monitor, or at a desk with multiple displays.
+
+The function signature must be::
+
+    from libqtile.config import Output, Screen
+
+    def generate_screens(outputs: list[Output]) -> list[Screen]:
+        ...
+
+Each :class:`~libqtile.config.Output` has the following attributes:
+
+- ``port`` — the connector name as seen by the display server (e.g. ``"HDMI-1"``, ``"DP-1"``)
+- ``make`` — manufacturer string reported by the monitor
+- ``model`` — model string reported by the monitor
+- ``serial`` — serial number reported by the monitor (stable across reboots, useful for identifying specific displays)
+- ``rect`` — a :class:`~libqtile.config.ScreenRect` describing the geometry of the output
+
+Example
+~~~~~~~
+
+The following example defines three helper functions, one per number of
+connected screens, and dispatches based on how many outputs are active. The
+``three_screens`` helper additionally matches each output to a fixed screen
+configuration using the monitor serial number so that each display always
+gets the same bar layout regardless of which port it happens to be plugged
+into::
+
+    import subprocess
+    from libqtile import bar, widget
+    from libqtile.config import Output, Screen
+
+    def one_screen():
+        # As an example: we want to render the appropriate world clock based on
+        where we are, but also the time at home. Dynamically compute the clock
+        widgets necessary to do this.
+        current = subprocess.check_output(
+            ["timedatectl", "show", "--value", "--property=Timezone"]
+        ).decode("utf-8")
+
+        # only display american clocks in 12 hour format
+        fmt = '%Y-%m-%d %a %I:%M %p'
+        if not current.startswith("America"):
+            fmt = '%Y-%m-%d %a %H:%M'
+
+        clocks = [
+            widget.Clock(format=fmt, **widget_defaults),
+        ]
+
+        # display the time at home if not at home
+        if current != "America/Denver\n":
+            clocks.insert(0, widget.Clock(
+                format='%I:%M %p Mountain',
+                timezone='America/Denver',
+                **widget_defaults,
+            ))
+
+        return [
+            Screen(top=bar.Bar([
+                widget.GroupBox(**widget_defaults),
+                widget.Prompt(**widget_defaults),
+                widget.Clipboard(timeout=None, width=bar.STRETCH, max_width=None),
+                widget.Battery(**widget_defaults),
+                widget.Systray(**widget_defaults),
+                ] + clocks,
+                height,
+            )),
+        ]
+
+
+    def two_screens():
+        # A docked laptop, for example. Or maybe a plugged in projector while
+        giving a conference talk.
+        return [
+            Screen(top=bar.Bar([
+                widget.GroupBox(**widget_defaults),
+                widget.Prompt(**widget_defaults),
+                widget.Spacer(),
+            ], height)),
+            Screen(top=bar.Bar([
+                widget.GroupBox(**widget_defaults),
+                widget.Clipboard(timeout=None, width=bar.STRETCH, max_width=None),
+                widget.Systray(**widget_defaults),
+                widget.Clock(format='%Y-%m-%d %a %I:%M %p', **widget_defaults),
+            ], height)),
+        ]
+
+
+    def three_screens(outputs: list[Output]):
+        """
+        Bind screen configuration to a set of outputs regardless of their port
+        names (e.g. HDMI-1, DP-1-1-2, etc.) by using the serial number of the
+        monitors, which is stable across reboots.
+        """
+        screens = []
+        for output in outputs:
+            if output.serial == "M2GCR1AM28PL":
+                # left screen
+                scr = Screen(top=bar.Bar([
+                    widget.GroupBox(**widget_defaults),
+                    widget.Prompt(**widget_defaults),
+                    widget.Spacer(),
+                ], height))
+            elif output.serial == "1B8W0P3":
+                # middle screen
+                scr = Screen(top=bar.Bar([
+                    widget.GroupBox(**widget_defaults),
+                    widget.Systray(**widget_defaults),
+                    widget.Clock(format='%Y-%m-%d %a %I:%M %p', **widget_defaults),
+                ], height))
+            elif output.serial == "M2GCR1AS21NL":
+                # right screen
+                scr = Screen(top=bar.Bar([
+                    widget.GroupBox(**widget_defaults),
+                    widget.Spacer(),
+                    widget.Clock(format='%Y-%m-%d %a %I:%M %p', **widget_defaults),
+                ], height))
+            else:
+                raise Exception(f"unknown output {output}")
+            screens.append(scr)
+        return screens
+
+    def generate_screens(outputs: list[Output]) -> list[Screen]:
+        if len(outputs) == 1:
+            return one_screen()
+        elif len(outputs) == 2:
+            return two_screens()
+        else:
+            return three_screens(outputs)
+
+.. note::
+    ``generate_screens`` and ``screens`` are mutually exclusive. If
+    ``generate_screens`` is defined it takes precedence and the ``screens``
+    variable is ignored.
+
 Fake Screens
 ============
 
