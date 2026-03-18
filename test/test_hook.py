@@ -483,9 +483,11 @@ def test_group_window_remove(manager_nospawn):
 class CallWindow:
     def __init__(self):
         self.window = ""
+        self.count = 0
 
     def __call__(self, window):
         self.window = window.name
+        self.count += 1
 
 
 @Retry(ignore_exceptions=(AssertionError))
@@ -557,6 +559,25 @@ def test_client_mouse_enter(manager_nospawn):
     manager_nospawn.test_window("Test Client")
     manager_nospawn.backend.fake_click(0, 0)
     assert_window(manager_nospawn, "Test Client")
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_client_focus_by_click(manager_nospawn):
+    class ClientMouseClickConfig(BareConfig):
+        test = CallWindow()
+        hook.subscribe.client_focus_by_click(test)
+
+    manager_nospawn.start(ClientMouseClickConfig)
+    manager_nospawn.test_window("Test Client")
+
+    manager_nospawn.backend.fake_click(0, 0)
+    assert manager_nospawn.c.eval("self.config.test.window") == "Test Client"
+    assert manager_nospawn.c.eval("self.config.test.count") == "1"
+
+    # Clicking on the window again will not fire the hook
+    manager_nospawn.backend.fake_click(0, 0)
+    assert manager_nospawn.c.eval("self.config.test.window") == "Test Client"
+    assert manager_nospawn.c.eval("self.config.test.count") == "1"
 
 
 @pytest.mark.usefixtures("hook_fixture")
