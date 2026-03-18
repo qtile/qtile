@@ -651,3 +651,18 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
         wlr_cursor_warp(cursor->cursor, NULL, cursor->cursor->x, cursor->cursor->y);
     }
 }
+
+void qw_cursor_fake_click(struct qw_cursor *cursor) {
+    struct wlr_pointer_button_event event = {
+        .button = 0x110, // BTN_LEFT (0x110 from linux/input-event-codes.h)
+        .state = WL_POINTER_BUTTON_STATE_PRESSED,
+        .time_msec = 0,
+    };
+
+    // Simulate press
+    qw_cursor_handle_button(&cursor->button, &event);
+
+    // Simulate release
+    event.state = WL_POINTER_BUTTON_STATE_RELEASED;
+    qw_cursor_handle_button(&cursor->button, &event);
+}

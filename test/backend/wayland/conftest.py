@@ -72,9 +72,8 @@ class WaylandBackend(Backend):
 
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
-        # Currently only restacks windows, and does not trigger bindings
         self.fake_motion(x, y)
-        self.manager.c.eval("self.core._focus_by_click()")
+        self.manager.c.eval("self.core.fake_click()")
 
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
