@@ -815,6 +815,7 @@ class Core(base.Core):
 
             node = {
                 "name": ffi.string(info.name).decode(),
+                "id": node_id,
                 "enabled": bool(info.enabled),
                 "x": info.x,
                 "y": info.y,
