@@ -19,6 +19,7 @@ class Core(base.Core):
 
         self._ffi = _ffi.ffi
         self._lib = _ffi.lib
+        self._lib.mac_init_app()
         self._callback_handle = None
         self._observer_handle = None
         self._poll_handle: typing.Any = None

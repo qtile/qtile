@@ -1,7 +1,16 @@
 #include "display.h"
+#import <AppKit/NSApplication.h>
 #import <ApplicationServices/ApplicationServices.h>
 #import <Foundation/Foundation.h>
 #import <IOKit/pwr_mgt/IOPMLib.h>
+
+void mac_init_app(void) {
+    // NSApplication must exist before creating any NSWindow.
+    // Accessory policy: no dock icon, no main menu bar — qtile is a background
+    // window-management process, not a regular GUI app.
+    [NSApplication sharedApplication];
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+}
 
 static IOPMAssertionID g_idle_assertion = kIOPMNullAssertionID;
 

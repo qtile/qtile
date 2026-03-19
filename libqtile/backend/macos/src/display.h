@@ -5,6 +5,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Must be called before any AppKit API (NSWindow, NSView, etc.).
+// Initialises [NSApplication sharedApplication] and sets the activation policy
+// to accessory (no dock icon, no menu bar).
+void mac_init_app(void);
+
 struct mac_output {
     char *name;
     int x;

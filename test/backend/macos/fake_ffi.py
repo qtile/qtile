@@ -8,6 +8,9 @@ class FakeLib:
     explicit stub here returning a sensible default so tests never hit real C code."""
 
     def __init__(self):
+        # Initialisation
+        self.mac_init_app = mock.MagicMock(return_value=None)
+
         # Integer / bool stubs
         self.mac_get_idle_time = mock.MagicMock(return_value=0.0)
         self.mac_observer_start = mock.MagicMock(return_value=0)

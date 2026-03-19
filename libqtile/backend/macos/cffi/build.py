@@ -14,6 +14,8 @@ MAC_SRC_PATH = (Path(__file__).parent / ".." / "src").resolve()
 
 CDEF = """
 // display.h
+void mac_init_app(void);
+
 struct mac_output {
     char *name;
     int x;
