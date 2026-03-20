@@ -67,7 +67,7 @@ class QtileError(Exception):
     pass
 
 
-def lget(o: list[T], v: int) -> T | None:
+def lget[T](o: list[T], v: int) -> T | None:
     try:
         return o[v]
     except (IndexError, TypeError):

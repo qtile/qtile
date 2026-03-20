@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import IntEnum, auto
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 from libqtile import hook
 from libqtile.log_utils import logger
@@ -85,10 +85,7 @@ class Inhibitor:
         return f"<window={name} type={mode} status={active}>"
 
 
-TInhibitor = TypeVar("TInhibitor", bound=Inhibitor)
-
-
-class IdleInhibitorManager(Generic[TInhibitor]):
+class IdleInhibitorManager[TInhibitor: Inhibitor]:
     def __init__(self, core: Core) -> None:
         self.core = core
         self.inhibitors: list[TInhibitor] = []
