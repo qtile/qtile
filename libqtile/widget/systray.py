@@ -265,7 +265,7 @@ class Systray(base._Widget, window._Window):
         except xcffib.ConnectionException:
             self.hidden = True  # Usually set in self.hide()
 
-        del self.qtile.windows_map[self.wid]
+        self.qtile.windows_map.pop(self.wid, None)
         Systray._instances -= 1
 
     def info(self):
