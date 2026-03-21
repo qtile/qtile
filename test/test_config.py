@@ -1,3 +1,5 @@
+import importlib
+import sys
 from pathlib import Path
 
 import pytest
@@ -211,3 +213,37 @@ def test_generate_screens_serial_matching(manager_nospawn, minimal_conf_noscreen
     assert manager_nospawn.c.screen[0].info()["serial"] == "monitor_left"
     assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "right_config"
     assert manager_nospawn.c.screen[1].info()["serial"] == "monitor_right"
+
+
+def test_reload_config_reloads_local_modules_and_skips_main(tmp_path, monkeypatch):
+    initial_wmname = "wmname-before-reload"
+    updated_wmname = "wmname-after-reload-longer"
+    suffix = tmp_path.name.replace("-", "_")
+    helper_name = f"reload_helper_{suffix}"
+    config_name = f"reload_config_{suffix}"
+    helper_file = tmp_path / f"{helper_name}.py"
+    config_file = tmp_path / f"{config_name}.py"
+
+    helper_file.write_text(f'VALUE = "{initial_wmname}"\n')
+    config_file.write_text(f"from {helper_name} import VALUE\nwmname = VALUE\n")
+
+    cfg = confreader.Config(config_file)
+
+    try:
+        cfg.load()
+
+        assert cfg.wmname == initial_wmname
+
+        helper_file.write_text(f'VALUE = "{updated_wmname}"\n')
+        importlib.invalidate_caches()
+
+        main = sys.modules["__main__"]
+        monkeypatch.setattr(main, "__file__", str(helper_file), raising=False)
+        monkeypatch.setattr(main, "__spec__", None, raising=False)
+
+        cfg.load()
+
+        assert cfg.wmname == updated_wmname
+    finally:
+        sys.modules.pop(config_name, None)
+        sys.modules.pop(helper_name, None)
