@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -75,6 +76,45 @@ def test_systray_reconfigure_screens(manager_nospawn, minimal_conf_noscreen, bac
 
     manager_nospawn.c.reconfigure_screens()
 
+    assert manager_nospawn.c.bar["top"].info()["widgets"][0]["name"] == "systray"
+
+
+def test_systray_reload_config_after_window_destroy(
+    manager_nospawn, minimal_conf_noscreen, backend_name
+):
+    if backend_name == "wayland":
+        pytest.skip("Skipping test on Wayland.")
+
+    config = minimal_conf_noscreen
+    config.screens = [libqtile.config.Screen(top=libqtile.bar.Bar([widget.Systray()], 10))]
+
+    manager_nospawn.start(config)
+
+    manager_nospawn.c.widget["systray"].eval(
+        "self.conn.conn.core.DestroyWindow(self.wid); self.conn.conn.flush()"
+    )
+
+    @Retry(ignore_exceptions=(AssertionError,))
+    def wait_for_removal():
+        assert manager_nospawn.c.eval("'systray' in self.widgets_map") == "True"
+        assert (
+            manager_nospawn.c.eval("self.widgets_map['systray'].wid in self.windows_map")
+            == "False"
+        )
+
+    wait_for_removal()
+
+    manager_nospawn.c.reload_config()
+
+    os.set_blocking(manager_nospawn.logspipe, False)
+
+    try:
+        logs = manager_nospawn.get_log_buffer()
+    except BlockingIOError:
+        logs = ""
+
+    assert "exception during finalize" not in logs
+    assert "KeyError" not in logs
     assert manager_nospawn.c.bar["top"].info()["widgets"][0]["name"] == "systray"
 
 
