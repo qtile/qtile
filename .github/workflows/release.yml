@@ -171,7 +171,7 @@ jobs:
       - name: Create artifact
         run: tar czf ~/wayland.tar.gz -C ${HOME}/wayland/ .
       - name: Upload built libraries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wayland
           path: ~/wayland.tar.gz
@@ -206,7 +206,7 @@ jobs:
           name: wayland
       - name: Unpack wayland artifact
         run: tar xf wayland.tar.gz -C /
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set environment variables
         run: |
           PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-${PYTHON_VERSION/./})
@@ -222,7 +222,7 @@ jobs:
           auditwheel show dist/qtile-*.whl
           auditwheel repair --plat manylinux_2_34_x86_64 -w output_wheels dist/qtile-*.whl
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: wheels-${{ matrix.python-version }}
           path: output_wheels/qtile*.whl
@@ -245,7 +245,7 @@ jobs:
         with:
           name: wheels-${{ matrix.manual-version }}
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install wheel
@@ -261,7 +261,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: dnf install -y cairo-devel libffi-devel
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set environment variables
         run: |
           PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-${PYTHON_VERSION/./})
@@ -274,7 +274,7 @@ jobs:
           python -m pip install build
           python -m build --sdist .
       - name: Upload source
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: source
           path: dist/*.tar.gz
