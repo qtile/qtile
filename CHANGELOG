@@ -1,4 +1,8 @@
 Qtile x.xx.x, released xxxx-xx-xx:
+    * features
+    * bugfixes
+
+Qtile 0.35.0, released 2026-03-20:
     !!! Breaking changes !!!
       - Removed the cmus and moc widgets. These were GPL licensed, and as such
         incompatible with our MIT license. They were added to the tree by
@@ -9,7 +13,10 @@ Qtile x.xx.x, released xxxx-xx-xx:
         added bonus that we undefine __getattr__, and as a result do a lot
         more type checking in the core codebase.
     * features
+      - a new generate_screens() config API for dynamically generating Screen
+        objects
     * bugfixes
+      - many (many) wayc backends
 
 Qtile 0.34.1, released 2025-12-14:
     * bugfixes
