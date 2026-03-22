@@ -1,20 +1,8 @@
 #include "touch.h"
+#include "cursor.h"
 #include "output.h"
 #include "util.h"
 #include <linux/input-event-codes.h>
-
-static void qw_touch_absolute_position_to_screen(struct qw_server *server, double x, double y,
-                                                 double *lx, double *ly) {
-    if (!wl_list_empty(&server->outputs)) {
-        struct qw_output *output;
-        output = wl_container_of(server->outputs.next, output, link);
-        *lx = x * output->wlr_output->width;
-        *ly = y * output->wlr_output->height;
-        return;
-    }
-    *lx = 0;
-    *ly = 0;
-}
 
 static void qw_touch_handle_down(struct wl_listener *listener, void *data) {
     struct qw_touch *touch = wl_container_of(listener, touch, down);
@@ -22,17 +10,16 @@ static void qw_touch_handle_down(struct wl_listener *listener, void *data) {
     struct qw_server *server = touch->server;
 
     double lx, ly;
-    qw_touch_absolute_position_to_screen(server, event->x, event->y, &lx, &ly);
+    wlr_cursor_absolute_to_layout_coords(server->cursor->cursor, touch->device, event->x, event->y,
+                                         &lx, &ly);
 
     struct wlr_surface *surface = NULL;
     double sx, sy;
     qw_server_view_at(server, lx, ly, &surface, &sx, &sy);
 
     if (surface) {
-        wlr_seat_touch_point_focus(server->seat, surface, event->time_msec, event->touch_id, sx,
+        wlr_seat_touch_notify_down(server->seat, surface, event->time_msec, event->touch_id, sx,
                                    sy);
-        wlr_seat_touch_notify_down(server->seat, surface, event->time_msec, event->touch_id, lx,
-                                   ly);
     }
 }
 
@@ -42,7 +29,6 @@ static void qw_touch_handle_up(struct wl_listener *listener, void *data) {
     struct qw_server *server = touch->server;
 
     wlr_seat_touch_notify_up(server->seat, event->time_msec, event->touch_id);
-    wlr_seat_touch_point_clear_focus(server->seat, event->time_msec, event->touch_id);
 }
 
 static void qw_touch_handle_motion(struct wl_listener *listener, void *data) {
@@ -51,7 +37,8 @@ static void qw_touch_handle_motion(struct wl_listener *listener, void *data) {
     struct qw_server *server = touch->server;
 
     double lx, ly;
-    qw_touch_absolute_position_to_screen(server, event->x, event->y, &lx, &ly);
+    wlr_cursor_absolute_to_layout_coords(server->cursor->cursor, touch->device, event->x, event->y,
+                                         &lx, &ly);
     wlr_seat_touch_notify_motion(server->seat, event->time_msec, event->touch_id, lx, ly);
 }
 
