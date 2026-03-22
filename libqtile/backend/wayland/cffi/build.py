@@ -13,6 +13,7 @@ from setuptools import Distribution
 from setuptools.command.build_ext import build_ext
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
+WLROOTS_PATH = os.getenv("QTILE_WLROOTS_PATH", "/usr/include/wlroots-0.19")
 
 PKG_CONFIG = os.environ.get("PKG_CONFIG", "pkg-config")
 WAYLAND_SCANNER = os.environ.get("QTILE_WAYLAND_SCANNER", shutil.which("wayland-scanner"))
@@ -61,6 +62,13 @@ for proto in PROTOS:
         text=True,
         stdout=subprocess.PIPE,
     ).stdout.strip()
+
+
+# Helper to check whether wlroots has been compiled with xwayland support
+def wlroots_has_xwayland():
+    config = Path(WLROOTS_PATH) / "wlr" / "config.h"
+    return "WLR_HAS_XWAYLAND 1" in config.read_text()
+
 
 CDEF = """
 // logging
@@ -170,10 +178,30 @@ cdef_files = [
     "keyboard.h",
 ]
 
+XWAYLAND_ONLY_SOURCES = ["xwayland-view.c"]
+
 for file in cdef_files:
     with open(QW_PATH / file) as f:
         in_private_data = False
+        skip_no_xwayland_block = False
         for line in f.readlines():
+            # cffi doesn't prepocess `#if` blocks so we need
+            # to strip out any xwayland blocks ourselves
+            stripped = line.strip()
+            if stripped.startswith("#if"):
+                if "WLR_HAS_XWAYLAND" in stripped and not wlroots_has_xwayland():
+                    skip_no_xwayland_block = True
+                continue
+            elif stripped.startswith("#else") and skip_no_xwayland_block:
+                skip_no_xwayland_block = False
+                continue
+            elif stripped.startswith("#endif") and skip_no_xwayland_block:
+                skip_no_xwayland_block = False
+                continue
+
+            if skip_no_xwayland_block:
+                continue
+
             if line.startswith("#"):
                 continue
             if line.strip().lower().startswith("// private data"):
@@ -199,12 +227,19 @@ INCLUDE_DIRS = [
     os.getenv("QTILE_CAIRO_PATH", "/usr/include/cairo"),
     os.getenv("QTILE_PIXMAN_PATH", "/usr/include/pixman-1"),
     os.getenv("QTILE_LIBDRM_PATH", "/usr/include/libdrm"),
-    os.getenv("QTILE_WLROOTS_PATH", "/usr/include/wlroots-0.19"),
+    WLROOTS_PATH,
     QW_PATH,
     QW_PROTO_OUT_PATH,
 ]
 LIBRARIES = ["wlroots-0.19", "wayland-server", "input", "cairo"]
+
+# SOURCE_FILES loads all .c files...
 SOURCE_FILES = glob.glob(f"{QW_PATH}/*.c")
+
+# ...but we need to exclude any xwayland files
+if not wlroots_has_xwayland():
+    SOURCE_FILES = [f for f in SOURCE_FILES if not any(x in f for x in XWAYLAND_ONLY_SOURCES)]
+
 OBJECTS = [Path(src).parent / "build" / Path(src).with_suffix(".o").name for src in SOURCE_FILES]
 
 
@@ -216,6 +251,11 @@ def chdir(path: Path) -> Iterator[None]:
         yield
     finally:
         os.chdir(prev_cwd)
+
+
+MACROS: list[tuple[str, str | None]] = [("WLR_USE_UNSTABLE", None)]
+if not wlroots_has_xwayland():
+    MACROS.append(("WLR_HAS_XWAYLAND", "0"))
 
 
 def build_objects(debug: bool = False, asan: bool = False) -> None:
@@ -235,7 +275,7 @@ def build_objects(debug: bool = False, asan: bool = False) -> None:
         cmd.shlib_compiler.compile(
             [os.path.basename(path) for path in SOURCE_FILES],
             output_dir="build",
-            macros=[("WLR_USE_UNSTABLE", None)],
+            macros=MACROS,
             include_dirs=INCLUDE_DIRS,
             extra_preargs=extra_preargs,
         )
@@ -267,7 +307,7 @@ def ffi_compile(verbose: bool = False, debug: bool = False, asan: bool = False) 
     ffi.set_source(
         "libqtile.backend.wayland._ffi",
         SOURCE,
-        define_macros=[("WLR_USE_UNSTABLE", None)],
+        define_macros=MACROS,
         include_dirs=INCLUDE_DIRS,
         extra_objects=OBJECTS,
         libraries=LIBRARIES,
