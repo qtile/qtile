@@ -466,18 +466,21 @@ static void qw_server_handle_new_xwayland_surface(struct wl_listener *listener, 
     }
 }
 
-const char *qw_server_xwayland_display_name(struct qw_server *server) {
-    return server->xwayland->display_name;
-}
-#else
-const char *qw_server_xwayland_display_name(struct qw_server *server) { return NULL; }
-#endif
-
 static void qw_server_handle_xwayland_ready(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_server *server = wl_container_of(listener, server, xwayland_ready);
     qw_xwayland_atoms_init(server->xwayland, server->xwayland_atoms);
 }
+
+const char *qw_server_xwayland_display_name(struct qw_server *server) {
+    return server->xwayland->display_name;
+}
+#else
+const char *qw_server_xwayland_display_name(struct qw_server *server) {
+    UNUSED(server);
+    return NULL;
+}
+#endif
 
 // Return the view at the given layout coordinates, if any.
 // Also fills out surface and surface-local coords if found.
