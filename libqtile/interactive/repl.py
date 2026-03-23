@@ -5,14 +5,11 @@ import contextlib
 import io
 import re
 import traceback
+from typing import Any
 
 from libqtile.log_utils import logger
-from libqtile.utils import create_task
 
 ATTR_MATCH = re.compile(r"([\w\.]+?)(?:\.([\w]*))?$")
-TERMINATOR = "___END___"
-COMPLETION_REQUEST = "___COMPLETE___::"
-REPL_PORT = 41414
 
 
 def mark_unavailable(func):
@@ -81,7 +78,7 @@ def get_completions(text, local_vars):
         return []
 
 
-class QtileREPLServer:
+class QtileREPL:
     """
     Provides a REPL interface to allow users to inspect qtile's internals via
     a more intuitive/familiar interface compared to `qtile shell`.
@@ -90,8 +87,14 @@ class QtileREPLServer:
     def __init__(self):
         self.buffer = ""
         self.compiler = codeop.Compile()
-        self.started = False
-        self.connections = set()
+
+    async def start(self, qtile) -> dict[str, Any]:
+        logger.debug("Starting Qtile REPL")
+
+        self.locals = {"qtile": qtile, **make_safer_env()}
+        self.compiler = codeop.CommandCompiler()
+
+        return {"output": "Connected to Qtile REPL\nPress Ctrl+C to exit.\n"}
 
     def evaluate_code(self, code):
         with io.StringIO() as stdout:
@@ -113,102 +116,20 @@ class QtileREPLServer:
 
             return stdout.getvalue()
 
-    async def handle_client(self, reader, writer):
-        """Method for sending data to REPL client."""
-        q = self.locals.get("qtile", None)
-
-        async def send(message, end=True):
-            """Wrapper to send data to client."""
-            suffix = TERMINATOR if end else ""
-            writer.write(f"{message}{suffix}\n".encode())
-            await writer.drain()
-
-        await send("Connected to Qtile REPL\nPress Ctrl+C to exit.\n")
-
-        # Keep track of the number of connected clients so server is not
-        # stopped while there is still a client connected.
-        task = asyncio.current_task()
-        self.connections.add(task)
-
-        self.compiler = codeop.CommandCompiler()
-
-        while not reader.at_eof():
-            buffer = ""
-            # The client handles checking when a code block is complete and
-            # terminates the code with a marker. Server therefore just reads
-            # until it finds that marker.
-            while True:
-                line = await reader.readline()
-                if not line:
-                    break
-                line = line.decode()
-
-                if line.strip() == TERMINATOR:
-                    break
-
-                buffer += line
-
-            # Handle completion requests
-            if buffer.startswith(COMPLETION_REQUEST):
-                prefix = buffer.split("::", 1)[1]
+    # `request` and the return could potentially be typed more strongly
+    async def handle(self, request: dict[str, Any]) -> dict[str, Any]:
+        """Handle a REPL request by the client. Caller must check that the session isn't locked"""
+        match request:
+            case {"completion": prefix}:
                 matches = get_completions(prefix, self.locals)
-                output = ",".join(matches) + "\n"
-                await send(output)
-                continue
+                return {"matches": matches}
 
-            if not buffer.strip():
-                buffer = ""
-                await send("", end=False)
-                continue
+            case {"code": code}:
+                if not code.strip():
+                    return {"output": ""}
+                else:
+                    output = await asyncio.to_thread(self.evaluate_code, code)
+                    return {"output": output.strip()}
 
-            # Ready to execute
-            output = ""
-
-            # Block interaction if session is locked
-            if q is not None and q.locked:
-                output = "Server is locked."
-            else:
-                # Evaluate code in a thread so blocking calls don't block the eventloop
-                loop = asyncio.get_running_loop()
-                output = await loop.run_in_executor(None, self.evaluate_code, buffer)
-
-            # Send output to client
-            await send(output.strip())
-
-        # Client has disconnected. Tidy up.
-        writer.close()
-        self.connections.remove(task)
-
-    async def start(self, locals_dict=dict()):
-        if self.started:
-            return
-
-        self.locals = {**make_safer_env(), **locals_dict}
-        self.server = await asyncio.start_server(self.handle_client, "localhost", REPL_PORT)
-        logger.info("Qtile REPL server running on localhost:%d", REPL_PORT)
-        self.started = True
-
-        # serve_forever() cannot be stopped except by putting it in a task and
-        # cancelling that task.
-        self.repl_task = create_task(self.server.serve_forever())
-
-        try:
-            await self.repl_task
-        except asyncio.CancelledError:
-            logger.info("Qtile REPL server has been stopped.")
-
-    async def stop(self):
-        if not self.started:
-            return
-
-        if self.connections:
-            logger.debug("Can't close with active connections")
-            return
-
-        self.server.close()
-        await self.server.wait_closed()
-        self.repl_task.cancel()
-        self.started = False
-
-
-repl_server = QtileREPLServer()
+            case _:
+                return {"output": "Internal REPL error\n"}

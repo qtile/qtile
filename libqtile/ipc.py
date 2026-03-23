@@ -21,6 +21,7 @@ from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Self
 
 from libqtile import hook
+from libqtile.interactive.repl import QtileREPL
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
 
@@ -81,7 +82,14 @@ class IPCStatus(enum.IntEnum):
 
 class MessageType(enum.StrEnum):
     COMMAND = "command"
+    # Since this is just a `dict[Any]` bundled with a status,
+    # it can be used for both the repl and command results. This
+    # also simplifies the server's handler code, since it can always
+    # return a `REPLY` message, e.g. on error.
     REPLY = "reply"
+    # Maybe this could just be a repl_request?
+    REPL_START = "repl_start"
+    REPL_REQUEST = "repl_request"
 
 
 class IPCMessage(metaclass=ABCMeta):
@@ -180,6 +188,46 @@ class IPCReplyMessage(IPCMessage):
         return IPCReplyMessage(status=IPCStatus.EXCEPTION, data=data)
 
 
+@dataclass
+class IPCReplStartMessage(IPCMessage):
+    @property
+    def message_type(self):
+        return MessageType.REPL_START
+
+    # This message doesn't carry any data
+    def to_json(self) -> dict:
+        return dict()
+
+    @classmethod
+    def from_json(cls, _json: dict) -> IPCReplStartMessage:
+        return IPCReplStartMessage()
+
+    def __iter__(self):
+        return iter(())
+
+
+@dataclass
+class IPCReplRequestMessage(IPCMessage):
+    # We let the repl implementation decide what/how to
+    # represent their messages, so we just pass them a dict
+    data: dict[str, Any]
+
+    @property
+    def message_type(self):
+        return MessageType.REPL_REQUEST
+
+    # This message doesn't carry any data
+    def to_json(self) -> dict:
+        return self.data
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCReplRequestMessage:
+        return IPCReplRequestMessage(json)
+
+    def __iter__(self):
+        return iter(())
+
+
 class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
@@ -200,11 +248,21 @@ class _IPC:
         try:
             obj = json.loads(data.decode(), object_hook=_IPC._json_tuple_object_hook)
             match obj:
+                # This could be made more succinct by mapping the `MessageType`
+                # to the class, and then just calling `map[type].from_json(content)`.
+                # On first pass, the implementation required special handling for
+                # different message types, perhaps this might be useful in the future too.
                 case {"message_type": MessageType.COMMAND, "content": content}:
                     return IPCCommandMessage.from_json(content)
 
                 case {"message_type": MessageType.REPLY, "content": content}:
                     return IPCReplyMessage.from_json(content)
+
+                case {"message_type": MessageType.REPL_START, "content": content}:
+                    return IPCReplStartMessage.from_json(content)
+
+                case {"message_type": MessageType.REPL_REQUEST, "content": content}:
+                    return IPCReplRequestMessage.from_json(content)
 
                 case {"message_type": typ, "content": _}:
                     raise IPCError(f"Unknown message type: '{typ}'")
@@ -330,7 +388,7 @@ class ReconnectingClient:
         then wait for and return the response from the server.
         """
         async with AsyncClient(self.socket_path) as c:
-            return await c.send(IPCCommandMessage(*msg))
+            return await c.command(IPCCommandMessage(*msg))
 
 
 class PersistentClient:
@@ -365,10 +423,17 @@ class PersistentClient:
             self._run(self._client.connect())
 
         message = IPCCommandMessage(*msg)
-        return self._run(self._client.send(message))
+        return self._run(self._client.command(message))
 
-    def __enter__(self):
+    def repl_start(self) -> IPCReplyMessage:
+        return self._run(self._client.repl_start())
+
+    def repl_request(self, data: dict[str, Any]) -> IPCReplyMessage:
+        return self._run(self._client.repl_request(data))
+
+    def __enter__(self) -> PersistentClient:
         self.connect()
+        return self
 
     def __exit__(self, _exc_type, _exc, _tb):
         self.close()
@@ -405,7 +470,7 @@ class AsyncClient:
     def is_connected(self) -> bool:
         return self.stream is not None
 
-    async def send(self, message: IPCCommandMessage) -> IPCReplyMessage:
+    async def send(self, message: IPCMessage) -> IPCReplyMessage:
         """Send the message to the server using the existing connection.
         `connect` must have been called, it is recommended to use async with:
 
@@ -428,6 +493,15 @@ class AsyncClient:
         except asyncio.TimeoutError:
             raise IPCError("Server not responding")
 
+    async def command(self, command: IPCCommandMessage) -> IPCReplyMessage:
+        return await self.send(command)
+
+    async def repl_start(self) -> IPCReplyMessage:
+        return await self.send(IPCReplStartMessage())
+
+    async def repl_request(self, data: dict[str, Any]) -> IPCReplyMessage:
+        return await self.send(IPCReplRequestMessage(data))
+
     async def close(self):
         if self.stream is not None:
             await self.stream.close()
@@ -444,10 +518,15 @@ class AsyncClient:
 
 class Server:
     def __init__(
-        self, socket_path: str, handler: Callable[[IPCCommandMessage], IPCReplyMessage]
+        self, socket_path: str, handler: Callable[[IPCCommandMessage], IPCReplyMessage], qtile
     ) -> None:
         self.socket_path = socket_path
         self.handler = handler
+        # Needed to initiate a QtileREPL. This feels a bit dirty,
+        # especially since we already pass an indirect reference to
+        # the qtile instance in `handler`, because `IPCCommandServer`
+        # holds a reference to `qtile` as well
+        self.qtile = qtile
         self.server = None  # type: asyncio.AbstractServer | None
 
         # Use a flag to indicate if session is locked
@@ -479,7 +558,7 @@ class Server:
         """
         stream = IPCStreamIO(reader, writer)
         logger.debug("Connection made to server")
-
+        repl = None
         try:
             while True:
                 # There is no timeout here to enable long lived connections
@@ -488,22 +567,42 @@ class Server:
                 # Clients are assumed to be trusted, although there is no actual
                 # verification mechanism for this
                 req = await stream.read_message()
+
                 # EOF
                 if req is None:
                     logger.debug("Client disconnected")
                     break
 
-                if not isinstance(req, IPCCommandMessage):
-                    logger.error("Expected command message from client")
-                    break
-
                 # Don't handle requests when session is locked
+                # Note: this check is done by `IPCCommandServer` as well
                 if self.locked.is_set():
                     rep = IPCReplyMessage.error({"error": "Session locked."})
                 else:
-                    # The handler shouldn't throw, but return an
-                    # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
-                    rep = self.handler(req)
+                    match req:
+                        case IPCCommandMessage():
+                            # The handler shouldn't throw, but return an
+                            # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
+                            rep = self.handler(req)
+
+                        case IPCReplStartMessage():
+                            # Intentionally ignore if the repl was
+                            # already started like the original code did
+                            if repl is None:
+                                repl = QtileREPL()
+                                rep = IPCReplyMessage.success(await repl.start(self.qtile))
+
+                        # As mentioned in `MessageType`, it's possible to handle
+                        # the repl being None by just creating one on demand,
+                        # as the repl isn't really "running" at all, and getting
+                        # rid of the `REPL_START` message type
+                        case IPCReplRequestMessage():
+                            if repl is None:
+                                rep = IPCReplyMessage.error({"error": "REPL isn't running"})
+                            else:
+                                rep = IPCReplyMessage.success(await repl.handle(req.data))
+
+                        case _:
+                            raise IPCError(f"Invalid request received: {req.message_type}")
 
                 logger.debug("Sending result")
                 await stream.write_message(rep)
