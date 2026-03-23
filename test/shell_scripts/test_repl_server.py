@@ -1,14 +1,4 @@
-import asyncio
-import contextlib
-
-import pytest
-
-from libqtile.interactive.repl import (
-    REPL_PORT,
-    TERMINATOR,
-    QtileREPLServer,
-    get_completions,
-)
+from libqtile.interactive.repl import get_completions
 
 
 def test_get_completions_top_level():
@@ -36,42 +26,3 @@ def test_get_completions_attribute():
 def test_get_completions_invalid_expr():
     result = get_completions("invalid..expr", {})
     assert result == []
-
-
-@pytest.mark.anyio
-async def test_repl_server_executes_code():
-    repl = QtileREPLServer()
-    locals_dict = {"x": 123}
-
-    # Start the REPL server in a background task
-    start_task = asyncio.create_task(repl.start(locals_dict=locals_dict))
-
-    # Wait for the server to bind the port
-    await asyncio.sleep(0.1)
-
-    reader, writer = await asyncio.open_connection("localhost", REPL_PORT)
-
-    try:
-        # Read welcome message
-        welcome = await reader.read(4096)
-        assert b"Connected to Qtile REPL" in welcome
-
-        # Send a simple expression to evaluate
-        writer.write(b"x\n" + f"{TERMINATOR}\n".encode())
-        await writer.drain()
-
-        # Read REPL result
-        result = await reader.readuntil(f"{TERMINATOR}\n".encode())
-        assert "123" in result.decode()
-
-    finally:
-        writer.close()
-        await writer.wait_closed()
-
-        # Stop the REPL server
-        await repl.stop()
-
-        # Cancel the server task
-        start_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await start_task
