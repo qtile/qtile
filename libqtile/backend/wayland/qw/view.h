@@ -70,7 +70,6 @@ struct qw_border {
 
 struct qw_view {
     struct qw_server *server;
-    int layer;
     int x;
     int y;
     int width;
@@ -154,5 +153,7 @@ void qw_view_ftl_manager_handle_destroy(struct qw_view *view);
 void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, int height);
 
 struct qw_output *qw_view_get_primary_output(struct qw_view *view);
+
+int qw_view_get_layer(struct qw_view *view);
 
 #endif /* VIEW_H */

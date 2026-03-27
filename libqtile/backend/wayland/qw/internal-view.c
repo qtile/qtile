@@ -77,7 +77,7 @@ static void qw_internal_view_place(void *self, int x, int y, int width, int heig
 
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     if (above != 0) {
-        qw_view_reparent(&view->base, LAYER_BRINGTOFRONT);
+        qw_view_raise_to_top(&view->base);
     }
     view->base.x = x;
     view->base.y = y;
@@ -149,7 +149,6 @@ struct qw_internal_view *qw_server_internal_view_new(struct qw_server *server, i
     // Initialize the base qw_view with provided geometry and callbacks
     struct qw_view base = {
         .server = server,
-        .layer = LAYER_LAYOUT,
         .x = x,
         .y = y,
         .width = width,

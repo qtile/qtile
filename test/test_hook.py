@@ -560,6 +560,20 @@ def test_client_mouse_enter(manager_nospawn):
 
 
 @pytest.mark.usefixtures("hook_fixture")
+def test_client_mouse_click(manager_nospawn):
+    class ClientMouseClickConfig(BareConfig):
+        test = CallWindow()
+        hook.subscribe.client_mouse_click(test)
+        layouts = [layout.columns.Columns()]
+
+    manager_nospawn.start(ClientMouseClickConfig)
+    manager_nospawn.test_window("Test Client")
+    manager_nospawn.test_window("one")
+    manager_nospawn.backend.fake_click(0, 0)
+    assert_window(manager_nospawn, "Test Client")
+
+
+@pytest.mark.usefixtures("hook_fixture")
 def test_client_name_updated(manager_nospawn):
     class ClientNameUpdatedConfig(BareConfig):
         test = CallWindow()

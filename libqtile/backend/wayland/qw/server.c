@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/backend/session.h>
+#include <wlr/interfaces/wlr_keyboard.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
@@ -1156,4 +1157,23 @@ bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
     }
 
     return false;
+}
+
+void qw_server_add_dummy_keyboard(struct qw_server *server) {
+    struct wlr_seat *seat = server->seat;
+    struct wlr_keyboard *kbd = calloc(1, sizeof(struct wlr_keyboard));
+    if (!kbd)
+        return;
+
+    // NULL impl is fine for a dummy — no real hardware to talk to
+    wlr_keyboard_init(kbd, NULL, "dummy-keyboard");
+
+    struct xkb_context *ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    struct xkb_keymap *keymap = xkb_keymap_new_from_names(ctx, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    wlr_keyboard_set_keymap(kbd, keymap);
+    xkb_keymap_unref(keymap);
+    xkb_context_unref(ctx);
+
+    wlr_seat_set_keyboard(seat, kbd);
 }

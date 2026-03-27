@@ -507,12 +507,13 @@ class Core(base.Core):
 
         if view != ffi.NULL:
             win = self.qtile.windows_map.get(view.wid)
+            hook.fire("client_mouse_click", win)
 
             if win is not None and self.qtile.config.bring_front_click is True:
-                win.bring_to_front()
+                win.move_to_top()
             elif self.qtile.config.bring_front_click == "floating_only":
                 if isinstance(win, base.Window) and win.floating:
-                    win.bring_to_front()
+                    win.move_to_top()
 
             if isinstance(win, Static):
                 if win.screen is not self.qtile.current_screen:
@@ -892,6 +893,9 @@ class Core(base.Core):
     @expose_command
     def idle_notify_activity(self) -> None:
         lib.qw_server_idle_notify_activity(self.qw)
+
+    def add_dummy_keyboard(self) -> None:
+        lib.qw_server_add_dummy_keyboard(self.qw)
 
 
 class Painter:

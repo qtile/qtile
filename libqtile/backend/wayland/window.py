@@ -44,19 +44,24 @@ class Base(base._Window):
         self.defunct = False
         self.group: _Group | None = None
         self.core: Core = typing.cast("Core", qtile.core)
+        self._base_layer: int | None = lib.LAYER_LAYOUT
 
     def reparent(self, layer: int) -> None:
-        if self.layer == layer:
+        if self.layer() == layer:
             return
         lib.qw_view_reparent(self._ptr, layer)
 
-    @property
+        # So we can return to base layer after bringing to front
+        if layer != lib.LAYER_BRINGTOFRONT:
+            self._base_layer = layer
+
+    @expose_command()
     def layer(self) -> int:
-        return self._ptr.layer
+        return lib.qw_view_get_layer(self._ptr)
 
     @expose_command()
     def keep_above(self, enable: bool | None = None) -> None:
-        is_enabled = self.layer == lib.LAYER_KEEPABOVE
+        is_enabled = self.layer() == lib.LAYER_KEEPABOVE
         if enable is None:
             enable = not is_enabled
 
@@ -67,7 +72,7 @@ class Base(base._Window):
 
     @expose_command()
     def keep_below(self, enable: bool | None = None) -> None:
-        is_enabled = self.layer == lib.LAYER_KEEPBELOW
+        is_enabled = self.layer() == lib.LAYER_KEEPBELOW
         if enable is None:
             enable = not is_enabled
         if enable:
@@ -94,9 +99,20 @@ class Base(base._Window):
         lib.qw_view_lower_to_bottom(self._ptr)
 
     @expose_command()
-    def bring_to_front(self) -> None:
-        self.reparent(lib.LAYER_BRINGTOFRONT)
-        lib.qw_view_raise_to_top(self._ptr)
+    def bring_to_front(self, enable: bool | None = None) -> None:
+        is_enabled = self.layer() == lib.LAYER_BRINGTOFRONT
+        print(f"1. {is_enabled}")
+        if enable is None:
+            enable = not is_enabled
+        print(enable)
+        if enable:
+            self.reparent(lib.LAYER_BRINGTOFRONT)
+            lib.qw_view_raise_to_top(self._ptr)
+        else:
+            if self._base_layer is not None:
+                self.reparent(self._base_layer)
+            else:
+                self.reparent(lib.LAYER_LAYOUT)
 
     @property
     def wid(self) -> int:
@@ -604,14 +620,14 @@ class Window(Base, base.Window):
 
     @expose_command()
     def move_up(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPBELOW:
+        if force and self.layer() == lib.LAYER_KEEPBELOW:
             new_layer = self.get_new_layer(self._float_state)
             self.reparent(new_layer)
         lib.qw_view_move_up(self._ptr)
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPAOVE:
+        if force and self.layer() == lib.LAYER_KEEPABOVE:
             new_layer = self.get_new_layer(self._float_state)
             self.reparent(new_layer)
         lib.qw_view_move_down(self._ptr)
@@ -665,7 +681,7 @@ class Window(Base, base.Window):
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
-            if self.layer != lib.LAYER_KEEPABOVE and self.qtile.config.floats_kept_above:
+            if self.layer() != lib.LAYER_KEEPABOVE and self.qtile.config.floats_kept_above:
                 self.keep_above(enable=True)
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             self.reparent(lib.LAYER_LAYOUT)
