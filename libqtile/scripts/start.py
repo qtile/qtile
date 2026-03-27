@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import locale
+import os
 from os import makedirs, path
 from pathlib import Path
 from sys import exit
@@ -38,6 +39,12 @@ def rename_process():
 def get_default_config():
     config = LIBQTILE_PATH / "resources" / "default_config.py"
     return config.resolve().as_posix()
+
+
+def get_default_backend():
+    if os.environ.get("WAYLAND_DISPLAY"):
+        return "wayland"
+    return "x11"
 
 
 def make_qtile(options) -> Qtile | None:
@@ -145,7 +152,7 @@ def add_subcommand(subparsers, parents):
     parser.add_argument(
         "-b",
         "--backend",
-        default="x11",
+        default=get_default_backend(),
         dest="backend",
         choices=libqtile.backend.CORES.keys(),
         help="Use specified backend.",
