@@ -526,13 +526,15 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
     def get_widget_in_position(self, x: int, y: int) -> _Widget | None:
         if self.horizontal:
-            for i in self.widgets:
-                if x < i.offsetx + i.length:
-                    return i
+            if self.border_width[3] <= y < self.size:
+                for i in self.widgets:
+                    if x < i.offsetx + i.length:
+                        return i
         else:
-            for i in self.widgets:
-                if y < i.offsety + i.length:
-                    return i
+            if self.border_width[0] <= x < self.size:
+                for i in self.widgets:
+                    if y < i.offsety + i.length:
+                        return i
         return None
 
     def process_button_click(self, x: int, y: int, button: int) -> None:
