@@ -271,6 +271,32 @@ Note that we used the same display, ``:1``, in both the terminal command
 and the VSCode configuration environment variables.  Then ``debug`` usually
 in VSCode. Feel free to change the screen size to fit your own screen.
 
+Profiling
+=========
+
+`py-spy <https://github.com/benfred/py-spy>`_ is a sampling profiler that
+attaches to any running Python process with no code changes and no restart
+required:
+
+.. code-block:: bash
+
+    pip install py-spy
+
+    # Record a 30-second flamegraph (interactive SVG)
+    py-spy record -o flamegraph.svg -d 30 --pid $(pidof qtile)
+
+Open ``flamegraph.svg`` in a browser to explore the call stack interactively.
+``py-spy top`` gives a live ``top``-style view of where time is being spent.
+
+For memory, use the built-in :doc:`qtile top </manual/commands/shell/qtile-top>`
+subcommand, which wraps :mod:`tracemalloc`:
+
+.. code-block:: bash
+
+    qtile top          # live curses view of top allocators
+    qtile top --raw    # one-shot snapshot
+
+
 Resources
 =========
 
