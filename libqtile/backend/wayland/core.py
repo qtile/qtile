@@ -577,7 +577,9 @@ class Core(base.Core):
     def display_name(self) -> str:
         return ffi.string(self.qw.socket).decode()
 
-    def create_internal(self, x: int, y: int, width: int, height: int) -> base.Internal:
+    def create_internal(
+        self, x: int, y: int, width: int, height: int, depth: int = 32
+    ) -> base.Internal:
         ptr = lib.qw_server_internal_view_new(self.qw, x, y, width, height)
         if not ptr:
             raise RuntimeError("failed creating internal view")

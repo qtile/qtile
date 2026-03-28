@@ -6,7 +6,7 @@ from collections import defaultdict
 from libqtile import configurable, hook
 from libqtile.command.base import CommandObject, expose_command
 from libqtile.log_utils import logger
-from libqtile.utils import is_valid_colors
+from libqtile.utils import has_transparency, is_valid_colors
 
 if typing.TYPE_CHECKING:
     import asyncio
@@ -266,7 +266,15 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             # Whereas we won't have a window if we're startup up for the first time or
             # the window has been killed by us no longer using the bar's screen
 
-            self.window = qtile.core.create_internal(self.x, self.y, width, height)
+            if qtile.core.name == "x11":
+                if has_transparency(self.background):
+                    depth = 32
+                else:
+                    depth = qtile.core.conn.default_screen.root_depth  # type: ignore[attr-defined]
+            else:
+                depth = 32  # This could be anything as it's not needed for wayland.
+
+            self.window = qtile.core.create_internal(self.x, self.y, width, height, depth)
 
             self.window.opacity = self.opacity
             self.window.unhide()
