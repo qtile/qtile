@@ -622,6 +622,7 @@ class Core(base.Core):
         y: int,
         width: int,
         height: int,
+        depth: int = 32,
     ) -> base.Internal:
         assert self.qtile is not None
 
@@ -629,8 +630,8 @@ class Core(base.Core):
         # backgrounds. If the Screen doesn't support 32-bit visuals, the code
         # in create_window() -> _get_depth_and_visual() will fall back to an
         # appropriate depth.
-        win = self.conn.create_window(x, y, width, height, desired_depth=32)
-        internal = window.Internal(win, self.qtile, desired_depth=32)
+        win = self.conn.create_window(x, y, width, height, desired_depth=depth)
+        internal = window.Internal(win, self.qtile, desired_depth=depth)
 
         internal.place(x, y, width, height, 0, None)
         self.qtile.manage(internal)
