@@ -185,7 +185,16 @@ def test_focus_cycle(manager):
     manager.test_window("three")
 
     # Test preconditions (the order of items in 'clients' is managed by each layout)
-    assert set(manager.c.layout.info()["clients"]) == {"one", "two", "three"}
+    if manager.c.layout.info()["name"] == "floating":
+        assert set(manager.c.layout.info()["clients"]) == {
+            "one",
+            "two",
+            "float1",
+            "float2",
+            "three",
+        }
+    else:
+        assert set(manager.c.layout.info()["clients"]) == {"one", "two", "three"}
     assert_focused(manager, "three")
 
     # Assert that the layout cycles the focus on all windows
@@ -370,7 +379,10 @@ def test_remove_floating(manager):
     manager.test_window("two")
     float1 = manager.test_window("float1", floating=True)
     assert_focused(manager, "float1")
-    assert set(manager.c.layout.info()["clients"]) == {"one", "two"}
+    if manager.c.layout.info()["name"] == "floating":
+        assert set(manager.c.layout.info()["clients"]) == {"one", "two", "float1"}
+    else:
+        assert set(manager.c.layout.info()["clients"]) == {"one", "two"}
     assert manager.c.group.info()["focus_history"] == ["one", "two", "float1"]
 
     # Removing a focused floating window must focus the one that was focused before
