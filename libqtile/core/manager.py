@@ -356,11 +356,6 @@ class Qtile(CommandObject):
         shutdown, these are finalized and then regenerated when reloading the config.
         """
         try:
-            for widget in self.widgets_map.values():
-                if not widget.finalized:
-                    widget.finalize()
-            self.widgets_map.clear()
-
             # For layouts we need to finalize each clone of a layout in each group
             for group in self.groups:
                 for layout in group.layouts:
@@ -368,7 +363,6 @@ class Qtile(CommandObject):
 
             for screen in self.screens:
                 screen.finalize_gaps()
-
         except:  # noqa: E722
             logger.exception("exception during finalize")
         hook.clear()
