@@ -351,7 +351,10 @@ def lift_args(cmd, args, kwargs):
     converted_args = []
     converted_kwargs = dict()
 
-    params = typing.get_type_hints(cmd, globalns=globals())
+    # We use the globals from the command itself to ensure that all types are
+    # available. This means that structural types need to imported at run time
+    # and not just for typing.
+    params = typing.get_type_hints(cmd, globalns=cmd.__globals__)
 
     non_return_annotated_args = filter(lambda k: k != "return", params.keys())
     for param, arg in zip(non_return_annotated_args, args):
