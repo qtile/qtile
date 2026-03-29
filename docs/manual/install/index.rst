@@ -116,6 +116,33 @@ Or install qtile-git with:
     uv tool install .                               # for minimal dependencies
     uv tool install .[dev,widgets,optional-core]    # for all dependencies
 
+Installing other dependencies
+-----------------------------
+
+If you use ``uv`` to install qtile, any python modules that you want to use with it
+must be installed in the same environment. You have a few options for doing this:
+
+At installation time:
+
+.. code-block:: bash
+
+    # Install package from pypi
+    uv tool install --with package-name qtile  # can use qtile[widgets] etc. as above
+
+    # Install from github repo
+    uv tool install --with git+https://github.com/elParaguayo/qtile-extras/ .
+
+    # Install from custom requirements file
+    uv tool install --with-requirements /path/to/requirements.txt .
+
+Installing packages after installation is a bit more complicated and does not seem to
+be officially supported when using ``uv tool``. However, the following code should work:
+
+.. code-block:: bash
+
+    cd $(uv tool dir)/qtile
+    uv pip install package-name
+
 .. _starting-qtile:
 
 Starting Qtile
