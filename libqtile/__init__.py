@@ -25,6 +25,7 @@ class DynamicLibraries(enum.Enum):
     PANGO = "pango-1.0"
     PANGOCAIRO = "pangocairo-1.0"
     XCBCURSOR = "xcb-cursor"
+    FONTCONFIG = "fontconfig"
 
 
 def find_library(key: DynamicLibraries) -> str | None:

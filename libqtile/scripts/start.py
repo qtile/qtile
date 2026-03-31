@@ -7,7 +7,7 @@ from sys import exit
 from typing import TYPE_CHECKING
 
 import libqtile.backend
-from libqtile import confreader, qtile
+from libqtile import confreader, pangocffi, qtile
 from libqtile.log_utils import logger
 from libqtile.utils import VERSION, get_config_file
 
@@ -84,6 +84,9 @@ def start(options):
         locale.setlocale(locale.LC_ALL, "")
     except locale.Error:
         pass
+
+    # Initialise fontconfig before starting qtile to prevent races
+    pangocffi.init_fontconfig()
 
     libpath = (LIBQTILE_PATH / "..").resolve()
     logger.warning(f"Starting Qtile {VERSION} from {libpath}")
