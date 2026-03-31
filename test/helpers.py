@@ -19,7 +19,7 @@ import traceback
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
-from libqtile import command, config, ipc, layout
+from libqtile import command, config, ipc, layout, pangocffi
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
 from libqtile.lazy import lazy
@@ -191,6 +191,8 @@ class TestManager:
                 os.environ.pop("DISPLAY", None)
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 init_log(self.log_level)
+                # Initialise fontconfig before starting qtile to prevent races
+                pangocffi.init_fontconfig()
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
                 from libqtile.core.lifecycle import lifecycle

@@ -4,6 +4,11 @@ from libqtile.pango_ffi import pango_ffi as ffi
 gobject = ffi.dlopen(find_library(DynamicLibraries.GOBJECT))  # type: ignore
 pango = ffi.dlopen(find_library(DynamicLibraries.PANGO))  # type: ignore
 pangocairo = ffi.dlopen(find_library(DynamicLibraries.PANGOCAIRO))  # type: ignore
+fontconfig = ffi.dlopen(find_library(DynamicLibraries.FONTCONFIG))  # type: ignore
+
+
+def init_fontconfig():
+    fontconfig.FcInit()
 
 
 def create_layout(cairo_t):

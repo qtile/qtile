@@ -37,6 +37,9 @@ pango_ffi.cdef(
     typedef ... GError;
     typedef int gint;
 
+    int
+    FcInit(void);
+
     void
     pango_cairo_show_layout (cairo_t *cr,
                              PangoLayout *layout);
