@@ -83,7 +83,14 @@ def target():
 
 
 @pytest.fixture
-def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, target, vertical):
+def widget_name():
+    yield ""
+
+
+@pytest.fixture
+def screenshot_manager(
+    widget, widget_name, request, manager_nospawn, minimal_conf_noscreen, target, vertical
+):
     """
     Create a manager instance for the screenshots. Individual "tests" should only call
     `screenshot_manager.take_screenshot()` but the destination path is also available in
@@ -107,7 +114,7 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
         def __init__(self, *args, **kwargs):
             widget_class.__init__(self, *args, **kwargs)
             # We need the widget's name to be the name of the inherited class
-            self.name = widget_class.__name__.lower()
+            self.name = (widget_name or widget_class.__name__).lower()
 
         def _configure(self, bar, screen):
             widget_class._configure(self, bar, screen)
@@ -196,6 +203,7 @@ def screenshot_manager(widget, request, manager_nospawn, minimal_conf_noscreen, 
     # Add some convenience attributes for taking screenshots
     manager_nospawn.target = filename
     ss_widget = manager_nospawn.c.widget[name]
+    manager_nospawn.widget = ss_widget
     manager_nospawn.take_screenshot = lambda f=filename: ss_widget.take_screenshot(f())
 
     yield manager_nospawn

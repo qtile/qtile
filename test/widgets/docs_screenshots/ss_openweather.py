@@ -8,6 +8,11 @@ def widget():
     yield TextBox
 
 
+@pytest.fixture
+def widget_name():
+    return "OpenWeather"
+
+
 @pytest.mark.parametrize(
     "screenshot_manager,expected",
     [
@@ -19,5 +24,5 @@ def widget():
     indirect=["screenshot_manager"],
 )
 def ss_openweather(screenshot_manager, expected):
-    screenshot_manager.c.widget["textbox"].update(expected)
+    screenshot_manager.widget.update(expected)
     screenshot_manager.take_screenshot()
