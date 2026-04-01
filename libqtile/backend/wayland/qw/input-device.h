@@ -18,6 +18,7 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
 struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_device *input_device);
 
 struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_device);
+struct qw_touch *qw_input_device_get_touch(struct qw_input_device *input_device);
 
 bool qw_input_device_is_touchpad(struct qw_input_device *input_device);
 

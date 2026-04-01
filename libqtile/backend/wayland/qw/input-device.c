@@ -49,6 +49,7 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
         wlr_cursor_attach_input_device(server->cursor->cursor, device);
         break;
     case WLR_INPUT_DEVICE_TOUCH:
+        wlr_cursor_attach_input_device(server->cursor->cursor, device);
         qw_touch_handle_new(server, device);
         break;
     default:
@@ -76,6 +77,11 @@ struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_devi
 struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_device) {
     struct qw_keyboard *keyboard = (struct qw_keyboard *)(input_device->device->data);
     return keyboard;
+}
+
+struct qw_touch *qw_input_device_get_touch(struct qw_input_device *input_device) {
+    struct qw_touch *touch = (struct qw_touch *)(input_device->device->data);
+    return touch;
 }
 
 bool qw_input_device_is_touchpad(struct qw_input_device *input_device) {
