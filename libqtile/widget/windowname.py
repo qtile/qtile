@@ -1,4 +1,5 @@
-from libqtile import bar, hook, pangocffi
+import libqtile.bar
+from libqtile import hook, pangocffi
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -26,9 +27,14 @@ class WindowName(base._TextBox):
             "   return text"
             "then set option parse_text=my_func",
         ),
+        (
+            "stretch",
+            True,
+            "Widget fills available space in bar. Set to ``False`` to limit widget width to size of its contents.",
+        ),
     ]
 
-    def __init__(self, width=bar.STRETCH, **config):
+    def __init__(self, width=libqtile.bar.STRETCH, **config):
         base._TextBox.__init__(self, width=width, **config)
         self.add_defaults(WindowName.defaults)
 
@@ -38,6 +44,9 @@ class WindowName(base._TextBox):
         hook.subscribe.focus_change(self.hook_response)
         hook.subscribe.float_change(self.hook_response)
         hook.subscribe.current_screen_change(self.hook_response_current_screen)
+
+        if not self.stretch:
+            self.length_type = libqtile.bar.CALCULATED
 
     def remove_hooks(self):
         hook.unsubscribe.client_name_updated(self.hook_response)
