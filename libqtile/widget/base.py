@@ -839,11 +839,11 @@ class BackgroundPoll(_TextBox):
     def timer_setup(self):
         create_task(self.do_tick())
 
-    def poll(self):
+    def poll(self) -> str | None:
         """An optional non-async-based method for polling. Will be run as an
         async future."""
 
-    async def apoll(self):
+    async def apoll(self) -> str | None:
         """An optional async-based method for polling."""
 
     async def do_tick(self, requeue=True):
