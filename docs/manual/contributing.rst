@@ -86,7 +86,7 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on GitHub.
       then change it in a later patch. Please do a patch-by-patch review of your
       PR, and make sure each commit passes CI and makes logical sense on its
       own. In other words: *do* introduce your feature in one commit and maybe
-      add the tests and documentation in a seperate commit. *Don't* push commits
+      add the tests and documentation in a separate commit. *Don't* push commits
       that partially implement a feature and are basically broken.
 
 .. note:: Others might ban *force-pushes*, we allow them and prefer them over
