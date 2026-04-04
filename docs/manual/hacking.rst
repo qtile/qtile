@@ -20,7 +20,7 @@ mypy              python3-mypy        Testing ``qtile check`` (optional)
 imagemagick>=6.8  imagemagick         ``test/test_images*`` (optional)
 gtk-layer-shell   libgtk-layer-shell0 Testing notification windows in Wayland (optional)
 dbus-launch       dbus-x11            Testing dbus-using widgets (optional)
-notifiy-send      libnotify-bin       Testing ``Notify`` widget (optional)
+notify-send       libnotify-bin       Testing ``Notify`` widget (optional)
 xvfb              xvfb                Testing with X11 headless (optional)
 ================= =================== ==================================================
 

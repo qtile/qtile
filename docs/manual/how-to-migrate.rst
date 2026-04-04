@@ -11,7 +11,7 @@ parse the config file and make changes as appropriate. Basic tips for using
 ``LibCST`` are included below but it is recommended that you read their
 documentation to familiarise yourself with the available functionalities.
 
-Stucture of a migration file
+Structure of a migration file
 ----------------------------
 
 Migrations should be saved as a new file in ``libqtile/scripts/migrations``.
