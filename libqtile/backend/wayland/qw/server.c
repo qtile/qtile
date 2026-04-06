@@ -1154,3 +1154,26 @@ bool qw_server_inhibitor_surface_visible(struct qw_idle_inhibitor *inhibitor,
 
     return false;
 }
+
+struct qw_view *qw_server_active_view(struct qw_server *server) {
+    struct wlr_surface *focused = server->seat->keyboard_state.focused_surface;
+    if (focused == NULL) {
+        return NULL;
+    }
+
+    struct wlr_xdg_toplevel *xdg_toplevel = wlr_xdg_toplevel_try_from_wlr_surface(focused);
+    if (xdg_toplevel != NULL) {
+
+        return xdg_toplevel->base->data;
+    }
+
+#if WLR_HAS_XWAYLAND
+    struct wlr_xwayland_surface *xwayland_surface =
+        wlr_xwayland_surface_try_from_wlr_surface(focused);
+    if (xwayland_surface != NULL) {
+        return xwayland_surface->data;
+    }
+#endif
+
+    return NULL;
+}

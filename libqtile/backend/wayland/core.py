@@ -423,10 +423,10 @@ class Core(base.Core):
     def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
         assert self.qtile is not None
         if pressed:
-            if not self.qw_cursor.implicit_grab.live:
-                self._focus_by_click()
-
             handled = self.qtile.process_button_click(int(button), int(mask), x, y)
+
+            if not handled and not self.qw_cursor.implicit_grab.live:
+                self._focus_by_click()
 
             if isinstance(self.qtile.hovered_window, Internal):
                 self.qtile.hovered_window.process_button_click(
@@ -501,14 +501,28 @@ class Core(base.Core):
         # TODO logic imcomplete
         win._ptr.focus(win._ptr, False)  # What is the second argument?
 
+    def _grab_click_on_current_window(self) -> None:
+        """Grab button events on the current window.
+
+        Called before switching screens to ensure clicks on the now-unfocused
+        window will be intercepted to refocus it.
+        """
+        win = self.qtile.current_window
+        if win:
+            # In wayland backend, current_window is always an wayland Window
+            assert isinstance(win, Window)
+            win._grab_click()
+
     def _focus_by_click(self) -> ffi.CData:
         assert self.qtile is not None
         view = self.qw_cursor.view
 
         if view != ffi.NULL:
             win = self.qtile.windows_map.get(view.wid)
+            if win is None:
+                return
 
-            if win is not None and self.qtile.config.bring_front_click is True:
+            if self.qtile.config.bring_front_click is True:
                 win.bring_to_front()
             elif self.qtile.config.bring_front_click == "floating_only":
                 if isinstance(win, base.Window) and win.floating:
@@ -518,16 +532,17 @@ class Core(base.Core):
                 if win.screen is not self.qtile.current_screen:
                     self.qtile.focus_screen(win.screen.index, warp=False)
                 win.focus(False)
-            elif isinstance(win, base.Window):
+            elif isinstance(win, Window):
                 if win.group and win.group.screen is not self.qtile.current_screen:
                     self.qtile.focus_screen(win.group.screen.index, warp=False)
                 self.qtile.current_group.focus(win, False)
-
+                win._ungrab_click()
         else:
             screen = self.qtile.find_screen(
                 int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
             )
             if screen:
+                self._grab_click_on_current_window()
                 self.qtile.focus_screen(screen.index, warp=False)
 
         return view
