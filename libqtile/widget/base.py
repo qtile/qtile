@@ -835,9 +835,10 @@ class BackgroundPoll(_TextBox):
     def __init__(self, text="N/A", **config):
         super().__init__(text, **config)
         self.add_defaults(BackgroundPoll.defaults)
+        self._task = None
 
     def timer_setup(self):
-        create_task(self.do_tick())
+        self._task = create_task(self.do_tick())
 
     def poll(self) -> str | None:
         """An optional non-async-based method for polling. Will be run as an
@@ -861,7 +862,7 @@ class BackgroundPoll(_TextBox):
                 logger.exception("Failed to reschedule timer for %s.", self.name)
             if requeue and self.update_interval is not None:
                 await asyncio.sleep(self.update_interval)
-                create_task(self.do_tick())
+                self._task = create_task(self.do_tick())
         else:
             logger.warning("%s's poll() returned None, not rescheduling", self.name)
 
@@ -869,6 +870,11 @@ class BackgroundPoll(_TextBox):
     def force_update(self):
         """Immediately poll the widget. Existing timers are unaffected."""
         create_task(self.do_tick(requeue=False))
+
+    def finalize(self):
+        if self._task is not None:
+            self._task.cancel()
+        super().finalize()
 
 
 class PaddingMixin(configurable.Configurable):
