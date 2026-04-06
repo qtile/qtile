@@ -433,3 +433,7 @@ struct qw_output *qw_view_get_primary_output(struct qw_view *view) {
 
     return primary_output->data;
 }
+
+void qw_view_grab_click(struct qw_view *view) { view->grabbed_click = true; }
+
+void qw_view_ungrab_click(struct qw_view *view) { view->grabbed_click = false; }

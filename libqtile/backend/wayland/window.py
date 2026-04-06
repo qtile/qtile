@@ -44,6 +44,12 @@ class Base(base._Window):
         self.group: _Group | None = None
         self.core: Core = typing.cast("Core", qtile.core)
 
+    def _grab_click(self) -> None:
+        lib.qw_view_grab_click(self._ptr)
+
+    def _ungrab_click(self) -> None:
+        lib.qw_view_ungrab_click(self._ptr)
+
     def reparent(self, layer: int) -> None:
         if self.layer() == layer:
             return
@@ -235,6 +241,14 @@ class Base(base._Window):
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
+        # re-grab button events on the previously focused window,
+        # but only un-grab them on focus by click
+        old = lib.qw_server_active_view(self.core.qw)
+        if old != ffi.NULL and old.wid != ffi.NULL and old.wid in self.qtile.windows_map:
+            old_win = self.qtile.windows_map[old.wid]
+            if isinstance(old_win, Window):
+                old_win._grab_click()
+
         self.core.focus_window(self)
 
         if warp and self.qtile.config.cursor_warp:
@@ -259,6 +273,7 @@ class Internal(Base, base.Internal):
         ptr.base.wid = wid
         self._internal_ptr = ptr
         self._killed = False
+        self._grab_click()
 
     @property
     def surface(self) -> ffi.CData:
@@ -374,6 +389,7 @@ class Window(Base, base.Window):
         ptr.request_fullscreen_cb = lib.request_fullscreen_cb
         ptr.set_title_cb = lib.set_title_cb
         ptr.set_app_id_cb = lib.set_app_id_cb
+        self._grab_click()
 
     def handle_request_focus(self) -> bool:
         logger.debug("Focusing window from external request")
@@ -661,6 +677,9 @@ class Window(Base, base.Window):
                     self._float_width,
                     self._float_height,
                 )
+
+                # Make sure floating window is placed above other LAYOUT windows
+                self.move_to_top()
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
@@ -789,7 +808,7 @@ class Window(Base, base.Window):
             self.hide()
         else:
             self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=True, respect_hints=True
+                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
             )
 
     def _tweak_float(
