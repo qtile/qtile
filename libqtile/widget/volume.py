@@ -166,8 +166,10 @@ class Volume(VolumeBase):
             }
         )
 
+        self._volume_task = None
+
     def timer_setup(self):
-        create_task(self.do_volume())
+        self._volume_task = create_task(self.do_volume())
         if self.theme_path:
             self.setup_images()
 
@@ -197,7 +199,7 @@ class Volume(VolumeBase):
             self._update_drawer()
             self.bar.draw()
         await asyncio.sleep(self.update_interval)
-        create_task(self.do_volume())
+        self._volume_task = create_task(self.do_volume())
 
     async def get_volume(self):
         try:
@@ -258,3 +260,8 @@ class Volume(VolumeBase):
     def run_app(self):
         if self.volume_app is not None:
             subprocess.Popen(self.volume_app, shell=True)
+
+    def finalize(self):
+        if self._volume_task is not None:
+            self._volume_task.cancel()
+        super().finalize()
