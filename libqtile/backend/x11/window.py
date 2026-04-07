@@ -1311,7 +1311,8 @@ class _Window:
 
         self.window.set_property("_NET_WM_STATE", state)
 
-        # re-grab button events on the previously focussed window
+        # re-grab button events on the previously focussed window,
+        # but only un-grab them on focus by click
         old = self.qtile.core._root.get_property("_NET_ACTIVE_WINDOW", "WINDOW", unpack=int)
         if old and old[0] in self.qtile.windows_map:
             old_win = self.qtile.windows_map[old[0]]
@@ -1322,7 +1323,6 @@ class _Window:
                     state.remove(state_focused)
                     old_win.window.set_property("_NET_WM_STATE", state)
         self.qtile.core._root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
-        self._ungrab_click()
 
         # Check if we need to restack a previously focused fullscreen window
         self.qtile.core.check_stacking(self)
