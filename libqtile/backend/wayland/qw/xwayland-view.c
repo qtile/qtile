@@ -36,6 +36,10 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
         return;
     }
 
+    if (server->exclusive_layer != NULL) {
+        return;
+    }
+
     if (prev_surface == surface) {
         return;
     }
