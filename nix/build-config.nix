@@ -22,6 +22,11 @@ let
       pkg = pkgs.libxcb-cursor;
       libname = "libxcb-cursor.so";
     }
+    {
+      varname = "FONTCONFIG";
+      pkg = pkgs.fontconfig;
+      libname = "libfontconfig.so";
+    }
   ];
 
   # header files provided through environment variables

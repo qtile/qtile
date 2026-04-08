@@ -39,11 +39,11 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
 
     # Write library paths to file, if they are specified at build time via
     # --config-settings=PANGO_PATH=...
-    libs = ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]
+    libs = ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR", "FONTCONFIG"]
     if set(libs).intersection(config_settings.keys()):
         with open("libqtile/_build_config.py", "w") as f:
             f.write("# This file is generated at build time by builder.py\n")
-            for lib in ["PANGO", "PANGOCAIRO", "GOBJECT", "XCBCURSOR"]:
+            for lib in libs:
                 p = lib + "_PATH"
                 f.write(f"{p} = {config_settings.get(lib)!r}\n")
 
