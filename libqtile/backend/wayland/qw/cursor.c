@@ -619,8 +619,8 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
             wlr_xcursor_manager_get_xcursor(cursor->xwayland_mgr, "default", 1);
         if (xcursor != NULL) {
             struct wlr_xcursor_image *image = xcursor->images[0];
-            wlr_xwayland_set_cursor(server->xwayland, image->buffer, image->width * 4, image->width,
-                                    image->height, image->hotspot_x, image->hotspot_y);
+            struct wlr_buffer *buffer = wlr_xcursor_image_get_buffer(image);
+            wlr_xwayland_set_cursor(server->xwayland, buffer, image->hotspot_x, image->hotspot_y);
         }
     }
 #endif
