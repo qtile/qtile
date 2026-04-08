@@ -51,6 +51,10 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
         return;
     }
 
+    if (server->exclusive_layer != NULL) {
+        return;
+    }
+
     if (prev_surface == surface) {
         return;
     }
