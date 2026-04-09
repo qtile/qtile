@@ -17,28 +17,54 @@ ifeq ($(GITHUB_ACTIONS),true)
 TEST_RUNNER = coverage run -m pytest
 endif
 
+# Detect if we're in a Nix environment
+ifdef NIX_BUILD_CORES
+PYTHON_CMD = python3
+else
+PYTHON_CMD = uv run $(UV_PYTHON_ARG) python3
+endif
+
 .PHONY: help
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[1m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 .PHONY: deps
 deps: ## Install all of qtile's dependencies.
+ifndef NIX_BUILD_CORES
 	uv sync $(UV_PYTHON_ARG) --all-extras
+else
+	@echo "Running in Nix environment, dependencies managed by Nix"
+endif
 
 .PHONY: check
 check: deps ## Run the test suite on the latest python
+ifdef NIX_BUILD_CORES
+	python3 ./libqtile/backend/wayland/cffi/build.py
+	$(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
+else
 	uv run ./libqtile/backend/wayland/cffi/build.py
 	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
+endif
 
 .PHONY: docs
 docs: deps ## Run the sphinx build for the html docs.
+ifdef NIX_BUILD_CORES
+	$(MAKE) -C docs html
+else
 	uv run $(MAKE) -C docs html
+endif
 
 .PHONY: check-packaging
 check-packaging:  ## Check that the packaging is sane
+ifdef NIX_BUILD_CORES
+	check-manifest
+	python3 -m build --sdist .
+	twine check dist/*
+else
 	uv run $(UV_PYTHON_ARG) check-manifest
 	uv run $(UV_PYTHON_ARG) python3 -m build --sdist .
 	uv run $(UV_PYTHON_ARG) twine check dist/*
+endif
 
 .PHONY: lint
 lint: ## Check the source code

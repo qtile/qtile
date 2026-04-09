@@ -19,33 +19,11 @@ jobs:
                 python-version: ['3.12', '3.13', '3.14']
                 backend: ['x11', 'wayland']
         steps:
-            - uses: actions/checkout@v6
-            - name: Set up python ${{ matrix.python-version }}
-              uses: actions/setup-python@v6
-              with:
-                  python-version: ${{ matrix.python-version }}
-            - name: Set up uv
-              uses: astral-sh/setup-uv@v7
-              with:
-                  enable-cache: true
-                  cache-dependency-glob: "pyproject.toml"
-                  python-version: ${{ matrix.python-version }}
-            - name: Install dependencies
-              run: |
-                sudo apt update
-                sudo apt install yq
-                sudo apt install -y --no-install-recommends $(yq -r '.build.apt_packages | join(" ")' .readthedocs.yaml)
-                # Any Wayland-specific Ubuntu system dependencies should be installed from ./scripts/ubuntu_wayland_setup
-            - name: Cache Wayland dependencies
-              uses: actions/cache@v5
-              with:
-                path: cache
-                key: ${{ runner.os }}-wayland-${{ hashFiles('scripts/ubuntu_wayland_setup') }}
-                restore-keys: |
-                  ${{ runner.os }}-wayland-
-            - name: Install wayland
-              run: bash -x ./scripts/ubuntu_wayland_setup
-            - name: Clean python version and export to env
+            - name: Checkout repository
+              uses: actions/checkout@v6
+            - name: Install Nix
+              uses: cachix/install-nix-action@v27
+            - name: Set up python version environment variable
               shell: bash
               run: |
                 PYTHON_VERSION="${{ matrix.python-version }}"
@@ -53,22 +31,24 @@ jobs:
                 echo "QTILE_CI_PYTHON=${CLEAN_VERSION}" >> $GITHUB_ENV
             - name: Run Tests
               run: |
-                [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
-                dump_cores() {
-                  echo "=== Listing coredumps ==="
-                  coredumpctl list || true
-                  echo "=== Stack trace for last coredump ==="
-                  coredumpctl debug --debugger-arguments="-batch -ex 'set pagination off' -ex 'bt full' -ex 'quit'" || true
-                }
-                trap dump_cores ERR
-                make QTILE_CI_PYTHON=${QTILE_CI_PYTHON} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
-                uv run coverage combine -q
-                uv run coverage report -m
-                uv run coverage xml
+                nix develop --command bash -c '
+                  [ "$(grep -c -P '\''\t'\'' CHANGELOG)" = "0" ]
+                  dump_cores() {
+                    echo "=== Listing coredumps ==="
+                    coredumpctl list || true
+                    echo "=== Stack trace for last coredump ==="
+                    coredumpctl debug --debugger-arguments="-batch -ex '\''set pagination off'\'' -ex '\''bt full'\'' -ex '\''quit'\''" || true
+                  }
+                  trap dump_cores ERR
+                  make QTILE_CI_PYTHON=${{ env.QTILE_CI_PYTHON }} QTILE_CI_BACKEND=${{ matrix.backend }} check check-packaging
+                  coverage combine -q
+                  coverage report -m
+                  coverage xml
+                '
             - name: Upload coverage data to coveralls.io
               continue-on-error: true
               run: |
-                uv tool run coveralls --service=github
+                nix develop --command coveralls --service=github
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                 COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
