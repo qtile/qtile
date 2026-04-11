@@ -44,6 +44,7 @@ class WindowVisibilityToggler:
         self.warp_pointer = warp_pointer
         # determine current status based on visibility
         self.shown = False
+        self._hooked = False
         self.show()
 
     def info(self):
@@ -108,8 +109,7 @@ class WindowVisibilityToggler:
             if self.on_focus_lost_hide:
                 if self.warp_pointer:
                     win.focus(warp=True)
-                hook.subscribe.client_focus(self.on_focus_change)
-                hook.subscribe.setgroup(self.on_focus_change)
+                self.subscribe()
 
     def hide(self):
         """
@@ -117,17 +117,22 @@ class WindowVisibilityToggler:
         """
         if self.visible or self.shown:
             # unsubscribe the hook methods, since the window is not shown
-            if self.on_focus_lost_hide:
-                hook.unsubscribe.client_focus(self.on_focus_change)
-                hook.unsubscribe.setgroup(self.on_focus_change)
+            self.unsubscribe()
             self.window.togroup(self.scratchpad_name)
             self.shown = False
 
+    def subscribe(self):
+        if not self._hooked:
+            hook.subscribe.client_focus(self.on_focus_change)
+            hook.subscribe.setgroup(self.on_focus_change)
+            self._hooked = True
+
     def unsubscribe(self):
         """unsubscribe all hooks"""
-        if self.on_focus_lost_hide and (self.visible or self.shown):
+        if self._hooked and self.on_focus_lost_hide and (self.visible or self.shown):
             hook.unsubscribe.client_focus(self.on_focus_change)
             hook.unsubscribe.setgroup(self.on_focus_change)
+            self._hooked = False
 
     def on_focus_change(self, *args, **kwargs):
         """
@@ -291,6 +296,7 @@ class ScratchPad(group._Group):
         name = None
         for name, dd in self.dropdowns.items():
             if dd.window is client:
+                dd.unsubscribe()
                 del self.dropdowns[name]
                 break
         self._check_unsubscribe()
