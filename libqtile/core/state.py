@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from libqtile import hook
-from libqtile.backend.base import Window
+from libqtile.backend.base import Static, Window
 from libqtile.scratchpad import ScratchPad
 
 if TYPE_CHECKING:
-    from libqtile.backend.base import Static
     from libqtile.core.manager import Qtile
 
 

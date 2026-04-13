@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from types import FunctionType
+from typing import Any, Literal
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from types import FunctionType
-    from typing import Any, Literal
-
-    from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
-    from libqtile.layout.base import Layout
+from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
+from libqtile.layout.base import Layout
 
 
 class ConfigError(Exception):

@@ -5,8 +5,6 @@ run the same Python version, and that clients must be trusted (as
 un-marshalling untrusted data can result in arbitrary code execution).
 """
 
-from __future__ import annotations
-
 import asyncio
 import fcntl
 import json
@@ -14,7 +12,7 @@ import marshal
 import os.path
 import socket
 import struct
-from typing import Any
+from typing import Any, Self
 
 from libqtile import hook
 from libqtile.log_utils import logger
@@ -240,7 +238,7 @@ class Server:
             writer.close()
             await writer.wait_closed()
 
-    async def __aenter__(self) -> Server:
+    async def __aenter__(self) -> Self:
         """Start and return the server"""
         await self.start()
         return self

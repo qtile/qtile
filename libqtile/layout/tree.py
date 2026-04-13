@@ -1,18 +1,12 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from collections.abc import Sequence
+from typing import Any, Self
 
 from libqtile import hook
+from libqtile.backend import base
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect
+from libqtile.group import _Group
 from libqtile.layout.base import Layout
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from typing import Any, Self
-
-    from libqtile.backend import base
-    from libqtile.group import _Group
 
 to_superscript = dict(zip(map(ord, "0123456789"), map(ord, "⁰¹²³⁴⁵⁶⁷⁸⁹")))
 

@@ -13,15 +13,23 @@ import socket
 import tempfile
 import time
 from collections import defaultdict
+from collections.abc import Callable, Sequence
 from logging.handlers import RotatingFileHandler
+from os import PathLike
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any, Literal
 
 import libqtile
 from libqtile import bar, hook, ipc, utils
 from libqtile.backend import base
 from libqtile.command import interface
-from libqtile.command.base import CommandError, CommandException, CommandObject, expose_command
+from libqtile.command.base import (
+    CommandError,
+    CommandException,
+    CommandObject,
+    ItemT,
+    expose_command,
+)
 from libqtile.command.client import InteractiveCommandClient
 from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import (
@@ -37,6 +45,7 @@ from libqtile.config import (
     ScreenRect,
 )
 from libqtile.config import ScratchPad as ScratchPadConfig
+from libqtile.confreader import Config
 from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import LoopContext
 from libqtile.core.state import QtileState
@@ -44,11 +53,13 @@ from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.interactive.repl import repl_server
+from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
 from libqtile.scripts.main import VERSION
 from libqtile.utils import (
+    ColorType,
     create_task,
     get_cache_dir,
     lget,
@@ -56,16 +67,6 @@ from libqtile.utils import (
     send_notification,
 )
 from libqtile.widget.base import _Widget
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
-    from os import PathLike
-    from typing import Any, Literal
-
-    from libqtile.command.base import ItemT
-    from libqtile.confreader import Config
-    from libqtile.layout.base import Layout
-    from libqtile.utils import ColorType
 
 
 class Qtile(CommandObject):

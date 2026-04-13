@@ -1,15 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from enum import IntEnum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from libqtile import hook
 from libqtile.log_utils import logger
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Any
-
     from libqtile.backend.base.core import Core
     from libqtile.backend.base.window import Window
     from libqtile.core.manager import Qtile

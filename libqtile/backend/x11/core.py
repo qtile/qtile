@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import asyncio
 import contextlib
 import os
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterator
 
 import xcffib
 import xcffib.randr
@@ -21,9 +19,6 @@ from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
 
 EVENT_TO_HANDLER = {
     xcffib.xproto.ButtonPressEvent: "handle_ButtonPress",

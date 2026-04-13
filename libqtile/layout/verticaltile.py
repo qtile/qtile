@@ -1,15 +1,9 @@
-from __future__ import annotations
+from typing import Self
 
-from typing import TYPE_CHECKING
-
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
+from libqtile.group import _Group
 from libqtile.layout.base import _SimpleLayoutBase
-
-if TYPE_CHECKING:
-    from typing import Self
-
-    from libqtile.backend.base import Window
-    from libqtile.group import _Group
 
 
 class VerticalTile(_SimpleLayoutBase):

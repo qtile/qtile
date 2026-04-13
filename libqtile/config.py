@@ -3,27 +3,23 @@ from __future__ import annotations
 import os.path
 import re
 import sys
+from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal
 
 from libqtile import configurable, hook, utils
-from libqtile.bar import Bar
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.bar import Bar, BarType
+from libqtile.command.base import CommandObject, ItemT, expose_command
+from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.utils import ColorType
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-    from typing import Any, Literal
-
     from libqtile.backend import base
     from libqtile.backend.base.idle_notify import IdleAction
-    from libqtile.bar import BarType
-    from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
-    from libqtile.group import _Group
     from libqtile.layout.base import Layout
     from libqtile.lazy import LazyCall
-    from libqtile.utils import ColorType
 
 
 class Key:

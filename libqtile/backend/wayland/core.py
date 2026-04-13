@@ -34,8 +34,6 @@
 # Licensed under the MIT License.
 # See the LICENSE file in the root of this repository for details.
 
-from __future__ import annotations
-
 import asyncio
 import contextlib
 import functools
@@ -48,19 +46,19 @@ import time
 from collections import defaultdict
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from libqtile import hook
+from libqtile import config, hook
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
 from libqtile.backend.wayland.window import Base, Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
-from libqtile.config import Output, ScreenRect
+from libqtile.config import Output, Screen, ScreenRect
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import QtileError, reap_zombies, rgb
+from libqtile.utils import ColorType, QtileError, reap_zombies, rgb
 
 try:
     from libqtile.backend.wayland._ffi import ffi, lib
@@ -69,11 +67,6 @@ except ModuleNotFoundError:
     print("Warning: Wayland backend not built. Backend will not run.")
 
     from libqtile.backend.wayland.ffi_stub import ffi, lib
-
-if TYPE_CHECKING:
-    from libqtile import config
-    from libqtile.config import Screen
-    from libqtile.utils import ColorType
 
 
 def translate_masks(modifiers: list[str]) -> int:

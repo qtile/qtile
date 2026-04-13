@@ -9,7 +9,7 @@ clients to do this interaction.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any
 
 from libqtile.command.base import SelectError
 from libqtile.command.graph import (
@@ -17,15 +17,11 @@ from libqtile.command.graph import (
     CommandGraphNode,
     CommandGraphObject,
     CommandGraphRoot,
+    GraphType,
+    SelectorType,
 )
 from libqtile.command.interface import CommandInterface, IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
-
-if TYPE_CHECKING:
-    from typing import Any
-
-    from libqtile.command.graph import GraphType
-    from libqtile.command.interface import SelectorType
 
 
 class CommandClient:

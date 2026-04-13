@@ -4,8 +4,6 @@ Command-line tool to expose qtile.command functionality to shell.
 This can be used standalone or in other shell scripts.
 """
 
-from __future__ import annotations
-
 import argparse
 import itertools
 import json

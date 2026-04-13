@@ -1,11 +1,6 @@
-from typing import TYPE_CHECKING
-
 from libqtile import bar
 from libqtile.widget import base
-from libqtile.widget.helpers.status_notifier import has_xdg, host
-
-if TYPE_CHECKING:
-    from libqtile.widget.helpers.status_notifier import StatusNotifierItem
+from libqtile.widget.helpers.status_notifier import StatusNotifierItem, has_xdg, host
 
 
 class StatusNotifier(base._Widget):

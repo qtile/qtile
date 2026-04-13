@@ -5,19 +5,14 @@ import copy
 import inspect
 import math
 import subprocess
-from typing import TYPE_CHECKING
+from typing import Any
 
 from libqtile import bar, configurable, confreader, hook
 from libqtile.command import interface
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.base import CommandObject, ItemT, expose_command
 from libqtile.lazy import LazyCall
 from libqtile.log_utils import logger
 from libqtile.utils import ColorType, create_task
-
-if TYPE_CHECKING:
-    from typing import Any
-
-    from libqtile.command.base import ItemT
 
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute

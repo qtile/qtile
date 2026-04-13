@@ -1,21 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any
 
 from libqtile import hook
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
 from libqtile.config import ScreenRect, _Match
+from libqtile.group import _Group
 from libqtile.layout import Columns, Max
 from libqtile.layout.base import Layout
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Any
-
-    from libqtile.backend.base import Window
-    from libqtile.group import _Group
-
-    Rect = tuple[float, float, float, float]
+Rect = tuple[float, float, float, float]
 
 
 class Split:

@@ -8,10 +8,10 @@ import cairocffi
 
 from libqtile import pangocffi, utils
 from libqtile.log_utils import logger
+from libqtile.utils import ColorsType
 
 if typing.TYPE_CHECKING:
     from libqtile.backend.base import Internal
-    from libqtile.utils import ColorsType
 
 
 class Drawer:

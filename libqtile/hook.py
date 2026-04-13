@@ -1,18 +1,13 @@
-from __future__ import annotations
-
 import asyncio
 import contextlib
 import inspect
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
 from libqtile import backend, utils
 from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    HookHandler = Callable[[Callable], Callable]
+HookHandler = Callable[[Callable], Callable]
 
 subscriptions = {}  # type: dict
 

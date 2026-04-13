@@ -1,17 +1,10 @@
-from __future__ import annotations
-
 import asyncio
 import inspect
 from collections.abc import Callable, Coroutine
-from typing import TYPE_CHECKING
 
 from libqtile.command import interface
 from libqtile.lazy import LazyCall
 from libqtile.utils import create_task, logger
-
-if TYPE_CHECKING:
-    pass
-
 
 IdleAction = Callable | Coroutine | LazyCall | None
 

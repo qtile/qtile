@@ -1,17 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Generator
+from typing import Any, Self
 
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
+from libqtile.group import _Group
 from libqtile.layout.base import Layout
-
-if TYPE_CHECKING:
-    from collections.abc import Generator
-    from typing import Any, Self
-
-    from libqtile.backend.base import Window
-    from libqtile.config import ScreenRect
-    from libqtile.group import _Group
 
 
 class _BspNode:

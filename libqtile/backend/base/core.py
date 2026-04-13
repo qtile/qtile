@@ -3,21 +3,18 @@ from __future__ import annotations
 import contextlib
 import typing
 from abc import ABCMeta, abstractmethod
+from typing import Any
 
-from libqtile import hook
-from libqtile.command.base import CommandObject, expose_command
+from libqtile import config, hook
+from libqtile.backend.base.idle_inhibit import IdleInhibitorManager
+from libqtile.backend.base.idle_notify import IdleNotifier
+from libqtile.command.base import CommandObject, ItemT, expose_command
 from libqtile.config import Screen
+from libqtile.group import _Group
 
 if typing.TYPE_CHECKING:
-    from typing import Any
-
-    from libqtile import config
     from libqtile.backend.base import Internal
-    from libqtile.backend.base.idle_inhibit import IdleInhibitorManager
-    from libqtile.backend.base.idle_notify import IdleNotifier
-    from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
-    from libqtile.group import _Group
 
 
 class Core(CommandObject, metaclass=ABCMeta):

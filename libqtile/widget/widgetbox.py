@@ -1,14 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from typing import Any
 
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.pangocffi import markup_escape_text
 from libqtile.widget import Systray, base
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 class WidgetBox(base._TextBox):

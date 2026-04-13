@@ -1,16 +1,10 @@
-from __future__ import annotations
-
 import math
-from typing import TYPE_CHECKING
+from typing import Any, Self
 
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
+from libqtile.group import _Group
 from libqtile.layout.base import _SimpleLayoutBase
-
-if TYPE_CHECKING:
-    from typing import Any, Self
-
-    from libqtile.backend.base import Window
-    from libqtile.group import _Group
 
 ROWCOL = 1  # do rows at a time left to right top down
 COLROW = 2  # do cols top to bottom, left to right

@@ -2,22 +2,17 @@
 The interface to execute commands on the command graph
 """
 
-from __future__ import annotations
-
 import traceback
 import types
 import typing
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
+from typing import Any, Literal, Union, get_args, get_origin
 
 from libqtile import hook, ipc
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
-from libqtile.command.graph import CommandGraphCall, CommandGraphNode
+from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
 from libqtile.log_utils import logger
 from libqtile.utils import ColorsType, ColorType  # noqa: F401
-
-if TYPE_CHECKING:
-    from libqtile.command.graph import SelectorType
 
 SUCCESS = 0
 ERROR = 1

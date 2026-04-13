@@ -1,14 +1,10 @@
-from __future__ import annotations
-
 import asyncio
 import contextlib
 import signal
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import Self
 
 from libqtile.log_utils import logger
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class LoopContext(contextlib.AbstractAsyncContextManager):
@@ -20,7 +16,7 @@ class LoopContext(contextlib.AbstractAsyncContextManager):
         self._signals = signals or {}
         self._stopped = False
 
-    async def __aenter__(self) -> LoopContext:
+    async def __aenter__(self) -> Self:
         self._stopped = False
         loop = asyncio.get_running_loop()
         loop.set_exception_handler(self._handle_exception)

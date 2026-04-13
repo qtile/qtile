@@ -7,7 +7,7 @@ from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
 from libqtile.backend.base.window import WindowType
 from libqtile.backend.wayland.drawer import Drawer
-from libqtile.command.base import CommandError, expose_command
+from libqtile.command.base import CommandError, CommandObject, ItemT, expose_command
 from libqtile.core.manager import Qtile
 from libqtile.group import _Group
 from libqtile.log_utils import logger
@@ -24,7 +24,6 @@ except ModuleNotFoundError:
 
 if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
-    from libqtile.command.base import CommandObject, ItemT
 
 
 class Base(base._Window):

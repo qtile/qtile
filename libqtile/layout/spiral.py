@@ -1,18 +1,12 @@
-from __future__ import annotations
+from typing import Any, Self
 
-from typing import TYPE_CHECKING
-
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
+from libqtile.group import _Group
 from libqtile.layout.base import _SimpleLayoutBase
 from libqtile.log_utils import logger
 
-if TYPE_CHECKING:
-    from typing import Any, Self
-
-    from libqtile.backend.base import Window
-    from libqtile.group import _Group
-
-    Rect = tuple[int, int, int, int]
+Rect = tuple[int, int, int, int]
 
 
 GOLDEN_RATIO = 1.618

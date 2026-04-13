@@ -2,21 +2,18 @@ from __future__ import annotations
 
 import typing
 from abc import ABCMeta, abstractmethod
+from typing import Any
 
-from libqtile import hook
-from libqtile.command.base import CommandError, CommandObject, expose_command
+from libqtile import config, hook
+from libqtile.backend.base import Drawer
+from libqtile.command.base import CommandError, CommandObject, ItemT, expose_command
+from libqtile.group import _Group
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
+from libqtile.utils import ColorsType
 
 if typing.TYPE_CHECKING:
-    from typing import Any
-
-    from libqtile import config
-    from libqtile.backend.base import Drawer
-    from libqtile.command.base import ItemT
     from libqtile.core.manager import Qtile
-    from libqtile.group import _Group
-    from libqtile.utils import ColorsType
 
 
 class _Window(CommandObject, metaclass=ABCMeta):

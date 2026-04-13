@@ -3,8 +3,6 @@ A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
 complete - it only implements the subset of functionalty needed by qtile.
 """
 
-from __future__ import annotations
-
 import contextlib
 import functools
 import operator

@@ -5,6 +5,7 @@ import os
 import os.path
 import shutil
 import sys
+from collections.abc import Iterator
 from glob import glob
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -13,8 +14,6 @@ from libqtile.scripts.migrations import MIGRATIONS, load_migrations
 from libqtile.utils import get_config_file
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     import libcst
 
 BACKUP_SUFFIX = ".migrate.bak"
