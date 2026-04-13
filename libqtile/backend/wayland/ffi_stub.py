@@ -6,20 +6,13 @@
 #     ^^^^^^^^^^^^^^
 # E   AttributeError: 'NoneType' object has no attribute 'def_extern'
 
-from __future__ import annotations
-
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeVar
-
-if TYPE_CHECKING:
-    from typing import Any
-
-    T = TypeVar("T")
+from typing import Any
 
 
 class FFIStub:
     @staticmethod
-    def def_extern() -> Callable[[T], T]:
+    def def_extern[T]() -> Callable[[T], T]:
         return lambda f: f
 
     def __getattr__(self, name: str) -> Any:

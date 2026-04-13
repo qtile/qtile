@@ -1,14 +1,8 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 import libqtile
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
 from libqtile.layout.base import _SimpleLayoutBase
-
-if TYPE_CHECKING:
-    from libqtile.backend.base import Window
-    from libqtile.config import ScreenRect
 
 
 class Zoomy(_SimpleLayoutBase):

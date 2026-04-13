@@ -1,17 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Iterable
 
 from libqtile.command.client import InteractiveCommandClient
-from libqtile.command.graph import CommandGraphCall, CommandGraphNode
+from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
 from libqtile.command.interface import CommandInterface
+from libqtile.config import _Match
 from libqtile.log_utils import logger
-
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-
-    from libqtile.command.graph import SelectorType
-    from libqtile.config import _Match
 
 
 class LazyCall:

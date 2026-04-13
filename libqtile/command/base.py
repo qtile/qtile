@@ -9,17 +9,13 @@ import asyncio
 import inspect
 import sys
 import traceback
-from typing import TYPE_CHECKING
+from collections.abc import Callable
 
+from libqtile.command.graph import SelectorType
 from libqtile.log_utils import logger
 from libqtile.utils import create_task
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from libqtile.command.graph import SelectorType
-
-    ItemT = tuple[bool, list[str | int]] | None
+ItemT = tuple[bool, list[str | int]] | None
 
 
 def allow_when_locked(func: Callable) -> Callable:

@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from libqtile.backend.base import Core
 
 

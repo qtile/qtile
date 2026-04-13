@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import xcffib
 from xcffib.xproto import ClientMessageData, ClientMessageEvent, EventMask, SetMode
 

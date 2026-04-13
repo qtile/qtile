@@ -1,15 +1,9 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
+from cairocffi import ImageSurface
 
 from libqtile import configurable, pangocffi
-
-if TYPE_CHECKING:
-    from cairocffi import ImageSurface
-
-    from libqtile.backend.base import Drawer, Internal
-    from libqtile.core.manager import Qtile
-    from libqtile.utils import ColorType
+from libqtile.backend.base import Drawer, Internal
+from libqtile.core.manager import Qtile
+from libqtile.utils import ColorType
 
 
 class Popup(configurable.Configurable):

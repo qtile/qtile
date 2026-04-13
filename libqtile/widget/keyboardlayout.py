@@ -1,18 +1,13 @@
-from __future__ import annotations
-
 import re
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from subprocess import CalledProcessError, check_output
-from typing import TYPE_CHECKING
 
 from libqtile.command.base import expose_command
 from libqtile.confreader import ConfigError
+from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
 from libqtile.widget import base
-
-if TYPE_CHECKING:
-    from libqtile.core.manager import Qtile
 
 
 class _BaseLayoutBackend(metaclass=ABCMeta):

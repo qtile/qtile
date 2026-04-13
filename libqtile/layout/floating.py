@@ -1,16 +1,9 @@
-from __future__ import annotations
+from typing import Any
 
-from typing import TYPE_CHECKING
-
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
-from libqtile.config import Match, _Match
+from libqtile.config import Match, ScreenRect, _Match
 from libqtile.layout.base import Layout
-
-if TYPE_CHECKING:
-    from typing import Any
-
-    from libqtile.backend.base import Window
-    from libqtile.config import ScreenRect
 
 
 class Floating(Layout):

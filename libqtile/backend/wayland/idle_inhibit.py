@@ -1,20 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any
 
 from libqtile.backend.base.idle_inhibit import IdleInhibitorManager as BaseIdleInhibitorManager
 from libqtile.backend.base.idle_inhibit import Inhibitor, InhibitorType
+from libqtile.backend.base.window import Window
+from libqtile.core.manager import Qtile
 
 try:
     from libqtile.backend.wayland._ffi import ffi, lib
 except ModuleNotFoundError:
     from libqtile.backend.wayland.ffi_stub import ffi, lib
-
-if TYPE_CHECKING:
-    from typing import Any
-
-    from libqtile.backend.base.window import Window
-    from libqtile.core.manager import Qtile
 
 
 class WaylandInhibitor(Inhibitor):

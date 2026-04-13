@@ -1,11 +1,8 @@
-from __future__ import annotations
-
 import array
 import contextlib
 import inspect
 import traceback
 from itertools import islice
-from typing import TYPE_CHECKING
 
 import xcffib
 import xcffib.xproto
@@ -17,12 +14,9 @@ from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
-from libqtile.command.base import CommandError, expose_command
+from libqtile.command.base import CommandError, ItemT, expose_command
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
-
-if TYPE_CHECKING:
-    from libqtile.command.base import ItemT
 
 # ICCM Constants
 NoValue = 0x0000

@@ -5,12 +5,12 @@ import glob
 import importlib
 import os
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Callable, Coroutine, Sequence
 from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from random import randint
 from shutil import which
-from typing import TYPE_CHECKING, cast
+from typing import Any, cast
 
 try:
     from dbus_fast import AuthError, Message, Variant
@@ -26,11 +26,6 @@ from libqtile.log_utils import logger
 
 ColorType = str | tuple[int, int, int] | tuple[int, int, int, float]
 ColorsType = ColorType | list[ColorType]
-if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine
-    from typing import Any, TypeVar
-
-    T = TypeVar("T")
 
 try:
     VERSION = distribution("qtile").version

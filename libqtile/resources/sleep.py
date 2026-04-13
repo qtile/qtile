@@ -1,15 +1,10 @@
-from __future__ import annotations
-
 import fcntl
 import os
-from typing import TYPE_CHECKING
+from typing import Any
 
 from libqtile import hook
 from libqtile.log_utils import logger
 from libqtile.utils import create_task
-
-if TYPE_CHECKING:
-    from typing import Any
 
 try:
     from dbus_fast.aio import MessageBus
@@ -43,8 +38,7 @@ class Inhibitor:
         self.sleep = False
         self.resume = False
         self.fd: int = -1
-        if TYPE_CHECKING:
-            self.login: Any
+        self.login: Any = None
 
     def want_sleep(self) -> None:
         """

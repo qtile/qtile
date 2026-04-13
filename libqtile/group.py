@@ -1,13 +1,6 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 from libqtile import hook, utils
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.base import CommandObject, ItemT, expose_command
 from libqtile.log_utils import logger
-
-if TYPE_CHECKING:
-    from libqtile.command.base import ItemT
 
 
 class _Group(CommandObject):

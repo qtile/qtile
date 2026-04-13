@@ -1,22 +1,19 @@
 from __future__ import annotations
 
+import asyncio
 import typing
 from collections import defaultdict
+from typing import Any
 
 from libqtile import configurable, hook
-from libqtile.command.base import CommandObject, expose_command
+from libqtile.command.base import CommandObject, ItemT, expose_command
 from libqtile.log_utils import logger
-from libqtile.utils import has_transparency, is_valid_colors
+from libqtile.utils import ColorsType, has_transparency, is_valid_colors
 
 if typing.TYPE_CHECKING:
-    import asyncio
-    from typing import Any
-
     from libqtile.backend.base import Drawer, Internal, Window
-    from libqtile.command.base import ItemT
     from libqtile.config import Screen
     from libqtile.core.manager import Qtile
-    from libqtile.utils import ColorsType
     from libqtile.widget.base import _Widget
 
 NESW = ("top", "right", "bottom", "left")

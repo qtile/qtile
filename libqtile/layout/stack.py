@@ -1,16 +1,10 @@
-from __future__ import annotations
+from typing import Any, Self
 
-from typing import TYPE_CHECKING
-
+from libqtile.backend.base import Window
 from libqtile.command.base import expose_command
+from libqtile.config import ScreenRect
+from libqtile.group import _Group
 from libqtile.layout.base import Layout, _ClientList
-
-if TYPE_CHECKING:
-    from typing import Any, Self
-
-    from libqtile.backend.base import Window
-    from libqtile.config import ScreenRect
-    from libqtile.group import _Group
 
 
 class _WinStack(_ClientList):

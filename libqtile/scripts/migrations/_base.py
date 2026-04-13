@@ -1,20 +1,15 @@
 from __future__ import annotations
 
 import difflib
+from collections.abc import Collection
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import ClassVar
 
 import libcst
 import libcst.matchers as m
+from libcst.metadata.base_provider import ProviderT
 
 from libqtile.scripts.migrations import MIGRATIONS
-
-if TYPE_CHECKING:
-    from collections.abc import Collection
-    from typing import ClassVar
-
-    from libcst.metadata.base_provider import ProviderT
-
 
 # By default, libcst adds spaces around "=" so we should remove them
 EQUALS_NO_SPACE = libcst.AssignEqual(

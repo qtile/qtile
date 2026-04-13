@@ -1,15 +1,17 @@
-from __future__ import annotations
-
 import os
 import sys
-import typing
 import warnings
-from logging import WARNING, Formatter, StreamHandler, captureWarnings, getLogger
+from logging import (
+    WARNING,
+    Formatter,
+    Logger,
+    LogRecord,
+    StreamHandler,
+    captureWarnings,
+    getLogger,
+)
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-
-if typing.TYPE_CHECKING:
-    from logging import Logger, LogRecord
 
 logger = getLogger(__package__)
 

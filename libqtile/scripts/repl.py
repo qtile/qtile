@@ -1,11 +1,8 @@
-from __future__ import annotations
-
 import codeop
 import re
 import socket
 import sys
 from time import sleep
-from typing import TYPE_CHECKING
 
 try:
     from prompt_toolkit import PromptSession
@@ -20,9 +17,6 @@ except (ImportError, ModuleNotFoundError):
 
 from libqtile.interactive.repl import COMPLETION_REQUEST, REPL_PORT, TERMINATOR
 from libqtile.scripts.cmd_obj import cmd_obj
-
-if TYPE_CHECKING:
-    pass
 
 HOST = "localhost"
 

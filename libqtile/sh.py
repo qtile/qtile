@@ -2,15 +2,13 @@
 A command shell for Qtile.
 """
 
-from __future__ import annotations
-
 import inspect
 import pprint
 import re
 import shutil
 import sys
 from importlib import import_module
-from typing import TYPE_CHECKING
+from typing import Any
 
 from libqtile.command.client import CommandClient
 from libqtile.command.interface import (
@@ -19,10 +17,6 @@ from libqtile.command.interface import (
     CommandInterface,
     format_selectors,
 )
-
-if TYPE_CHECKING:
-    from typing import Any
-
 
 # From: https://stackoverflow.com/a/64333329/3087339
 # Matches commas that are not enclosed in quote marks

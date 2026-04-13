@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 import platform
 import re
@@ -7,19 +5,14 @@ from abc import ABC, abstractmethod
 from enum import Enum, unique
 from pathlib import Path
 from subprocess import CalledProcessError, check_output
-from typing import TYPE_CHECKING, NamedTuple
+from typing import Any, NamedTuple
 
 from libqtile import bar, configurable, images
 from libqtile.command.base import expose_command
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import send_notification
+from libqtile.utils import ColorsType, send_notification
 from libqtile.widget import base
-
-if TYPE_CHECKING:
-    from typing import Any
-
-    from libqtile.utils import ColorsType
 
 
 @unique

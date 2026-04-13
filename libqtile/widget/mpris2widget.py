@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 import asyncio
 import re
 import string
-from typing import TYPE_CHECKING
+from typing import Any
 
 from dbus_fast import Message, Variant
 from dbus_fast.aio import MessageBus
@@ -14,9 +12,6 @@ from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import _send_dbus_message, add_signal_receiver, create_task
 from libqtile.widget import base
-
-if TYPE_CHECKING:
-    from typing import Any
 
 MPRIS_PATH = "/org/mpris/MediaPlayer2"
 MPRIS_OBJECT = "org.mpris.MediaPlayer2"
