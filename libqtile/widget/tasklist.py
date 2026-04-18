@@ -410,7 +410,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     def setup_hooks(self):
         hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
-        hook.subscribe.float_change(self.update)
+        hook.subscribe.window_state_change(self.update)
         hook.subscribe.client_urgent_hint_changed(self.update)
 
         hook.subscribe.net_wm_icon_change(self.invalidate_cache)

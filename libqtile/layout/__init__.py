@@ -2,6 +2,7 @@ __all__ = [
     "Bsp",
     "Columns",
     "Floating",
+    "Fullscreen",
     "Matrix",
     "Max",
     "Plasma",
@@ -22,6 +23,7 @@ __all__ = [
 from libqtile.layout.bsp import Bsp
 from libqtile.layout.columns import Columns
 from libqtile.layout.floating import Floating
+from libqtile.layout.fullscreen import Fullscreen
 from libqtile.layout.matrix import Matrix
 from libqtile.layout.max import Max
 from libqtile.layout.plasma import Plasma
