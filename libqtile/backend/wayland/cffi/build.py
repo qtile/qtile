@@ -4,8 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
-from collections.abc import Iterator
-from contextlib import contextmanager
+from contextlib import chdir
 from pathlib import Path
 
 from cffi import FFI
@@ -241,16 +240,6 @@ if not wlroots_has_xwayland():
     SOURCE_FILES = [f for f in SOURCE_FILES if not any(x in f for x in XWAYLAND_ONLY_SOURCES)]
 
 OBJECTS = [Path(src).parent / "build" / Path(src).with_suffix(".o").name for src in SOURCE_FILES]
-
-
-@contextmanager
-def chdir(path: Path) -> Iterator[None]:
-    prev_cwd = os.getcwd()
-    try:
-        os.chdir(path)
-        yield
-    finally:
-        os.chdir(prev_cwd)
 
 
 MACROS: list[tuple[str, str | None]] = [("WLR_USE_UNSTABLE", None)]
