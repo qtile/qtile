@@ -4,7 +4,6 @@ The interface to execute commands on the command graph
 
 from __future__ import annotations
 
-import traceback
 import types
 import typing
 from abc import ABCMeta, abstractmethod
@@ -19,9 +18,9 @@ from libqtile.utils import ColorsType, ColorType  # noqa: F401
 if TYPE_CHECKING:
     from libqtile.command.graph import SelectorType
 
-SUCCESS = 0
-ERROR = 1
-EXCEPTION = 2
+SUCCESS = ipc.IPCStatus.SUCCESS
+ERROR = ipc.IPCStatus.ERROR
+EXCEPTION = ipc.IPCStatus.EXCEPTION
 
 
 # these two mask their aliases from elsewhere in the tree (i.e.
@@ -397,8 +396,8 @@ class IPCCommandServer:
 
     def call(
         self,
-        data: tuple[list[SelectorType], str, tuple, dict, bool],
-    ) -> tuple[int, Any]:
+        data: ipc.IPCCommandMessage,
+    ) -> ipc.IPCReplyMessage:
         """Receive and parse the given data"""
         selectors, name, args, kwargs, lifted = data
         try:
@@ -406,9 +405,9 @@ class IPCCommandServer:
             cmd = obj.command(name)
         except SelectError as err:
             sel_string = format_selectors(selectors)
-            return ERROR, f"No object {err.name} in path '{sel_string}'"
+            return ipc.IPCReplyMessage.error(f"No object {err.name} in path '{sel_string}'")
         if not cmd:
-            return ERROR, "No such command"
+            return ipc.IPCReplyMessage.error("No such command")
 
         logger.debug("Command: %s(%s, %s)", name, args, kwargs)
 
@@ -420,11 +419,11 @@ class IPCCommandServer:
             args = (obj,) + args
 
         if self.qtile.locked and not getattr(cmd, "_allow_when_locked", False):
-            return ERROR, f"{name} cannot be called when session is locked."
+            return ipc.IPCReplyMessage.error(f"{name} cannot be called when session is locked.")
 
         try:
-            return SUCCESS, cmd(*args, **kwargs)
+            return ipc.IPCReplyMessage.success(cmd(*args, **kwargs))
         except CommandError as err:
-            return ERROR, err.args[0]
-        except Exception:
-            return EXCEPTION, traceback.format_exc().strip().split("\n")[-1]
+            return ipc.IPCReplyMessage.error(err.args[0])
+        except Exception as exc:
+            return ipc.IPCReplyMessage.exception(exc)

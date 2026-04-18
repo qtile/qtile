@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import codeop
 import re
-import socket
 import sys
-from time import sleep
 from typing import TYPE_CHECKING
+
+from libqtile.ipc import PersistentClient, find_sockfile
 
 try:
     from prompt_toolkit import PromptSession
@@ -18,34 +18,8 @@ try:
 except (ImportError, ModuleNotFoundError):
     HAS_PT = False
 
-from libqtile.interactive.repl import COMPLETION_REQUEST, REPL_PORT, TERMINATOR
-from libqtile.scripts.cmd_obj import cmd_obj
-
 if TYPE_CHECKING:
     pass
-
-HOST = "localhost"
-
-
-class Command:
-    """Wrapper to call commands via command interface."""
-
-    def __init__(self, command, obj_spec=["root"], *args, **kwargs):
-        self.function = command
-        self.socket = None
-        self.args = args
-        self.kwargs = kwargs
-        self.obj_spec = obj_spec
-        self.info = False
-
-    def __call__(self):
-        return cmd_obj(self)
-
-
-# Calls to start and stop the qtile REPL server
-# Sends commands via qtile cmd-obj
-start_server = Command("start_repl_server")
-stop_server = Command("stop_repl_server")
 
 
 def is_code_complete(text: str) -> bool:
@@ -64,53 +38,17 @@ def is_code_complete(text: str) -> bool:
         return True
 
 
-def read_full_response(sock, end_marker=f"{TERMINATOR}\n"):
-    """Function to read data from socket until termination marker."""
-    buffer = ""
-    while True:
-        data = sock.recv(4096).decode()
-
-        if not data:
-            # connection closed without end marker
-            break
-
-        buffer += data
-        if end_marker in buffer:
-            # Split off the marker and return only the response text
-            response, _, _ = buffer.partition(end_marker)
-            return response
-
-    # connection closed without end marker
-    return buffer
-
-
 def start_repl(_args):
     if not HAS_PT:
         sys.exit("You need to install prompt_toolkit to use the REPL client.")
 
-    # Start the repl server in qtile and find port number
-    start_server()
+    with PersistentClient(find_sockfile()) as client:
+        welcome_message = client.repl_start().data["output"]
 
-    # We need to wait until server is up an running before continuing
-    retry_count = 0
-    while retry_count < 5:
-        try:
-            sock = socket.create_connection((HOST, REPL_PORT))
-            break
-        except ConnectionRefusedError:
-            retry_count += 1
-            sleep(0.5)
-
-    if retry_count == 5:
-        print("Unable to connect to REPL server. Exiting...")
-        stop_server()
-        return
-
-    try:
         # Create the objects needed for the client
         class SocketCompleter(Completer):
-            def __init__(self, sock):
-                self.sock = sock
+            def __init__(self, client):
+                self.client = client
 
             def get_completions(self, document, _complete_event):
                 text_before_cursor = document.text_before_cursor
@@ -124,11 +62,10 @@ def start_repl(_args):
                 start_position = -len(word)
 
                 # Send only the word to the REPL server
-                self.sock.sendall(f"{COMPLETION_REQUEST}{word}\n{TERMINATOR}\n".encode())
+                matches = self.client.repl_request({"completion": word}).data["matches"]
 
-                # Read completions from server and filter out empty strings
-                data = read_full_response(self.sock)
-                options = list(filter(None, data.strip().split(",")))
+                # Filter out empty strings
+                options = list(filter(None, matches))
 
                 # No suggestions so return early
                 if not options:
@@ -139,7 +76,7 @@ def start_repl(_args):
                     yield Completion(opt, start_position=start_position)
 
         kb = KeyBindings()
-        completer = SocketCompleter(sock)
+        completer = SocketCompleter(client)
 
         # Create a session instance
         session = PromptSession(
@@ -159,10 +96,9 @@ def start_repl(_args):
 
             if is_code_complete(text):
                 # Save input line to print after
-                full_block = f"{text}\n{TERMINATOR}\n"
 
                 # Submit to server
-                sock.sendall(full_block.encode())
+                response = client.repl_request({"code": text}).data["output"]
 
                 # Save our code to the history as `buffer.reset()`
                 # would otherwise prevent that from happening
@@ -170,9 +106,6 @@ def start_repl(_args):
 
                 # Clear buffer before reading response
                 buffer.reset()
-
-                # Read and print server response
-                response = read_full_response(sock)
 
                 # Echo input and response manually
                 text = text.replace("\n", "\n... ")
@@ -184,7 +117,7 @@ def start_repl(_args):
 
         with patch_stdout():
             # Read the welcome message from the server.
-            print(read_full_response(sock), end="", flush=True)
+            print(welcome_message, end="", flush=True)
 
             while True:
                 try:
@@ -192,10 +125,6 @@ def start_repl(_args):
                 except KeyboardInterrupt:
                     print("\nExiting.")
                     break
-
-    finally:
-        sock.close()
-        stop_server()
 
 
 def add_subcommand(subparsers, parents):
