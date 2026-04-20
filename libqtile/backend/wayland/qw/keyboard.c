@@ -71,14 +71,17 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
         // Track key for repeat
         keyboard->key_pressed = true;
 
-        // Call user callback for each symbol to check if handled
-        for (int i = 0; i < nsyms; ++i) {
-            // TODO: for efficiency maybe let c take control of the key list?
-            // If callback returns 1, event is handled; no further processing needed
-            if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
-                handled = true;
-                keyboard->repeat_keysym = syms[i];
-                break;
+        // Don't handle presses if an exclusive layer has focus
+        if (server->exclusive_layer == NULL) {
+            // Call user callback for each symbol to check if handled
+            for (int i = 0; i < nsyms; ++i) {
+                // TODO: for efficiency maybe let c take control of the key list?
+                // If callback returns 1, event is handled; no further processing needed
+                if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
+                    handled = true;
+                    keyboard->repeat_keysym = syms[i];
+                    break;
+                }
             }
         }
 
