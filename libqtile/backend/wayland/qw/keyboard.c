@@ -11,10 +11,28 @@ static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data)
     UNUSED(data);
 
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, destroy);
+
     wl_list_remove(&keyboard->modifiers.link);
     wl_list_remove(&keyboard->key.link);
     wl_list_remove(&keyboard->destroy.link);
     wl_list_remove(&keyboard->link);
+
+    // There appears to be a delay between when a keyboard is destroyed and when
+    // wlroots updates the seat's active keyboard. It is possible to miss a focus
+    // event during this delay (issue #5927)
+    // We can work around this by updating the active keyboard here
+    if (keyboard->wlr_keyboard == wlr_seat_get_keyboard(keyboard->server->seat)) {
+        struct qw_keyboard *new_keyboard = NULL;
+        wl_list_for_each(new_keyboard, &keyboard->server->keyboards, link) {
+            wlr_seat_set_keyboard(keyboard->server->seat, new_keyboard->wlr_keyboard);
+            break;
+        }
+        if (new_keyboard == NULL) {
+            wlr_log(WLR_DEBUG, "No keyboards remaining, seat has no active keyboard");
+            wlr_seat_set_keyboard(keyboard->server->seat, NULL);
+        }
+    }
+
     free(keyboard);
 }
 
