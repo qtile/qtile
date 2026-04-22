@@ -20,6 +20,7 @@ exclude libqtile/backend/x11/_ffi*.py
 exclude libqtile/backend/wayland/_ffi*.*
 exclude libqtile/backend/wayland/_libinput*.*
 exclude libqtile/backend/wayland/qw/build/*.o
+exclude test/wayland_clients/bin/*
 exclude Makefile
 exclude .readthedocs.yaml
 exclude .git-blame-ignore-revs
