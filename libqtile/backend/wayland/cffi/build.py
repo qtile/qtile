@@ -300,6 +300,8 @@ def build_test_client():
     root = Path(__file__).parent.parent.parent.parent.parent
     proto = QW_PROTO_OUT_PATH
 
+    (root / "test/wayland_clients/bin").mkdir(parents=True, exist_ok=True)
+
     cmd = [
         "cc",
         str(root / "test/wayland_clients/src/cursor-shape-v1.c"),
