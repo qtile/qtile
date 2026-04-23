@@ -24,6 +24,7 @@ exclude Makefile
 exclude .readthedocs.yaml
 exclude .git-blame-ignore-revs
 exclude .clang-format
+exclude Dockerfile
 
 graft libqtile/resources
 graft libqtile/widget/helpers
