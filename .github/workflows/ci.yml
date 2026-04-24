@@ -53,6 +53,8 @@ jobs:
                   -e QTILE_CI_BACKEND=${{ matrix.backend }} \
                   -e GITHUB_ACTIONS=true \
                   -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+                  -e GITHUB_REF=${{ github.ref }} \
+                  -e GITHUB_SHA=${{ github.sha }} \
                   -e COVERALLS_FLAG_NAME=${{ format('{0}-{1}', matrix.python-version, matrix.backend) }} \
                   -e COVERALLS_PARALLEL=true \
                   -e COVERALLS_SERVICE_JOB_ID=${{ github.run_id }} \
