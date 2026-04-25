@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+    - Add `auto_group` config variable
     * bugfixes
       - Fix timers on BackgrounPoll-based widgets not clearing on config reload
 
