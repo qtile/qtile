@@ -5,26 +5,7 @@ on:
     pull_request:
 
 jobs:
-    build-image:
-        runs-on: ubuntu-24.04
-        steps:
-            - uses: actions/checkout@v6
-
-            - name: Build Docker image
-              run: docker build -t qtile-ci:local .
-
-            - name: Save Docker image
-              run: docker save qtile-ci:local | gzip > qtile-ci.tar.gz
-
-            - name: Upload Docker image
-              uses: actions/upload-artifact@v6
-              with:
-                  name: docker-image
-                  path: qtile-ci.tar.gz
-                  retention-days: 1
-
-    test:
-        needs: build-image
+    tests:
         runs-on: ubuntu-24.04
         name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
         strategy:
@@ -34,13 +15,8 @@ jobs:
         steps:
             - uses: actions/checkout@v6
 
-            - name: Download Docker image
-              uses: actions/download-artifact@v8
-              with:
-                  name: docker-image
-
-            - name: Load Docker image
-              run: docker load < qtile-ci.tar.gz
+            - name: Build Docker image
+              run: docker build -t qtile-ci:local .
 
             - name: Run tests in container
               run: |
@@ -60,20 +36,9 @@ jobs:
                   -e COVERALLS_SERVICE_JOB_ID=${{ github.run_id }} \
                   qtile-ci:local
 
-    cleanup:
-        name: Cleanup artifacts
-        needs: test
-        runs-on: ubuntu-24.04
-        if: always()
-        steps:
-            - name: Delete Docker image artifact
-              uses: geekyeggo/delete-artifact@v6
-              with:
-                  name: docker-image
-
     coverage:
         name: Finalize Coverage
-        needs: test
+        needs: tests
         runs-on: ubuntu-24.04
         steps:
             - name: Coveralls Finished
