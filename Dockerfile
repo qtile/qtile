@@ -26,5 +26,6 @@ RUN dnf install -y \
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 
 WORKDIR /workspace
+ENV HOME=/workspace
 
 ENTRYPOINT ["/workspace/scripts/ci-entrypoint"]
