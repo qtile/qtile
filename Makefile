@@ -30,6 +30,24 @@ check: deps ## Run the test suite on the latest python
 	uv run ./libqtile/backend/wayland/cffi/build.py
 	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
 
+.PHONY: ci-check
+ci-check: ## Run the test suite in the docker ci container
+	docker run --rm -it\
+		-v $(PWD):/workspace:z \
+		-e USER_UID=$$(id -u) \
+		-e USER_GID=$$(id -g) \
+		qtile-ci \
+		make check
+
+.PHONY: ci-bash
+ci-bash: ## Run the test suite in the docker ci container
+	docker run --rm -it \
+		-v $(PWD):/workspace:z \
+		-e USER_UID=$$(id -u) \
+		-e USER_GID=$$(id -g) \
+		qtile-ci \
+		bash
+
 .PHONY: docs
 docs: deps ## Run the sphinx build for the html docs.
 	uv run $(MAKE) -C docs html
