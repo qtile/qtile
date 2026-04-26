@@ -47,7 +47,7 @@ jobs:
                 docker run --rm \
                   -v ${{ github.workspace }}:/workspace \
                   -w /workspace \
-                  --user $(id -u):$(id -g) \
+                  -e USER_UID=`id -u` -e USER_GID=`id -g` \
                   -e HOME=/workspace \
                   -e QTILE_CI_PYTHON=${{ matrix.python-version }} \
                   -e QTILE_CI_BACKEND=${{ matrix.backend }} \
@@ -58,8 +58,7 @@ jobs:
                   -e COVERALLS_FLAG_NAME=${{ format('{0}-{1}', matrix.python-version, matrix.backend) }} \
                   -e COVERALLS_PARALLEL=true \
                   -e COVERALLS_SERVICE_JOB_ID=${{ github.run_id }} \
-                  qtile-ci:local \
-                  ./entrypoint.sh
+                  qtile-ci:local
 
     cleanup:
         name: Cleanup artifacts

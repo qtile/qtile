@@ -5,15 +5,6 @@ source "$(dirname "$0")/ci-env"
 
 [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
 
-dump_cores() {
-  echo "=== Listing coredumps ==="
-  coredumpctl list || true
-  coredumpctl debug \
-    --debugger-arguments="-batch -ex 'set pagination off' -ex 'bt full' -ex quit" || true
-}
-
-trap dump_cores ERR
-
 make \
   QTILE_CI_PYTHON="${QTILE_CI_PYTHON}" \
   QTILE_CI_BACKEND="${QTILE_CI_BACKEND}" \
