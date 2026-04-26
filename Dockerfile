@@ -3,13 +3,11 @@ FROM fedora:44
 RUN dnf install -y \
     cairo-devel \
     cairo-gobject-devel \
-    dbus-x11 \
     gcc git make\
     gobject-introspection \
     gtk3 \
     ImageMagick \
     libnotify \
-    nss_wrapper-libs \
     pango \
     pulseaudio-libs \
     python3.12 python3.12-devel \
@@ -28,7 +26,5 @@ RUN dnf install -y \
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 
 WORKDIR /workspace
-
-ENV PATH="/home/user/.local/bin:$PATH"
 
 ENTRYPOINT ["/workspace/scripts/ci-entrypoint"]
