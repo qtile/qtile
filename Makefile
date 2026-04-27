@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
 ifeq ($(QTILE_CI_PYTHON),)
@@ -27,26 +28,25 @@ deps: ## Install all of qtile's dependencies.
 
 .PHONY: check
 check: deps ## Run the test suite on the latest python
-	uv run ./libqtile/backend/wayland/cffi/build.py
+	uv run ./libqtile/backend/wayland/cffi/build.py --debug
 	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
+
+TTY := $(shell [ -t 0 ] && echo "-t")
+DOCKER_RUN = docker run --rm -i $(TTY) \
+	-v $(PWD):/workspace:z \
+	-e USER_UID=$$(id -u) \
+	-e USER_GID=$$(id -g) \
+	-e HOME=/workspace \
+	--env-file <(env) \
+	qtile-ci
 
 .PHONY: ci-check
 ci-check: ## Run the test suite in the docker ci container
-	docker run --rm -it\
-		-v $(PWD):/workspace:z \
-		-e USER_UID=$$(id -u) \
-		-e USER_GID=$$(id -g) \
-		qtile-ci \
-		make check
+	$(DOCKER_RUN) make check
 
 .PHONY: ci-bash
 ci-bash: ## Run the test suite in the docker ci container
-	docker run --rm -it \
-		-v $(PWD):/workspace:z \
-		-e USER_UID=$$(id -u) \
-		-e USER_GID=$$(id -g) \
-		qtile-ci \
-		bash
+	$(DOCKER_RUN) bash
 
 .PHONY: docs
 docs: deps ## Run the sphinx build for the html docs.

@@ -5,6 +5,7 @@ RUN dnf install -y \
     cairo-gobject-devel \
     dbus-x11 \
     gcc git make\
+    gdb \
     gobject-introspection \
     gtk3 \
     ImageMagick \
@@ -22,11 +23,11 @@ RUN dnf install -y \
     xorg-x11-server-Xvfb \
     xorg-x11-server-Xwayland \
     xterm \
+    zstd \
     && dnf clean all
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 
 WORKDIR /workspace
-ENV HOME=/workspace
 
 ENTRYPOINT ["/workspace/scripts/ci-entrypoint"]
