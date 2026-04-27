@@ -16,24 +16,31 @@ jobs:
             - uses: actions/checkout@v6
 
             - name: Build Docker image
-              run: docker build -t qtile-ci:local .
+              run: docker build -t qtile-ci .
 
             - name: Run tests in container
               run: |
-                docker run --rm \
-                  -v ${{ github.workspace }}:/workspace \
-                  -e USER_UID=`id -u` -e USER_GID=`id -g` \
-                  -e QTILE_CI_PYTHON=${{ matrix.python-version }} \
-                  -e QTILE_CI_BACKEND=${{ matrix.backend }} \
-                  -e GITHUB_ACTIONS=true \
-                  -e GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
-                  -e GITHUB_REF=${{ github.ref }} \
-                  -e GITHUB_SHA=${{ github.sha }} \
-                  -e COVERALLS_FLAG_NAME=${{ format('{0}-{1}', matrix.python-version, matrix.backend) }} \
-                  -e COVERALLS_PARALLEL=true \
-                  -e COVERALLS_SERVICE_JOB_ID=${{ github.run_id }} \
-                  qtile-ci:local \
-                  /workspace/scripts/ci-run-test
+                mkdir coredumps
+                sudo sysctl -w kernel.core_pattern=/workspace/coredumps/core-%e.%p.%t
+                make ci-check
+              env:
+                QTILE_CI_PYTHON: ${{ matrix.python-version }}
+                QTILE_CI_BACKEND: ${{ matrix.backend }}
+                GITHUB_ACTIONS: true
+                GITHUB_REF: ${{ github.ref }}
+                GITHUB_SHA: ${{ github.sha }}
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
+                COVERALLS_PARALLEL: true
+                COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
+
+            - name: Upload coredumps
+              if: always()
+              uses: actions/upload-artifact@v7
+              with:
+                name: coredumps-py${{ matrix.python-version }}-${{ matrix.backend }}-${{ github.run_id }}
+                path: coredumps/core*
+                if-no-files-found: ignore
 
     coverage:
         name: Finalize Coverage

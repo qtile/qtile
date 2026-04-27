@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 # Some tests fail when run as root. And if we use 'docker run --user', this
 # user doesn't have an entry in /etc/passwd, also causing some tests to fail.
 # We work around this by starting as root, creating a user matching the host's
@@ -11,10 +10,5 @@ if [ "$(id -u)" -eq 0 ]; then
     useradd -m -u $USER_UID -g $USERNAME -s /bin/bash $USERNAME
     exec setpriv --reuid=$USERNAME --regid=$USERNAME --clear-groups "$0" "$@"
 fi
-
-# Check for interactive flag
-# if [[ "${1:-}" == "-i" ]]; then
-#     exec bash
-# fi
 
 exec "$@"
