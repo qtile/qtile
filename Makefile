@@ -30,6 +30,12 @@ deps: ## Install all of qtile's dependencies.
 check: deps ## Run the test suite on the latest python
 	uv run ./libqtile/backend/wayland/cffi/build.py --debug
 	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
+	uv run coverage combine -q
+	uv run coverage report -m
+	uv run coverage xml
+	@if [ "$$GITHUB_ACTIONS" = "true" ]; then \
+		uv tool run coveralls --service=github || true; \
+	fi
 
 TTY := $(shell [ -t 0 ] && echo "-t")
 DOCKER_RUN = docker run --rm -i $(TTY) \
