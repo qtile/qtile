@@ -29,11 +29,19 @@ deps: ## Install all of qtile's dependencies.
 .PHONY: check
 check: deps ## Run the test suite on the latest python
 	uv run ./libqtile/backend/wayland/cffi/build.py --debug
-	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG)
+	uv run $(UV_PYTHON_ARG) $(TEST_RUNNER) $(PYTEST_BACKEND_ARG); \
+	TEST_RESULT=$$?; \
+	if [ "$$GITHUB_ACTIONS" = "true" ]; then \
+		echo "=== Backtraces ==="; \
+		for corefile in coredumps/core*; do \
+			[ -f "$$corefile" ] && gdb -batch -ex "bt full" -c "$$corefile"; \
+		done; \
+	fi; \
+	if [ $$TEST_RESULT -ne 0 ]; then exit $$TEST_RESULT; fi
 	uv run coverage combine -q
 	uv run coverage report -m
 	uv run coverage xml
-	@if [ "$$GITHUB_ACTIONS" = "true" ]; then \
+	if [ "$$GITHUB_ACTIONS" = "true" ]; then \
 		uv tool run coveralls --service=github || true; \
 	fi
 
