@@ -5,6 +5,7 @@
 #include "cursor.h"
 #include "input-device.h"
 #include "keyboard.h"
+#include "touch.h"
 #include "util.h"
 
 // Called when the device is destroyed
@@ -42,11 +43,14 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
         if (server->lock != NULL) {
             qw_session_lock_focus_first_lock_surface(server);
         }
-
         break;
     case WLR_INPUT_DEVICE_POINTER:
         // Attach a new pointer device to the server's cursor
         wlr_cursor_attach_input_device(server->cursor->cursor, device);
+        break;
+    case WLR_INPUT_DEVICE_TOUCH:
+        wlr_cursor_attach_input_device(server->cursor->cursor, device);
+        qw_touch_handle_new(server, device);
         break;
     default:
         break;
@@ -54,6 +58,9 @@ void qw_server_input_device_new(struct qw_server *server, struct wlr_input_devic
     uint32_t caps = WL_SEAT_CAPABILITY_POINTER;
     if (!wl_list_empty(&server->keyboards)) {
         caps |= WL_SEAT_CAPABILITY_KEYBOARD;
+    }
+    if (!wl_list_empty(&server->touches)) {
+        caps |= WL_SEAT_CAPABILITY_TOUCH;
     }
     wlr_seat_set_capabilities(server->seat, caps);
 
@@ -70,6 +77,11 @@ struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_devi
 struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_device) {
     struct qw_keyboard *keyboard = (struct qw_keyboard *)(input_device->device->data);
     return keyboard;
+}
+
+struct qw_touch *qw_input_device_get_touch(struct qw_input_device *input_device) {
+    struct qw_touch *touch = (struct qw_touch *)(input_device->device->data);
+    return touch;
 }
 
 bool qw_input_device_is_touchpad(struct qw_input_device *input_device) {
