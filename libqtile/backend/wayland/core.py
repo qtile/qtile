@@ -137,6 +137,14 @@ def cursor_button_cb(
 
 
 @ffi.def_extern()
+def pointer_internal_event_cb(
+    wid: int, sx: int, sy: int, event_type: int, userdata: ffi.CData
+) -> None:
+    core = ffi.from_handle(userdata)
+    core.handle_pointer_internal_event(wid, sx, sy, event_type)
+
+
+@ffi.def_extern()
 def on_screen_change_cb(userdata: ffi.CData) -> None:
     core = ffi.from_handle(userdata)
     core.handle_screen_change()
@@ -258,6 +266,7 @@ class Core(base.Core):
         self.qw.unmanage_view_cb = lib.unmanage_view_cb
         self.qw.cursor_motion_cb = lib.cursor_motion_cb
         self.qw.cursor_button_cb = lib.cursor_button_cb
+        self.qw.pointer_internal_event_cb = lib.pointer_internal_event_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
         self.qw.on_screen_reserve_space_cb = lib.on_screen_reserve_space_cb
         self.qw.view_activation_cb = lib.view_activation_cb
@@ -412,6 +421,19 @@ class Core(base.Core):
         self.qtile.process_button_motion(
             int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
         )
+
+    def handle_pointer_internal_event(self, wid: int, sx: int, sy: int, event_type: int) -> None:
+        """Forward a pointer enter/leave/motion event on an Internal view."""
+        assert self.qtile is not None
+        win = self.qtile.windows_map.get(wid)
+        if not isinstance(win, base.Internal):
+            return
+        if event_type == lib.QW_POINTER_INTERNAL_ENTER:
+            win.process_pointer_enter(sx, sy)
+        elif event_type == lib.QW_POINTER_INTERNAL_LEAVE:
+            win.process_pointer_leave(sx, sy)
+        elif event_type == lib.QW_POINTER_INTERNAL_MOTION:
+            win.process_pointer_motion(sx, sy)
 
     def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
         assert self.qtile is not None
