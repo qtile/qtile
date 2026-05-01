@@ -99,6 +99,15 @@ typedef void (*cursor_motion_cb_t)(void *userdata);
 typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x, int y,
                                   void *userdata);
 
+// Pointer enter/leave/motion event on an Internal view (e.g. a bar).
+enum qw_pointer_internal_event_type {
+    QW_POINTER_INTERNAL_ENTER = 0,
+    QW_POINTER_INTERNAL_LEAVE = 1,
+    QW_POINTER_INTERNAL_MOTION = 2,
+};
+typedef void (*pointer_internal_event_cb_t)(int wid, int sx, int sy, int event_type,
+                                            void *userdata);
+
 // Forward declaration for wlr_output
 struct wlr_output;
 
@@ -197,6 +206,7 @@ struct qw_server {
     unmanage_view_cb_t unmanage_view_cb;
     cursor_motion_cb_t cursor_motion_cb;
     cursor_button_cb_t cursor_button_cb;
+    pointer_internal_event_cb_t pointer_internal_event_cb;
     on_screen_change_cb_t on_screen_change_cb;
     on_screen_reserve_space_cb_t on_screen_reserve_space_cb;
     view_activation_cb_t view_activation_cb;

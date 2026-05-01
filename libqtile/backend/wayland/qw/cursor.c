@@ -6,6 +6,7 @@
 #include "output.h"
 #include "server.h"
 #include "util.h"
+#include "view.h"
 #include "wayland-util.h"
 
 void qw_cursor_destroy(struct qw_cursor *cursor) {
@@ -20,6 +21,9 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 
     free(cursor);
 }
+
+// Forward declaration: dispatch Internal-view enter/leave/motion to compositor.
+static void qw_cursor_dispatch_internal_pointer(struct qw_cursor *cursor, double sx, double sy);
 
 // Pointer focus helper function
 static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *surface, double sx,
@@ -37,6 +41,38 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
         if (surface != prev_surface) {
             wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
         }
+    }
+    qw_cursor_dispatch_internal_pointer(cursor, sx, sy);
+}
+
+// Notify the compositor about pointer enter/leave/motion on Internal views.
+static void qw_cursor_dispatch_internal_pointer(struct qw_cursor *cursor, double sx, double sy) {
+    if (!cursor->server->pointer_internal_event_cb) {
+        return;
+    }
+
+    int new_wid = -1;
+    if (cursor->view != NULL && cursor->view->view_type == QW_VIEW_INTERNAL) {
+        new_wid = cursor->view->wid;
+    }
+
+    int prev_wid = cursor->prev_internal_wid;
+    if (new_wid != prev_wid) {
+        if (prev_wid != -1) {
+            cursor->server->pointer_internal_event_cb(prev_wid, 0, 0,
+                                                      QW_POINTER_INTERNAL_LEAVE,
+                                                      cursor->server->cb_data);
+        }
+        if (new_wid != -1) {
+            cursor->server->pointer_internal_event_cb(new_wid, (int)sx, (int)sy,
+                                                      QW_POINTER_INTERNAL_ENTER,
+                                                      cursor->server->cb_data);
+        }
+        cursor->prev_internal_wid = new_wid;
+    } else if (new_wid != -1) {
+        cursor->server->pointer_internal_event_cb(new_wid, (int)sx, (int)sy,
+                                                  QW_POINTER_INTERNAL_MOTION,
+                                                  cursor->server->cb_data);
     }
 }
 
@@ -368,6 +404,7 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     }
 
     cursor->server = server;
+    cursor->prev_internal_wid = -1;
     cursor->cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(cursor->cursor, server->output_layout);
     cursor->mgr = wlr_xcursor_manager_create(NULL, 24);
