@@ -432,6 +432,18 @@ class Core(base.Core):
         else:
             return self.qtile.process_button_release(button, mask)
 
+    @expose_command
+    def get_cursor_shape_v1(self) -> str | None:
+        """
+        Get the current cursor shape name from cursor-shape-v1 protocol.
+
+        Returns None if the cursor has no shape name set.
+        """
+        cursor = self.qw_cursor
+        if cursor.current_shape_name == ffi.NULL:
+            return None
+        return ffi.string(cursor.current_shape_name).decode("utf-8")
+
     def handle_manage_view(self, view: ffi.CData) -> None:
         wid = self.new_wid()
         view.wid = wid

@@ -20,6 +20,7 @@ struct qw_cursor {
     struct qw_view *view;
     struct qw_implicit_grab implicit_grab;
     struct wlr_cursor_shape_manager_v1 *cursor_shape_mgr;
+    const char *current_shape_name;
 
     // private data
     struct qw_server *server;

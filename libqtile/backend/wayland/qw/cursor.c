@@ -375,6 +375,7 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     cursor->cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(cursor->cursor, server->output_layout);
     cursor->mgr = wlr_xcursor_manager_create(NULL, 24);
+    cursor->current_shape_name = NULL;
 
     // Setup listeners for various pointer events
     cursor->request_set.notify = qw_cursor_handle_seat_request_set;
@@ -686,6 +687,7 @@ static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, voi
     }
 
     const char *name = wlr_cursor_shape_v1_name(event->shape);
+    cursor->current_shape_name = name;
 
     wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
 }
