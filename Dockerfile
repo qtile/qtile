@@ -15,8 +15,10 @@ RUN dnf install -y \
     python3.12 python3.12-devel \
     python3.13 python3.13-devel \
     python3.14 python3.14-devel \
+    wayland-devel \
     wayland-protocols-devel \
-    wlroots0.19-devel \
+    wlroots-0.20.0-1.fc44 \
+    wlroots-devel-0.20.0-1.fc44 \
     xcb-util-cursor \
     xorg-x11-server-Xorg \
     xorg-x11-server-Xephyr \

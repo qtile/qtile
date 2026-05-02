@@ -12,7 +12,7 @@ from setuptools import Distribution
 from setuptools.command.build_ext import build_ext
 
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
-WLROOTS_PATH = os.getenv("QTILE_WLROOTS_PATH", "/usr/include/wlroots-0.19")
+WLROOTS_PATH = os.getenv("QTILE_WLROOTS_PATH", "/usr/include/wlroots-0.20")
 
 PKG_CONFIG = os.environ.get("PKG_CONFIG", "pkg-config")
 WAYLAND_SCANNER = os.environ.get("QTILE_WAYLAND_SCANNER", shutil.which("wayland-scanner"))
@@ -230,7 +230,7 @@ INCLUDE_DIRS = [
     QW_PATH,
     QW_PROTO_OUT_PATH,
 ]
-LIBRARIES = ["wlroots-0.19", "wayland-server", "input", "cairo"]
+LIBRARIES = ["wlroots-0.20", "wayland-server", "input", "cairo"]
 
 # SOURCE_FILES loads all .c files...
 SOURCE_FILES = glob.glob(f"{QW_PATH}/*.c")

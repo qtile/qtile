@@ -44,5 +44,5 @@ let
     };
 in
 (pkgs.python3Packages.qtile.overrideAttrs qtile-override-func).override {
-  wlroots = pkgs.wlroots_0_19;
+  wlroots = pkgs.wlroots_0_20;
 }
