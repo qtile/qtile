@@ -15,6 +15,7 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     wl_list_remove(&cursor->motion_absolute.link);
     wl_list_remove(&cursor->frame.link);
     wl_list_remove(&cursor->button.link);
+    wl_list_remove(&cursor->request_set_cursor_shape.link);
 
     wlr_xcursor_manager_destroy(cursor->mgr);
 
@@ -359,6 +360,9 @@ static void qw_cursor_handle_frame(struct wl_listener *listener, void *data) {
     wlr_seat_pointer_notify_frame(cursor->server->seat);
 }
 
+// forward declaration
+static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data);
+
 struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     // Allocate memory for qw_cursor
     struct qw_cursor *cursor = calloc(1, sizeof(*cursor));
@@ -371,6 +375,7 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     cursor->cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(cursor->cursor, server->output_layout);
     cursor->mgr = wlr_xcursor_manager_create(NULL, 24);
+    cursor->current_shape_name = NULL;
 
     // Setup listeners for various pointer events
     cursor->request_set.notify = qw_cursor_handle_seat_request_set;
@@ -390,6 +395,11 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
 
     cursor->button.notify = qw_cursor_handle_button;
     wl_signal_add(&cursor->cursor->events.button, &cursor->button);
+
+    cursor->cursor_shape_mgr = wlr_cursor_shape_manager_v1_create(server->display, 1);
+    cursor->request_set_cursor_shape.notify = qw_handle_request_set_cursor_shape;
+    wl_signal_add(&cursor->cursor_shape_mgr->events.request_set_shape,
+                  &cursor->request_set_cursor_shape);
 
     wl_list_init(&cursor->constraint_commit.link);
 
@@ -665,4 +675,19 @@ void qw_cursor_fake_click(struct qw_cursor *cursor) {
     // Simulate release
     event.state = WL_POINTER_BUTTON_STATE_RELEASED;
     qw_cursor_handle_button(&cursor->button, &event);
+}
+
+static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, void *data) {
+    struct qw_cursor *cursor = wl_container_of(listener, cursor, request_set_cursor_shape);
+    struct wlr_cursor_shape_manager_v1_request_set_shape_event *event = data;
+
+    struct wlr_seat_client *focused_client = cursor->server->seat->pointer_state.focused_client;
+    if (focused_client != event->seat_client) {
+        return;
+    }
+
+    const char *name = wlr_cursor_shape_v1_name(event->shape);
+    cursor->current_shape_name = name;
+
+    wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
 }
