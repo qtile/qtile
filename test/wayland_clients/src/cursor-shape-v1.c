@@ -31,6 +31,7 @@ static struct wp_cursor_shape_manager_v1 *cursor_manager;
 static struct wp_cursor_shape_device_v1 *cursor_device;
 
 static uint32_t cursor_shape = WP_CURSOR_SHAPE_DEVICE_V1_SHAPE_CROSSHAIR;
+static uint32_t last_serial = 0;
 
 /* ---------------- shm ---------------- */
 
@@ -148,6 +149,7 @@ static void pointer_enter(void *data, struct wl_pointer *pointer, uint32_t seria
     (void)x;
     (void)y;
 
+    last_serial = serial;
     set_cursor(serial);
 }
 
@@ -158,6 +160,12 @@ static void pointer_motion(void *data, struct wl_pointer *pointer, uint32_t time
     (void)time;
     (void)x;
     (void)y;
+
+    last_serial = 0;
+    if (last_serial == 0) {
+        last_serial = 1;
+    }
+    set_cursor(last_serial);
 }
 
 static void pointer_leave(void *data, struct wl_pointer *pointer, uint32_t serial,
