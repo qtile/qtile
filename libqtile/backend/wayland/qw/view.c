@@ -394,6 +394,10 @@ struct qw_output *qw_view_get_primary_output(struct qw_view *view) {
         }
     }
 
+    if (primary_output == NULL) {
+        return NULL;
+    }
+
     return primary_output->data;
 }
 
@@ -494,5 +498,19 @@ void qw_view_update_ftl_outputs(struct qw_view *view, struct wlr_surface *surfac
 
         wl_list_remove(&vo->link);
         free(vo);
+    }
+}
+
+void qw_view_prepare_kill(struct qw_view *view, struct wlr_surface *surface, struct wlr_seat *seat,
+                          void (*kill_complete)(struct qw_view *self),
+                          void (*activate_func)(void *self, bool activate)) {
+    if (view->on_anim_complete == kill_complete) {
+        return;
+    }
+
+    activate_func(view, false);
+
+    if (surface == seat->keyboard_state.focused_surface) {
+        wlr_seat_keyboard_clear_focus(seat);
     }
 }
