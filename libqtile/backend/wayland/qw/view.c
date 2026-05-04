@@ -3,6 +3,8 @@
 #include "server.h"
 #include "util.h"
 #include <stdlib.h>
+#include <wayland-util.h>
+#include <wlr/types/wlr_scene.h>
 #include <wlr/util/log.h>
 
 // Frees all border rectangles and their associated scene nodes of the view.
@@ -437,3 +439,24 @@ struct qw_output *qw_view_get_primary_output(struct qw_view *view) {
 void qw_view_grab_click(struct qw_view *view) { view->grabbed_click = true; }
 
 void qw_view_ungrab_click(struct qw_view *view) { view->grabbed_click = false; }
+void qw_set_node_opacity(struct wlr_scene_node *node, float opacity) {
+    if (node->type == WLR_SCENE_NODE_BUFFER) {
+        struct wlr_scene_buffer *buf = wlr_scene_buffer_from_node(node);
+        wlr_scene_buffer_set_opacity(buf, opacity);
+    } else if (node->type == WLR_SCENE_NODE_RECT) {
+        struct wlr_scene_rect *rect = wlr_scene_rect_from_node(node);
+        // RGBA
+        // A indicates opacity
+        float new_color[4] = {rect->color[0], rect->color[1], rect->color[2], opacity};
+        wlr_scene_rect_set_color(rect, new_color);
+    } else if (node->type == WLR_SCENE_NODE_TREE) {
+        struct wlr_scene_tree *tree = wlr_scene_tree_from_node(node);
+        struct wlr_scene_node *child;
+        wl_list_for_each(child, &tree->children, link) { qw_set_node_opacity(child, opacity); }
+    }
+}
+void qw_view_set_opacity(struct qw_view *view, float opacity) {
+    if (view->content_tree) {
+        qw_set_node_opacity(&view->content_tree->node, opacity);
+    }
+}

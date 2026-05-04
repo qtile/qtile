@@ -156,8 +156,8 @@ void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, 
 struct qw_output *qw_view_get_primary_output(struct qw_view *view);
 
 int qw_view_get_layer(struct qw_view *view);
-
 void qw_view_grab_click(struct qw_view *view);
 void qw_view_ungrab_click(struct qw_view *view);
-
+void qw_set_node_opacity(struct wlr_scene_node *node, float opacity);
+void qw_view_set_opacity(struct qw_view *view, float opacity);
 #endif /* VIEW_H */
