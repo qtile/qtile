@@ -931,7 +931,7 @@ bool qw_server_init(struct qw_server *server) {
     }
 
     wl_list_init(&server->outputs);
-
+    wl_list_init(&server->views);
     server->output_layout = wlr_output_layout_create(server->display);
     if (server->output_layout == NULL) {
         wlr_log(WLR_ERROR, "failed to create output layout");
