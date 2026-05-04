@@ -229,6 +229,7 @@ TEST_CLIENTS: list[TestClient] = [
 # Build configuration
 
 CDEF_FILES = [
+    "animation.h",
     "log.h",
     "session-lock.h",
     "server.h",
@@ -386,6 +387,7 @@ extern "Python" int request_maximize_cb(bool maximize, void *userdata);
 extern "Python" int request_minimize_cb(bool minimize, void *userdata);
 extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
+extern "Python" void anim_complete_cb(int wid, void *cb_data);
 """
 
 
