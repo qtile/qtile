@@ -238,10 +238,6 @@ class Core(base.Core):
     def __init__(self) -> None:
         # this Internal window receives keyboard input, e.g. via the Prompt widget.
         self.focused_internal: base.Internal | None = None
-        # bar currently under the pointer and last bar-local cursor coords;
-        # used to dispatch widget hover events from handle_cursor_motion.
-        self._pointer_bar: Any = None
-        self._pointer_pos: tuple[int, int] = (0, 0)
 
         """Setup the Wayland core backend"""
         lib.qw_log_init(get_wlr_log_level(), lib.log_cb)
@@ -413,62 +409,9 @@ class Core(base.Core):
     def handle_cursor_motion(self) -> None:
         assert self.qtile is not None
         self._focus_pointer(motion=True)
-        cx = int(self.qw_cursor.cursor.x)
-        cy = int(self.qw_cursor.cursor.y)
-        self.qtile.process_button_motion(cx, cy)
-        self._dispatch_bar_pointer(cx, cy)
-
-    def _dispatch_bar_pointer(self, cx: int, cy: int) -> None:
-        """Hit-test the bars and dispatch pointer enter/leave/motion.
-
-        On X11 these are delivered via XCB EnterNotify/LeaveNotify/MotionNotify
-        which Internal-window event handlers forward to
-        ``Bar.process_pointer_{enter,leave,motion}`` (rewired in
-        ``Bar._configure``). On the Wayland side, wlroots gives the
-        compositor a single global cursor motion stream (``wlr_cursor``)
-        with no per-Internal-window enter/leave, so we hit-test the bar
-        rectangles ourselves and call the same entry points. Without
-        this, widget ``mouse_enter`` / ``mouse_leave`` callbacks (used
-        e.g. by qtile-extras' TooltipMixin) never fire on the Wayland
-        backend.
-        """
-        assert self.qtile is not None
-
-        new_bar = None
-        lx = ly = 0
-        live_bars = []
-        for screen in self.qtile.screens:
-            for bar in (screen.top, screen.bottom, screen.left, screen.right):
-                if bar is None:
-                    continue
-                live_bars.append(bar)
-                if bar.x <= cx < bar.x + bar.width and bar.y <= cy < bar.y + bar.height:
-                    new_bar = bar
-                    lx = cx - bar.x
-                    ly = cy - bar.y
-
-        prev = self._pointer_bar
-        # Drop the reference if the previous bar was finalized (e.g. on
-        # screen reconfigure). Calling process_pointer_leave on a dead bar
-        # would touch a torn-down drawer/window.
-        if prev is not None and prev not in live_bars:
-            prev = None
-            self._pointer_bar = None
-
-        if new_bar is prev:
-            if new_bar is not None:
-                new_bar.process_pointer_motion(lx, ly)
-                self._pointer_pos = (lx, ly)
-            return
-        if prev is not None:
-            # Pass the last known bar-local coords so widget.mouse_leave
-            # gets a sensible position, matching the X11 path which
-            # delivers the LeaveNotify event coordinates.
-            prev.process_pointer_leave(*self._pointer_pos)
-        if new_bar is not None:
-            new_bar.process_pointer_enter(lx, ly)
-        self._pointer_bar = new_bar
-        self._pointer_pos = (lx, ly)
+        self.qtile.process_button_motion(
+            int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
+        )
 
     def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
         assert self.qtile is not None
