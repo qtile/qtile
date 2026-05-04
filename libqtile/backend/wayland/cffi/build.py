@@ -170,6 +170,7 @@ extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
 cdef_files = [
+    "animation.h",
     "log.h",
     "session-lock.h",
     "server.h",

@@ -32,6 +32,7 @@ class _Group(CommandObject):
         self.current_layout = None
         self.last_focused = None
         self.persist = persist
+        self._hide_timer = None
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
@@ -145,6 +146,10 @@ class _Group(CommandObject):
             return
         self.screen = screen
         if self.screen:
+            if self._hide_timer:
+                self._hide_timer.cancel()
+                self._hide_timer = None
+
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
             self.layout_all(warp=warp and self.qtile.config.cursor_warp)

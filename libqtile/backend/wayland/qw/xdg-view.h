@@ -2,6 +2,7 @@
 #define XDG_VIEW_H
 
 // Include the generic view base struct and Wayland/WLRoots core and types
+#include "animation.h"
 #include "output.h"
 #include "view.h"
 #include <wayland-server-core.h>
@@ -69,5 +70,6 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
 void qw_xdg_view_focus(void *self, int above);
 
 void qw_xdg_activation_new_token(struct wl_listener *listener, void *data);
+void qw_xdg_view_animation_step(struct qw_xdg_view *xdg_view);
 
 #endif /* XDG_VIEW_H */

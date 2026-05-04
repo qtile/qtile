@@ -279,6 +279,7 @@ struct qw_server {
     struct wlr_output_power_manager_v1 *output_power_manager;
     struct wl_listener set_output_power_mode;
     struct wl_list idle_timers; // list of qw_idle_timer
+    struct wl_list views;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;

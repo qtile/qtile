@@ -28,6 +28,7 @@ backend in your config as follows:
    elif qtile.core.name == "wayland":
        term = "foot"
 
+
 Running X11-Only Programs
 =========================
 
@@ -39,6 +40,59 @@ XWayland windows sometimes don't receive mouse events
 -----------------------------------------------------
 
 There is currently a known bug (https://github.com/qtile/qtile/issues/3675) which causes pointer events (hover/click/scroll) to propagate to the wrong window when switching focus.
+
+Animations
+==========
+
+The Wayland backend supports animations for various window events. These can
+be configured globally or individually for different types of events.
+
+Configuration Options
+---------------------
+
+The following options control the duration (in milliseconds) and easing
+functions used for animations:
+
+- ``wl_default_duration`` (default: ``200``)
+- ``wl_default_ease`` (default: ``"out_cubic"``)
+- ``wl_spawn_duration`` (default: ``200``)
+- ``wl_spawn_ease`` (default: ``"out_cubic"``)
+- ``wl_kill_duration`` (default: ``200``)
+- ``wl_kill_ease`` (default: ``"out_cubic"``)
+- ``wl_slide_group_duration`` (default: ``200``)
+- ``wl_slide_group_ease`` (default: ``"out_cubic"``)
+- ``wl_dropdown_duration`` (default: ``200``)
+- ``wl_dropdown_ease`` (default: ``"out_cubic"``)
+
+Easing Functions
+----------------
+
+Available easing functions include the following types, which can be prefixed
+with ``in_``, ``out_``, or ``in_out_``:
+
+- ``sine``
+- ``cubic``
+- ``quint``
+- ``circ``
+- ``elastic``
+- ``quad``
+- ``quart``
+- ``expo``
+- ``back``
+- ``bounce``
+
+Example Usage
+-------------
+
+.. code-block:: python
+
+   # In your config.py
+   wl_default_duration = 300
+   wl_default_ease = "out_quint"
+
+   # Specifically override group switching animation
+   wl_slide_group_duration = 400
+   wl_slide_group_ease = "in_out_sine"
 
 Input Device Configuration
 ==========================

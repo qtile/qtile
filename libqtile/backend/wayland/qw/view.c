@@ -479,3 +479,17 @@ void qw_view_set_opacity(struct qw_view *view, float opacity) {
         }
     }
 }
+
+void qw_view_prepare_kill(struct qw_view *view, struct wlr_surface *surface, struct wlr_seat *seat,
+                          void (*kill_complete)(struct qw_view *self),
+                          void (*activate_func)(void *self, bool activate)) {
+    if (view->on_anim_complete == kill_complete) {
+        return;
+    }
+
+    activate_func(view, false);
+
+    if (surface == seat->keyboard_state.focused_surface) {
+        wlr_seat_keyboard_clear_focus(seat);
+    }
+}
