@@ -2,6 +2,7 @@
 #define XDG_VIEW_H
 
 // Include the generic view base struct and Wayland/WLRoots core and types
+#include "animation.h"
 #include "output.h"
 #include "view.h"
 #include <wayland-server-core.h>

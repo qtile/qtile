@@ -802,6 +802,7 @@ struct qw_server *qw_server_create() {
     }
 
     wl_list_init(&server->outputs);
+    wl_list_init(&server->views);
     server->output_layout = wlr_output_layout_create(server->display);
     server->output_layout_change.notify = qw_server_handle_output_layout_change;
     wlr_xdg_output_manager_v1_create(server->display, server->output_layout);
