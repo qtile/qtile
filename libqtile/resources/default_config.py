@@ -209,6 +209,21 @@ wl_input_rules = None
 wl_xcursor_theme = None
 wl_xcursor_size = 24
 
+# Wayland animation configuration.
+# Set wl_animation = None to disable all animations entirely.
+# To customize, pass Animation objects for each animation type:
+#
+#   from libqtile.config import Animation, WaylandAnimations
+#   wl_animation = WaylandAnimations(
+#       slide=Animation(duration=150, ease="in_out_cubic"),
+#       spawn=Animation(duration=100, ease="out_quart"),
+#   )
+#
+# Unspecified animation types fall back to the defaults (200ms, out_cubic).
+# Available easing functions: sine, cubic, quint, circ, elastic, quad, quart, expo, back, bounce.
+# Each can be prefixed with 'in_', 'out_', or 'in_out_' (e.g. 'in_cubic', 'out_quint').
+wl_animation = None
+
 idle_timers = []  # type: list
 idle_inhibitors = []  # type: list
 

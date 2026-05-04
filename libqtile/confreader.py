@@ -7,7 +7,17 @@ from pathlib import Path
 from types import FunctionType
 from typing import Any, Literal
 
-from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
+from libqtile.config import (
+    Group,
+    IdleInhibitor,
+    IdleTimer,
+    Key,
+    Mouse,
+    Output,
+    Rule,
+    Screen,
+    WaylandAnimations,
+)
 from libqtile.layout.base import Layout
 
 
@@ -20,7 +30,7 @@ from collections.abc import Callable
 from typing import Any
 from typing import Literal
 from types import FunctionType
-from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
+from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen, WaylandAnimations
 from libqtile.layout.base import Layout
 
 """
@@ -53,6 +63,8 @@ class Config:
     wl_input_rules: dict[str, Any] | None
     wl_xcursor_theme: str | None
     wl_xcursor_size: int
+    wl_animation: WaylandAnimations | None
+    """Wayland animation configuration. Set to None to disable all animations."""
     idle_timers: list[IdleTimer]
     idle_inhibitors: list[IdleInhibitor]
     fake_screens: list[Screen] | None

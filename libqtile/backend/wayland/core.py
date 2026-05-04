@@ -44,7 +44,7 @@ import signal
 import sys
 import time
 from collections import defaultdict
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +53,7 @@ from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
-from libqtile.backend.wayland.window import Base, Internal, Static, Window
+from libqtile.backend.wayland.window import Base, Internal, Static, Window, resolve_animation
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import Output, Screen, ScreenRect
 from libqtile.images import Img
@@ -228,6 +228,12 @@ def idle_state_change_cb(userdata: ffi.CData, seconds: int, is_idle: bool) -> No
     core.handle_idle_state_change(seconds, is_idle)
 
 
+@ffi.def_extern()
+def anim_complete_cb(wid, cb_data):
+    core = ffi.from_handle(cb_data)
+    core.on_animation_complete(wid)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -280,6 +286,8 @@ class Core(base.Core):
         self.qw.check_inhibited_cb = lib.check_inhibited_cb
         self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
         self.qw.idle_state_change_cb = lib.idle_state_change_cb
+        self.qw.anim_complete_cb = lib.anim_complete_cb
+        self._anim_complete_callbacks: dict[int, list[Callable[[], None]]] = {}
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
@@ -946,6 +954,81 @@ class Core(base.Core):
 
     def add_dummy_input_devices(self) -> None:
         lib.qw_server_add_dummy_input_devices(self.qw)
+
+    def register_anim_complete(self, wid: int, callback: Callable[[], None]) -> None:
+        self._anim_complete_callbacks.setdefault(wid, []).append(callback)
+
+    def on_animation_complete(self, wid: int) -> None:
+        callbacks = self._anim_complete_callbacks.pop(wid, [])
+        for cb in callbacks:
+            cb()
+
+    def animate_group_switch(self, screen, old_group, new_group, warp) -> None:
+        old_index = self.qtile.groups.index(old_group)
+        new_index = self.qtile.groups.index(new_group)
+        direction = 1 if new_index > old_index else -1
+        offset = screen.width * direction
+
+        duration, ease = resolve_animation(self.qtile, "slide", None, None)
+
+        if duration == 0:
+            super().animate_group_switch(screen, old_group, new_group, warp)
+            return
+
+        with self.qtile.core.masked():
+            sliding_out = list(old_group.windows)
+            for win in sliding_out:
+                orig_x = win.x
+                win.place(
+                    win.x - offset,
+                    win.y,
+                    win.width,
+                    win.height,
+                    win.borderwidth,
+                    win.bordercolor,
+                    duration=duration,
+                    ease=ease,
+                )
+                win.x = orig_x
+
+            old_group.screen = None
+
+            remaining = len(sliding_out)
+
+            def _on_slide_out_done():
+                nonlocal remaining
+                remaining -= 1
+                if remaining == 0:
+                    old_group.hide()
+
+            if sliding_out:
+                for win in sliding_out:
+                    self.register_anim_complete(win.wid, _on_slide_out_done)
+            else:
+                old_group.hide()
+
+            new_group.set_screen(screen, warp)
+            for win in new_group.windows:
+                target_x = win.x
+                win.place(
+                    target_x + offset,
+                    win.y,
+                    win.width,
+                    win.height,
+                    win.borderwidth,
+                    win.bordercolor,
+                    duration=0,
+                )
+                win.place(
+                    target_x,
+                    win.y,
+                    win.width,
+                    win.height,
+                    win.borderwidth,
+                    win.bordercolor,
+                    duration=duration,
+                    ease=ease,
+                )
 
 
 class Painter:

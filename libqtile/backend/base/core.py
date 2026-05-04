@@ -161,3 +161,19 @@ class Core(CommandObject, metaclass=ABCMeta):
             for inhibitor in self.idle_inhibitor_manager.inhibitors
             if not active_only or (active_only and inhibitor.check())
         ]
+
+    def animate_group_switch(
+        self,
+        screen: Screen,
+        old_group: _Group,
+        new_group: _Group,
+        warp: bool,
+    ) -> None:
+        """
+        Switch `screen` from `old_group` to `new_group`. Backends may override
+        this to animate the transition; the default just swaps them instantly.
+        """
+        with self.qtile.core.masked():
+            new_group.set_screen(screen, warp)
+            if old_group is not new_group:
+                old_group.set_screen(None, warp)
