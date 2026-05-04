@@ -406,6 +406,13 @@ class Window(Base, base.Window):
                 return True
         return False
 
+    @base._Window.opacity.setter  # Use the setter from the base class
+    def opacity(self, opacity: float) -> None:
+        self._opacity = opacity
+
+        if self._ptr:
+            lib.qw_view_set_opacity(self._ptr, opacity)
+
     def handle_request_maximize(self, maximize: bool) -> bool:
         self.maximized = maximize
         return True
