@@ -173,6 +173,9 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         // View under the cursor may have changed
         qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
     }
+    // Every time a commit happens, opacity is reset
+    // Together, we can stop this
+    qw_view_set_opacity(&xdg_view->base, xdg_view->base.opacity);
 }
 
 // Clip the xdg_view's scene tree if needed

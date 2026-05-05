@@ -101,6 +101,7 @@ class _Window(CommandObject, metaclass=ABCMeta):
     @opacity.setter
     def opacity(self, opacity: float) -> None:
         """Opacity setter."""
+        print(f"QTILE IS SETTING OPACITY TO: {opacity}")
         self._opacity = opacity
 
     @abstractmethod

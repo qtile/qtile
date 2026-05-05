@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <wayland-util.h>
 #include <wlr/types/wlr_scene.h>
-#include <wlr/util/log.h>
 
 // Frees all border rectangles and their associated scene nodes of the view.
 // Checks if borders exist, then destroys each of the 4 border scene nodes per border set.
@@ -457,6 +456,8 @@ void qw_set_node_opacity(struct wlr_scene_node *node, float opacity) {
 }
 void qw_view_set_opacity(struct qw_view *view, float opacity) {
     if (view->content_tree) {
-        qw_set_node_opacity(&view->content_tree->node, opacity);
+        struct wlr_scene_node *node_ptr = &view->content_tree->node;
+        qw_set_node_opacity(node_ptr, opacity);
+        view->opacity = opacity;
     }
 }
