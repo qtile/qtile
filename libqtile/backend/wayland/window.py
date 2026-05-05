@@ -43,6 +43,10 @@ class Base(base._Window):
         self.defunct = False
         self.group: _Group | None = None
         self.core: Core = typing.cast("Core", qtile.core)
+        # Just in case
+        self._opacity = 1.0
+        if self._ptr != ffi.NULL:
+            self._ptr.opacity = 1.0
 
     def _grab_click(self) -> None:
         lib.qw_view_grab_click(self._ptr)
@@ -54,6 +58,17 @@ class Base(base._Window):
         if self.layer() == layer:
             return
         lib.qw_view_reparent(self._ptr, layer)
+
+    @property
+    def opacity(self) -> float:
+        """The opacity of this window."""
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float) -> None:
+        self._opacity = opacity
+        if self._ptr:
+            lib.qw_view_set_opacity(self._ptr, opacity)
 
     @expose_command()
     def layer(self) -> int:
@@ -238,6 +253,8 @@ class Base(base._Window):
         self.bordercolor = bordercolor
         self.borderwidth = borderwidth
         self._ptr.place(self._ptr, x, y, width, height, c_layers, n, int(above))
+        # TODO: Remove this test
+        self.opacity = 0.5
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
@@ -405,14 +422,6 @@ class Window(Base, base.Window):
                 self.fullscreen = fullscreen
                 return True
         return False
-
-    @base._Window.opacity.setter  # Use the setter from the base class
-    def opacity(self, opacity: float) -> None:
-        self._opacity = opacity
-        if self._ptr:
-            print(f"QTILE IS SETTING OPACITY TO: {opacity}")
-            print("Setting opacity")
-            # lib.qw_view_set_opacity(self._ptr, opacity)
 
     def handle_request_maximize(self, maximize: bool) -> bool:
         self.maximized = maximize
