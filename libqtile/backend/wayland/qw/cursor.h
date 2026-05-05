@@ -37,6 +37,8 @@ struct qw_cursor {
     struct wlr_pointer_constraint_v1 *active_constraint;
     bool active_confine_requires_warp;
     pixman_region32_t confine;
+    // Wid of the Internal view currently under the pointer (-1 if none).
+    int prev_internal_wid;
 };
 
 struct qw_pointer_constraint {
