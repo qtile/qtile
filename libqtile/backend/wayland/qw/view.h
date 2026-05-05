@@ -85,10 +85,10 @@ struct qw_view {
     char *instance; // XWayland only
     char *role;     // XWayland only
     bool skip_taskbar;
+    float opacity;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
     struct wlr_foreign_toplevel_handle_v1 *ftl_handle;
     bool grabbed_click;
-
     request_focus_cb_t request_focus_cb;
     request_close_cb_t request_close_cb;
     request_maximize_cb_t request_maximize_cb;
@@ -156,8 +156,7 @@ void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, 
 struct qw_output *qw_view_get_primary_output(struct qw_view *view);
 
 int qw_view_get_layer(struct qw_view *view);
-
 void qw_view_grab_click(struct qw_view *view);
 void qw_view_ungrab_click(struct qw_view *view);
-
+void qw_view_set_opacity(struct qw_view *view, float opacity);
 #endif /* VIEW_H */

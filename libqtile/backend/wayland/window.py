@@ -43,6 +43,10 @@ class Base(base._Window):
         self.defunct = False
         self.group: _Group | None = None
         self.core: Core = typing.cast("Core", qtile.core)
+        # Just in case
+        self._opacity = 1.0
+        if self._ptr != ffi.NULL:
+            self._ptr.opacity = 1.0
 
     def _grab_click(self) -> None:
         lib.qw_view_grab_click(self._ptr)
@@ -54,6 +58,19 @@ class Base(base._Window):
         if self.layer() == layer:
             return
         lib.qw_view_reparent(self._ptr, layer)
+
+    @property
+    def opacity(self) -> float:
+        """The opacity of this window."""
+        return self._opacity
+
+    @opacity.setter
+    def opacity(self, opacity: float) -> None:
+        # Clamp the given opacity
+        opacity = max(0.0, min(1.0, opacity))
+        self._opacity = opacity
+        if self._ptr:
+            lib.qw_view_set_opacity(self._ptr, opacity)
 
     @expose_command()
     def layer(self) -> int:
@@ -657,6 +674,7 @@ class Window(Base, base.Window):
             maximized=self._float_state == FloatStates.MAXIMIZED,
             minimized=self._float_state == FloatStates.MINIMIZED,
             fullscreen=self._float_state == FloatStates.FULLSCREEN,
+            opacity=self.opacity,
         )
 
     @property

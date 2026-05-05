@@ -99,3 +99,62 @@ def test_layer_bring_to_front(wmanager):
 
 
 # TODO: Add test for bring_front_click
+
+
+@bare_config
+def test_window_opacity(wmanager):
+    # 1. Spawn a fake window
+    wmanager.test_window("one")
+    # 2. Check the default opacity
+    assert wmanager.c.window.info()["opacity"] == 1.0
+    # 3. Change the opacity using the IPC command
+    wmanager.c.window.set_opacity(0.5)
+    assert wmanager.c.window.info()["opacity"] == 0.5
+    # 5. Spawn a second window to ensure the compositor doesn't crash
+    wmanager.test_window("two")
+    assert wmanager.c.window.info()["opacity"] == 1.0  # The NEW window is 1.0
+    # Test multi window consistency
+    wmanager.c.window.set_opacity(0.2)
+    assert window_by_name(wmanager.c, "two").info()["opacity"] == 0.2  #
+    assert window_by_name(wmanager.c, "one").info()["opacity"] == 0.5
+
+
+@bare_config
+def test_window_opacity_commands(wmanager):
+    wmanager.test_window("one")
+    # 1. Initial state should be 1.0
+    assert wmanager.c.window.info()["opacity"] == 1.0
+
+    # 2. Test explicit out-of-bounds (High)
+    wmanager.c.window.set_opacity(5.0)
+    assert wmanager.c.window.info()["opacity"] == 1.0
+
+    # 3. Test explicit out-of-bounds (Low)
+    # The base class IPC command clamps at 0.1, not 0.0!
+    wmanager.c.window.set_opacity(-1.0)
+    assert wmanager.c.window.info()["opacity"] == pytest.approx(0.1)
+
+    # 4. Set to a normal value for stepping
+    wmanager.c.window.set_opacity(0.5)
+    assert wmanager.c.window.info()["opacity"] == 0.5
+
+    # 5. Test single steps
+    wmanager.c.window.up_opacity()
+    assert wmanager.c.window.info()["opacity"] == pytest.approx(0.6)
+
+    wmanager.c.window.down_opacity()
+    assert wmanager.c.window.info()["opacity"] == pytest.approx(0.5)
+
+    # 6. Break it: Spam down_opacity way past 0.1
+    for _ in range(10):
+        wmanager.c.window.down_opacity()
+
+    # Should be firmly clamped at 0.1
+    assert wmanager.c.window.info()["opacity"] == pytest.approx(0.1)
+
+    # 7. Break it: Spam up_opacity way past 1.0
+    for _ in range(15):
+        wmanager.c.window.up_opacity()
+
+    # Should be firmly clamped at 1.0
+    assert wmanager.c.window.info()["opacity"] == pytest.approx(1.0)
