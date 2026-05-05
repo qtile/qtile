@@ -253,7 +253,6 @@ class Base(base._Window):
         self.bordercolor = bordercolor
         self.borderwidth = borderwidth
         self._ptr.place(self._ptr, x, y, width, height, c_layers, n, int(above))
-        # TODO: Remove this test
         self.opacity = 0.5
 
     @expose_command()
