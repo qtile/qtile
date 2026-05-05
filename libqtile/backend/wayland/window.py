@@ -674,6 +674,7 @@ class Window(Base, base.Window):
             maximized=self._float_state == FloatStates.MAXIMIZED,
             minimized=self._float_state == FloatStates.MINIMIZED,
             fullscreen=self._float_state == FloatStates.FULLSCREEN,
+            opacity=self.opacity,
         )
 
     @property
