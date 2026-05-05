@@ -438,7 +438,7 @@ struct qw_output *qw_view_get_primary_output(struct qw_view *view) {
 void qw_view_grab_click(struct qw_view *view) { view->grabbed_click = true; }
 
 void qw_view_ungrab_click(struct qw_view *view) { view->grabbed_click = false; }
-void qw_set_node_opacity(struct wlr_scene_node *node, float opacity) {
+static void qw_set_node_opacity(struct wlr_scene_node *node, float opacity) {
     if (node->type == WLR_SCENE_NODE_BUFFER) {
         struct wlr_scene_buffer *buf = wlr_scene_buffer_from_node(node);
         wlr_scene_buffer_set_opacity(buf, opacity);
