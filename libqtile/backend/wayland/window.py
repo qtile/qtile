@@ -66,6 +66,8 @@ class Base(base._Window):
 
     @opacity.setter
     def opacity(self, opacity: float) -> None:
+        # Clamp the given opacity
+        opacity = max(0.0, min(1.0, opacity))
         self._opacity = opacity
         if self._ptr:
             lib.qw_view_set_opacity(self._ptr, opacity)
@@ -253,7 +255,6 @@ class Base(base._Window):
         self.bordercolor = bordercolor
         self.borderwidth = borderwidth
         self._ptr.place(self._ptr, x, y, width, height, c_layers, n, int(above))
-        self.opacity = 0.5
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
