@@ -4,3 +4,8 @@ qtile.desktop: A desktop file for qtile telling session managers about qtile
 qtile-wayland.desktop: A desktop file to start qtile in wayland mode.
 
 99-qtile.rules: udev rules for hardware that qtile can manage
+
+qtile-session.target, qtile.service: example systemd user units for starting
+    qtile as a systemd user service, which activates graphical-session.target
+    so xdg-desktop-portal and similar services work correctly. Install to
+    ~/.config/systemd/user/.
