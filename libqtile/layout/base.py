@@ -485,7 +485,6 @@ class _SimpleLayoutBase(Layout):
 
     def swap(self, window1: Window, window2: Window) -> None:
         self.clients.swap(window1, window2)
-        self.group.layout_all()
         self.group.focus(window1)
 
     def next(self) -> None:

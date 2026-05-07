@@ -744,14 +744,12 @@ class MonadTall(_SimpleLayoutBase):
     def shuffle_up(self):
         """Shuffle the client up the stack"""
         self.clients.shuffle_up()
-        self.group.layout_all()
         self.group.focus(self.clients.current_client)
 
     @expose_command()
     def shuffle_down(self):
         """Shuffle the client down the stack"""
         self.clients.shuffle_down()
-        self.group.layout_all()
         self.group.focus(self.clients[self.focused])
 
     @expose_command()
