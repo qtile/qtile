@@ -865,11 +865,16 @@ def test_window_stacking_order(xmanager):
     """Test basic window stacking controls."""
     conn = xcbq.Connection(xmanager.display)
 
-    def has_state_above(wid):
-        r = conn.conn.core.GetProperty(
-            False, wid, conn.atoms["_NET_WM_STATE"], conn.atoms["ATOM"], 0, (2**32) - 1
-        ).reply()
-        return conn.atoms["_NET_WM_STATE_ABOVE"] in r.value.to_atoms()
+    def _wnd(name):
+        return xmanager.c.window[{w["name"]: w["id"] for w in xmanager.c.windows()}[name]]
+
+    def _clients():
+        root = conn.default_screen.root.wid
+        q = conn.conn.core.QueryTree(root).reply()
+        stack = list(q.children)
+        wins = [(w["name"], stack.index(w["id"])) for w in xmanager.c.windows()]
+        wins.sort(key=lambda x: x[1])
+        return [x[0] for x in wins]
 
     xmanager.test_window("one")
     xmanager.test_window("two", floating=True)
@@ -877,10 +882,11 @@ def test_window_stacking_order(xmanager):
     xmanager.test_window("four", floating=True)
     xmanager.test_window("five", floating=True)
 
-    assert not has_state_above(wid)
+    # We're testing 3 "layers"
+    # BELOW, 'everything else', ABOVE
 
-    window_by_name(xmanager.c, "one").toggle_floating()
-    assert has_state_above(wid)
+    # New windows added on top of each other
+    assert _clients() == ["one", "two", "three", "four", "five"]
 
     # Moving above/below moves above/below next client in the layer
     _wnd("one").move_up()
@@ -997,6 +1003,28 @@ def test_floats_kept_above(xmanager):
     # Open a different floating window. This should be above the first floating one.
     xmanager.test_window("three", floating=True)
     assert _clients() == ["two", "one", "three"]
+
+
+@manager_config
+def test_floats_kept_above_cleared_on_toggle(xmanager):
+    conn = xcbq.Connection(xmanager.display)
+
+    def has_state_above(wid):
+        r = conn.conn.core.GetProperty(
+            False, wid, conn.atoms["_NET_WM_STATE"], conn.atoms["ATOM"], 0, (2**32) - 1
+        ).reply()
+        return conn.atoms["_NET_WM_STATE_ABOVE"] in r.value.to_atoms()
+
+    xmanager.test_window("one")
+    wid = xmanager.c.window.info()["id"]
+
+    assert not has_state_above(wid)
+
+    window_by_name(xmanager.c, "one").toggle_floating()
+    assert has_state_above(wid)
+
+    window_by_name(xmanager.c, "one").toggle_floating()
+    assert not has_state_above(wid)
 
 
 @manager_config
