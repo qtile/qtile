@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from collections import namedtuple
 from math import pi
@@ -134,6 +136,12 @@ class ImageBuffer:
         self.width = width
         self.height = height
 
+    @classmethod
+    def empty(cls, format, width, height):
+        stride = cairocffi.ImageSurface.format_stride_for_width(format, width)
+        data = bytearray(stride * height)
+        return cls(data, format, width, height)
+
 
 class Img:
     """Img is a class which creates & manipulates cairo SurfacePatterns from an image
@@ -168,6 +176,13 @@ class Img:
     def from_data(cls, data, format, width, height):
         "Create an Img instance from image data"
         image_buffer = ImageBuffer(data, format, width, height)
+        img = cls(None)
+        img.image_buffer = image_buffer
+        return img
+
+    @classmethod
+    def blank(cls, format, width, height):
+        image_buffer = ImageBuffer.empty(format, width, height)
         img = cls(None)
         img.image_buffer = image_buffer
         return img
@@ -256,6 +271,20 @@ class Img:
         width0, height0 = initial_size
         return _ImgSize(width0 * width_factor, height0 * height_factor)
 
+    def paste(self, img: Img):
+        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
+        with cairocffi.Context(surface) as ctx:
+            ctx.set_source(self.pattern)
+            ctx.paint()
+            ctx.set_source(img.pattern)
+            ctx.paint()
+        result = cairocffi.SurfacePattern(surface)
+        self._pattern = result
+
+        data = bytes(surface.get_data())
+        fmt = surface.get_format()
+        self.image_buffer = ImageBuffer(data, fmt, self.width, self.height)
+
     @property
     def surface(self):
         try:
@@ -300,20 +329,6 @@ class Img:
         s0 = (self.bytes_img, self.theta, self.width, self.height)
         s1 = (other.bytes_img, other.theta, other.width, other.height)
         return s0 == s1
-
-    def draw(self, drawer, offsetx=0, offsety=0):
-        # If an output scale was specified, image will have been upscaled when resized.
-        # Rasterize image as a cairo Pattern
-        pattern = self.pattern
-
-        # Translate and downscale image if required
-        drawer.ctx.save()
-        drawer.ctx.translate(offsetx, offsety)
-        scale = self._output_scale
-        drawer.ctx.scale(1 / scale, 1 / scale)
-        drawer.ctx.set_source(pattern)
-        drawer.ctx.paint()
-        drawer.ctx.restore()
 
 
 class Loader:

@@ -7,6 +7,7 @@ import typing
 import cairocffi
 
 from libqtile import pangocffi, utils
+from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.utils import ColorsType
 
@@ -333,6 +334,21 @@ class Drawer:
     @property
     def output_scale(self):
         return getattr(self._win, "scale", 1)
+
+    def draw_image(self, img: Img, offsetx: int = 0, offsety: int = 0) -> None:
+        pattern = img.pattern
+
+        # If the image has an embedded output_scale > 1, it has been scaled
+        # for a HiDPI display. We downscale here for compositing. Note that
+        # image quality isn't degraded because the context uses a recording
+        # surface
+        self.ctx.save()
+        self.ctx.translate(offsetx, offsety)
+        scale = img._output_scale
+        self.ctx.scale(1 / scale, 1 / scale)
+        self.ctx.set_source(pattern)
+        self.ctx.paint()
+        self.ctx.restore()
 
 
 class TextLayout:

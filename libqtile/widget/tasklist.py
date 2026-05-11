@@ -591,7 +591,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         size = self.height if self.bar.horizontal else self.width
         y = (size - self.icon_size) // 2
 
-        img.draw(drawer=self.drawer, offsetx=x, offsety=y)
+        self.drawer.draw_image(img, offsetx=x, offsety=y)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
