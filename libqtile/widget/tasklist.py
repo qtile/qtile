@@ -578,7 +578,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 img = xdg_img
 
         if img is not None:
-            img.resize(height=self.icon_size, output_scale=self.drawer.output_scale)
+            img.resize(height=self.icon_size)
 
         self._icons_cache[window.wid] = img
         return img

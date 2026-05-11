@@ -162,7 +162,6 @@ class Img:
         self.image_buffer = None
         self.name = name
         self.path = path
-        self._output_scale = 1
 
     def _reset(self):
         if hasattr(self, "surface"):
@@ -222,16 +221,9 @@ class Img:
     width = _PixelSize("width")
     height = _PixelSize("height")
 
-    def resize(self, width=None, height=None, output_scale=None):
+    def resize(self, width=None, height=None):
         if width is None and height is None:
             raise ValueError("You must supply width or height")
-
-        if output_scale is not None:
-            if width is not None:
-                width *= output_scale
-            if height is not None:
-                height *= output_scale
-            self._output_scale = output_scale
 
         width0, height0 = self.default_size
         width_factor = width / width0 if width is not None else None

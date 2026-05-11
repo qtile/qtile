@@ -435,7 +435,7 @@ class StatusNotifierItem:  # noqa: E303
             base_icon.paste(overlay)
         icon = base_icon
 
-        # Store the surface for next time
+        # Store the image for next time
         self.images[size] = icon
 
         return icon

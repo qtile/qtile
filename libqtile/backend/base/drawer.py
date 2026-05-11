@@ -336,19 +336,26 @@ class Drawer:
         return getattr(self._win, "scale", 1)
 
     def draw_image(self, img: Img, offsetx: int = 0, offsety: int = 0) -> None:
+        w0 = img.width
+        h0 = img.height
+        applied_scale = img.width / img.default_size.width
+        combined_scale = applied_scale * self.output_scale
+        img.scale(combined_scale, combined_scale)
         pattern = img.pattern
 
-        # If the image has an embedded output_scale > 1, it has been scaled
-        # for a HiDPI display. We downscale here for compositing. Note that
-        # image quality isn't degraded because the context uses a recording
-        # surface
+        # If the image has been scaled for HiDPI, we downscale here for
+        # compositing. Quality isn't degraded because the context uses a
+        # recording surface.
         self.ctx.save()
         self.ctx.translate(offsetx, offsety)
-        scale = img._output_scale
-        self.ctx.scale(1 / scale, 1 / scale)
+        self.ctx.scale(1 / self.output_scale, 1 / self.output_scale)
         self.ctx.set_source(pattern)
         self.ctx.paint()
         self.ctx.restore()
+
+        # Some widgets cache images, so restore mutated state
+        img.width = w0
+        img.height = h0
 
 
 class TextLayout:

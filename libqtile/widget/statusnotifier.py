@@ -109,8 +109,7 @@ class StatusNotifier(base._Widget):
         for item in self.available_icons:
             # Get the icon at its scaled size or larger (if possible)
             icon = item.get_icon(scaled_icon_size)
-            # Make the icon DPI-aware by resizing with display output_scale specified
-            icon.resize(height=self.icon_size, output_scale=self.drawer.output_scale)
+            icon.resize(height=self.icon_size)
             if self.bar.horizontal:
                 self._draw_icon(icon, xoffset, yoffset)
             else:
