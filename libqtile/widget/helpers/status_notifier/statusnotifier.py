@@ -432,8 +432,9 @@ class StatusNotifierItem:  # noqa: E303
             overlay = imgs.get("Overlay", None)
 
         if overlay:
-            base_icon.paste(overlay)
-        icon = base_icon
+            icon = base_icon.paste(overlay)
+        else:
+            icon = base_icon
 
         # Store the image for next time
         self.images[size] = icon
