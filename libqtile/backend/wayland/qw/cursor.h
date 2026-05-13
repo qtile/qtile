@@ -1,9 +1,13 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 
+#include <pixman.h>
+#include <wayland-server-core.h>
 #include <wlr/types/wlr_cursor.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+
+#include <stdint.h>
 
 struct qw_server; // Forward declaration to avoid circular dependency
 
