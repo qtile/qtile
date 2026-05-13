@@ -4,6 +4,7 @@ and its supporting code.
 """
 
 import os
+from copy import copy
 from glob import glob
 from os import path
 
@@ -47,6 +48,19 @@ def png_img():
     return images.Img.from_path(PNGS[0])
 
 
+@pytest.fixture(scope="function")
+def rgba_pixel_data():
+    # ARGB32 format: 4 bytes per pixel, order is B, G, R, A
+    pixels = []
+    for y in range(24):
+        for x in range(24):
+            if x == y:
+                pixels.extend([0, 0, 255, 255])
+            else:
+                pixels.extend([0, 0, 0, 0])
+    return bytearray(pixels)
+
+
 def test_get_cairo_surface(path_n_bytes_image):
     path, bytes_image = path_n_bytes_image
     surf_info = images.get_cairo_surface(bytes_image)
@@ -83,6 +97,14 @@ class TestImg:
         assert img != img2
         img2.theta = 0.0
         assert img == img2
+
+    def test_from_data(self, rgba_pixel_data):
+        data_in = copy(rgba_pixel_data)
+        img = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+        surface = img.surface
+        assert isinstance(surface, cairocffi.ImageSurface)
+        data_out = surface.get_data()
+        assert data_in == bytes(data_out)
 
     def test_setting(self, png_img):
         img = png_img
@@ -147,6 +169,19 @@ class TestImg:
         assert_approx_equal(t_matrix, (s2o2, s2o2, -s2o2, s2o2))
         del img.theta
         assert img.theta == pytest.approx(0.0)
+
+    # Resizing should always resample from the original image source rather than
+    # chaining transformations
+    def test_resize_rasterization(self, png_img):
+        img0 = copy(png_img)
+        assert png_img.width == 24
+        assert png_img.height == 24
+        png_img.resize(101, 101)
+        assert png_img.width == 101
+        assert png_img.height == 101
+        png_img.resize(24, 24)
+        assert png_img == img0
+        assert bytes(png_img.surface.get_data()) == bytes(img0.surface.get_data())
 
 
 class TestImgScale:
