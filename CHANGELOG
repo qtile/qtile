@@ -2,8 +2,34 @@ Qtile x.xx.x, released xxxx-xx-xx:
     * features
       - The Clock widget now uses the stdlib zoneinfo module for string
         timezone lookup. pytz is no longer a (optional) dependency.
+      - prompt widget: add options for block, invisible, and bar cursor
+      - df widget: add used space formatting parameter
+      - wayland: add ability to set opacity on windows
+      - wayland: add grab click support
+      - Add client_focus_by_click hook
+      - Allow WindowName to have calculated width
     * bugfixes
       - Fix timers on BackgrounPoll-based widgets not clearing on config reload
+      - prompt widget: fix sanitization issue
+      - df widget: use floating point division for better precision
+      - Thermal sensor widget: make threaded again
+      - wayland: dispatch pointer enter/leave/motion to bar widgets
+      - x11: ungrab click on focus by click regardless of origin
+      - wayland: modify keep-above behaviour
+      - wayland: update active keyboard when destroyed
+      - wayland: ignore qtile key bindings if a layer has exclusive focus
+      - wayland: disable client focus when exclusive_layer held
+      - wayland: fix build when xwayland support is absent
+      - Fix `qtile cmd-obj -f spawn` crash
+      - Fix qtile shell on python 3.14
+      - Improve battery name getter for Linux in the battery widget
+      - Remove scratchpad hooks when client killed
+      - Restore solid background for systray widgets
+      - Fix Volume widget crash on reload
+      - Fix window losing focus when dragged between screens
+      - Initialise fontconfig before starting qtile
+      - nix: add fontconfig to runtime library configuration
+      - Only pass button presses to bar when press is inside bar
 
 Qtile 0.35.0, released 2026-03-20:
     !!! Breaking changes !!!
