@@ -73,7 +73,6 @@ widgets = [
     "pulsectl",
     "pulsectl_asyncio",
     "python-mpd2",
-    "pytz",
     "pyxdg",
     "xmltodict",
     "aiohttp",

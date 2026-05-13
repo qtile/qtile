@@ -1,5 +1,7 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+      - The Clock widget now uses the stdlib zoneinfo module for string
+        timezone lookup. pytz is no longer a (optional) dependency.
     * bugfixes
       - Fix timers on BackgrounPoll-based widgets not clearing on config reload
 

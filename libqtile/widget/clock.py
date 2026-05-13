@@ -1,20 +1,10 @@
-import sys
 import time
 from datetime import UTC, datetime, timedelta, tzinfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.widget import base
-
-try:
-    import pytz
-except ImportError:
-    pass
-
-try:
-    import dateutil.tz
-except ImportError:
-    pass
 
 
 class Clock(base.InLoopPollText):
@@ -26,11 +16,10 @@ class Clock(base.InLoopPollText):
         (
             "timezone",
             None,
-            "The timezone to use for this clock, either as"
-            ' string if pytz or dateutil is installed (e.g. "US/Central" or'
-            " anything in /usr/share/zoneinfo), or as tzinfo (e.g."
-            " datetime.timezone.utc). None means the system local timezone and is"
-            " the default.",
+            "The timezone to use for this clock, either as a string (e.g."
+            ' "US/Central" or anything in /usr/share/zoneinfo), or as a'
+            " datetime.tzinfo instance (e.g. datetime.timezone.utc). None"
+            " means the system local timezone and is the default.",
         ),
     ]
     DELTA = timedelta(seconds=0.5)
@@ -51,18 +40,10 @@ class Clock(base.InLoopPollText):
             if not timezone:
                 return None
 
-            # A string timezone needs to be converted to a tzinfo object
-            if "pytz" in sys.modules:
-                return pytz.timezone(timezone)
-            elif "dateutil" in sys.modules:
-                return dateutil.tz.gettz(timezone)
-            else:
-                logger.warning(
-                    "Clock widget can not infer its timezone from a"
-                    " string without pytz or dateutil. Install one"
-                    " of these libraries, or give it a"
-                    " datetime.tzinfo instance."
-                )
+            try:
+                return ZoneInfo(timezone)
+            except ZoneInfoNotFoundError:
+                logger.warning("Invalid timezone %s.", timezone)
         elif timezone is None:
             pass
         else:

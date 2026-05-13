@@ -1,6 +1,4 @@
 import datetime
-import sys
-from importlib import reload
 
 import pytest
 
@@ -25,14 +23,6 @@ class MockDatetime(datetime.datetime):
 
 @pytest.fixture
 def patched_clock(monkeypatch):
-    # Stop system importing these modules in case they exist on environment
-    monkeypatch.setitem(sys.modules, "pytz", None)
-    monkeypatch.setitem(sys.modules, "dateutil", None)
-    monkeypatch.setitem(sys.modules, "dateutil.tz", None)
-
-    # Reload module to force ImportErrors
-    reload(vertical_clock)
-
     # Override datetime.
     # This is key for testing as we can fix time.
     monkeypatch.setattr("libqtile.widget.vertical_clock.datetime", MockDatetime)
