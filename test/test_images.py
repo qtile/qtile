@@ -204,6 +204,25 @@ class TestImg:
         img3 = img0.paste(img1)
         assert bytes(img3.surface.get_data()) == expected_result
 
+    def test_img_paint_mask(self):
+        # fmt: off
+        img = images.Img.from_data(
+            # format is B G R A
+            bytearray([0x80, 0x80, 0x80, 0xFF,
+                       0x00, 0x00, 0x00, 0x00,
+                       0x80, 0x00, 0x80, 0xFF,
+                       0x00, 0x00, 0x00, 0x00]),
+            cairocffi.FORMAT_ARGB32, 2, 2
+        )
+        expected_result = bytes([0x00, 0x00, 0xFF, 0xFF,
+                                 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0xFF, 0XFF,
+                                 0x00, 0x00, 0x00, 0x00])
+        # fmt: on
+
+        img2 = img.paint_mask("#FF0000")
+        assert bytes(img2.surface.get_data()) == expected_result
+
 
 class TestImgScale:
     def test_scale(self, png_img):

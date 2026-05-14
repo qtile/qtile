@@ -9,7 +9,7 @@ import cairocffi
 from libqtile import pangocffi, utils
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import ColorsType, ColorType
+from libqtile.utils import ColorsType
 
 if typing.TYPE_CHECKING:
     from libqtile.backend.base import Internal
@@ -335,9 +335,7 @@ class Drawer:
     def output_scale(self):
         return getattr(self._win, "scale", 1)
 
-    def draw_image(
-        self, img: Img, offsetx: int = 0, offsety: int = 0, *, color: ColorType | None = None
-    ) -> None:
+    def draw_image(self, img: Img, offsetx: int = 0, offsety: int = 0) -> None:
         w0 = img.width
         h0 = img.height
         applied_scale = img.width / img.default_size.width
@@ -351,14 +349,8 @@ class Drawer:
         self.ctx.save()
         self.ctx.translate(offsetx, offsety)
         self.ctx.scale(1 / self.output_scale, 1 / self.output_scale)
-        if color is not None:
-            self.set_source_rgb(color)
-            self.ctx.set_operator(cairocffi.OPERATOR_SOURCE)
-            self.ctx.mask(pattern)
-            self.ctx.fill()
-        else:
-            self.ctx.set_source(pattern)
-            self.ctx.paint()
+        self.ctx.set_source(pattern)
+        self.ctx.paint()
         self.ctx.restore()
 
         # Some widgets cache images, so restore mutated state

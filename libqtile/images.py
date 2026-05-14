@@ -7,7 +7,8 @@ from math import pi
 import cairocffi
 import cairocffi.pixbuf
 
-from libqtile.utils import scan_files
+from libqtile import utils
+from libqtile.utils import ColorsType, scan_files
 
 
 class LoadingError(Exception):
@@ -308,6 +309,33 @@ class Img:
             ctx.translate(offsetx, offsety)
             ctx.set_source(overlay.pattern)
             ctx.paint()
+        data = bytearray(surface.get_data())
+        fmt = surface.get_format()
+        return Img.from_data(data, fmt, self.width, self.height)
+
+    def paint_mask(self, colour: ColorsType):
+        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
+        with cairocffi.Context(surface) as ctx:
+            if isinstance(colour, list):
+                if len(colour) == 0:
+                    # defaults to black
+                    ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
+                elif len(colour) == 1:
+                    ctx.set_source_rgba(*utils.rgb(colour[0]))
+                else:
+                    linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
+                    step_size = 1.0 / (len(colour) - 1)
+                    step = 0.0
+                    for c in colour:
+                        linear.add_color_stop_rgba(step, *utils.rgb(c))
+                        step += step_size
+                    ctx.set_source(linear)
+            else:
+                ctx.set_source_rgba(*utils.rgb(colour))
+
+            ctx.set_operator(cairocffi.OPERATOR_SOURCE)
+            ctx.mask(self.pattern)
+            ctx.fill()
         data = bytearray(surface.get_data())
         fmt = surface.get_format()
         return Img.from_data(data, fmt, self.width, self.height)

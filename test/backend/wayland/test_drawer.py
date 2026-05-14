@@ -45,13 +45,6 @@ def drawer(monkeypatch):
     return d, image_surface
 
 
-@pytest.fixture
-def drawer_small(monkeypatch):
-    image_surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, 2, 2)
-    d = MockDrawer(image_surface, 1, monkeypatch)
-    return d, image_surface
-
-
 # Lets assume icon size is 16 x 16 and output scale factor is 1.5. Therefore we
 # want to draw the icon at 24 x 24 (16 x 1.5 = 24). if our icon has been scaled
 # correctly, it will exactly match the original image
@@ -89,24 +82,3 @@ def test_hidpi_pixel_data_scaling(rgba_pixel_data, drawer):  # noqa:F811
     d.draw_image(img)
     d._draw()
     assert bytes(img0.surface.get_data()) == bytes(image_surface.get_data())
-
-
-def test_draw_image_color(drawer_small):
-    # fmt: off
-    img = images.Img.from_data(
-        # format is B G R A
-        bytearray([0x80, 0x80, 0x80, 0xFF,
-                   0x00, 0x00, 0x00, 0x00,
-                   0x80, 0x00, 0x80, 0xFF,
-                   0x00, 0x00, 0x00, 0x00]),
-        cairocffi.FORMAT_ARGB32, 2, 2
-    )
-    expected_result = bytes([0x00, 0x00, 0xFF, 0xFF,
-                             0x00, 0x00, 0x00, 0x00,
-                             0x00, 0x00, 0xFF, 0XFF,
-                             0x00, 0x00, 0x00, 0x00])
-    # fmt: on
-    d, image_surface = drawer_small
-    d.draw_image(img, color="#ff0000")
-    d._draw()
-    assert bytes(image_surface.get_data()) == expected_result
