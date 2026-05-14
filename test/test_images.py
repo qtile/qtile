@@ -183,6 +183,27 @@ class TestImg:
         assert png_img == img0
         assert bytes(png_img.surface.get_data()) == bytes(img0.surface.get_data())
 
+    def test_img_paste(self):
+        img0 = images.Img.from_data(
+            bytearray([0x80, 0x80, 0x80, 0xFF] * 4), cairocffi.FORMAT_ARGB32, 2, 2
+        )
+        # fmt: off
+        img1 = images.Img.from_data(
+            bytearray([0xFF, 0x00, 0x00, 0xFF,
+                       0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0xFF, 0xFF,
+                       0x00, 0x00, 0x00, 0x00]),
+            cairocffi.FORMAT_ARGB32, 2, 2
+        )
+        expected_result = bytes([0xFF, 0x00, 0x00, 0xFF,
+                                 0x80, 0x80, 0x80, 0xFF,
+                                 0x00, 0x00, 0xFF, 0XFF,
+                                 0x80, 0x80, 0x80, 0xFF])
+        # fmt: on
+
+        img3 = img0.paste(img1)
+        assert bytes(img3.surface.get_data()) == expected_result
+
 
 class TestImgScale:
     def test_scale(self, png_img):

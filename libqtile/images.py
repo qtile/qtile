@@ -308,7 +308,7 @@ class Img:
             ctx.translate(offsetx, offsety)
             ctx.set_source(overlay.pattern)
             ctx.paint()
-        data = bytes(surface.get_data())
+        data = bytearray(surface.get_data())
         fmt = surface.get_format()
         return Img.from_data(data, fmt, self.width, self.height)
 
