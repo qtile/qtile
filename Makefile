@@ -46,7 +46,7 @@ check: deps ## Run the test suite on the latest python
 	fi
 
 TTY := $(shell [ -t 0 ] && echo "-t")
-DOCKER_RUN = docker run --rm -i $(TTY) \
+DOCKER_RUN = docker run --rm --init -i $(TTY) \
 	-v $(PWD):/workspace:z \
 	-e USER_UID=$$(id -u) \
 	-e USER_GID=$$(id -g) \
