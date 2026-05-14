@@ -147,7 +147,7 @@ class Xephyr:
             args.extend(["+xinerama"])
             args.extend(["-extension", "RANDR"])
 
-        start_x11_and_poll_connection(args, self.xephyr_display)
+        self.proc = start_x11_and_poll_connection(args, self.xephyr_display)
 
         if self.xtrace:
             # because we run Xephyr without auth and xtrace requires auth, we
@@ -166,7 +166,7 @@ class Xephyr:
                 "-D",
                 self.xtrace_display,
             ]
-            start_x11_and_poll_connection(args, self.xtrace_display)
+            self.xtrace_proc = start_x11_and_poll_connection(args, self.xtrace_display)
 
     def stop_xephyr(self):
         stop_x11(self.proc, self.xephyr_display, self.xephyr_display_file)
