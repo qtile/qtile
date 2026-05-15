@@ -82,3 +82,18 @@ def test_hidpi_pixel_data_scaling(rgba_pixel_data, drawer):  # noqa:F811
     d.draw_image(img)
     d._draw()
     assert bytes(img0.surface.get_data()) == bytes(image_surface.get_data())
+
+
+def test_hidpi_img_paint_mask(svg_img, drawer):
+    assert svg_img.width == 24
+    assert svg_img.height == 24
+    # Snapshot svg_img before any scaling
+    img0 = copy(svg_img)
+    red_img0 = img0.paint_mask("#ff0000")
+    # Set icon image size
+    svg_img.resize(height=16)
+    red_img = svg_img.paint_mask("#ff0000")
+    d, image_surface = drawer
+    d.draw_image(red_img)
+    d._draw()
+    assert bytes(red_img0.surface.get_data()) == bytes(image_surface.get_data())

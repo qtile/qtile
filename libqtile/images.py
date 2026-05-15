@@ -192,25 +192,21 @@ class Img:
 
     def __init__(self, bytes_img=None, name="", path=""):
         if bytes_img:
-            self.backend = ImageFileBackend(bytes_img)
+            self._common_init(ImageFileBackend(bytes_img), name=name, path=path)
+        else:
+            self._common_init(None, name=name, path=path)
+
+    def _common_init(self, backend, name="", path=""):
+        self.backend = backend
         self.name = name
         self.path = path
-
-    def _reset(self):
-        if hasattr(self, "surface"):
-            self.surface.finish()
-            del self.surface
-        if hasattr(self, "pattern"):
-            # patterns do not need to be finish()ed, only surfaces do
-            del self.pattern
+        self._operations = []
 
     @classmethod
     def from_data(cls, data, format, width, height):
         "Create an Img instance from image data"
         img = cls.__new__(cls)
-        img.backend = ImageBufferBackend(data, format, width, height)
-        img.name = ""
-        img.path = ""
+        img._common_init(ImageBufferBackend(data, format, width, height))
         return img
 
     @classmethod
@@ -218,9 +214,7 @@ class Img:
         stride = cairocffi.ImageSurface.format_stride_for_width(format, width)
         data = bytearray(stride * height)
         img = cls.__new__(cls)
-        img.backend = ImageBufferBackend(data, format, width, height)
-        img.name = ""
-        img.path = ""
+        img._common_init(ImageBufferBackend(data, format, width, height))
         return img
 
     @classmethod
@@ -231,10 +225,16 @@ class Img:
         name = os.path.basename(image_path)
         name, file_type = os.path.splitext(name)
         img = cls.__new__(cls)
-        img.backend = ImageFileBackend(bytes_img)
-        img.name = name
-        img.path = image_path
+        img._common_init(ImageFileBackend(bytes_img), name=name, path=image_path)
         return img
+
+    def _reset(self):
+        if hasattr(self, "surface"):
+            self.surface.finish()
+            del self.surface
+        if hasattr(self, "pattern"):
+            # patterns do not need to be finish()ed, only surfaces do
+            del self.pattern
 
     @property
     def default_surface(self):
@@ -313,32 +313,33 @@ class Img:
         fmt = surface.get_format()
         return Img.from_data(data, fmt, self.width, self.height)
 
-    def paint_mask(self, colour: ColorsType):
-        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
-        with cairocffi.Context(surface) as ctx:
-            if isinstance(colour, list):
-                if len(colour) == 0:
-                    # defaults to black
-                    ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
-                elif len(colour) == 1:
-                    ctx.set_source_rgba(*utils.rgb(colour[0]))
+    def paint_mask(self, colour: ColorsType) -> Img:
+        def func(surface):
+            # surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
+            with cairocffi.Context(surface) as ctx:
+                if isinstance(colour, list):
+                    if len(colour) == 0:
+                        # defaults to black
+                        ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
+                    elif len(colour) == 1:
+                        ctx.set_source_rgba(*utils.rgb(colour[0]))
+                    else:
+                        linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
+                        step_size = 1.0 / (len(colour) - 1)
+                        step = 0.0
+                        for c in colour:
+                            linear.add_color_stop_rgba(step, *utils.rgb(c))
+                            step += step_size
+                        ctx.set_source(linear)
                 else:
-                    linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
-                    step_size = 1.0 / (len(colour) - 1)
-                    step = 0.0
-                    for c in colour:
-                        linear.add_color_stop_rgba(step, *utils.rgb(c))
-                        step += step_size
-                    ctx.set_source(linear)
-            else:
-                ctx.set_source_rgba(*utils.rgb(colour))
+                    ctx.set_source_rgba(*utils.rgb(colour))
 
-            ctx.set_operator(cairocffi.OPERATOR_SOURCE)
-            ctx.mask(self.pattern)
-            ctx.fill()
-        data = bytearray(surface.get_data())
-        fmt = surface.get_format()
-        return Img.from_data(data, fmt, self.width, self.height)
+                ctx.set_operator(cairocffi.OPERATOR_SOURCE)
+                ctx.mask(cairocffi.SurfacePattern(surface))
+                ctx.fill()
+
+        self._operations.append(func)
+        return self
 
     @property
     def surface(self):
@@ -346,6 +347,9 @@ class Img:
             return self._surface
         except AttributeError:
             surf = self.backend.get_surface(self.width, self.height)
+            for operation in self._operations:
+                operation(surf)
+
             self._surface = surf
             return surf
 
