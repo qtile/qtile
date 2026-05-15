@@ -49,6 +49,11 @@ def png_img():
 
 
 @pytest.fixture(scope="function")
+def png_img_24():
+    return images.Img.from_path(os.path.join(DATA_DIR, "png", "audio-volume-muted.png"))
+
+
+@pytest.fixture(scope="function")
 def rgba_pixel_data():
     # ARGB32 format: 4 bytes per pixel, order is B, G, R, A
     pixels = []
@@ -172,16 +177,16 @@ class TestImg:
 
     # Resizing should always resample from the original image source rather than
     # chaining transformations
-    def test_resize_rasterization(self, png_img):
-        img0 = copy(png_img)
-        assert png_img.width == 24
-        assert png_img.height == 24
-        png_img.resize(101, 101)
-        assert png_img.width == 101
-        assert png_img.height == 101
-        png_img.resize(24, 24)
-        assert png_img == img0
-        assert bytes(png_img.surface.get_data()) == bytes(img0.surface.get_data())
+    def test_resize_rasterization(self, png_img_24):
+        img0 = copy(png_img_24)
+        assert png_img_24.width == 24
+        assert png_img_24.height == 24
+        png_img_24.resize(101, 101)
+        assert png_img_24.width == 101
+        assert png_img_24.height == 101
+        png_img_24.resize(24, 24)
+        assert png_img_24 == img0
+        assert bytes(png_img_24.surface.get_data()) == bytes(img0.surface.get_data())
 
     def test_img_paste(self):
         img0 = images.Img.from_data(

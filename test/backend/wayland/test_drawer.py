@@ -6,7 +6,7 @@ import pytest
 
 from libqtile import images
 from libqtile.backend.wayland.drawer import Drawer
-from test.test_images import SVGS, png_img, rgba_pixel_data  # noqa: F401
+from test.test_images import SVGS, png_img_24, rgba_pixel_data  # noqa: F401
 
 
 class FakeDrawer(Drawer):
@@ -61,13 +61,13 @@ def test_hidpi_svg_scaling(svg_img, drawer):
     assert bytes(img0.surface.get_data()) == bytes(image_surface.get_data())
 
 
-def test_hidpi_png_scaling(png_img, drawer):  # noqa:F811
-    assert png_img.width == 24
-    assert png_img.height == 24
-    img0 = copy(png_img)
-    png_img.resize(height=16)
+def test_hidpi_png_scaling(png_img_24, drawer):  # noqa:F811
+    assert png_img_24.width == 24
+    assert png_img_24.height == 24
+    img0 = copy(png_img_24)
+    png_img_24.resize(height=16)
     d, image_surface = drawer
-    d.draw_image(png_img)
+    d.draw_image(png_img_24)
     d._draw()
     assert bytes(img0.surface.get_data()) == bytes(image_surface.get_data())
 
@@ -92,8 +92,8 @@ def test_hidpi_img_paint_mask(svg_img, drawer):
     red_img0 = img0.paint_mask("#ff0000")
     # Set icon image size
     svg_img.resize(height=16)
-    red_img = svg_img.paint_mask("#ff0000")
+    svg_img.paint_mask("#ff0000")
     d, image_surface = drawer
-    d.draw_image(red_img)
+    d.draw_image(svg_img)
     d._draw()
     assert bytes(red_img0.surface.get_data()) == bytes(image_surface.get_data())
