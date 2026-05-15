@@ -176,6 +176,7 @@ cdef_files = [
     "cursor.h",
     "input-device.h",
     "keyboard.h",
+    "touch.h",
 ]
 
 XWAYLAND_ONLY_SOURCES = ["xwayland-view.c"]
