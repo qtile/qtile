@@ -51,6 +51,7 @@ class Image(base._Widget, base.MarginMixin):
         if self.img is None:
             return
 
+        self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw_image(self.img, self.margin_x, self.margin_y)
         self.draw_at_default_position()
 
