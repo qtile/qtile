@@ -109,17 +109,9 @@ void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *
     struct qw_session_lock_surface *sls = wl_container_of(listener, sls, surface_destroy);
     struct qw_server *server = sls->server;
 
-    if (server->lock != NULL && server->lock->lock != NULL) {
-        struct wlr_session_lock_surface_v1 *lock_surface = sls->lock_surface;
-        if (lock_surface->link.prev != NULL && lock_surface->link.next != NULL) {
-            wl_list_remove(&lock_surface->link);
-            wl_list_init(&lock_surface->link);
-        }
-
-        // Focus shifts if other surfaces remain
-        if (!wl_list_empty(&server->lock->lock->surfaces)) {
-            qw_session_lock_focus_first_lock_surface(server);
-        }
+    if (server->lock != NULL && server->lock->lock != NULL &&
+        !wl_list_empty(&server->lock->lock->surfaces)) {
+        qw_session_lock_focus_first_lock_surface(server);
     }
 
     wl_list_remove(&sls->surface_destroy.link);
@@ -140,6 +132,10 @@ void qw_session_lock_destroy(struct qw_session_lock *session_lock, bool unlock) 
 
         server->lock_state = QW_SESSION_LOCK_UNLOCKED;
         qw_session_lock_restore_focus(server);
+
+        // Clear all output lock_surface pointers
+        struct qw_output *output;
+        wl_list_for_each(output, &server->outputs, link) { output->lock_surface = NULL; }
 
     } else if (server->lock_state == QW_SESSION_LOCK_LOCKED && !unlock) {
         wlr_log(WLR_ERROR, "Session lock client vanished without unlocking.");
