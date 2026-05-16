@@ -1291,6 +1291,14 @@ class DropDown(configurable.Configurable):
             "some programs that may not be caught by the window's PID if it does "
             "not match the PID of the spawned process.",
         ),
+        (
+            "reset_geometry_on_toggle",
+            True,
+            "If ``True``, the window is repositioned and resized to the configured "
+            "geometry each time it is shown. If ``False``, any geometry changes made "
+            "while the window is visible (e.g. resizing or moving it) are remembered "
+            "and restored on the next show.",
+        ),
     )
 
     def __init__(self, name: str, cmd: str, **config: Any) -> None:
