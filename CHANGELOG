@@ -5,6 +5,8 @@ Qtile x.xx.x, released xxxx-xx-xx:
         Layer-shell surfaces that commit after their output is destroyed, session
         lock surfaces on a destroyed output, and killed internal views no longer
         dereference freed compositor state.
+      - Fix window configuration order so the current window is configured
+        before other windows, reducing flickering
 
 Qtile 0.36.0, released 2026-05-22:
     * features

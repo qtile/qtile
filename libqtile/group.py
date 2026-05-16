@@ -122,6 +122,10 @@ class _Group(CommandObject):
                 floating = [x for x in self.windows if x.floating and not x.minimized]
                 screen_rect = self.screen.get_rect()
                 if normal:
+                    # Send current window first to prevent flickering
+                    if self.current_window is not None and self.current_window in normal:
+                        normal.remove(self.current_window)
+                        normal.insert(0, self.current_window)
                     try:
                         self.layout.layout(normal, screen_rect)
                     except Exception:
