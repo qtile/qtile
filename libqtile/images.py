@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from collections import namedtuple
+from copy import copy
 from math import pi
 
 import cairocffi
@@ -196,11 +197,21 @@ class Img:
         else:
             self._common_init(None, name=name, path=path)
 
+    def __copy__(self):
+        new = self.__class__.__new__(self.__class__)
+        new.__dict__.update(self.__dict__)
+        new._operations = list(self._operations)
+        new._resources = [copy(r) for r in self._resources]
+        new.__dict__.pop("_surface", None)
+        new.__dict__.pop("_pattern", None)
+        return new
+
     def _common_init(self, backend, name="", path=""):
         self.backend = backend
         self.name = name
         self.path = path
         self._operations = []
+        self._resources = []
 
     @classmethod
     def from_data(cls, data, format, width, height):
@@ -273,6 +284,10 @@ class Img:
             return self.scale(width_factor, height_factor, lock_aspect_ratio=True)
 
     def scale(self, width_factor=None, height_factor=None, lock_aspect_ratio=False):
+        # First scale any attached image resources
+        for resource in self._resources:
+            resource.scale(width_factor, height_factor)
+
         if width_factor is None and height_factor is None:
             raise ValueError("You must supply width_factor or height_factor")
         if lock_aspect_ratio:
@@ -302,20 +317,22 @@ class Img:
         return _ImgSize(width0 * width_factor, height0 * height_factor)
 
     def paste(self, overlay: Img, offsetx: int = 0, offsety: int = 0) -> Img:
-        surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
-        with cairocffi.Context(surface) as ctx:
-            ctx.set_source(self.pattern)
-            ctx.paint()
-            ctx.translate(offsetx, offsety)
-            ctx.set_source(overlay.pattern)
-            ctx.paint()
-        data = bytearray(surface.get_data())
-        fmt = surface.get_format()
-        return Img.from_data(data, fmt, self.width, self.height)
+        overlay = copy(overlay)  # Snapshot overlay when paste is called
+        self._resources.append(overlay)
+        resource_idx = len(self._resources) - 1
+
+        def func(img, surface):
+            with cairocffi.Context(surface) as ctx:
+                ctx.translate(offsetx, offsety)
+                ctx.set_source(cairocffi.SurfacePattern(img._resources[resource_idx].surface))
+                ctx.paint()
+
+        self._operations.append(func)
+        self._reset()
+        return self
 
     def paint_mask(self, colour: ColorsType) -> Img:
-        def func(surface):
-            # surface = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, self.width, self.height)
+        def func(img, surface):
             with cairocffi.Context(surface) as ctx:
                 if isinstance(colour, list):
                     if len(colour) == 0:
@@ -324,7 +341,7 @@ class Img:
                     elif len(colour) == 1:
                         ctx.set_source_rgba(*utils.rgb(colour[0]))
                     else:
-                        linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
+                        linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, img.height)
                         step_size = 1.0 / (len(colour) - 1)
                         step = 0.0
                         for c in colour:
@@ -339,6 +356,7 @@ class Img:
                 ctx.fill()
 
         self._operations.append(func)
+        self._reset()
         return self
 
     @property
@@ -348,7 +366,7 @@ class Img:
         except AttributeError:
             surf = self.backend.get_surface(self.width, self.height)
             for operation in self._operations:
-                operation(surf)
+                operation(self, surf)
 
             self._surface = surf
             return surf

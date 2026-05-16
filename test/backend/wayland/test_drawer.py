@@ -97,3 +97,40 @@ def test_hidpi_img_paint_mask(svg_img, drawer):
     d.draw_image(svg_img)
     d._draw()
     assert bytes(red_img0.surface.get_data()) == bytes(image_surface.get_data())
+
+
+def test_hidpi_img_paste(svg_img, rgba_pixel_data, drawer):  # noqa:F811
+    assert svg_img.width == 24
+    assert svg_img.height == 24
+    overlay = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+    assert overlay.width == 24
+    assert overlay.height == 24
+
+    expected_result = bytearray(svg_img.surface.get_data())
+    overlay_data = bytes(overlay.surface.get_data())
+    for i in range(0, len(overlay_data), 4):
+        if overlay_data[i + 3] != 0:
+            expected_result[i : i + 4] = overlay_data[i : i + 4]
+
+    svg_img.resize(height=16)
+    overlay.resize(height=16)
+    svg_img.paste(overlay)
+    d, image_surface = drawer
+    d.draw_image(svg_img)
+    d._draw()
+    assert bytes(image_surface.get_data()) == expected_result
+
+
+def test_draw_image_does_not_mutate_resources(svg_img, rgba_pixel_data, drawer):  # noqa:F811
+    overlay = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+    svg_img.paste(overlay)
+
+    original_resource_width = svg_img._resources[0].width
+    original_resource_height = svg_img._resources[0].height
+
+    d, image_surface = drawer
+    d.draw_image(svg_img)
+
+    # draw_image should not mutate the original's resources
+    assert svg_img._resources[0].width == original_resource_width
+    assert svg_img._resources[0].height == original_resource_height

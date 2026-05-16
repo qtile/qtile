@@ -228,6 +228,38 @@ class TestImg:
         img2 = img.paint_mask("#FF0000")
         assert bytes(img2.surface.get_data()) == expected_result
 
+    def test_copy_operations_independent(self, png_img):
+        img0 = copy(png_img)
+
+        # Appending to img0's operations should not affect png_img
+        img0.paint_mask("#ff0000")
+        assert len(png_img._operations) == 0
+        assert len(img0._operations) == 1
+
+    def test_copy_resources_independent(self, png_img_24, rgba_pixel_data):
+        overlay = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+        png_img_24.paste(overlay)
+
+        img0 = copy(png_img_24)
+
+        # Appending a new resource to img0 should not affect png_img_24
+        overlay2 = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+        img0.paste(overlay2)
+
+        assert len(png_img_24._resources) == 1
+        assert len(img0._resources) == 2
+
+    def test_operations_applied_after_cache(self, png_img):
+        # Access surface to cache it
+        surface0 = png_img.surface
+
+        # Add an operation after caching
+        png_img.paint_mask("#ff0000")
+
+        # Without invalidation, surface would be the same cached one with no paint_mask applied
+        # With invalidation, surface is rebuilt with paint_mask applied
+        assert png_img.surface is not surface0
+
 
 class TestImgScale:
     def test_scale(self, png_img):

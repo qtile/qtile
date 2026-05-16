@@ -3,6 +3,7 @@ from __future__ import annotations
 import collections
 import math
 import typing
+from copy import copy
 
 import cairocffi
 
@@ -336,8 +337,9 @@ class Drawer:
         return getattr(self._win, "scale", 1)
 
     def draw_image(self, img: Img, offsetx: int = 0, offsety: int = 0) -> None:
-        w0 = img.width
-        h0 = img.height
+        # Some widgets cache images, so perform the following operations on a copy
+        img = copy(img)
+
         applied_scale = img.width / img.default_size.width
         combined_scale = applied_scale * self.output_scale
         img.scale(combined_scale, combined_scale)
@@ -352,10 +354,6 @@ class Drawer:
         self.ctx.set_source(pattern)
         self.ctx.paint()
         self.ctx.restore()
-
-        # Some widgets cache images, so restore mutated state
-        img.width = w0
-        img.height = h0
 
 
 class TextLayout:
