@@ -286,14 +286,16 @@ class _Group(CommandObject):
             if win in self.tiled_windows:
                 self.tiled_windows.remove(win)
 
+        widget_has_keyboard = self.qtile.widget_has_keyboard()
+
         # a notification may not have focus
-        if hadfocus:
+        if hadfocus and not widget_has_keyboard:
             self.focus(nextfocus, warp=True, force=force)
             # no next focus window means focus changed to nothing
             if not nextfocus:
                 hook.fire("focus_change")
         elif self.screen:
-            self.layout_all()
+            self.layout_all(focus=not widget_has_keyboard)
 
     def mark_floating(self, win, floating):
         if floating:

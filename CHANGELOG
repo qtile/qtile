@@ -30,6 +30,7 @@ Qtile x.xx.x, released xxxx-xx-xx:
       - Initialise fontconfig before starting qtile
       - nix: add fontconfig to runtime library configuration
       - Only pass button presses to bar when press is inside bar
+      - Stop Prompt widget cancelling text entry when window closes
 
 Qtile 0.35.0, released 2026-03-20:
     !!! Breaking changes !!!
