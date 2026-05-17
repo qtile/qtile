@@ -116,6 +116,9 @@ class Gap:
         """
         return dict(position=self.position)
 
+    def has_keyboard(self) -> bool:
+        return False
+
 
 class Obj:
     def __init__(self, name: str) -> None:
@@ -790,6 +793,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             else:
                 # Bar is not reserving screen space so let's keep above other windows
                 self.window.keep_above(enable=True)
+
+    def has_keyboard(self) -> bool:
+        return self._has_keyboard is not None
 
 
 BarType = Bar | Gap
