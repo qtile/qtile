@@ -618,8 +618,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         """
         Removes keyboard focus from the widget.
         """
-        if self._saved_focus is not None:
+        assert self.qtile is not None
+        if self._saved_focus is not None and self._saved_focus.wid in self.qtile.windows_map:
             self._saved_focus.focus(False)
+        self._saved_focus = None
         self._has_keyboard = None
 
     def draw(self) -> None:
