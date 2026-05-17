@@ -38,4 +38,7 @@ bool qw_surfaces_on_same_output(struct wlr_surface *surface_a, struct wlr_surfac
 struct qw_view *qw_view_from_wlr_surface(struct wlr_surface *surface, bool *is_layer_surface,
                                          bool *is_session_lock_surface);
 
+// wlr scene rects expect pre-multiplied RGBA values
+void qw_util_premultiply_rgba(const float rgba[4], float opacity, float out[4]);
+
 #endif /* UTIL_H */

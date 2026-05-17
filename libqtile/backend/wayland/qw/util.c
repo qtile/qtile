@@ -174,3 +174,12 @@ struct qw_view *qw_view_from_wlr_surface(struct wlr_surface *surface, bool *is_l
 
     return NULL;
 }
+
+void qw_util_premultiply_rgba(const float rgba[4], float opacity, float out[4]) {
+    float alpha = rgba[3] * opacity;
+
+    out[0] = rgba[0] * alpha;
+    out[1] = rgba[1] * alpha;
+    out[2] = rgba[2] * alpha;
+    out[3] = alpha;
+}
