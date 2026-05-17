@@ -118,6 +118,7 @@ struct qw_view {
     struct {
         enum qw_border_type type;
         uint32_t width;
+        float color[4][4];
         union {
             struct wlr_scene_rect *rects[4];
             struct wlr_scene_buffer *scene_bufs[4];
