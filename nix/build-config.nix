@@ -48,8 +48,8 @@ let
     }
     {
       varname = "WLROOTS";
-      pkg = pkgs.wlroots_0_19;
-      header-dir = "wlroots-0.19";
+      pkg = pkgs.wlroots_0_20;
+      header-dir = "wlroots-0.20";
     }
   ];
 
