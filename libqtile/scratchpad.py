@@ -163,6 +163,8 @@ class DropDownToggler(WindowVisibilityToggler):
         self.y = ddconfig.y
         self.width = ddconfig.width
         self.height = ddconfig.height
+        self.reset_geometry_on_toggle = ddconfig.reset_geometry_on_toggle
+        self.geometry = (self.x, self.y, self.width, self.height)
         self.border_width = window.qtile.config.floating_layout.border_width
 
         # add "SKIP_TASKBAR" to _NET_WM_STATE atom (for X11)
@@ -192,23 +194,36 @@ class DropDownToggler(WindowVisibilityToggler):
         )
         return info
 
+    def hide(self):
+        if not self.reset_geometry_on_toggle and (self.visible or self.shown):
+            win = self.window
+            screen = win.group.screen if win.group else None
+            if screen is not None:
+                self.geometry = (
+                    (win.x - screen.dx) / screen.dwidth,
+                    (win.y - screen.dy) / screen.dheight,
+                    (win.width + 2 * self.border_width) / screen.dwidth,
+                    (win.height + 2 * self.border_width) / screen.dheight,
+                )
+        WindowVisibilityToggler.hide(self)
+
     def show(self):
         """
         Like WindowVisibilityToggler.show, but before showing the window,
         its floating x, y, width and height is set.
         """
         if (not self.visible) or (not self.shown):
-            # SET GEOMETRY
             win = self.window
             screen = win.qtile.current_screen
-            # calculate windows floating position and width/height
+            x_frac, y_frac, w_frac, h_frac = self.geometry
+            # Calculate windows floating position and width/height
             # these may differ for screens, and thus always recalculated.
-            x = int(screen.dx + self.x * screen.dwidth)
-            y = int(screen.dy + self.y * screen.dheight)
+            x = int(screen.dx + x_frac * screen.dwidth)
+            y = int(screen.dy + y_frac * screen.dheight)
             win.float_x = x
             win.float_y = y
-            width = int(screen.dwidth * self.width) - 2 * self.border_width
-            height = int(screen.dheight * self.height) - 2 * self.border_width
+            width = int(screen.dwidth * w_frac) - 2 * self.border_width
+            height = int(screen.dheight * h_frac) - 2 * self.border_width
             win.place(x, y, width, height, self.border_width, win.bordercolor, respect_hints=True)
             # Toggle the dropdown
             WindowVisibilityToggler.show(self)
