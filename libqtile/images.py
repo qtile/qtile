@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import os
 from collections import namedtuple
+from copy import copy
 from math import pi
 
 import cairocffi
 import cairocffi.pixbuf
 
-from libqtile.utils import scan_files
+from libqtile import utils
+from libqtile.utils import ColorsType, scan_files
 
 
 class LoadingError(Exception):
@@ -29,6 +33,11 @@ def get_cairo_surface(bytes_img, width=None, height=None):
         )
         surf, fmt = cairocffi.pixbuf.decode_to_image_surface(bytes_img)
         return _SurfaceInfo(surf, fmt)
+
+
+def get_cairo_surface_for_data(data, format, width, height):
+    surf = cairocffi.ImageSurface.create_for_data(data, format, width, height)
+    return _SurfaceInfo(surf, format)
 
 
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
@@ -119,10 +128,59 @@ class _Rotation(_Resetter):
 _ImgSize = namedtuple("_ImgSize", ("width", "height"))
 
 
+class ImageFileBackend:
+    """Backend for encoded image files (PNG, JPEG, etc)"""
+
+    def __init__(self, bytes_img):
+        self.bytes_img = bytes_img
+
+    def get_surface(self, width=None, height=None):
+        surf, _ = get_cairo_surface(self.bytes_img, width, height)
+        return surf
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ImageFileBackend):
+            return False
+        return self.bytes_img == other.bytes_img
+
+
+class ImageBufferBackend:
+    """Backend for raw pixel data"""
+
+    def __init__(self, data, format, width, height):
+        self.data = data
+        self.format = format
+        self.width = width
+        self.height = height
+
+    def get_surface(self, width=None, height=None):
+        surf, _ = get_cairo_surface_for_data(self.data, self.format, self.width, self.height)
+        if width is None or (width == self.width and height == self.height):
+            return surf
+        scaled = cairocffi.ImageSurface(cairocffi.FORMAT_ARGB32, width, height)
+        with cairocffi.Context(scaled) as ctx:
+            ctx.scale(width / self.width, height / self.height)
+            pattern = cairocffi.SurfacePattern(surf)
+            pattern.set_filter(cairocffi.FILTER_BEST)
+            ctx.set_source(pattern)
+            ctx.paint()
+        return scaled
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ImageBufferBackend):
+            return False
+        return (
+            self.data == other.data
+            and self.format == other.format
+            and self.width == other.width
+            and self.height == other.height
+        )
+
+
 class Img:
     """Img is a class which creates & manipulates cairo SurfacePatterns from an image
 
-    There are two constructors Img(...) and Img.from_path(...)
+    There are three constructors Img(...), Img.from_path(...) and Img.from_data(...)
 
     The cairo surface pattern is at img.pattern.
     Changing any of the attributes width, height, or theta will update the pattern.
@@ -133,10 +191,53 @@ class Img:
     Pattern is first stretched, then rotated.
     """
 
-    def __init__(self, bytes_img, name="", path=""):
-        self.bytes_img = bytes_img
+    def __init__(self, bytes_img=None, name="", path=""):
+        if bytes_img:
+            self._common_init(ImageFileBackend(bytes_img), name=name, path=path)
+        else:
+            self._common_init(None, name=name, path=path)
+
+    def __copy__(self):
+        new = self.__class__.__new__(self.__class__)
+        new.__dict__.update(self.__dict__)
+        new._operations = list(self._operations)
+        new._resources = [copy(r) for r in self._resources]
+        new.__dict__.pop("_surface", None)
+        new.__dict__.pop("_pattern", None)
+        return new
+
+    def _common_init(self, backend, name="", path=""):
+        self.backend = backend
         self.name = name
         self.path = path
+        self._operations = []
+        self._resources = []
+
+    @classmethod
+    def from_data(cls, data, format, width, height):
+        "Create an Img instance from image data"
+        img = cls.__new__(cls)
+        img._common_init(ImageBufferBackend(data, format, width, height))
+        return img
+
+    @classmethod
+    def blank(cls, format, width, height):
+        stride = cairocffi.ImageSurface.format_stride_for_width(format, width)
+        data = bytearray(stride * height)
+        img = cls.__new__(cls)
+        img._common_init(ImageBufferBackend(data, format, width, height))
+        return img
+
+    @classmethod
+    def from_path(cls, image_path):
+        "Create an Img instance from image_path"
+        with open(image_path, "rb") as fobj:
+            bytes_img = fobj.read()
+        name = os.path.basename(image_path)
+        name, file_type = os.path.splitext(name)
+        img = cls.__new__(cls)
+        img._common_init(ImageFileBackend(bytes_img), name=name, path=image_path)
+        return img
 
     def _reset(self):
         if hasattr(self, "surface"):
@@ -146,21 +247,12 @@ class Img:
             # patterns do not need to be finish()ed, only surfaces do
             del self.pattern
 
-    @classmethod
-    def from_path(cls, image_path):
-        "Create an Img instance from image_path"
-        with open(image_path, "rb") as fobj:
-            bytes_img = fobj.read()
-        name = os.path.basename(image_path)
-        name, file_type = os.path.splitext(name)
-        return cls(bytes_img, name=name, path=image_path)
-
     @property
     def default_surface(self):
         try:
             return self._default_surface
         except AttributeError:
-            surf, fmt = get_cairo_surface(self.bytes_img)
+            surf = self.backend.get_surface()
             self._default_surface = surf
             return surf
 
@@ -192,6 +284,10 @@ class Img:
             return self.scale(width_factor, height_factor, lock_aspect_ratio=True)
 
     def scale(self, width_factor=None, height_factor=None, lock_aspect_ratio=False):
+        # First scale any attached image resources
+        for resource in self._resources:
+            resource.scale(width_factor, height_factor)
+
         if width_factor is None and height_factor is None:
             raise ValueError("You must supply width_factor or height_factor")
         if lock_aspect_ratio:
@@ -220,12 +316,58 @@ class Img:
         width0, height0 = initial_size
         return _ImgSize(width0 * width_factor, height0 * height_factor)
 
+    def paste(self, overlay: Img, offsetx: int = 0, offsety: int = 0) -> Img:
+        overlay = copy(overlay)  # Snapshot overlay when paste is called
+        self._resources.append(overlay)
+        resource_idx = len(self._resources) - 1
+
+        def func(img, surface):
+            with cairocffi.Context(surface) as ctx:
+                ctx.translate(offsetx, offsety)
+                ctx.set_source(cairocffi.SurfacePattern(img._resources[resource_idx].surface))
+                ctx.paint()
+
+        self._operations.append(func)
+        self._reset()
+        return self
+
+    def paint_mask(self, colour: ColorsType) -> Img:
+        def func(img, surface):
+            with cairocffi.Context(surface) as ctx:
+                if isinstance(colour, list):
+                    if len(colour) == 0:
+                        # defaults to black
+                        ctx.set_source_rgba(0.0, 0.0, 0.0, 1.0)
+                    elif len(colour) == 1:
+                        ctx.set_source_rgba(*utils.rgb(colour[0]))
+                    else:
+                        linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, img.height)
+                        step_size = 1.0 / (len(colour) - 1)
+                        step = 0.0
+                        for c in colour:
+                            linear.add_color_stop_rgba(step, *utils.rgb(c))
+                            step += step_size
+                        ctx.set_source(linear)
+                else:
+                    ctx.set_source_rgba(*utils.rgb(colour))
+
+                ctx.set_operator(cairocffi.OPERATOR_SOURCE)
+                ctx.mask(cairocffi.SurfacePattern(surface))
+                ctx.fill()
+
+        self._operations.append(func)
+        self._reset()
+        return self
+
     @property
     def surface(self):
         try:
             return self._surface
         except AttributeError:
-            surf, fmt = get_cairo_surface(self.bytes_img, self.width, self.height)
+            surf = self.backend.get_surface(self.width, self.height)
+            for operation in self._operations:
+                operation(self, surf)
+
             self._surface = surf
             return surf
 
@@ -258,9 +400,12 @@ class Img:
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        s0 = (self.bytes_img, self.theta, self.width, self.height)
-        s1 = (other.bytes_img, other.theta, other.width, other.height)
-        return s0 == s1
+        return (
+            self.backend == other.backend
+            and self.theta == other.theta
+            and self.width == other.width
+            and self.height == other.height
+        )
 
 
 class Loader:
