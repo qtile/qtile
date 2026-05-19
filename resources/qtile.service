@@ -1,0 +1,11 @@
+[Unit]
+Description=qtile window manager
+PartOf=qtile-session.target
+After=graphical-session-pre.target
+
+[Service]
+Type=exec
+ExecStartPre=/usr/bin/systemctl --user start qtile-session.target
+ExecStart=%h/.local/bin/qtile start
+ExecStopPost=/usr/bin/systemctl --user stop graphical-session.target
+TimeoutStopSec=10s
