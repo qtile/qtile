@@ -207,6 +207,8 @@ jobs:
       - name: Unpack wayland artifact
         run: tar xf wayland.tar.gz -C /
       - uses: actions/checkout@v6
+      - name: Mark workspace as safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Set environment variables
         run: |
           PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-${PYTHON_VERSION/./})
@@ -262,6 +264,8 @@ jobs:
       - name: Install dependencies
         run: dnf install -y cairo-devel libffi-devel
       - uses: actions/checkout@v6
+      - name: Mark workspace as safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Set environment variables
         run: |
           PYTHON_ROOT=$(find /opt/python -name ${PYTHON_VERSION/./}-${PYTHON_VERSION/./})
