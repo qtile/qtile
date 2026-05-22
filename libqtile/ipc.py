@@ -197,7 +197,11 @@ class Server:
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
         flags = fcntl.fcntl(self.sock.fileno(), fcntl.F_GETFD)
         fcntl.fcntl(self.sock.fileno(), fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-        self.sock.bind(self.socket_path)
+        old_umask = os.umask(0o177)
+        try:
+            self.sock.bind(self.socket_path)
+        finally:
+            os.umask(old_umask)
 
     def lock(self):
         self.locked.set()
