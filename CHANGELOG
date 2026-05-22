@@ -1,5 +1,9 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+    * bugfixes
+
+Qtile 0.36.0, released 2026-05-22:
+    * features
       - The Clock widget now uses the stdlib zoneinfo module for string
         timezone lookup. pytz is no longer a (optional) dependency.
       - prompt widget: add options for block, invisible, and bar cursor
