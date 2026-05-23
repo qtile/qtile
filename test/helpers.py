@@ -155,10 +155,20 @@ class TestManager:
         self.testwindows = []
         self.logspipe = None
 
+    def timeout_handler(self, signum, frame):
+        os.kill(self.proc.pid, signal.SIGUSR2)
+        subprocess.run(["ps", "awfux"], stdout=sys.stderr)
+        old = self._old_sigalrm_handler
+        if callable(old):
+            old(signum, frame)
+
     def __enter__(self):
         """Set up resources"""
         faulthandler.enable(all_threads=True)
         faulthandler.register(signal.SIGUSR2, all_threads=True)
+        self._old_sigalrm_handler = signal.getsignal(signal.SIGALRM)
+        signal.signal(signal.SIGALRM, self.timeout_handler)
+        faulthandler.register(signal.SIGALRM, all_threads=True, chain=True)
         self._sockfile = tempfile.NamedTemporaryFile()
         self.sockfile = self._sockfile.name
         return self
