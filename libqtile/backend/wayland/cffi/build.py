@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 from contextlib import chdir
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from cffi import FFI
@@ -28,6 +29,8 @@ if not WAYLAND_SCANNER:
         text=True,
         stdout=subprocess.PIPE,
     ).stdout.strip()
+if WAYLAND_SCANNER is None:
+    sys.exit("wayland-scanner not found. Exiting.")
 WAYLAND_PROTOCOLS = subprocess.run(
     [PKG_CONFIG, "--variable=pkgdatadir", "wayland-protocols"],
     text=True,
@@ -35,36 +38,113 @@ WAYLAND_PROTOCOLS = subprocess.run(
 ).stdout.strip()
 
 QW_PROTO_IN_PATH = (QW_PATH / ".." / "proto").resolve()
-
-PROTOS = [
-    [
-        "wlr-layer-shell-unstable-v1-protocol.h",
-        f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml",
-    ],
-    [
-        "wlr-output-power-management-unstable-v1-protocol.h",
-        f"{QW_PROTO_IN_PATH}/wlr-output-power-management-unstable-v1.xml",
-    ],
-    ["xdg-shell-protocol.h", f"{WAYLAND_PROTOCOLS}/stable/xdg-shell/xdg-shell.xml"],
-    [
-        "pointer-constraints-unstable-v1-protocol.h",
-        f"{WAYLAND_PROTOCOLS}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml",
-    ],
-    [
-        "cursor-shape-v1-protocol.h",
-        f"{WAYLAND_PROTOCOLS}/staging/cursor-shape/cursor-shape-v1.xml",
-    ],
-]
-
 QW_PROTO_OUT_PATH = QW_PATH / "proto"
 QW_PROTO_OUT_PATH.mkdir(exist_ok=True)
 
+TEST_CLIENT_PATH = (
+    Path(__file__) / ".." / ".." / ".." / ".." / ".." / "test" / "wayland_clients"
+).resolve()
+TEST_CLIENT_SRC_PATH = TEST_CLIENT_PATH / "src"
+TEST_CLIENT_OUT_PATH = TEST_CLIENT_PATH / "bin"
+TEST_CLIENT_OUT_PATH.mkdir(parents=True, exist_ok=True)
+CLIENT_BASE = TEST_CLIENT_SRC_PATH / "client-base.c"
+
+
+@dataclass
+class Protocol:
+    xml_path: str
+    build_server: bool = True
+    build_client: bool = False
+
+    @property
+    def private_code(self) -> str:
+        """Derives the private code protocol name from the XML filename."""
+        return f"{Path(self.xml_path).stem}-protocol.c"
+
+    @property
+    def server_header(self) -> str:
+        """Derives the server header protocol name from the XML filename."""
+        return f"{Path(self.xml_path).stem}-protocol.h"
+
+    @property
+    def client_header(self) -> str:
+        """Derives the client header protocol name from the XML filename."""
+        return f"{Path(self.xml_path).stem}-client-protocol.h"
+
+    def _build(self, protocol_type: str, output: Path) -> None:
+        assert WAYLAND_SCANNER is not None
+        subprocess.run(
+            [WAYLAND_SCANNER, protocol_type, self.xml_path, output.resolve().as_posix()],
+            check=True,
+        )
+
+    def build(self) -> None:
+        if self.build_server:
+            self._build("server-header", QW_PROTO_OUT_PATH / self.server_header)
+
+        if self.build_client:
+            self._build("client-header", QW_PROTO_OUT_PATH / self.client_header)
+            self._build("private-code", QW_PROTO_OUT_PATH / self.private_code)
+
+
+@dataclass
+class TestClient:
+    name: str
+    sources: list[str | Path]
+    includes: list[str | Path] = field(default_factory=list)
+    packages: list[str] = field(default_factory=list)
+    extra_args: list[str] = field(default_factory=list)
+
+    def _to_string(self, value: str | Path) -> str:
+        if isinstance(value, Path):
+            return value.resolve().as_posix()
+        return value
+
+    @property
+    def all_packages(self) -> list[str]:
+        return ["wayland-client"] + self.packages
+
+    def build(self) -> None:
+        cflags = (
+            subprocess.check_output(["pkg-config", "--cflags", *self.all_packages])
+            .decode()
+            .split()
+        )
+
+        libs = (
+            subprocess.check_output(["pkg-config", "--libs", *self.all_packages]).decode().split()
+        )
+
+        cmd = [
+            "cc",
+            *cflags,
+            *(self._to_string(source) for source in self.sources),
+            *(arg for include in self.includes for arg in ("-I", self._to_string(include))),
+            *self.extra_args,
+            *libs,
+            "-o",
+            (TEST_CLIENT_OUT_PATH / self.name).resolve().as_posix(),
+        ]
+
+        subprocess.run(cmd, check=True)
+
+
+PROTOS: list[Protocol] = [
+    Protocol(f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml"),
+    Protocol(f"{QW_PROTO_IN_PATH}/wlr-output-power-management-unstable-v1.xml"),
+    Protocol(f"{WAYLAND_PROTOCOLS}/stable/xdg-shell/xdg-shell.xml", build_client=True),
+    Protocol(
+        f"{WAYLAND_PROTOCOLS}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
+    ),
+    Protocol(f"{WAYLAND_PROTOCOLS}/staging/cursor-shape/cursor-shape-v1.xml"),
+]
+
+
+TEST_CLIENTS: list[TestClient] = []
+
+
 for proto in PROTOS:
-    subprocess.run(
-        [WAYLAND_SCANNER, "server-header", proto[1], QW_PROTO_OUT_PATH / proto[0]],
-        text=True,
-        stdout=subprocess.PIPE,
-    ).stdout.strip()
+    proto.build()
 
 
 # Helper to check whether wlroots has been compiled with xwayland support
@@ -275,6 +355,11 @@ def build_objects(debug: bool = False, asan: bool = False) -> None:
         )
 
 
+def build_test_clients():
+    for client in TEST_CLIENTS:
+        client.build()
+
+
 def ffi_compile(verbose: bool = False, debug: bool = False, asan: bool = False) -> None:
     # The ffi source of "libqtile.backend.wayland._ffi" means that we'll compile the library file
     # at libqtile/backend/wayland/_ffi.so.
@@ -312,6 +397,7 @@ def ffi_compile(verbose: bool = False, debug: bool = False, asan: bool = False) 
     ffi.compile(
         tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose
     )
+    build_test_clients()
 
 
 if __name__ == "__main__":
