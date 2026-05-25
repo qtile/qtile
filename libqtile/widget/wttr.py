@@ -96,5 +96,5 @@ class Wttr(GenPollUrl):
 
     def parse(self, response):
         for coord in self.location:
-            response = response.strip().replace(coord, self.location[coord])
-        return response
+            response = response.replace(coord, self.location[coord])
+        return response.strip()
