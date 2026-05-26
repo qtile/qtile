@@ -63,7 +63,9 @@ class WaylandBackend(Backend):
     def create(self):
         """This is used to instantiate the Core"""
         os.environ.update(self.env)
-        return self.core(*self.args)
+        core = self.core(*self.args)
+        core.add_dummy_input_devices()
+        return core
 
     def configure(self, manager):
         """This backend needs to get WAYLAND_DISPLAY variable."""
