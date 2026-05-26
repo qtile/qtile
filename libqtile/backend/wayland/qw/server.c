@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <wlr/backend/libinput.h>
 #include <wlr/backend/session.h>
+#include <wlr/interfaces/wlr_keyboard.h>
+#include <wlr/interfaces/wlr_pointer.h>
+#include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_output_management_v1.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
@@ -48,9 +51,18 @@ void qw_server_poll(struct qw_server *server) {
     wl_display_flush_clients(server->display);
 }
 
+static void qw_server_destroy_dummy_input_devices(struct qw_server *server) {
+    if (server->dummy_keyboard != NULL) {
+        wlr_keyboard_finish(server->dummy_keyboard);
+        free(server->dummy_keyboard);
+        server->dummy_keyboard = NULL;
+    }
+}
+
 // Cleanup routine to destroy the compositor and free resources.
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
+    qw_server_destroy_dummy_input_devices(server);
     wl_list_remove(&server->new_input.link);
     wl_list_remove(&server->new_output.link);
     wl_list_remove(&server->output_layout_change.link);
@@ -1179,4 +1191,37 @@ struct qw_view *qw_server_active_view(struct qw_server *server) {
 #endif
 
     return NULL;
+}
+
+static void qw_server_add_dummy_keyboard(struct qw_server *server) {
+    struct wlr_seat *seat = server->seat;
+    struct wlr_keyboard *kbd = calloc(1, sizeof(struct wlr_keyboard));
+    if (!kbd)
+        return;
+
+    // NULL impl is fine for a dummy — no real hardware to talk to
+    wlr_keyboard_init(kbd, NULL, "dummy-keyboard");
+
+    struct xkb_context *ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    struct xkb_keymap *keymap = xkb_keymap_new_from_names(ctx, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    wlr_keyboard_set_keymap(kbd, keymap);
+    xkb_keymap_unref(keymap);
+    xkb_context_unref(ctx);
+
+    wlr_seat_set_keyboard(seat, kbd);
+
+    server->dummy_keyboard = kbd;
+}
+
+void qw_server_add_dummy_input_devices(struct qw_server *server) {
+    if (server->dummy_keyboard != NULL) {
+        return;
+    }
+
+    qw_server_add_dummy_keyboard(server);
+
+    // We don't create a dummy pointer but we pretend there is one available
+    uint32_t caps = WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD;
+    wlr_seat_set_capabilities(server->seat, caps);
 }

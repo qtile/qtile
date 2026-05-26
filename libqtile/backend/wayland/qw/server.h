@@ -290,6 +290,7 @@ struct qw_server {
     struct wlr_relative_pointer_manager_v1 *relative_pointer_manager;
     struct wlr_pointer_constraints_v1 *pointer_constraints;
     struct wl_listener new_pointer_constraint;
+    struct wlr_keyboard *dummy_keyboard;
 };
 
 struct qw_drag_icon {
@@ -379,5 +380,7 @@ void qw_server_add_idle_timer(struct qw_server *server, int seconds);
 void qw_server_remove_idle_timer(struct qw_server *server, int seconds);
 
 struct qw_view *qw_server_active_view(struct qw_server *server);
+
+void qw_server_add_dummy_input_devices(struct qw_server *server);
 
 #endif /* SERVER_H */
