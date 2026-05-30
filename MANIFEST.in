@@ -36,6 +36,7 @@ prune bin
 prune docs
 prune scripts
 prune rpm
+prune test/wayland_clients/bin
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
