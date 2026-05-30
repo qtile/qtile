@@ -137,10 +137,31 @@ PROTOS: list[Protocol] = [
         f"{WAYLAND_PROTOCOLS}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
     ),
     Protocol(f"{WAYLAND_PROTOCOLS}/staging/cursor-shape/cursor-shape-v1.xml"),
+    Protocol(
+        f"{WAYLAND_PROTOCOLS}/staging/ext-idle-notify/ext-idle-notify-v1.xml",
+        build_client=True,
+        build_server=False,
+    ),
+    Protocol(
+        f"{WAYLAND_PROTOCOLS}/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml",
+        build_client=True,
+        build_server=False,
+    ),
 ]
 
 
-TEST_CLIENTS: list[TestClient] = []
+TEST_CLIENTS: list[TestClient] = [
+    TestClient(
+        name="idle-client",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "idle-client.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "ext-idle-notify-v1-protocol.c",
+            QW_PROTO_OUT_PATH / "idle-inhibit-unstable-v1-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    )
+]
 
 
 for proto in PROTOS:

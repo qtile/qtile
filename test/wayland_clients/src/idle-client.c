@@ -1,6 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "client-base.h"
 
-struct idle_state {
+#include "ext-idle-notify-v1-client-protocol.h"
+#include "idle-inhibit-unstable-v1-client-protocol.h"
+
+struct test_state {
     struct client_state base;
 
     struct ext_idle_notifier_v1 *idle_notifier;
@@ -14,101 +21,116 @@ struct idle_state {
     struct wl_surface *surface;
 };
 
-static void create_watch(struct client_state *base, uint32_t timeout_ms) {
-    struct idle_state *state = (struct idle_state *)base;
+static void handle_idled(void *data, struct ext_idle_notification_v1 *notification) {
+    (void)data;
+    (void)notification;
 
-    if (!state.idle_notifier) {
+    test_message("idled");
+}
+
+static void handle_resumed(void *data, struct ext_idle_notification_v1 *notification) {
+    (void)data;
+    (void)notification;
+
+    test_message("resumed");
+}
+
+static const struct ext_idle_notification_v1_listener idle_notification_listener = {
+    .idled = handle_idled,
+    .resumed = handle_resumed,
+};
+
+static void create_watch(struct test_state *state, uint32_t timeout_ms) {
+
+    if (!state->idle_notifier) {
         fprintf(stderr, "No ext_idle_notifier_v1\n");
         return;
     }
 
-    if (!state.seat) {
+    if (!state->base.seat) {
         fprintf(stderr, "No wl_seat\n");
         return;
     }
 
-    if (state.notification) {
-        ext_idle_notification_v1_destroy(state.notification);
-        state.notification = NULL;
+    if (state->notification) {
+        ext_idle_notification_v1_destroy(state->notification);
+        state->notification = NULL;
     }
 
-    state.notification =
-        ext_idle_notifier_v1_get_idle_notification(state.idle_notifier, timeout_ms, state.seat);
+    state->notification = ext_idle_notifier_v1_get_idle_notification(state->idle_notifier,
+                                                                     timeout_ms, state->base.seat);
 
-    ext_idle_notification_v1_add_listener(state.notification, &idle_notification_listener, &state);
+    ext_idle_notification_v1_add_listener(state->notification, &idle_notification_listener, state);
+    state->subscribed = true;
 
-    wl_display_roundtrip(state.display);
+    wl_display_roundtrip(state->base.display);
 
-    puts("OK");
-    fflush(stdout);
+    test_ok();
 }
 
-static void destroy_watch(struct client_state *base) {
-    struct idle_state *state = (struct idle_state *)base;
+static void destroy_watch(struct test_state *state) {
 
-    if (!state.notification) {
-        puts("No notification");
+    if (!state->notification) {
+        test_message("No notification");
         return;
     }
 
-    ext_idle_notification_v1_destroy(state.notification);
+    ext_idle_notification_v1_destroy(state->notification);
 
-    state.notification = NULL;
+    state->notification = NULL;
+    state->subscribed = false;
 
-    puts("OK");
-    fflush(stdout);
+    test_ok();
 }
 
-static void create_inhibitor(struct client_state *base) {
-    struct idle_state *state = (struct idle_state *)base;
+static void create_inhibitor(struct test_state *state) {
 
-    if (!state.idle_inhibit_manager) {
-        fprintf(stderr, "No zwp_idle_inhibit_manager_v1\n");
-        return;
-    }
-
-    if (!state.compositor) {
+    if (!state->base.compositor) {
         fprintf(stderr, "No wl_compositor\n");
         return;
     }
 
-    if (state.inhibitor) {
+    if (!state->idle_inhibit_manager) {
+        test_error("No zwp_idle_inhibit_manager_v1.");
         return;
     }
 
-    if (!state.surface) {
-        state.surface = wl_compositor_create_surface(state.compositor);
-
-        wl_surface_commit(state.surface);
+    if (state->inhibitor) {
+        return;
     }
 
-    state.inhibitor =
-        zwp_idle_inhibit_manager_v1_create_inhibitor(state.idle_inhibit_manager, state.surface);
+    if (!state->surface) {
+        state->surface = wl_compositor_create_surface(state->base.compositor);
+        wl_surface_commit(state->surface);
+    }
 
-    wl_display_roundtrip(state.display);
+    state->inhibitor =
+        zwp_idle_inhibit_manager_v1_create_inhibitor(state->idle_inhibit_manager, state->surface);
 
-    puts("OK");
-    fflush(stdout);
+    state->inhibited = true;
+
+    wl_display_roundtrip(state->base.display);
+
+    test_ok();
 }
 
-static void destroy_inhibitor(struct client_state *base) {
-    struct idle_state *state = (struct idle_state *)base;
+static void destroy_inhibitor(struct test_state *state) {
 
-    if (!state.inhibitor) {
+    if (!state->inhibitor) {
         return;
     }
 
-    zwp_idle_inhibitor_v1_destroy(state.inhibitor);
+    zwp_idle_inhibitor_v1_destroy(state->inhibitor);
 
-    state.inhibitor = NULL;
+    state->inhibitor = NULL;
+    state->inhibited = false;
 
-    puts("OK");
-    fflush(stdout);
+    test_ok();
 }
 
 static void registry_handler(struct client_state *base, struct wl_registry *registry, uint32_t name,
                              const char *interface, uint32_t version) {
-    struct idle_state *state = (struct idle_state *)base;
+    struct test_state *state = (struct test_state *)base;
 
     if (strcmp(interface, ext_idle_notifier_v1_interface.name) == 0) {
 
@@ -122,12 +144,12 @@ static void registry_handler(struct client_state *base, struct wl_registry *regi
 }
 
 static bool dispatch_command(struct client_state *base, const char *cmd, const char *arg) {
-    struct idle_state *state = (struct idle_state *)base;
+    struct test_state *state = (struct test_state *)base;
 
     if (strcmp(cmd, "watch") == 0) {
         if (!arg) {
             fprintf(stderr, "watch requires timeout\n");
-            return;
+            return true;
         }
 
         create_watch(state, atoi(arg));
@@ -147,36 +169,32 @@ static bool dispatch_command(struct client_state *base, const char *cmd, const c
     return true;
 }
 
-void do_cleanup(struct client_state *base) {
-    struct idle_state *state = (struct idle_state *)base;
+void cleanup(struct client_state *base) {
+    struct test_state *state = (struct test_state *)base;
 
-    static void cleanup(struct client_state * base) {
-        struct idle_state *state = (struct idle_state *)base;
+    if (state->subscribed) {
+        destroy_watch(state);
+    }
 
-        if (state->subscribed) {
-            destroy_watch(state);
-        }
+    if (state->inhibited) {
+        destroy_inhibitor(state);
+    }
 
-        if (state->inhibited) {
-            destroy_inhibitor(state);
-        }
+    if (state->surface) {
+        wl_surface_destroy(state->surface);
+    }
 
-        if (state.surface) {
-            wl_surface_destroy(state.surface);
-        }
+    if (state->idle_inhibit_manager) {
+        zwp_idle_inhibit_manager_v1_destroy(state->idle_inhibit_manager);
+    }
 
-        if (state.idle_inhibit_manager) {
-            zwp_idle_inhibit_manager_v1_destroy(state.idle_inhibit_manager);
-        }
-
-        if (state.idle_notifier) {
-            ext_idle_notifier_v1_destroy(state.idle_notifier);
-        }
+    if (state->idle_notifier) {
+        ext_idle_notifier_v1_destroy(state->idle_notifier);
     }
 }
 
 int main(void) {
-    struct idle_state state = {0};
+    struct test_state state = {0};
 
     const struct client_ops ops = {.registry_global = registry_handler,
                                    .dispatch_command = dispatch_command,
