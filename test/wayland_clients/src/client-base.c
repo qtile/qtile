@@ -108,19 +108,19 @@ static bool dispatch_line(struct client_state *state, char *line) {
 
 static void client_state_cleanup(struct client_state *state) {
     if (state->seat) {
-        wl_seat_destroy(state.seat);
+        wl_seat_destroy(state->seat);
     }
 
     if (state->compositor) {
-        wl_compositor_destroy(state.compositor);
+        wl_compositor_destroy(state->compositor);
     }
 
     if (state->registry) {
-        wl_registry_destroy(state.registry);
+        wl_registry_destroy(state->registry);
     }
 
     if (state->display) {
-        wl_display_disconnect(state.display);
+        wl_display_disconnect(state->display);
     }
 }
 
