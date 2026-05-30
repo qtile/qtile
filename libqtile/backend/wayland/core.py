@@ -722,6 +722,8 @@ class Core(base.Core):
     def _poll(self) -> None:
         lib.qw_server_poll(self.qw)
 
+    @expose_command()
+    @allow_when_locked
     def flush(self) -> None:
         self._poll()
 

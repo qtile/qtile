@@ -1,5 +1,10 @@
 import contextlib
+import fcntl
 import os
+import select
+import subprocess
+import time
+from pathlib import Path
 
 import pytest
 
@@ -101,3 +106,198 @@ def new_layer_client(wmanager, name="layer"):
     pid = wmanager.test_notification(name)
     wmanager.c.sync()
     return pid
+
+
+CLIENT_PATH = Path(__file__) / ".." / ".." / ".." / "wayland_clients" / "bin"
+
+
+def make_test_env(mgr):
+    """Generate environment variables to ensure client connects to test server."""
+    env = os.environ.copy()
+    env.pop("DISPLAY", None)
+    env.pop("WAYLAND_DISPLAY", None)
+    env.update(mgr.backend.env)
+    return env
+
+
+class ScriptError(Exception):
+    pass
+
+
+class ClientHandler:
+    def __init__(self, cmd, manager):
+        if Path(cmd).is_absolute():
+            cmd_path = Path(cmd)
+        else:
+            cmd_path = (CLIENT_PATH / cmd).resolve()
+
+        if not cmd_path.exists():
+            assert False, f"{cmd_path.as_posix()} not found."
+
+        self.cmd = cmd_path.as_posix()
+
+        self.process = None
+        self.manager = manager
+
+    def __enter__(self):
+        self._run()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
+    def _run(self):
+        if self.cmd is None:
+            assert False, "No command defined."
+
+        if self.process is not None and self.process.poll() is None:
+            return
+
+        self.process = subprocess.Popen(
+            [self.cmd],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+            env=make_test_env(self.manager),
+        )
+
+        fcntl.fcntl(self.process.stdout.fileno(), fcntl.F_SETFL, os.O_NONBLOCK)
+
+    def stop(self):
+        try:
+            if self.process and self.process.poll() is None:
+                self.process.stdin.write("quit\n")
+                self.process.stdin.flush()
+                self.process.wait(timeout=2)
+
+        except subprocess.TimeoutExpired:
+            self.process.kill()
+
+        finally:
+            if self.process:
+                self.process.stdin.close()
+                self.process.stdout.close()
+                self.process.stderr.close()
+                self.process = None
+
+    def _send(self, command: str) -> None:
+        if self.process is None:
+            raise ScriptError("Process not started")
+
+        if self.process.poll() is not None:
+            raise ScriptError("Process has exited")
+        self.flush_manager()
+        self.process.stdin.write(command + "\n")
+        self.process.stdin.flush()
+        self.flush_manager()
+
+    def send(self, command: str) -> str:
+        """
+        Send a command and wait for one-line response.
+        Expected responses:
+            OK
+            ERROR: message
+        """
+        self._send(command)
+
+        while True:
+            response = self.process.stdout.readline()
+
+            if response == "":
+                if self.process.poll() is None:
+                    continue
+
+                stderr = self.process.stderr.read().strip()
+                raise ScriptError(f"Process closed stdout. stderr={stderr}")
+
+            break
+
+        return response.strip()
+
+    def assert_no_text(self, timeout_ms=200):
+        """
+        Verifies that no next is output by the client during a specified time period.
+
+        Useful if you want to demonstrate that no text is output by the clien
+        e.g. responding to a message from the compositor.
+        """
+        self.assert_line("", timeout_ms=timeout_ms, assert_timeout=True)
+
+    def assert_line(self, line, timeout_ms=1000, assert_timeout=False) -> None:
+        """
+        Waits for the client to output a specific line.
+        NB client only reads the first line available.
+        """
+        poll_obj = select.poll()
+        poll_obj.register(self.process.stdout, select.POLLIN)
+        poll_result = poll_obj.poll(timeout_ms)
+        if poll_result:
+            out = self.process.stdout.readline().strip()
+            assert out == line
+        else:
+            if assert_timeout:
+                assert True
+            else:
+                assert False, "No text received."
+
+    def assert_ok(self, command: str) -> None:
+        """Verify that the client outputs 'OK' after sending a command."""
+        assert self.send(command) == "OK"
+
+    def assert_error(self, command: str, error: str) -> None:
+        """Verify that the client outputs an error message."""
+        assert self.send(command) == f"ERROR: {error}"
+
+    def send_read_until(self, command, expected, timeout_ms=2000):
+        """
+        Send command and read stdout until `expected` is seen.
+
+        Returns all lines read (including the matching line).
+
+        Raises TimeoutError if the line is not received before the timeout.
+        """
+        self._send(command)
+
+        poll_obj = select.poll()
+        poll_obj.register(self.process.stdout, select.POLLIN)
+
+        deadline = time.monotonic() + timeout_ms / 1000
+        lines = []
+
+        while True:
+            remaining = max(0, int((deadline - time.monotonic()) * 1000))
+
+            if remaining == 0:
+                assert False, f"Timed out waiting for {expected!r}. Received: {lines!r}"
+
+            if not poll_obj.poll(remaining):
+                assert False, f"Timed out waiting for {expected!r}. Received: {lines!r}"
+
+            data = self.process.stdout.read()
+            if not data:  # EOF
+                raise EOFError(f"Process exited before {expected!r}. Received: {lines!r}")
+
+            raw_lines = [l.strip() for l in data.split("\n") if l]
+            lines.extend(raw_lines)
+
+            if expected in lines:
+                return lines
+
+    def restart(self):
+        self._run()
+
+    def flush_manager(self):
+        self.manager.c.core.flush()
+
+
+@pytest.fixture
+def test_client(wmanager, request):
+    script = getattr(request, "param", None)
+
+    if script is None:
+        raise ValueError("The test_client fixture must be parameterised.")
+
+    with ClientHandler(script, wmanager) as client:
+        yield client

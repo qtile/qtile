@@ -14,7 +14,6 @@ import socket
 import struct
 from typing import Any, Self
 
-from libqtile import hook
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
 
@@ -186,11 +185,6 @@ class Server:
         self.handler = handler
         self.server = None  # type: asyncio.AbstractServer | None
 
-        # Use a flag to indicate if session is locked
-        self.locked = asyncio.Event()
-        hook.subscribe.locked(self.lock)
-        hook.subscribe.unlocked(self.unlock)
-
         if os.path.exists(socket_path):
             os.unlink(socket_path)
 
@@ -202,12 +196,6 @@ class Server:
             self.sock.bind(self.socket_path)
         finally:
             os.umask(old_umask)
-
-    def lock(self):
-        self.locked.set()
-
-    def unlock(self):
-        self.locked.clear()
 
     async def _server_callback(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
@@ -226,11 +214,7 @@ class Server:
         except IPCError:
             logger.warning("Invalid data received, closing connection")
         else:
-            # Don't handle requests when session is locked
-            if self.locked.is_set():
-                rep = (1, {"error": "Session locked."})
-            else:
-                rep = self.handler(req)
+            rep = self.handler(req)
 
             result = _IPC.pack(rep, is_json=is_json)
 
