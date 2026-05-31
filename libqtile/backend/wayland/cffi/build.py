@@ -147,6 +147,11 @@ PROTOS: list[Protocol] = [
         build_client=True,
         build_server=False,
     ),
+    Protocol(
+        f"{WAYLAND_PROTOCOLS}/staging/ext-session-lock/ext-session-lock-v1.xml",
+        build_client=True,
+        build_server=False,
+    ),
 ]
 
 
@@ -160,7 +165,16 @@ TEST_CLIENTS: list[TestClient] = [
             QW_PROTO_OUT_PATH / "idle-inhibit-unstable-v1-protocol.c",
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
-    )
+    ),
+    TestClient(
+        name="session-lock",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "session-lock.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "ext-session-lock-v1-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
 ]
 
 

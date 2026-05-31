@@ -222,6 +222,7 @@ struct qw_server {
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
+    enum qw_session_lock_state lock_state;
 
     // Private data
     struct wl_event_loop *event_loop;
@@ -266,7 +267,6 @@ struct qw_server {
     struct wlr_session_lock_manager_v1 *lock_manager;
     struct qw_session_lock *lock;
     struct wlr_scene_tree *lock_tree;
-    enum qw_session_lock_state lock_state;
     struct wlr_foreign_toplevel_manager_v1 *ftl_mgr;
     struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard;
     struct wlr_virtual_pointer_manager_v1 *virtual_pointer;
