@@ -12,82 +12,83 @@ from cffi import FFI
 from setuptools import Distribution
 from setuptools.command.build_ext import build_ext
 
+# Path resolution
+
 QW_PATH = (Path(__file__).parent / ".." / "qw").resolve()
-WLROOTS_PATH = os.getenv("QTILE_WLROOTS_PATH", "/usr/include/wlroots-0.20")
-
-PKG_CONFIG = os.environ.get("PKG_CONFIG", "pkg-config")
-WAYLAND_SCANNER = os.environ.get("QTILE_WAYLAND_SCANNER", shutil.which("wayland-scanner"))
-if not WAYLAND_SCANNER:
-    print(
-        "Didn't find a wayland-scanner executable in $PATH, and "
-        "$QTILE_WAYLAND_SCANNER is not set. Trying to get the path to it from "
-        "pkg-config",
-        file=sys.stderr,
-    )
-    WAYLAND_SCANNER = subprocess.run(
-        [PKG_CONFIG, "--variable=wayland_scanner", "wayland-scanner"],
-        text=True,
-        stdout=subprocess.PIPE,
-    ).stdout.strip()
-if WAYLAND_SCANNER is None:
-    sys.exit("wayland-scanner not found. Exiting.")
-WAYLAND_PROTOCOLS = subprocess.run(
-    [PKG_CONFIG, "--variable=pkgdatadir", "wayland-protocols"],
-    text=True,
-    stdout=subprocess.PIPE,
-).stdout.strip()
-
 QW_PROTO_IN_PATH = (QW_PATH / ".." / "proto").resolve()
 QW_PROTO_OUT_PATH = QW_PATH / "proto"
-QW_PROTO_OUT_PATH.mkdir(exist_ok=True)
 
 TEST_CLIENT_PATH = (
     Path(__file__) / ".." / ".." / ".." / ".." / ".." / "test" / "wayland_clients"
 ).resolve()
 TEST_CLIENT_SRC_PATH = TEST_CLIENT_PATH / "src"
 TEST_CLIENT_OUT_PATH = TEST_CLIENT_PATH / "bin"
-TEST_CLIENT_OUT_PATH.mkdir(parents=True, exist_ok=True)
 CLIENT_BASE = TEST_CLIENT_SRC_PATH / "client-base.c"
 
+# Tool resolution
 
-@dataclass
+PKG_CONFIG = os.environ.get("PKG_CONFIG", "pkg-config")
+
+
+def _resolve_wayland_scanner() -> str:
+    if explicit := os.environ.get("QTILE_WAYLAND_SCANNER"):
+        return explicit
+    if found := shutil.which("wayland-scanner"):
+        return found
+    print(
+        "wayland-scanner not found in $PATH or $QTILE_WAYLAND_SCANNER; "
+        "falling back to pkg-config",
+        file=sys.stderr,
+    )
+    result = subprocess.run(
+        [PKG_CONFIG, "--variable=wayland_scanner", "wayland-scanner"],
+        text=True,
+        stdout=subprocess.PIPE,
+    ).stdout.strip()
+
+    return result
+
+
+def _pkg_variable(package: str, variable: str) -> str:
+    return subprocess.run(
+        [PKG_CONFIG, f"--variable={variable}", package],
+        text=True,
+        stdout=subprocess.PIPE,
+        check=True,
+    ).stdout.strip()
+
+
+WAYLAND_SCANNER: str = _resolve_wayland_scanner()
+WAYLAND_PROTOCOLS: str = _pkg_variable("wayland-protocols", "pkgdatadir")
+WLROOTS_PATH: str = os.getenv("QTILE_WLROOTS_PATH", "/usr/include/wlroots-0.20")
+
+# Protocol and test-client declarations
+
+
+@dataclass(frozen=True)
 class Protocol:
     xml_path: str
     build_server: bool = True
     build_client: bool = False
 
     @property
+    def stem(self) -> str:
+        return Path(self.xml_path).stem
+
+    @property
     def private_code(self) -> str:
-        """Derives the private code protocol name from the XML filename."""
-        return f"{Path(self.xml_path).stem}-protocol.c"
+        return f"{self.stem}-protocol.c"
 
     @property
     def server_header(self) -> str:
-        """Derives the server header protocol name from the XML filename."""
-        return f"{Path(self.xml_path).stem}-protocol.h"
+        return f"{self.stem}-protocol.h"
 
     @property
     def client_header(self) -> str:
-        """Derives the client header protocol name from the XML filename."""
-        return f"{Path(self.xml_path).stem}-client-protocol.h"
-
-    def _build(self, protocol_type: str, output: Path) -> None:
-        assert WAYLAND_SCANNER is not None
-        subprocess.run(
-            [WAYLAND_SCANNER, protocol_type, self.xml_path, output.resolve().as_posix()],
-            check=True,
-        )
-
-    def build(self) -> None:
-        if self.build_server:
-            self._build("server-header", QW_PROTO_OUT_PATH / self.server_header)
-
-        if self.build_client:
-            self._build("client-header", QW_PROTO_OUT_PATH / self.client_header)
-            self._build("private-code", QW_PROTO_OUT_PATH / self.private_code)
+        return f"{self.stem}-client-protocol.h"
 
 
-@dataclass
+@dataclass(frozen=True)
 class TestClient:
     name: str
     sources: list[str | Path]
@@ -95,38 +96,9 @@ class TestClient:
     packages: list[str] = field(default_factory=list)
     extra_args: list[str] = field(default_factory=list)
 
-    def _to_string(self, value: str | Path) -> str:
-        if isinstance(value, Path):
-            return value.resolve().as_posix()
-        return value
-
     @property
     def all_packages(self) -> list[str]:
         return ["wayland-client"] + self.packages
-
-    def build(self) -> None:
-        cflags = (
-            subprocess.check_output(["pkg-config", "--cflags", *self.all_packages])
-            .decode()
-            .split()
-        )
-
-        libs = (
-            subprocess.check_output(["pkg-config", "--libs", *self.all_packages]).decode().split()
-        )
-
-        cmd = [
-            "cc",
-            *cflags,
-            *(self._to_string(source) for source in self.sources),
-            *(arg for include in self.includes for arg in ("-I", self._to_string(include))),
-            *self.extra_args,
-            *libs,
-            "-o",
-            (TEST_CLIENT_OUT_PATH / self.name).resolve().as_posix(),
-        ]
-
-        subprocess.run(cmd, check=True)
 
 
 PROTOS: list[Protocol] = [
@@ -154,7 +126,6 @@ PROTOS: list[Protocol] = [
     ),
 ]
 
-
 TEST_CLIENTS: list[TestClient] = [
     TestClient(
         name="idle-client",
@@ -177,18 +148,73 @@ TEST_CLIENTS: list[TestClient] = [
     ),
 ]
 
+# Build configuration
 
-for proto in PROTOS:
-    proto.build()
+CDEF_FILES = [
+    "log.h",
+    "session-lock.h",
+    "server.h",
+    "view.h",
+    "util.h",
+    "output.h",
+    "internal-view.h",
+    "cursor.h",
+    "input-device.h",
+    "keyboard.h",
+]
+XWAYLAND_ONLY_SOURCES = ["xwayland-view.c"]
 
 
-# Helper to check whether wlroots has been compiled with xwayland support
-def wlroots_has_xwayland():
+def wlroots_has_xwayland() -> bool:
     config = Path(WLROOTS_PATH) / "wlr" / "config.h"
     return "WLR_HAS_XWAYLAND 1" in config.read_text()
 
 
-CDEF = """
+@dataclass(frozen=True)
+class BuildConfig:
+    has_xwayland: bool
+    include_dirs: list[str]
+    libraries: list[str]
+    macros: list[tuple[str, str | None]]
+    source_files: list[str]
+
+    @classmethod
+    def from_environment(cls) -> "BuildConfig":
+        has_xwayland = wlroots_has_xwayland()
+        source_files = glob.glob(f"{QW_PATH}/*.c")
+        if not has_xwayland:
+            source_files = [
+                f for f in source_files if not any(x in f for x in XWAYLAND_ONLY_SOURCES)
+            ]
+        macros: list[tuple[str, str | None]] = [("WLR_USE_UNSTABLE", None)]
+        if not has_xwayland:
+            macros.append(("WLR_HAS_XWAYLAND", "0"))
+        return cls(
+            has_xwayland=has_xwayland,
+            include_dirs=[
+                os.getenv("QTILE_CAIRO_PATH", "/usr/include/cairo"),
+                os.getenv("QTILE_PIXMAN_PATH", "/usr/include/pixman-1"),
+                os.getenv("QTILE_LIBDRM_PATH", "/usr/include/libdrm"),
+                WLROOTS_PATH,
+                str(QW_PATH),
+                str(QW_PROTO_OUT_PATH),
+            ],
+            libraries=["wlroots-0.20", "wayland-server", "input", "cairo"],
+            source_files=source_files,
+            macros=macros,
+        )
+
+    @property
+    def objects(self) -> list[Path]:
+        return [
+            Path(src).parent / "build" / Path(src).with_suffix(".o").name
+            for src in self.source_files
+        ]
+
+
+# CDEF construction
+
+_CDEF_PREAMBLE = """
 // logging
 enum wlr_log_importance {
     WLR_SILENT,
@@ -284,154 +310,158 @@ extern "Python" void set_title_cb(char* title, void *userdata);
 extern "Python" void set_app_id_cb(char* app_id, void *userdata);
 """
 
-cdef_files = [
-    "log.h",
-    "session-lock.h",
-    "server.h",
-    "view.h",
-    "util.h",
-    "output.h",
-    "internal-view.h",
-    "cursor.h",
-    "input-device.h",
-    "keyboard.h",
-]
 
-XWAYLAND_ONLY_SOURCES = ["xwayland-view.c"]
-
-for file in cdef_files:
-    with open(QW_PATH / file) as f:
-        in_private_data = False
-        skip_no_xwayland_block = False
-        for line in f.readlines():
-            # cffi doesn't prepocess `#if` blocks so we need
-            # to strip out any xwayland blocks ourselves
-            stripped = line.strip()
-            if stripped.startswith("#if"):
-                if "WLR_HAS_XWAYLAND" in stripped and not wlroots_has_xwayland():
-                    skip_no_xwayland_block = True
-                continue
-            elif stripped.startswith("#else") and skip_no_xwayland_block:
-                skip_no_xwayland_block = False
-                continue
-            elif stripped.startswith("#endif") and skip_no_xwayland_block:
-                skip_no_xwayland_block = False
-                continue
-
-            if skip_no_xwayland_block:
-                continue
-
-            if line.startswith("#"):
-                continue
-            if line.strip().lower().startswith("// private data"):
-                in_private_data = True
-                CDEF += "    ...;\n"
-                continue
-            if line.startswith("};") and in_private_data:
-                in_private_data = False
-            if in_private_data:
-                continue
-            CDEF += line
-
-SOURCE = "\n".join(f'#include "{header}"' for header in cdef_files) + "\n"
+def _build_cdef(config: BuildConfig) -> str:
+    """Read QW headers and concatenate into a single CFFI cdef string."""
+    parts = [_CDEF_PREAMBLE]
+    for filename in CDEF_FILES:
+        parts.append(_read_header(QW_PATH / filename, config.has_xwayland))
+    return "".join(parts)
 
 
-def get_include_path(lib: str) -> str:
-    return subprocess.run(
-        ["pkg-config", "--variable=includedir", lib], text=True, stdout=subprocess.PIPE
-    ).stdout.strip()
+def _read_header(path: Path, has_xwayland: bool) -> str:
+    """
+    Read a single header, stripping preprocessor directives and
+    xwayland-only blocks when xwayland is not available.
+    """
+    lines: list[str] = []
+    in_private_data = False
+    skip_xwayland_block = False
+
+    for line in path.read_text().splitlines(keepends=True):
+        stripped = line.strip()
+        if stripped.startswith("#if"):
+            if "WLR_HAS_XWAYLAND" in stripped and not has_xwayland:
+                skip_xwayland_block = True
+            continue
+        if stripped.startswith("#else") and skip_xwayland_block:
+            skip_xwayland_block = False
+            continue
+        if stripped.startswith("#endif") and skip_xwayland_block:
+            skip_xwayland_block = False
+            continue
+        if skip_xwayland_block or line.startswith("#"):
+            continue
+        if stripped.lower().startswith("// private data"):
+            in_private_data = True
+            lines.append("    ...;\n")
+            continue
+        if line.startswith("};") and in_private_data:
+            in_private_data = False
+        if not in_private_data:
+            lines.append(line)
+
+    return "".join(lines)
 
 
-INCLUDE_DIRS = [
-    os.getenv("QTILE_CAIRO_PATH", "/usr/include/cairo"),
-    os.getenv("QTILE_PIXMAN_PATH", "/usr/include/pixman-1"),
-    os.getenv("QTILE_LIBDRM_PATH", "/usr/include/libdrm"),
-    WLROOTS_PATH,
-    QW_PATH,
-    QW_PROTO_OUT_PATH,
-]
-LIBRARIES = ["wlroots-0.20", "wayland-server", "input", "cairo"]
-
-# SOURCE_FILES loads all .c files...
-SOURCE_FILES = glob.glob(f"{QW_PATH}/*.c")
-
-# ...but we need to exclude any xwayland files
-if not wlroots_has_xwayland():
-    SOURCE_FILES = [f for f in SOURCE_FILES if not any(x in f for x in XWAYLAND_ONLY_SOURCES)]
-
-OBJECTS = [Path(src).parent / "build" / Path(src).with_suffix(".o").name for src in SOURCE_FILES]
+# Build steps
 
 
-MACROS: list[tuple[str, str | None]] = [("WLR_USE_UNSTABLE", None)]
-if not wlroots_has_xwayland():
-    MACROS.append(("WLR_HAS_XWAYLAND", "0"))
+def generate_protocols() -> None:
+    QW_PROTO_OUT_PATH.mkdir(exist_ok=True)
+    for proto in PROTOS:
+        _generate_protocol(proto)
 
 
-def build_objects(debug: bool = False, asan: bool = False) -> None:
-    # We have to use relative paths here for output_dir to work as expected
+def _generate_protocol(proto: Protocol) -> None:
+    if proto.build_server:
+        _run_scanner("server-header", proto.xml_path, QW_PROTO_OUT_PATH / proto.server_header)
+    if proto.build_client:
+        _run_scanner("client-header", proto.xml_path, QW_PROTO_OUT_PATH / proto.client_header)
+        _run_scanner("private-code", proto.xml_path, QW_PROTO_OUT_PATH / proto.private_code)
+
+
+def _run_scanner(mode: str, xml_path: str, output: Path) -> None:
+    subprocess.run([WAYLAND_SCANNER, mode, xml_path, output.resolve().as_posix()], check=True)
+
+
+def build_c_objects(config: BuildConfig, *, debug: bool = False, asan: bool = False) -> None:
     with chdir(QW_PATH):
         dist = Distribution()
         cmd = build_ext(dist)
         cmd.setup_shlib_compiler()
 
-        extra_preargs = []
-        if debug or asan:
-            extra_preargs = ["-g3", "-Og"]
-        else:
-            extra_preargs = ["-O2"]
-        extra_preargs.extend(["-fPIC", "-Wall", "-Wextra"])
+        preargs = ["-g3", "-Og"] if (debug or asan) else ["-O2"]
+        preargs += ["-fPIC", "-Wall", "-Wextra"]
 
         cmd.shlib_compiler.compile(
-            [os.path.basename(path) for path in SOURCE_FILES],
+            [os.path.basename(p) for p in config.source_files],
             output_dir="build",
-            macros=MACROS,
-            include_dirs=INCLUDE_DIRS,
-            extra_preargs=extra_preargs,
+            macros=config.macros,
+            include_dirs=config.include_dirs,
+            extra_preargs=preargs,
         )
 
 
-def build_test_clients():
+def build_test_clients() -> None:
+    TEST_CLIENT_OUT_PATH.mkdir(parents=True, exist_ok=True)
     for client in TEST_CLIENTS:
-        client.build()
+        _build_test_client(client)
 
 
-def ffi_compile(verbose: bool = False, debug: bool = False, asan: bool = False) -> None:
-    # The ffi source of "libqtile.backend.wayland._ffi" means that we'll compile the library file
-    # at libqtile/backend/wayland/_ffi.so.
-    # This is built at the path specified in tmpdir which is "." by default. So, if we're in a
-    # virtual environment, libqtile might be at .venv/lib/python3.13/site-packages/ but if we run
-    # the builder script, we'll get a new libqtile folder in th current directory that only has that
-    # tree shown above and the libtile library won't find the `_ffi` library.
-    # We therefore set the tmpdir to be the path to the folder containing libqtile so the library
-    # is always created in the correct folder.
-    # The compile command is nested in a function to ensure that the tmpdir value is not overwritten.
-    build_objects(debug=debug, asan=asan)
+def _build_test_client(client: TestClient) -> None:
+    def to_str(v: str | Path) -> str:
+        return v.resolve().as_posix() if isinstance(v, Path) else v
 
-    extra_compile_args = []
-    extra_link_args = []
+    cflags = (
+        subprocess.check_output(["pkg-config", "--cflags", *client.all_packages]).decode().split()
+    )
+    libs = (
+        subprocess.check_output(["pkg-config", "--libs", *client.all_packages]).decode().split()
+    )
+
+    cmd = [
+        "cc",
+        *cflags,
+        *(to_str(s) for s in client.sources),
+        *(arg for inc in client.includes for arg in ("-I", to_str(inc))),
+        *client.extra_args,
+        *libs,
+        "-o",
+        (TEST_CLIENT_OUT_PATH / client.name).resolve().as_posix(),
+    ]
+    subprocess.run(cmd, check=True)
+
+
+def compile_ffi(
+    config: BuildConfig, *, verbose: bool = False, debug: bool = False, asan: bool = False
+) -> None:
+    extra_compile_args: list[str] = []
+    extra_link_args: list[str] = []
     if debug or asan:
-        extra_compile_args.extend(["-g3", "-Og"])
+        extra_compile_args += ["-g3", "-Og"]
     if asan:
-        extra_compile_args.extend(
-            ["-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer"]
-        )
-        extra_link_args.extend(["-fsanitize=address,undefined"])
+        extra_compile_args += ["-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer"]
+        extra_link_args += ["-fsanitize=address,undefined"]
+
+    source = "\n".join(f'#include "{h}"' for h in CDEF_FILES) + "\n"
 
     ffi = FFI()
     ffi.set_source(
         "libqtile.backend.wayland._ffi",
-        SOURCE,
-        define_macros=MACROS,
-        include_dirs=INCLUDE_DIRS,
-        extra_objects=OBJECTS,
-        libraries=LIBRARIES,
+        source,
+        define_macros=config.macros,
+        include_dirs=config.include_dirs,
+        extra_objects=[str(o) for o in config.objects],
+        libraries=config.libraries,
         extra_compile_args=extra_compile_args,
         extra_link_args=extra_link_args,
     )
-    ffi.cdef(CDEF)
+    ffi.cdef(_build_cdef(config))
     ffi.compile(
-        tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(), verbose=verbose
+        tmpdir=Path(__file__).parent.parent.parent.parent.parent.as_posix(),
+        verbose=verbose,
     )
+
+
+# Top-level entry point
+
+
+def ffi_compile(*, verbose: bool = False, debug: bool = False, asan: bool = False) -> None:
+    config = BuildConfig.from_environment()
+    generate_protocols()
+    build_c_objects(config, debug=debug, asan=asan)
+    compile_ffi(config, verbose=verbose, debug=debug, asan=asan)
     build_test_clients()
 
 
