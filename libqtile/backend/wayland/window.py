@@ -705,14 +705,15 @@ class Window(Base, base.Window):
                 self.keep_above(enable=True)
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             self.reparent(lib.LAYER_LAYOUT)
-            self._update_fullscreen(False)
-            self._update_maximized(False)
-            self._update_minimized(False)
             if self._float_state == FloatStates.FLOATING:
                 # store last size
                 self._float_width = self.width
                 self._float_height = self.height
+            old_state = self._float_state
             self._float_state = FloatStates.NOT_FLOATING
+            self._update_fullscreen(False, old_state)
+            self._update_maximized(False, old_state)
+            self._update_minimized(False, old_state)
             if self.group:
                 self.group.mark_floating(self, False)
             hook.fire("float_change")
@@ -742,11 +743,12 @@ class Window(Base, base.Window):
         elif self._float_state == FloatStates.FULLSCREEN:
             self._restore_geometry()
             self.floating = False
-            self._update_fullscreen(False)
 
-    def _update_fullscreen(self, do_full: bool) -> None:
-        if do_full != (self._float_state == FloatStates.FULLSCREEN):
-            self._ptr.update_fullscreen(self._ptr, do_full)
+    def _update_fullscreen(self, do_full: bool, old_state: FloatStates) -> None:
+        if not (do_full or old_state == FloatStates.FULLSCREEN):
+            return
+
+        self._ptr.update_fullscreen(self._ptr, do_full)
 
         if self.group and self.group.screen:
             screen = self.group.screen
@@ -783,8 +785,8 @@ class Window(Base, base.Window):
                 self._restore_geometry()
                 self.floating = False
 
-    def _update_maximized(self, do_max: bool) -> None:
-        if do_max != (self._float_state == FloatStates.MAXIMIZED):
+    def _update_maximized(self, do_max: bool, old_state: FloatStates) -> None:
+        if do_max or old_state == FloatStates.MAXIMIZED:
             self._ptr.update_maximized(self._ptr, do_max)
 
     @property
@@ -800,8 +802,8 @@ class Window(Base, base.Window):
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
 
-    def _update_minimized(self, do_min: bool) -> None:
-        if do_min != (self._float_state == FloatStates.MINIMIZED):
+    def _update_minimized(self, do_min: bool, old_state: FloatStates) -> None:
+        if do_min or old_state == FloatStates.MINIMIZED:
             self._ptr.update_minimized(self._ptr, do_min)
 
     def _reconfigure_floating(
@@ -813,15 +815,16 @@ class Window(Base, base.Window):
         new_float_state: FloatStates = FloatStates.FLOATING,
     ) -> None:
         if self._float_state != new_float_state:
+            old_state = self._float_state
             self._float_state = new_float_state
             self.reparent(self.get_new_layer(new_float_state))
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
-            self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
+            self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN, old_state)
+            self._update_maximized(new_float_state == FloatStates.MAXIMIZED, old_state)
+            self._update_minimized(new_float_state == FloatStates.MINIMIZED, old_state)
+
             hook.fire("float_change")
-        self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN)
-        self._update_maximized(new_float_state == FloatStates.MAXIMIZED)
-        self._update_minimized(new_float_state == FloatStates.MINIMIZED)
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
         else:

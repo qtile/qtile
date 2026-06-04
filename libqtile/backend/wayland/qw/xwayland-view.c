@@ -340,8 +340,7 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
         wlr_xwayland_surface_configure(qw_xsurface, x, y, width, height);
         qw_xwayland_view_clip(xwayland_view);
 
-        // Resize the foreign toplevel output tracking buffer
-        qw_view_resize_ftl_output_tracking_buffer(&xwayland_view->base, width, height);
+        qw_view_update_ftl_outputs(&xwayland_view->base, xwayland_view->xwayland_surface->surface);
     }
 
     // Paint borders around the view with given border colors and width
