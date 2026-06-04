@@ -34,6 +34,17 @@ static void qw_output_handle_destroy(struct wl_listener *listener, void *data) {
     wl_list_remove(&output->request_state.link);
     wl_list_remove(&output->destroy.link);
     wl_list_remove(&output->link);
+
+    /*
+    null out the output pointer on all layer views that belong to this output
+    before freeing it. Layer surfaces may be unmapped after output removal (e.g.
+    if the client destroys the view once the output has gone) and qw_layer_view_handle_unmap
+    will check this before calling qw_output_arrange_layers.
+    */
+    for (int i = 0; i < 4; i++) {
+        struct qw_layer_view *layer_view;
+        wl_list_for_each(layer_view, &output->layers[i], link) { layer_view->output = NULL; }
+    }
     free(output);
 }
 
