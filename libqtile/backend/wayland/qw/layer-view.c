@@ -36,8 +36,7 @@ static void qw_layer_view_handle_unmap(struct wl_listener *listener, void *data)
         layer_view->server->exclusive_layer = NULL;
     }
 
-    if (layer_view->surface->output) {
-        layer_view->output = layer_view->surface->output->data;
+    if (layer_view->output != NULL) {
         qw_output_arrange_layers(layer_view->output);
     }
 
