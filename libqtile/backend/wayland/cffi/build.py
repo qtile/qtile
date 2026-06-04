@@ -103,7 +103,9 @@ class TestClient:
 
 PROTOS: list[Protocol] = [
     Protocol(f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml"),
-    Protocol(f"{QW_PROTO_IN_PATH}/wlr-output-power-management-unstable-v1.xml"),
+    Protocol(
+        f"{QW_PROTO_IN_PATH}/wlr-output-power-management-unstable-v1.xml", build_client=True
+    ),
     Protocol(f"{WAYLAND_PROTOCOLS}/stable/xdg-shell/xdg-shell.xml", build_client=True),
     Protocol(
         f"{WAYLAND_PROTOCOLS}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
@@ -143,6 +145,15 @@ TEST_CLIENTS: list[TestClient] = [
             TEST_CLIENT_SRC_PATH / "session-lock.c",
             CLIENT_BASE,
             QW_PROTO_OUT_PATH / "ext-session-lock-v1-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
+    TestClient(
+        name="output-power-management",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "output-power-management.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "wlr-output-power-management-unstable-v1-protocol.c",
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),
