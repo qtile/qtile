@@ -126,6 +126,11 @@ PROTOS: list[Protocol] = [
         build_client=True,
         build_server=False,
     ),
+    Protocol(
+        f"{QW_PROTO_IN_PATH}/wlr-foreign-toplevel-management-unstable-v1.xml",
+        build_client=True,
+        build_server=False,
+    ),
 ]
 
 TEST_CLIENTS: list[TestClient] = [
@@ -154,6 +159,15 @@ TEST_CLIENTS: list[TestClient] = [
             TEST_CLIENT_SRC_PATH / "output-power-management.c",
             CLIENT_BASE,
             QW_PROTO_OUT_PATH / "wlr-output-power-management-unstable-v1-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
+    TestClient(
+        name="ftl-manager",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "ftl-manager.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "wlr-foreign-toplevel-management-unstable-v1-protocol.c",
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),

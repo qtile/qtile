@@ -318,39 +318,11 @@ static void qw_handle_ftl_request_fullscreen(struct wl_listener *listener, void 
     }
 }
 
-static void qw_handle_ftl_output_enter(struct wl_listener *listener, void *data) {
-    struct qw_view *view = wl_container_of(listener, view, ftl_output_enter);
-    struct wlr_scene_output *output = data;
-    if (view->ftl_handle != NULL) {
-        wlr_foreign_toplevel_handle_v1_output_enter(view->ftl_handle, output->output);
-    }
-}
-
-static void qw_handle_ftl_output_leave(struct wl_listener *listener, void *data) {
-    struct qw_view *view = wl_container_of(listener, view, ftl_output_leave);
-    struct wlr_scene_output *output = data;
-    if (view->ftl_handle != NULL) {
-        wlr_foreign_toplevel_handle_v1_output_leave(view->ftl_handle, output->output);
-    }
-}
-
-static bool qw_handle_ftl_point_accepts_input(struct wlr_scene_buffer *buffer, double *x,
-                                              double *y) {
-    UNUSED(buffer);
-    UNUSED(x);
-    UNUSED(y);
-    return false;
-}
-
-void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, int height) {
-    if (view->ftl_output_tracking_buffer != NULL) {
-        wlr_scene_buffer_set_dest_size(view->ftl_output_tracking_buffer, width, height);
-    }
-}
-
 void qw_view_ftl_manager_handle_create(struct qw_view *view) {
     // Create a foreign toplevel handle and set up listeners
     view->ftl_handle = wlr_foreign_toplevel_handle_v1_create(view->server->ftl_mgr);
+
+    wl_list_init(&view->ftl_outputs);
 
     view->ftl_request_activate.notify = qw_handle_ftl_request_activate;
     wl_signal_add(&view->ftl_handle->events.request_activate, &view->ftl_request_activate);
@@ -366,19 +338,6 @@ void qw_view_ftl_manager_handle_create(struct qw_view *view) {
 
     view->ftl_request_fullscreen.notify = qw_handle_ftl_request_fullscreen;
     wl_signal_add(&view->ftl_handle->events.request_fullscreen, &view->ftl_request_fullscreen);
-
-    view->ftl_output_tracking_buffer = wlr_scene_buffer_create(view->content_tree, NULL);
-    if (view->ftl_output_tracking_buffer != NULL) {
-        view->ftl_output_enter.notify = qw_handle_ftl_output_enter;
-        wl_signal_add(&view->ftl_output_tracking_buffer->events.output_enter,
-                      &view->ftl_output_enter);
-        view->ftl_output_leave.notify = qw_handle_ftl_output_leave;
-        wl_signal_add(&view->ftl_output_tracking_buffer->events.output_leave,
-                      &view->ftl_output_leave);
-        view->ftl_output_tracking_buffer->point_accepts_input = qw_handle_ftl_point_accepts_input;
-    } else {
-        wlr_log(WLR_ERROR, "Failed to create a foreign toplevel tracking buffer.");
-    }
 }
 
 void qw_view_ftl_manager_handle_destroy(struct qw_view *view) {
@@ -393,12 +352,11 @@ void qw_view_ftl_manager_handle_destroy(struct qw_view *view) {
     wl_list_remove(&view->ftl_request_minimize.link);
     wl_list_remove(&view->ftl_request_fullscreen.link);
 
-    // Remove output tracking
-    if (view->ftl_output_tracking_buffer != NULL) {
-        wl_list_remove(&view->ftl_output_enter.link);
-        wl_list_remove(&view->ftl_output_leave.link);
-        wlr_scene_node_destroy(&view->ftl_output_tracking_buffer->node);
-        view->ftl_output_tracking_buffer = NULL;
+    // Remove the outputs
+    struct qw_view_output *vo, *tmp;
+    wl_list_for_each_safe(vo, tmp, &view->ftl_outputs, link) {
+        wl_list_remove(&vo->link);
+        free(vo);
     }
 
     // Destroy the handle
@@ -477,5 +435,64 @@ void qw_view_set_opacity(struct qw_view *view, float opacity) {
                 wlr_scene_rect_set_color(rect, new_color);
             }
         }
+    }
+}
+
+static bool qw_view_has_ftl_output(struct qw_view *view, struct wlr_output *output) {
+    struct qw_view_output *vo;
+
+    wl_list_for_each(vo, &view->ftl_outputs, link) {
+        if (vo->output == output) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void qw_view_update_ftl_outputs(struct qw_view *view, struct wlr_surface *surface) {
+    if (view->ftl_handle == NULL) {
+        return;
+    }
+
+    struct wlr_surface_output *so;
+
+    /* Enter new outputs */
+    wl_list_for_each(so, &surface->current_outputs, link) {
+        if (qw_view_has_ftl_output(view, so->output)) {
+            continue;
+        }
+
+        wlr_foreign_toplevel_handle_v1_output_enter(view->ftl_handle, so->output);
+
+        struct qw_view_output *vo = calloc(1, sizeof(*vo));
+        if (vo == NULL) {
+            continue;
+        }
+
+        vo->output = so->output;
+        wl_list_insert(&view->ftl_outputs, &vo->link);
+    }
+
+    /* Leave old outputs */
+    struct qw_view_output *vo, *tmp;
+    wl_list_for_each_safe(vo, tmp, &view->ftl_outputs, link) {
+        bool still_present = false;
+
+        wl_list_for_each(so, &surface->current_outputs, link) {
+            if (so->output == vo->output) {
+                still_present = true;
+                break;
+            }
+        }
+
+        if (still_present) {
+            continue;
+        }
+
+        wlr_foreign_toplevel_handle_v1_output_leave(view->ftl_handle, vo->output);
+
+        wl_list_remove(&vo->link);
+        free(vo);
     }
 }

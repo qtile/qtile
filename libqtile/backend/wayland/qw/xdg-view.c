@@ -204,6 +204,16 @@ static void qw_xdg_view_clip(struct qw_xdg_view *xdg_view) {
     wlr_scene_subsurface_tree_set_clip(&xdg_view->scene_tree->node, &clip);
 }
 
+void dump_surface_outputs(void *self) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+    struct wlr_surface *surface = xdg_view->xdg_toplevel->base->surface;
+    struct wlr_surface_output *so;
+
+    wl_list_for_each(so, &surface->current_outputs, link) {
+        wlr_log(WLR_ERROR, "current_output=%s", so->output->name);
+    }
+}
+
 // Place the xdg_view at given position and size with border and stacking info
 static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
                               const struct qw_border *borders, int border_count, int above) {
@@ -237,8 +247,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, width, height);
         qw_xdg_view_clip(xdg_view);
 
-        // Resize the foreign toplevel output tracking buffer
-        qw_view_resize_ftl_output_tracking_buffer(&xdg_view->base, width, height);
+        qw_view_update_ftl_outputs(&xdg_view->base, xdg_view->xdg_toplevel->base->surface);
     }
 
     // Paint borders around the view with given border colors and width
