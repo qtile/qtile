@@ -110,7 +110,7 @@ PROTOS: list[Protocol] = [
     Protocol(
         f"{WAYLAND_PROTOCOLS}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
     ),
-    Protocol(f"{WAYLAND_PROTOCOLS}/staging/cursor-shape/cursor-shape-v1.xml"),
+    Protocol(f"{WAYLAND_PROTOCOLS}/staging/cursor-shape/cursor-shape-v1.xml", build_client=True),
     Protocol(
         f"{WAYLAND_PROTOCOLS}/staging/ext-idle-notify/ext-idle-notify-v1.xml",
         build_client=True,
@@ -130,6 +130,9 @@ PROTOS: list[Protocol] = [
         f"{QW_PROTO_IN_PATH}/wlr-foreign-toplevel-management-unstable-v1.xml",
         build_client=True,
         build_server=False,
+    ),
+    Protocol(
+        f"{WAYLAND_PROTOCOLS}/stable/tablet/tablet-v2.xml", build_client=True, build_server=False
     ),
 ]
 
@@ -168,6 +171,17 @@ TEST_CLIENTS: list[TestClient] = [
             TEST_CLIENT_SRC_PATH / "ftl-manager.c",
             CLIENT_BASE,
             QW_PROTO_OUT_PATH / "wlr-foreign-toplevel-management-unstable-v1-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
+    TestClient(
+        name="cursor-shape",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "cursor-shape.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "cursor-shape-v1-protocol.c",
+            QW_PROTO_OUT_PATH / "xdg-shell-protocol.c",
+            QW_PROTO_OUT_PATH / "tablet-v2-protocol.c",
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),
