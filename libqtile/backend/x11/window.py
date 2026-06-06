@@ -499,6 +499,10 @@ class _Window:
         self._float_state = FloatStates.NOT_FLOATING
         self._demands_attention = False
 
+        # Remember state of a floating window before it enters fullscreen
+        # See issue: https://github.com/qtile/qtile/issues/5950
+        self._pre_fullscreen_float_state = FloatStates.NOT_FLOATING
+
         self.hints = {
             "input": True,
             "icon_pixmap": None,
@@ -1798,6 +1802,7 @@ class Window(_Window, base.Window):
 
             if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
                 self._save_geometry()
+                self._pre_fullscreen_float_state = self._float_state
 
             bw = self.group.floating_layout.fullscreen_border_width
             self._enablefloating(
@@ -1814,7 +1819,10 @@ class Window(_Window, base.Window):
 
         if self._float_state == FloatStates.FULLSCREEN:
             self._restore_geometry()
-            self.floating = False
+            if self._pre_fullscreen_float_state != FloatStates.NOT_FLOATING:
+                self._reconfigure_floating(new_float_state=self._pre_fullscreen_float_state)
+            else:
+                self.floating = False
             self.change_layer()
             return
 
