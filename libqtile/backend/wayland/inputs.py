@@ -75,6 +75,11 @@ class InputConfig(configurable.Configurable):
         ("kb_variant", None, "Keyboard variant i.e. ``XKB_DEFAULT_VARIANT``"),
         ("kb_repeat_rate", 25, "Keyboard key repeats made per second"),
         ("kb_repeat_delay", 600, "Keyboard delay in milliseconds before repeating"),
+        (
+            "map_output",
+            None,
+            "Map touch device to specified output. Use device name or '*' to map over the entire output areas",
+        ),
     ]
 
     def __init__(self, **config: Any) -> None:
@@ -231,5 +236,16 @@ def configure_input_devices(server: ffi.CData, configs: dict[str, Any]) -> None:
                     ffi.new("char[]", (conf.kb_options or "").encode()),
                     ffi.new("char[]", (conf.kb_variant or "").encode()),
                 )
+
+            elif type == InputDeviceType.TOUCH:
+                touch = lib.qw_input_device_get_touch(input_device)
+                if touch == ffi.NULL:
+                    return
+
+                if conf.map_output is not None:
+                    all_outputs = conf.map_output == "*"
+                    mapped = lib.qw_touch_map_output(touch, conf.map_output.encode(), all_outputs)
+                    if not mapped:
+                        pass
 
     lib.qw_server_loop_input_devices(server, input_device_cb)
