@@ -178,6 +178,48 @@ be to start through a loop to save running applications:
     done
 
 
+Starting Qtile as a systemd user service
+========================================
+
+If ``graphical-session.target`` is never reached, or ``XDG_CURRENT_DESKTOP`` is
+not set and propagated to the user manager, you may see breakage such as:
+
+* Screen sharing in Chromium/Firefox on Wayland silently returning no sources
+  (the PipeWire ScreenCast goes through ``xdg-desktop-portal``).
+* Native file pickers in Flatpak or snap applications failing to open, or
+  falling back to a broken minimal dialog.
+* The wrong portal backend answering requests (e.g.
+  ``xdg-desktop-portal-gnome`` responding when you wanted
+  ``xdg-desktop-portal-wlr``), giving you the wrong file picker or theme.
+* User services started or restarted later not seeing ``DISPLAY``,
+  ``WAYLAND_DISPLAY``, or your ``PATH``, so dbus- or socket-activated helpers
+  can't find the compositor or binaries in ``~/.local/bin``.
+
+Starting Qtile from a systemd user service activates
+``graphical-session.target``, which is required for ``xdg-desktop-portal`` (and
+other services that key off of the graphical session) to work correctly.
+
+Example unit files are provided in the qtile source tree: `qtile-session.target
+<https://github.com/qtile/qtile/blob/master/resources/qtile-session.target>`_
+and `qtile.service
+<https://github.com/qtile/qtile/blob/master/resources/qtile.service>`_. Install
+them to ``~/.config/systemd/user/``. Adjust ``ExecStart`` in ``qtile.service``
+if your ``qtile`` binary lives somewhere other than ``~/.local/bin``, and
+append ``-b wayland`` for a Wayland session.
+
+Then, in your ``~/.xsession`` (or equivalent startup script), set
+``XDG_CURRENT_DESKTOP`` so the desktop portal picks the right backend,
+propagate the environment to the user manager so child services inherit it,
+and start Qtile via ``systemctl`` instead of execing it directly:
+
+.. code-block:: bash
+
+    export XDG_CURRENT_DESKTOP=qtile
+    systemctl --user import-environment XDG_CURRENT_DESKTOP PATH
+
+    exec systemctl --user start --wait qtile.service
+
+
 Wayland
 =======
 
