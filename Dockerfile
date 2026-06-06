@@ -11,6 +11,7 @@ RUN dnf install -y \
     ImageMagick \
     libnotify \
     pango \
+    procps \
     pulseaudio-libs \
     python3.12 python3.12-devel \
     python3.13 python3.13-devel \
