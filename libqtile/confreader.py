@@ -75,7 +75,15 @@ class Config:
             try:
                 value = settings[key]
             except KeyError:
-                value = getattr(self, key, default.get(key, None))
+                if key == "screens" and (
+                    settings.get("generate_screens") is not None
+                    or getattr(self, "generate_screens", None) is not None
+                    or settings.get("fake_screens") is not None
+                    or getattr(self, "fake_screens", None) is not None
+                ):
+                    value = []
+                else:
+                    value = getattr(self, key, default.get(key, None))
             setattr(self, key, value)
 
     def _reload_config_submodules(self, path: Path) -> None:
