@@ -437,7 +437,7 @@ class Qtile(CommandObject):
             return self.config.fake_screens
 
         if self.config.generate_screens is not None:
-            if self.config.screens is not None:
+            if self.config.screens:
                 logger.warning(
                     "Both screens and generate_screens are defined in config. Using generate_screens."
                 )
