@@ -18,6 +18,7 @@ running something else, please see `Installing From Source`_.
     Slackware <slackware>
     FreeBSD <freebsd>
     NixOS <nixos>
+    Void <void>
     Without DM <without-dm>
 
 .. _installing-from-source:
