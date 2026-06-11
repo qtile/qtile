@@ -630,6 +630,9 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     def draw(self) -> None:
         assert self.qtile is not None
 
+        if not hasattr(self, "drawer"):
+            # The bar has been finalized (the drawer is deleted) or not yet configured
+            return
         if not self.widgets:
             return  # calling self._actual_draw in this case would cause a NameError.
         if not self._draw_queued:
@@ -640,6 +643,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
     def _actual_draw(self) -> None:
         self._draw_queued = False
+        if not hasattr(self, "drawer"):
+            return
         self._resize(self.length, self.widgets)
         # We draw the border before the widgets
         if any(self.border_width):
@@ -689,6 +694,10 @@ class Bar(Gap, configurable.Configurable, CommandObject):
                 )
 
         for i in self.widgets:
+            # Widgets are finalized before bars so a queued draw can run while
+            # the bar is alive but its widgets are already dead
+            if i.finalized:
+                continue
             try:
                 i.draw()
             except Exception:
