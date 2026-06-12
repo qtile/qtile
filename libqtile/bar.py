@@ -172,7 +172,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         self.window: Internal | None = None
         self.drawer: Drawer
         self._configured = False
-        self._finalized = False
         self._draw_queued = False
         self.future: asyncio.Handle | None = None
 
@@ -218,9 +217,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         Configure the bar. `reconfigure` is set to True when screen dimensions
         change, forcing a recalculation of the bar's dimensions.
         """
-        # Clear this flag as the bar may be restarted (e.g. if screen removed and re-added)
-        self._finalized = False
-
         # We only want to adjust margin sizes once unless there's new space being
         # reserved or we're reconfiguring the bar because the screen has changed
         if not self._configured or self._reserved_space_updated or reconfigure:
@@ -404,7 +400,6 @@ class Bar(Gap, configurable.Configurable, CommandObject):
         return None
 
     def finalize(self) -> None:
-        self._finalized = True
         if self.future:
             self.future.cancel()
         for widget in self.widgets:
@@ -635,7 +630,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
     def draw(self) -> None:
         assert self.qtile is not None
 
-        if self._finalized:
+        if not hasattr(self, "drawer"):
+            # The bar has been finalized (the drawer is deleted) or not yet configured
             return
         if not self.widgets:
             return  # calling self._actual_draw in this case would cause a NameError.
@@ -647,8 +643,7 @@ class Bar(Gap, configurable.Configurable, CommandObject):
 
     def _actual_draw(self) -> None:
         self._draw_queued = False
-        # The draw may have been queued before the bar was finalized
-        if self._finalized or not hasattr(self, "drawer"):
+        if not hasattr(self, "drawer"):
             return
         self._resize(self.length, self.widgets)
         # We draw the border before the widgets
