@@ -2,6 +2,7 @@ import sys
 
 from setuptools import build_meta as _orig
 from setuptools.build_meta import *  # noqa: F401,F403
+from setuptools.dist import Distribution
 
 WAYLAND_FFI_BUILD = "./libqtile/backend/wayland/cffi/build.py"
 
@@ -46,5 +47,7 @@ def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
             for lib in libs:
                 p = lib + "_PATH"
                 f.write(f"{p} = {config_settings.get(lib)!r}\n")
+
+    Distribution.has_ext_modules = lambda self: True
 
     return _orig.build_wheel(wheel_directory, config_settings, metadata_directory)
