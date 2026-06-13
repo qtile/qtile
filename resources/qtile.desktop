@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Qtile
 Comment=Qtile Session
-Exec=qtile start
+Exec=/usr/bin/qtile start
 Type=Application
 Keywords=wm;tiling
