@@ -722,6 +722,8 @@ class Core(base.Core):
     def _poll(self) -> None:
         lib.qw_server_poll(self.qw)
 
+    @expose_command()
+    @allow_when_locked
     def flush(self) -> None:
         self._poll()
 
@@ -941,6 +943,9 @@ class Core(base.Core):
 
     def fake_click(self) -> None:
         lib.qw_cursor_fake_click(self.qw_cursor)
+
+    def add_dummy_input_devices(self) -> None:
+        lib.qw_server_add_dummy_input_devices(self.qw)
 
 
 class Painter:

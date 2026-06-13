@@ -222,6 +222,7 @@ struct qw_server {
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
+    enum qw_session_lock_state lock_state;
 
     // Private data
     struct wl_event_loop *event_loop;
@@ -266,7 +267,6 @@ struct qw_server {
     struct wlr_session_lock_manager_v1 *lock_manager;
     struct qw_session_lock *lock;
     struct wlr_scene_tree *lock_tree;
-    enum qw_session_lock_state lock_state;
     struct wlr_foreign_toplevel_manager_v1 *ftl_mgr;
     struct wlr_virtual_keyboard_manager_v1 *virtual_keyboard;
     struct wlr_virtual_pointer_manager_v1 *virtual_pointer;
@@ -290,6 +290,7 @@ struct qw_server {
     struct wlr_relative_pointer_manager_v1 *relative_pointer_manager;
     struct wlr_pointer_constraints_v1 *pointer_constraints;
     struct wl_listener new_pointer_constraint;
+    struct wlr_keyboard *dummy_keyboard;
 };
 
 struct qw_drag_icon {
@@ -379,5 +380,7 @@ void qw_server_add_idle_timer(struct qw_server *server, int seconds);
 void qw_server_remove_idle_timer(struct qw_server *server, int seconds);
 
 struct qw_view *qw_server_active_view(struct qw_server *server);
+
+void qw_server_add_dummy_input_devices(struct qw_server *server);
 
 #endif /* SERVER_H */

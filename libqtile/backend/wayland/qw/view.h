@@ -48,6 +48,12 @@ enum qw_view_type {
     QW_VIEW_INTERNAL,
 };
 
+struct qw_view_output {
+    // Private data
+    struct wlr_output *output;
+    struct wl_list link;
+};
+
 enum qw_border_type {
     QW_BORDER_RECT,
     QW_BORDER_BUFFER,
@@ -130,9 +136,7 @@ struct qw_view {
     struct wl_listener ftl_request_minimize;
     struct wl_listener ftl_request_fullscreen;
     // ftl output tracking
-    struct wlr_scene_buffer *ftl_output_tracking_buffer;
-    struct wl_listener ftl_output_enter;
-    struct wl_listener ftl_output_leave;
+    struct wl_list ftl_outputs;
 };
 
 void qw_view_reparent(struct qw_view *view, int layer);
@@ -152,7 +156,6 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
 // Create/destroy a foreign toplevel manager handle and listeners
 void qw_view_ftl_manager_handle_create(struct qw_view *view);
 void qw_view_ftl_manager_handle_destroy(struct qw_view *view);
-void qw_view_resize_ftl_output_tracking_buffer(struct qw_view *view, int width, int height);
 
 struct qw_output *qw_view_get_primary_output(struct qw_view *view);
 
@@ -160,4 +163,6 @@ int qw_view_get_layer(struct qw_view *view);
 void qw_view_grab_click(struct qw_view *view);
 void qw_view_ungrab_click(struct qw_view *view);
 void qw_view_set_opacity(struct qw_view *view, float opacity);
+
+void qw_view_update_ftl_outputs(struct qw_view *view, struct wlr_surface *surface);
 #endif /* VIEW_H */

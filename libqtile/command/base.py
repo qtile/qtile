@@ -232,6 +232,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         return self._commands.get(name)
 
+    @allow_when_locked
     @expose_command()
     def commands(self) -> list[str]:
         """

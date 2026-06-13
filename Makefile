@@ -78,7 +78,9 @@ lint: ## Check the source code
 
 .PHONY: clean
 clean: ## Clean generated files
-	-rm -rf dist qtile.egg-info docs/_build build/ .mypy_cache/ .pytest_cache/ .eggs/
+	-rm -rf dist qtile.egg-info docs/_build build/ .mypy_cache/ \
+	.pytest_cache/ .eggs/ libqtile/backend/wayland/cffi/.build/ \
+	libqtile/backend/wayland/qw/{build,proto}/ test/wayland_clients/bin/
 
 .PHONY: update-flake
 update-flake: ## Update the Nix flake.lock file, requires Nix installed with flake support, see: https://nixos.wiki/wiki/Flakes
