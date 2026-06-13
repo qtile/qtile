@@ -608,15 +608,78 @@ class Screen(CommandObject):
             assert self.qtile is not None
             old_group = self.group
             self.group = new_group
-            with self.qtile.core.masked():
-                # display clients of the new group and then hide from old group
-                # to remove the screen flickering
-                new_group.set_screen(self, warp)
 
-                # Can be the same group only if the screen just got configured for the
-                # first time - see `Qtile._process_screens`.
-                if old_group is not new_group:
-                    old_group.set_screen(None, warp)
+            if self.qtile.core.name == "wayland":
+                # Determine animation direction
+                old_index = self.qtile.groups.index(old_group)
+                new_index = self.qtile.groups.index(new_group)
+                direction = 1 if new_index > old_index else -1
+                offset = self.width * direction
+
+                duration = (
+                    self.qtile.config.wl_slide_group_duration
+                    or self.qtile.config.wl_default_duration
+                    or 0
+                )
+
+                ease = (
+                    self.qtile.config.wl_slide_group_ease
+                    or self.qtile.config.wl_default_ease
+                    or "out_cubic"
+                )
+
+                with self.qtile.core.masked():
+                    # Slide out old group
+                    for win in old_group.windows:
+                        orig_x = win.x
+                        win.place(
+                            win.x - offset,
+                            win.y,
+                            win.width,
+                            win.height,
+                            win.borderwidth,
+                            win.bordercolor,
+                            duration=duration,
+                            ease=ease,
+                        )
+                        win.x = orig_x
+
+                    old_group.screen = None
+                    old_group._hide_timer = self.qtile.call_later(
+                        duration / 1000.0, old_group.hide
+                    )
+
+                    # Slide in new group
+                    new_group.set_screen(self, warp)
+                    for win in new_group.windows:
+                        target_x = win.x
+                        # Start from off-screen
+                        win.place(
+                            target_x + offset,
+                            win.y,
+                            win.width,
+                            win.height,
+                            win.borderwidth,
+                            win.bordercolor,
+                            duration=0,
+                        )
+                        # Animate to target
+                        win.place(
+                            target_x,
+                            win.y,
+                            win.width,
+                            win.height,
+                            win.borderwidth,
+                            win.bordercolor,
+                            duration=duration,
+                            ease=ease,
+                        )
+            else:
+                with self.qtile.core.masked():
+                    new_group.set_screen(self, warp)
+
+                    if old_group is not new_group:
+                        old_group.set_screen(None, warp)
 
         hook.fire("setgroup")
         hook.fire("focus_change")

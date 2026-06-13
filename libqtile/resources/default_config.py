@@ -209,6 +209,25 @@ wl_input_rules = None
 wl_xcursor_theme = None
 wl_xcursor_size = 24
 
+# Durations (in ms) for Wayland animations.
+# Available easing functions include:
+# sine, cubic, quint, circ, elastic, quad, quart, expo, back, bounce.
+# Each can be prefixed with 'in_', 'out_', or 'in_out_' (e.g. 'in_cubic', 'out_quint').
+wl_slide_group_duration = 200
+wl_slide_group_ease = "out_cubic"
+
+wl_spawn_duration = 200
+wl_spawn_ease = "out_cubic"
+
+wl_kill_duration = 200
+wl_kill_ease = "out_cubic"
+
+wl_dropdown_duration = 200
+wl_dropdown_ease = "out_cubic"
+
+wl_default_duration = 200
+wl_default_ease = "out_cubic"
+
 idle_timers = []  # type: list
 idle_inhibitors = []  # type: list
 

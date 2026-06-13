@@ -7,6 +7,8 @@
 #include <wlr/types/wlr_foreign_toplevel_management_v1.h>
 #include <wlr/types/wlr_scene.h>
 
+#include "animation.h"
+
 // TODO: avoid this duplication
 // View states representing window states, similar to backend/base/window.py
 enum qw_view_state {
@@ -70,6 +72,9 @@ struct qw_border {
 
 struct qw_view {
     struct qw_server *server;
+    qw_anim anim;
+    qw_anim_cb on_anim_complete;
+    int layer;
     int x;
     int y;
     int width;
@@ -104,9 +109,9 @@ struct qw_view {
     void (*update_maximized)(void *self, bool maximize);
     void (*update_minimized)(void *self, bool minimize);
     void (*place)(void *self, int x, int y, int width, int height, const struct qw_border *borders,
-                  int border_count, int above);
+                  int border_count, int above, int duration, qw_easing_t ease);
     void (*focus)(void *self, int warp);
-    void (*kill)(void *self);
+    void (*kill)(void *self, int duration, qw_easing_t ease);
     void (*hide)(void *self);
     void (*unhide)(void *self);
     int (*get_pid)(void *self);
@@ -115,6 +120,7 @@ struct qw_view {
     int (*get_parent)(void *self);
 
     // Private data: pointer to an array of 4 pointers to wlr_scene_rect for borders
+    struct wl_list link;
     struct {
         enum qw_border_type type;
         uint32_t width;
@@ -160,4 +166,7 @@ int qw_view_get_layer(struct qw_view *view);
 void qw_view_grab_click(struct qw_view *view);
 void qw_view_ungrab_click(struct qw_view *view);
 void qw_view_set_opacity(struct qw_view *view, float opacity);
+void qw_view_prepare_kill(struct qw_view *view, struct wlr_surface *surface, struct wlr_seat *seat,
+                          void (*kill_complete)(struct qw_view *self),
+                          void (*activate_func)(void *self, bool activate));
 #endif /* VIEW_H */

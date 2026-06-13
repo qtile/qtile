@@ -53,6 +53,26 @@ class Config:
     wl_input_rules: dict[str, Any] | None
     wl_xcursor_theme: str | None
     wl_xcursor_size: int
+    wl_slide_group_duration: int
+    """Duration for group switching animations (ms)."""
+    wl_spawn_duration: int
+    """Duration for window spawn/move/resize animations (ms)."""
+    wl_kill_duration: int
+    """Duration for window kill animations (ms)."""
+    wl_dropdown_duration: int
+    """Duration for scratchpad (dropdown) animations (ms)."""
+    wl_default_duration: int
+    """Default duration for all animations (ms)."""
+    wl_slide_group_ease: str
+    """Easing function for group switching animations."""
+    wl_spawn_ease: str
+    """Easing function for window spawn/move/resize animations."""
+    wl_default_ease: str
+    """Default easing function for all animations."""
+    wl_kill_ease: str
+    """Easing function for window kill animations."""
+    wl_dropdown_ease: str
+    """Easing function for scratchpad (dropdown) animations."""
     idle_timers: list[IdleTimer]
     idle_inhibitors: list[IdleInhibitor]
     fake_screens: list[Screen] | None

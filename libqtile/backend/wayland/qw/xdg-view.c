@@ -1,4 +1,5 @@
 #include "xdg-view.h"
+#include "animation.h"
 #include "cursor.h"
 #include "server.h"
 #include "session-lock.h"
@@ -87,13 +88,11 @@ static void qw_xdg_view_hide(void *self) {
     wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, false);
     qw_xdg_view_activate(xdg_view, false);
 
-    // Clear keyboard focus if this view was focused
     if (xdg_view->xdg_toplevel->base->surface ==
         xdg_view->base.server->seat->keyboard_state.focused_surface) {
         wlr_seat_keyboard_clear_focus(xdg_view->base.server->seat);
     }
 
-    // View under the cursor may have changed
     qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
 }
 
@@ -107,6 +106,7 @@ static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
                                             xdg_view->base.server->cb_data);
     qw_xdg_view_hide(xdg_view);
 
+    wl_list_remove(&xdg_view->base.link);
     wl_list_remove(&xdg_view->request_maximize.link);
     wl_list_remove(&xdg_view->request_fullscreen.link);
     wl_list_remove(&xdg_view->set_title.link);
@@ -204,9 +204,13 @@ static void qw_xdg_view_clip(struct qw_xdg_view *xdg_view) {
     wlr_scene_subsurface_tree_set_clip(&xdg_view->scene_tree->node, &clip);
 }
 
+// Forward declaration
+static void qw_xdg_view_do_close_window(struct qw_view *base);
+
 // Place the xdg_view at given position and size with border and stacking info
 static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
-                              const struct qw_border *borders, int border_count, int above) {
+                              const struct qw_border *borders, int border_count, int above,
+                              int duration, qw_easing_t ease) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
     struct wlr_xdg_toplevel_state state = xdg_view->xdg_toplevel->current;
@@ -222,23 +226,23 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
 
     bool needs_repos = place_changed || geom_changed;
 
-    // Update stored geometry and base view rectangle
-    xdg_view->geom = geom;
-    xdg_view->base.x = x;
-    xdg_view->base.y = y;
-    xdg_view->base.width = width;
-    xdg_view->base.height = height;
+    // clang-format off
+    qw_anim_box anim_box = {
+        .geom_dst = &xdg_view->geom,
+        .geom_src = geom,
+        .target = {
+            .x = x,
+            .y = y,
+            .width = width,
+            .height = height,
+        },
+    };
+    // clang-format on
 
-    // Set position of the content scene node
-    wlr_scene_node_set_position(&xdg_view->base.content_tree->node, x, y);
+    qw_anim_try_animate_resize(&xdg_view->base, anim_box, duration, needs_repos, ease);
 
     if (needs_repos) {
-        // Resize the toplevel surface and apply clipping if needed
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, width, height);
-        qw_xdg_view_clip(xdg_view);
-
-        // Resize the foreign toplevel output tracking buffer
-        qw_view_resize_ftl_output_tracking_buffer(&xdg_view->base, width, height);
     }
 
     // Paint borders around the view with given border colors and width
@@ -254,9 +258,21 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
 }
 
 // Send close event to the xdg_toplevel surface (kill the view)
-static void qw_xdg_view_kill(void *self) {
-    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+static void qw_xdg_view_do_close_window(struct qw_view *base) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)base;
     wlr_xdg_toplevel_send_close(xdg_view->xdg_toplevel);
+}
+
+// Animate then kill the view
+static void qw_xdg_view_kill(void *self, int duration, qw_easing_t ease) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+
+    qw_view_prepare_kill(&xdg_view->base, xdg_view->xdg_toplevel->base->surface,
+                         xdg_view->base.server->seat, qw_xdg_view_do_close_window,
+                         (void (*)(void *, bool))qw_xdg_view_activate);
+    qw_anim_kill_slide_down(&xdg_view->base, duration, ease, qw_xdg_view_do_close_window);
+
+    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
 }
 
 // Unhide the xdg_view by enabling its content_tree scene node if currently disabled
@@ -465,6 +481,8 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.height = geom.height;
     xdg_view->base.title = xdg_view->xdg_toplevel->title;
     xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
+    xdg_view->base.on_anim_complete = NULL;
+    wl_list_insert(&xdg_view->base.server->views, &xdg_view->base.link);
 
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
 
