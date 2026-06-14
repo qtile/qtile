@@ -46,7 +46,7 @@ class VolumeBase(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, "", **config)
         self.add_defaults(VolumeBase.defaults)
-        self.surfaces = {}
+        self.images = {}
         self.volume = None
         self.is_mute = False
 
@@ -72,8 +72,7 @@ class VolumeBase(base._TextBox):
             else:  # self.volume >= 80:
                 img_name = "audio-volume-high"
 
-            self.drawer.ctx.set_source(self.surfaces[img_name])
-            self.drawer.ctx.paint()
+            self.drawer.draw_image(self.images[img_name])
         elif self.emoji:
             if len(self.emoji_list) < 4:
                 self.emoji_list = ["\U0001f507", "\U0001f508", "\U0001f509", "\U0001f50a"]
@@ -109,7 +108,7 @@ class VolumeBase(base._TextBox):
             img.resize(height=new_height)
             if img.width > self.length:
                 self.length = img.width + self.padding * 2
-            self.surfaces[name] = img.pattern
+            self.images[name] = img
 
     def draw(self):
         if self.theme_path:

@@ -4,6 +4,7 @@ and its supporting code.
 """
 
 import os
+from copy import copy
 from glob import glob
 from os import path
 
@@ -47,6 +48,24 @@ def png_img():
     return images.Img.from_path(PNGS[0])
 
 
+@pytest.fixture(scope="function")
+def png_img_24():
+    return images.Img.from_path(os.path.join(DATA_DIR, "png", "audio-volume-muted.png"))
+
+
+@pytest.fixture(scope="function")
+def rgba_pixel_data():
+    # ARGB32 format: 4 bytes per pixel, order is B, G, R, A
+    pixels = []
+    for y in range(24):
+        for x in range(24):
+            if x == y:
+                pixels.extend([0, 0, 255, 255])
+            else:
+                pixels.extend([0, 0, 0, 0])
+    return bytearray(pixels)
+
+
 def test_get_cairo_surface(path_n_bytes_image):
     path, bytes_image = path_n_bytes_image
     surf_info = images.get_cairo_surface(bytes_image)
@@ -83,6 +102,14 @@ class TestImg:
         assert img != img2
         img2.theta = 0.0
         assert img == img2
+
+    def test_from_data(self, rgba_pixel_data):
+        data_in = copy(rgba_pixel_data)
+        img = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+        surface = img.surface
+        assert isinstance(surface, cairocffi.ImageSurface)
+        data_out = surface.get_data()
+        assert data_in == bytes(data_out)
 
     def test_setting(self, png_img):
         img = png_img
@@ -147,6 +174,91 @@ class TestImg:
         assert_approx_equal(t_matrix, (s2o2, s2o2, -s2o2, s2o2))
         del img.theta
         assert img.theta == pytest.approx(0.0)
+
+    # Resizing should always resample from the original image source rather than
+    # chaining transformations
+    def test_resize_rasterization(self, png_img_24):
+        img0 = copy(png_img_24)
+        assert png_img_24.width == 24
+        assert png_img_24.height == 24
+        png_img_24.resize(101, 101)
+        assert png_img_24.width == 101
+        assert png_img_24.height == 101
+        png_img_24.resize(24, 24)
+        assert png_img_24 == img0
+        assert bytes(png_img_24.surface.get_data()) == bytes(img0.surface.get_data())
+
+    def test_img_paste(self):
+        img0 = images.Img.from_data(
+            bytearray([0x80, 0x80, 0x80, 0xFF] * 4), cairocffi.FORMAT_ARGB32, 2, 2
+        )
+        # fmt: off
+        img1 = images.Img.from_data(
+            bytearray([0xFF, 0x00, 0x00, 0xFF,
+                       0x00, 0x00, 0x00, 0x00,
+                       0x00, 0x00, 0xFF, 0xFF,
+                       0x00, 0x00, 0x00, 0x00]),
+            cairocffi.FORMAT_ARGB32, 2, 2
+        )
+        expected_result = bytes([0xFF, 0x00, 0x00, 0xFF,
+                                 0x80, 0x80, 0x80, 0xFF,
+                                 0x00, 0x00, 0xFF, 0XFF,
+                                 0x80, 0x80, 0x80, 0xFF])
+        # fmt: on
+
+        img3 = img0.paste(img1)
+        assert bytes(img3.surface.get_data()) == expected_result
+
+    def test_img_paint_mask(self):
+        # fmt: off
+        img = images.Img.from_data(
+            # format is B G R A
+            bytearray([0x80, 0x80, 0x80, 0xFF,
+                       0x00, 0x00, 0x00, 0x00,
+                       0x80, 0x00, 0x80, 0xFF,
+                       0x00, 0x00, 0x00, 0x00]),
+            cairocffi.FORMAT_ARGB32, 2, 2
+        )
+        expected_result = bytes([0x00, 0x00, 0xFF, 0xFF,
+                                 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0xFF, 0XFF,
+                                 0x00, 0x00, 0x00, 0x00])
+        # fmt: on
+
+        img2 = img.paint_mask("#FF0000")
+        assert bytes(img2.surface.get_data()) == expected_result
+
+    def test_copy_operations_independent(self, png_img):
+        img0 = copy(png_img)
+
+        # Appending to img0's operations should not affect png_img
+        img0.paint_mask("#ff0000")
+        assert len(png_img._operations) == 0
+        assert len(img0._operations) == 1
+
+    def test_copy_resources_independent(self, png_img_24, rgba_pixel_data):
+        overlay = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+        png_img_24.paste(overlay)
+
+        img0 = copy(png_img_24)
+
+        # Appending a new resource to img0 should not affect png_img_24
+        overlay2 = images.Img.from_data(rgba_pixel_data, cairocffi.FORMAT_ARGB32, 24, 24)
+        img0.paste(overlay2)
+
+        assert len(png_img_24._resources) == 1
+        assert len(img0._resources) == 2
+
+    def test_operations_applied_after_cache(self, png_img):
+        # Access surface to cache it
+        surface0 = png_img.surface
+
+        # Add an operation after caching
+        png_img.paint_mask("#ff0000")
+
+        # Without invalidation, surface would be the same cached one with no paint_mask applied
+        # With invalidation, surface is rebuilt with paint_mask applied
+        assert png_img.surface is not surface0
 
 
 class TestImgScale:
