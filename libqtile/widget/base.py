@@ -149,6 +149,10 @@ class _Widget(CommandObject, configurable.Configurable):
 
     @property
     def length(self):
+        if self.finalized:
+            # The drawer and layout have been destroyed (e.g. during
+            # reload_config/restart) so a length can no longer be calculated.
+            return 0
         if self.length_type == bar.CALCULATED:
             try:
                 return int(self.calculate_length())
