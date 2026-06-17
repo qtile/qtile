@@ -10,6 +10,7 @@ import functools
 import logging
 import multiprocessing
 import os
+import select
 import signal
 import subprocess
 import sys
@@ -190,6 +191,28 @@ class TestManager:
         # fiddling with the buffer size to grow it to whatever github allows.
         return os.read(self.logspipe, 64 * 1024).decode("utf-8")
 
+    def _drain_logs(self):
+        if self.logspipe is None:
+            return ""
+        chunks = []
+        while True:
+            readable, _, _ = select.select([self.logspipe], [], [], 0)
+            if not readable:
+                break
+            try:
+                data = os.read(self.logspipe, 64 * 1024)
+            except OSError:
+                break
+            if not data:
+                break
+            chunks.append(data)
+        return b"".join(chunks).decode("utf-8", "replace")
+
+    def _dump_logs(self, header):
+        logs = self._drain_logs()
+        if logs:
+            print(f"{header}\n{logs}", file=sys.stderr)
+
     def start(self, config_class, no_spawn=False, state=None):
         multiprocessing.set_start_method("fork", force=True)
         readlogs, writelogs = os.pipe()
@@ -198,20 +221,21 @@ class TestManager:
         def run_qtile():
             try:
                 rpipe.close()
+                os.close(readlogs)
                 os.environ.pop("DISPLAY", None)
                 os.environ.pop("WAYLAND_DISPLAY", None)
                 init_log(self.log_level)
+
+                formatter = logging.Formatter("%(levelname)s - %(message)s")
+                handler = logging.StreamHandler(os.fdopen(writelogs, "w"))
+                handler.setFormatter(formatter)
+                logger.addHandler(handler)
+
                 # Initialise fontconfig before starting qtile to prevent races
                 pangocffi.init_fontconfig()
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
                 from libqtile.core.lifecycle import lifecycle
-
-                os.close(readlogs)
-                formatter = logging.Formatter("%(levelname)s - %(message)s")
-                handler = logging.StreamHandler(os.fdopen(writelogs, "w"))
-                handler.setFormatter(formatter)
-                logger.addHandler(handler)
 
                 Qtile(
                     kore,
@@ -240,6 +264,7 @@ class TestManager:
                 self.c = command.client.InteractiveCommandClient(ipc_command)
                 self.backend.configure(self)
                 return
+            self._dump_logs("qtile failed to start; captured std* output:")
             if rpipe.poll(0.1):
                 error = rpipe.recv()
                 raise AssertionError(f"Error launching qtile, traceback:\n{error}")
@@ -287,6 +312,7 @@ class TestManager:
 
             if self.proc.exitcode:
                 print(f"qtile exited with exitcode: {self.proc.exitcode:d}", file=sys.stderr)
+                self._dump_logs("qtile log output before exit:")
 
             self.proc = None
 
