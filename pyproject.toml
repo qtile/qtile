@@ -48,7 +48,6 @@ dev = [
     "pytest-cov",
     "pytest-asyncio>=1.1.0",
     "pytest-httpbin",
-    "pytest-timeout",
     "pre-commit",
     "PyGObject",
     "pycairo >= 1.25.1",
@@ -164,6 +163,5 @@ filterwarnings = [
     "error:::test",
     "ignore:::dbus_next",
 ]
-faulthandler_timeout = 360
+faulthandler_timeout = 300
 faulthandler_exit_on_timeout = true
-timeout = 300 # pytest-timeout
