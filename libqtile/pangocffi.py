@@ -11,6 +11,11 @@ def init_fontconfig():
     fontconfig.FcInit()
 
 
+def reset_font_map():
+    """Discard the process-global default Pango/cairo font map."""
+    pangocairo.pango_cairo_font_map_set_default(ffi.NULL)
+
+
 def create_layout(cairo_t):
     """Create a PangoLayout from a cairo context."""
     return PangoLayout(cairo_t._pointer)

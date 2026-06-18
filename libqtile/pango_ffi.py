@@ -57,6 +57,9 @@ pango_ffi.cdef(
     PangoLayout *pango_cairo_create_layout (cairo_t *cr);
     void g_object_unref(gpointer object);
 
+    typedef ... PangoCairoFontMap;
+    void pango_cairo_font_map_set_default (PangoCairoFontMap *fontmap);
+
     void
     pango_layout_set_font_description (PangoLayout *layout,
                                        const PangoFontDescription *desc);

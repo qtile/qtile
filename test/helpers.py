@@ -243,6 +243,14 @@ class TestManager:
 
                 # Initialise fontconfig before starting qtile to prevent races
                 pangocffi.init_fontconfig()
+                # We've just fork()ed from the pytest process. If that process
+                # rendered any text (lots of the unit tests do), Pango spun up a
+                # "[pango] fontcon" helper thread to load fonts, and fork() did
+                # not copy it. Loading an as-yet-uncached font here would then
+                # block forever in g_cond_wait waiting on that missing thread --
+                # qtile would hang right after the compositor starts. Drop the
+                # inherited font map so this process builds its own.
+                pangocffi.reset_font_map()
                 kore = self.backend.create()
                 os.environ.update(self.backend.env)
                 from libqtile.core.lifecycle import lifecycle
