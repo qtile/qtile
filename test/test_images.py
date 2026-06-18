@@ -14,6 +14,13 @@ import pytest
 
 from libqtile import images
 
+# Decoding images in-process (libqtile.images -> cairocffi.pixbuf -> glycin)
+# spawns persistent glycin/GLib worker threads. Those threads would be inherited
+# by every qtile instance the suite later fork()s, deadlocking pango font loading
+# (g_cond_wait) in the child. Run each test in its own subprocess so the threads
+# die with it and the main pytest process stays fork-safe.
+pytestmark = pytest.mark.forked
+
 TEST_DIR = path.dirname(os.path.abspath(__file__))
 DATA_DIR = path.join(TEST_DIR, "data")
 PNGS = glob(path.join(DATA_DIR, "*", "*.png"))

@@ -8,6 +8,13 @@ from libqtile import images
 from libqtile.backend.wayland.drawer import Drawer
 from test.test_images import SVGS, png_img_24, rgba_pixel_data  # noqa: F401
 
+# Decoding images in-process (libqtile.images -> cairocffi.pixbuf -> glycin)
+# spawns persistent glycin/GLib worker threads. Those threads would be inherited
+# by every qtile instance the suite later fork()s, deadlocking pango font loading
+# (g_cond_wait) in the child. Run each test in its own subprocess so the threads
+# die with it and the main pytest process stays fork-safe.
+pytestmark = pytest.mark.forked
+
 
 class FakeDrawer(Drawer):
     def __init__(self, image_surface, output_scale, monkeypatch):
