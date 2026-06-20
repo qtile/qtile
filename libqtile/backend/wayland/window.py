@@ -109,7 +109,7 @@ class Base(base._Window):
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPABOVE:
+        if force and self.layer == lib.LAYER_KEEPAOVE:
             new_layer = self.get_new_layer(self._float_state)
             self.reparent(new_layer)
         lib.qw_view_move_down(self._ptr)
@@ -120,7 +120,7 @@ class Base(base._Window):
 
     @expose_command()
     def bring_to_front(self) -> None:
-        self.reparent(lib.LAYER_KEEPABOVE)
+        self.reparent(lib.LAYER_BRINGTOFRONT)
         lib.qw_view_raise_to_top(self._ptr)
 
     @property

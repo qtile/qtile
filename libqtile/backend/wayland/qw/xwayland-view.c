@@ -44,6 +44,8 @@ static void qw_xwayland_view_do_focus(struct qw_xwayland_view *xwayland_view,
         return;
     }
 
+    wlr_scene_node_raise_to_top(&xwayland_view->base.content_tree->node);
+
     // Deactivate previous surface if any
     if (prev_surface != NULL) {
         qw_util_deactivate_surface(prev_surface);
@@ -297,6 +299,12 @@ static struct wlr_scene_node *qw_xwayland_view_get_tree_node(void *self) {
     return &xwayland_view->scene_tree->node;
 }
 
+// Bring the xwayland_view's content scene node to the front
+static void qw_xwayland_view_bring_to_front(void *self) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    wlr_scene_node_raise_to_top(&xwayland_view->base.content_tree->node);
+}
+
 // Clip the xwayland_view's scene tree if needed
 static void qw_xwayland_view_clip(struct qw_xwayland_view *xwayland_view) {
     // Only clip if scene_tree exists, node is disabled, and node is linked
@@ -373,7 +381,7 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
 
     // Raise view if requested
     if (above != 0) {
-        qw_view_reparent(&xwayland_view->base, LAYER_KEEPABOVE);
+        qw_xwayland_view_bring_to_front(self);
     }
 
     // View under the cursor may have changed
