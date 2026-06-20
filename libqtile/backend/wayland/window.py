@@ -109,9 +109,6 @@ class Base(base._Window):
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
-        if force and self.layer == lib.LAYER_KEEPAOVE:
-            new_layer = self.get_new_layer(self._float_state)
-            self.reparent(new_layer)
         lib.qw_view_move_down(self._ptr)
 
     @expose_command()
@@ -704,7 +701,14 @@ class Window(Base, base.Window):
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
                 self._float_state = FloatStates.FLOATING
-            if self.layer() != lib.LAYER_KEEPABOVE and self.qtile.config.floats_kept_above:
+            # TODO: This is a bit rough
+            # Ignore child windows (layer == -1)
+            layer = self.layer()
+            if (
+                layer != -1
+                and layer != lib.LAYER_KEEPABOVE
+                and self.qtile.config.floats_kept_above
+            ):
                 self.keep_above(enable=True)
         elif (not do_float) and self._float_state != FloatStates.NOT_FLOATING:
             self.reparent(lib.LAYER_LAYOUT)

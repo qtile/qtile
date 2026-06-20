@@ -618,6 +618,12 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     struct qw_xwayland_view *xwayland_view = wl_container_of(listener, xwayland_view, map);
     struct wlr_xwayland_surface *xwayland_surface = xwayland_view->xwayland_surface;
 
+    if (xwayland_surface->parent != NULL && xwayland_surface->parent->data != NULL) {
+        // move surface kunder parent
+        struct qw_xwayland_view *parent_view = xwayland_surface->parent->data;
+        wlr_scene_node_reparent(&xwayland_view->base.content_tree->node, parent_view->base.child_tree);
+    }
+
     // Create a subsurface tree for this view under the content tree.
     xwayland_view->scene_tree = wlr_scene_subsurface_tree_create(xwayland_view->base.content_tree,
                                                                  xwayland_surface->surface);
@@ -625,11 +631,14 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     // Ensure child tree (transients, etc) above all
     wlr_scene_node_raise_to_top(&xwayland_view->base.child_tree->node);
 
-    // Reparent layer if view has keep_above or keep_below set
-    if (xwayland_surface->above) {
-        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPABOVE);
-    } else if (xwayland_surface->below) {
-        qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPBELOW);
+    // TODO: tidy this up
+    if (xwayland_surface->parent == NULL) {
+        // Reparent layer if view has keep_above or keep_below set
+        if (xwayland_surface->above) {
+            qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPABOVE);
+        } else if (xwayland_surface->below) {
+            qw_view_reparent((struct qw_view *)xwayland_view, LAYER_KEEPBELOW);
+        }
     }
 
     // Set the view's initial dimensions based on the surface.
@@ -954,7 +963,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.content_tree->node.data = xwayland_view;
     xwayland_view->base.border_tree = wlr_scene_tree_create(xwayland_view->base.content_tree);
     xwayland_view->base.child_tree = wlr_scene_tree_create(xwayland_view->base.content_tree);
-    xwayland_view->base.layer = LAYER_LAYOUT;
+    // xwayland_view->base.layer = LAYER_LAYOUT;
     xwayland_view->initial_commit = true;
 
     wl_signal_add(&xwayland_surface->events.destroy, &xwayland_view->destroy);
