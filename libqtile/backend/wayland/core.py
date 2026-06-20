@@ -527,7 +527,6 @@ class Core(base.Core):
 
         # TODO logic imcomplete
         win._ptr.focus(win._ptr, False)  # What is the second argument?
-        win.move_to_top()
 
     def _grab_click_on_current_window(self) -> None:
         """Grab button events on the current window.
