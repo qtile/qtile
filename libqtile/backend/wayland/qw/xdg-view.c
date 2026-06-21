@@ -1,5 +1,6 @@
 #include "xdg-view.h"
 #include "cursor.h"
+#include "output.h"
 #include "server.h"
 #include "session-lock.h"
 #include "util.h"
@@ -471,6 +472,12 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
 
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
+
+    if (xdg_toplevel->parent != NULL && xdg_toplevel->parent->base->data != NULL) {
+        // move surface under parent
+        struct qw_xdg_view *parent_view = xdg_toplevel->parent->base->data;
+        wlr_scene_node_reparent(&xdg_view->base.content_tree->node, parent_view->base.child_tree);
+    }
 
     // Create foreign toplevel manager and listeners
     if (xdg_view->base.ftl_handle == NULL) {
