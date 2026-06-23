@@ -38,6 +38,34 @@ static void qw_xdg_view_activate(struct qw_xdg_view *xdg_view, bool activate) {
     }
 }
 
+static bool surface_is_child(struct wlr_surface *surface, struct wlr_surface *potential_parent) {
+    if (surface == NULL || potential_parent == NULL) {
+        return false;
+    }
+
+    struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_try_from_wlr_surface(surface);
+
+    while (xdg_surface != NULL) {
+        struct wlr_surface *parent_surface = NULL;
+
+        if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel->parent != NULL) {
+            parent_surface = xdg_surface->toplevel->parent->base->surface;
+        } else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP && xdg_surface->popup->parent != NULL) {
+            parent_surface = xdg_surface->popup->parent;
+        } else {
+            break;
+        }
+
+        if (parent_surface == potential_parent) {
+            return true;
+        }
+
+        xdg_surface = wlr_xdg_surface_try_from_wlr_surface(parent_surface);
+    }
+
+    return false;
+}
+
 // Focus the given xdg_view's surface, managing activation and keyboard focus
 static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surface *surface) {
     if (!xdg_view) {
@@ -57,6 +85,10 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
     }
 
     if (prev_surface == surface) {
+        return;
+    }
+
+    if (surface_is_child(prev_surface, surface)) {
         return;
     }
 
