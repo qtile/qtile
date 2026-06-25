@@ -4,7 +4,7 @@ import enum
 
 
 class _UndefinedCore:
-    name = None
+    name: str | None = None
 
 
 class _UndefinedQtile:
