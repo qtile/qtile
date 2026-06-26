@@ -41,6 +41,18 @@ let
       postPatch = "";
 
       patches = [ ];
+    }
+    // {
+
+      # WARN: This is a temporary fix for the new path in the .desktop files.
+      # This should later be handled in nixpkgs, but for now it is simpler
+      # to put it here while we figure out what exactly we want to do there.
+      postInstall = (qtile-prev.postInstall or "") + ''
+        substituteInPlace $out/share/xsessions/qtile.desktop \
+          --replace-quiet /usr/bin/qtile $out/bin/qtile
+        substituteInPlace $out/share/wayland-sessions/qtile-wayland.desktop \
+          --replace-quiet /usr/bin/qtile $out/bin/qtile
+      '';
     };
 in
 (pkgs.python3Packages.qtile.overrideAttrs qtile-override-func).override {
