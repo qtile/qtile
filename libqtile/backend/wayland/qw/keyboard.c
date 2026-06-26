@@ -77,8 +77,8 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     // one, so keybindings stay constant regardless of the selected keyboard
     // layout (mirrors X11 grabbing on the initial layout). Fixes qtile #4259.
     const xkb_keysym_t *syms;
-    int nsyms = xkb_keymap_key_get_syms_by_level(keyboard->wlr_keyboard->keymap, keycode,
-                                                 0, 0, &syms);
+    int nsyms =
+        xkb_keymap_key_get_syms_by_level(keyboard->wlr_keyboard->keymap, keycode, 0, 0, &syms);
 
     bool handled = false;
     // Get current keyboard modifiers (shift, ctrl, alt, etc.)
