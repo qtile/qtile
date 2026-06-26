@@ -1,6 +1,8 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
     * bugfixes
+      - Wayland: keep keybindings consistent regardless of the active keyboard
+        layout. Fixes #4259.
 
 Qtile 0.36.0, released 2026-05-22:
     * features
