@@ -1,6 +1,22 @@
 qtile.desktop: A desktop file for qtile telling session managers about qtile
-    and how to run it. This file should be installed to /usr/share/xsessions
-
-qtile-wayland.desktop: A desktop file to start qtile in wayland mode.
+    and how to run it. Install it to /usr/share/xsessions (to offer an X11
+    session) and/or /usr/share/wayland-sessions (to offer a Wayland session).
 
 99-qtile.rules: udev rules for hardware that qtile can manage
+
+qtile-session.target, qtile.service: systemd user units that start qtile as a
+    user service, which activates graphical-session.target so xdg-desktop-portal
+    and similar services (screen sharing, file pickers, ...) work correctly.
+    Install both to ~/.config/systemd/user/. Adjust ExecStart in qtile.service
+    if your qtile binary is not in ~/.local/bin.
+
+    Anything static (locale, toolkit settings, ...) is better placed in
+    ~/.config/environment.d/, which the user manager reads on its own.
+    If you start qtile from a TTY or a launcher that does not set
+    XDG_SESSION_TYPE, set it (or anything else your apps need) in
+    ~/.config/environment.d/, or pass -b to "qtile start" explicitly. If more
+    than one xdg-desktop-portal backend is installed, pin the preferred one in
+    ~/.config/xdg-desktop-portal/qtile-portals.conf, e.g.:
+
+        [preferred]
+        default=wlr;gtk
