@@ -41,15 +41,16 @@ def get_default_config():
 
 
 def make_qtile(options) -> Qtile | None:
-    qtile.core.name = options.backend
-    if missing_deps := libqtile.backend.has_deps(options.backend):
-        print(f"Backend '{options.backend}' missing required Python dependencies:")
+    backend = options.backend or libqtile.backend.detect_backend()
+    qtile.core.name = backend
+    if missing_deps := libqtile.backend.has_deps(backend):
+        print(f"Backend '{backend}' missing required Python dependencies:")
         for dep in missing_deps:
             print("\t", dep)
 
         return None
 
-    kore = libqtile.backend.get_core(options.backend)
+    kore = libqtile.backend.get_core(backend)
 
     if not path.isfile(options.configfile):
         try:
@@ -148,7 +149,7 @@ def add_subcommand(subparsers, parents):
     parser.add_argument(
         "-b",
         "--backend",
-        default="x11",
+        default=None,
         dest="backend",
         choices=libqtile.backend.CORES.keys(),
         help="Use specified backend.",
