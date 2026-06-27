@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+    - Add `auto_group` config variable
     * bugfixes
 
 Qtile 0.36.0, released 2026-05-22:
