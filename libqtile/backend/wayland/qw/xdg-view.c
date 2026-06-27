@@ -1,5 +1,6 @@
 #include "xdg-view.h"
 #include "cursor.h"
+#include "output.h"
 #include "server.h"
 #include "session-lock.h"
 #include "util.h"
@@ -37,6 +38,34 @@ static void qw_xdg_view_activate(struct qw_xdg_view *xdg_view, bool activate) {
     }
 }
 
+static bool surface_is_child(struct wlr_surface *surface, struct wlr_surface *potential_parent) {
+    if (surface == NULL || potential_parent == NULL) {
+        return false;
+    }
+
+    struct wlr_xdg_surface *xdg_surface = wlr_xdg_surface_try_from_wlr_surface(surface);
+
+    while (xdg_surface != NULL) {
+        struct wlr_surface *parent_surface = NULL;
+
+        if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel->parent != NULL) {
+            parent_surface = xdg_surface->toplevel->parent->base->surface;
+        } else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP && xdg_surface->popup->parent != NULL) {
+            parent_surface = xdg_surface->popup->parent;
+        } else {
+            break;
+        }
+
+        if (parent_surface == potential_parent) {
+            return true;
+        }
+
+        xdg_surface = wlr_xdg_surface_try_from_wlr_surface(parent_surface);
+    }
+
+    return false;
+}
+
 // Focus the given xdg_view's surface, managing activation and keyboard focus
 static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surface *surface) {
     if (!xdg_view) {
@@ -56,6 +85,10 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
     }
 
     if (prev_surface == surface) {
+        return;
+    }
+
+    if (surface_is_child(prev_surface, surface)) {
         return;
     }
 
@@ -255,7 +288,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
 
     // Raise view if requested
     if (above != 0) {
-        qw_view_raise_to_top(&xdg_view->base);
+        qw_view_reparent(&xdg_view->base, LAYER_BRINGTOFRONT);
     }
 
     // View under the cursor may have changed
@@ -443,8 +476,11 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
     struct qw_server *server = xdg_view->base.server;
     struct wlr_xdg_popup *wlr_popup = data;
 
-    struct qw_xdg_popup *popup = qw_server_xdg_popup_new(
-        wlr_popup, xdg_view, server->scene_windows_layers[LAYER_BRINGTOFRONT]);
+    // wlr_log(WLR_ERROR, "parent: %p", xdg_view->xdg_toplevel->
+    struct qw_xdg_popup *popup =
+        // qw_server_xdg_popup_new(wlr_popup, xdg_view,
+        // server->scene_windows_layers[LAYER_KEEPABOVE]);
+        qw_server_xdg_popup_new(wlr_popup, xdg_view, xdg_view->base.child_tree);
     if (popup == NULL) {
         return;
     }
@@ -456,8 +492,9 @@ static void qw_xdg_view_handle_new_popup(struct wl_listener *listener, void *dat
 
     int lx, ly;
     wlr_scene_node_coords(&popup->xdg_view->base.content_tree->node, &lx, &ly);
-    wlr_scene_node_set_position(&popup->scene_tree->node, lx + total_border_width,
-                                ly + total_border_width);
+    // wlr_scene_node_set_position(&popup->scene_tree->node, lx + total_border_width,
+    //                             ly + total_border_width);
+    wlr_scene_node_set_position(&popup->scene_tree->node, total_border_width, total_border_width);
     // TODO: do we need to be concerned about the width/height of other window decorations?
 }
 
@@ -476,6 +513,12 @@ static void qw_xdg_view_handle_map(struct wl_listener *listener, void *data) {
     xdg_view->base.app_id = xdg_view->xdg_toplevel->app_id;
 
     struct wlr_xdg_toplevel *xdg_toplevel = xdg_view->xdg_toplevel;
+
+    if (xdg_toplevel->parent != NULL && xdg_toplevel->parent->base->data != NULL) {
+        // move surface under parent
+        struct qw_xdg_view *parent_view = xdg_toplevel->parent->base->data;
+        wlr_scene_node_reparent(&xdg_view->base.content_tree->node, parent_view->base.child_tree);
+    }
 
     // Create foreign toplevel manager and listeners
     if (xdg_view->base.ftl_handle == NULL) {
@@ -676,6 +719,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     // Create a scene tree node for this view inside the main layout tree
     xdg_view->base.content_tree = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xdg_view->base.content_tree->node.data = xdg_view;
+    xdg_view->base.border_tree = wlr_scene_tree_create(xdg_view->base.content_tree);
 
     // If the protocol version supports WM capabilities, set maximize/fullscreen/minimize
     if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
@@ -695,6 +739,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->scene_tree =
         wlr_scene_xdg_surface_create(xdg_view->base.content_tree, xdg_toplevel->base);
     xdg_toplevel->base->data = xdg_view;
+    xdg_view->base.child_tree = wlr_scene_tree_create(xdg_view->base.content_tree);
 
     // Assign function pointers for base view operations
     xdg_view->base.get_tree_node = qw_xdg_view_get_tree_node;

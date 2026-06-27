@@ -93,6 +93,8 @@ struct qw_view {
     bool skip_taskbar;
     float opacity;
     struct wlr_scene_tree *content_tree; // Scene tree holding the view's content
+    struct wlr_scene_tree *border_tree;  // Sub-tree holding border surfaces
+    struct wlr_scene_tree *child_tree;   // Sub-tree holding transients/children
     struct wlr_foreign_toplevel_handle_v1 *ftl_handle;
     bool grabbed_click;
     request_focus_cb_t request_focus_cb;
