@@ -1,0 +1,4 @@
+[Unit]
+Description=qtile session
+BindsTo=graphical-session.target
+Before=graphical-session.target
