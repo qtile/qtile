@@ -41,6 +41,19 @@ let
       postPatch = "";
 
       patches = [ ];
+
+      postInstall = ''
+        install resources/qtile.desktop -Dt $out/share/xsessions
+        install resources/qtile.desktop -Dt $out/share/wayland-sessions
+        install -Dm644 resources/qtile.service \
+          $out/share/systemd/user/qtile.service
+        install -Dm644 resources/qtile-session.target \
+          $out/share/systemd/user/qtile-session.target
+
+        substituteInPlace $out/share/systemd/user/qtile.service \
+          --replace-fail '%h/.local/bin/qtile' '${placeholder "out"}/bin/qtile' \
+          --replace-fail '/usr/bin/systemctl' '${pkgs.systemd}/bin/systemctl'
+      '';
     };
 in
 (pkgs.python3Packages.qtile.overrideAttrs qtile-override-func).override {

@@ -1,6 +1,18 @@
 [Desktop Entry]
 Name=Qtile
 Comment=Qtile Session
-Exec=/usr/bin/qtile start
+DesktopNames=qtile
+# Start qtile as a systemd user service so graphical-session.target is
+# activated and xdg-desktop-portal (screen sharing, file pickers, ...) works.
+# Needs qtile.service and qtile-session.target (from the qtile source tree,
+# resources/) installed to ~/.config/systemd/user/; see resources/README.
+# The Exec hands the variables the display manager set for the session to the
+# user manager (bare "import-environment" is deprecated, so they are listed
+# explicitly), then starts qtile.service. The list includes XDG_CURRENT_DESKTOP
+# (set above via DesktopNames) and XDG_SESSION_TYPE, which qtile uses to pick
+# its backend; unset variables are skipped. Static vars (locale, toolkit
+# settings, ...) are better placed in ~/.config/environment.d/.
+# To start qtile directly instead, use: Exec=qtile start
+Exec=/bin/sh -c "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XAUTHORITY XDG_SEAT XDG_VTNR XDG_SESSION_ID XDG_SESSION_TYPE XDG_SESSION_CLASS XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP DESKTOP_SESSION; exec systemctl --user start --wait qtile.service"
 Type=Application
 Keywords=wm;tiling
