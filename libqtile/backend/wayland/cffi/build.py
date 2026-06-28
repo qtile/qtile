@@ -102,7 +102,7 @@ class TestClient:
 
 
 PROTOS: list[Protocol] = [
-    Protocol(f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml"),
+    Protocol(f"{QW_PROTO_IN_PATH}/wlr-layer-shell-unstable-v1.xml", build_client=True),
     Protocol(
         f"{QW_PROTO_IN_PATH}/wlr-output-power-management-unstable-v1.xml", build_client=True
     ),
@@ -182,6 +182,16 @@ TEST_CLIENTS: list[TestClient] = [
             QW_PROTO_OUT_PATH / "cursor-shape-v1-protocol.c",
             QW_PROTO_OUT_PATH / "xdg-shell-protocol.c",
             QW_PROTO_OUT_PATH / "tablet-v2-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
+    TestClient(
+        name="layer-shell",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "layer-shell.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "wlr-layer-shell-unstable-v1-protocol.c",
+            QW_PROTO_OUT_PATH / "xdg-shell-protocol.c",
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),
