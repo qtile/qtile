@@ -42,5 +42,6 @@ void test_message(const char *fmt, ...);
 
 struct buffer *create_buffer(struct client_state *state, uint32_t width, uint32_t height,
                              uint32_t colour);
+void destroy_buffer(struct buffer *buf);
 
 #endif /* CLIENT_BASE_H */
