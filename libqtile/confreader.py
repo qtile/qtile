@@ -103,8 +103,19 @@ class Config:
                     continue
 
                 # Check if the module is in the config folder or subfolder
-                # and the file still exists.  If so, reload it
-                if folder in subpath.parents and subpath.exists():
+                # and the file still exists.  If so, reload it.
+                #
+                # Modules without a spec (e.g. `__main__`, when qtile is
+                # started from a console-script entry point installed in a
+                # venv that lives inside the config folder) cannot be
+                # reloaded and must be skipped: importlib.reload() requires
+                # module.__spec__ to be set, but `__main__` only gets a spec
+                # when run via `python -m`, not when run as a script.
+                if (
+                    folder in subpath.parents
+                    and subpath.exists()
+                    and getattr(module, "__spec__", None) is not None
+                ):
                     importlib.reload(module)
 
     def load(self):

@@ -1,3 +1,5 @@
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -46,6 +48,37 @@ def test_falls_back():
     # default is; don't assert anything at all about the default in case
     # someone changes it down the road.
     assert hasattr(f, "follow_mouse_focus")
+
+
+def test_reload_skips_module_without_spec(tmp_path, monkeypatch):
+    """
+    Regression test for https://github.com/qtile/qtile/issues/5877
+
+    When qtile is started from a console-script entry point installed in a
+    venv that lives inside the config folder (e.g. `.venv` next to
+    config.py), `sys.modules["__main__"].__file__` points at that script,
+    which is a subpath of the config folder. `__main__` has no `__spec__`
+    in that situation (it's only set when run via `python -m`), so
+    `importlib.reload()` raises `ModuleNotFoundError: spec not found for
+    the module '__main__'`. `_reload_config_submodules` must skip such
+    modules instead of trying to reload them.
+    """
+    path = tmp_path / "config.py"
+    path.write_text((configs_dir / "basic.py").read_text())
+
+    venv_qtile_script = tmp_path / ".venv" / "bin" / "qtile"
+    venv_qtile_script.parent.mkdir(parents=True)
+    venv_qtile_script.write_text("#!/usr/bin/env python\n")
+
+    fake_main = types.ModuleType("__main__")
+    fake_main.__file__ = str(venv_qtile_script)
+    fake_main.__spec__ = None
+
+    monkeypatch.setitem(sys.modules, "__main__", fake_main)
+
+    f = confreader.Config(path)
+    # Should not raise ModuleNotFoundError for the spec-less __main__ module.
+    f._reload_config_submodules(path)
 
 
 def cmd(x):
