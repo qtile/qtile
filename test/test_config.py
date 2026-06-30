@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -46,6 +48,184 @@ def test_falls_back():
     # default is; don't assert anything at all about the default in case
     # someone changes it down the road.
     assert hasattr(f, "follow_mouse_focus")
+
+
+def test_reload_config_submodules_subprocess(tmp_path):
+    """
+    Regression test for https://github.com/qtile/qtile/issues/5877
+
+    When qtile is started from a script installed inside the config folder
+    (e.g. inside a venv), sys.modules['__main__'].__file__ is inside the
+    config directory. _reload_config_submodules must walk imported submodules
+    starting from the top-level config module rather than attempting to reload
+    __main__ or all files in the directory.
+    """
+    config_file = tmp_path / "config.py"
+    config_file.write_text("import helper\nwmname = f'qtile_{helper.VAL}'\n")
+
+    helper_file = tmp_path / "helper.py"
+    helper_file.write_text("VAL = 1\n")
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    runner_file = bin_dir / "runner.py"
+
+    runner_file.write_text(f"""
+import importlib
+import sys
+import time
+from pathlib import Path
+from libqtile import confreader
+
+sys.dont_write_bytecode = True
+
+config_path = Path({repr(str(config_file))})
+cfg1 = confreader.Config(config_path)
+cfg1.load()
+assert cfg1.wmname == "qtile_1", f"Expected qtile_1, got {{cfg1.wmname}}"
+
+time.sleep(0.01)
+helper_path = Path({repr(str(helper_file))})
+helper_path.write_text("VAL = 2\\n")
+importlib.invalidate_caches()
+
+cfg2 = confreader.Config(config_path)
+cfg2.load()
+
+assert cfg2.wmname == "qtile_2", f"Expected qtile_2, got {{cfg2.wmname}}"
+print("SUCCESS")
+""")
+
+    res = subprocess.run(
+        [sys.executable, str(runner_file)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert res.returncode == 0, (
+        f"Subprocess failed:\nstdout:\n{res.stdout}\nstderr:\n{res.stderr}"
+    )
+    assert "SUCCESS" in res.stdout
+
+
+def test_reload_config_nested_submodules(tmp_path):
+    """
+    Tests that _reload_config_submodules recursively walks and reloads
+    submodule dependencies.
+    """
+    config_file = tmp_path / "config.py"
+    config_file.write_text("from sub1 import get_val\nwmname = f'qtile_{get_val()}'\n")
+
+    sub1_file = tmp_path / "sub1.py"
+    sub1_file.write_text("import sub2\ndef get_val():\n    return sub2.VAL\n")
+
+    sub2_file = tmp_path / "sub2.py"
+    sub2_file.write_text("VAL = 10\n")
+
+    runner_file = tmp_path / "runner.py"
+    runner_file.write_text(f"""
+import importlib
+import sys
+import time
+from pathlib import Path
+from libqtile import confreader
+
+sys.dont_write_bytecode = True
+
+config_path = Path({repr(str(config_file))})
+cfg1 = confreader.Config(config_path)
+cfg1.load()
+assert cfg1.wmname == "qtile_10"
+
+time.sleep(0.01)
+sub2_path = Path({repr(str(sub2_file))})
+sub2_path.write_text("VAL = 20\\n")
+importlib.invalidate_caches()
+
+cfg2 = confreader.Config(config_path)
+cfg2.load()
+assert cfg2.wmname == "qtile_20", f"Expected qtile_20, got {{cfg2.wmname}}"
+print("SUCCESS")
+""")
+
+    res = subprocess.run(
+        [sys.executable, str(runner_file)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert res.returncode == 0, (
+        f"Subprocess failed:\nstdout:\n{res.stdout}\nstderr:\n{res.stderr}"
+    )
+    assert "SUCCESS" in res.stdout
+
+
+def test_reload_config_submodules_edge_cases(tmp_path):
+    """
+    Tests edge cases in _reload_config_submodules:
+    - Deleted submodule files on disk
+    - Non-ModuleType entries in sys.modules
+    - Spec-less dynamic modules
+    - Objects with throwing attribute access in module namespace
+    """
+    config_file = tmp_path / "config.py"
+    config_file.write_text("import helper\nwmname = f'qtile_{helper.VAL}'\n")
+
+    helper_file = tmp_path / "helper.py"
+    helper_file.write_text("VAL = 1\n")
+
+    runner_file = tmp_path / "runner.py"
+    runner_file.write_text(f"""
+import importlib
+import sys
+from types import ModuleType
+from pathlib import Path
+from libqtile import confreader
+
+class ThrowingAttr:
+    @property
+    def __module__(self):
+        raise RuntimeError("Attribute access failed")
+
+sys.dont_write_bytecode = True
+
+config_path = Path({repr(str(config_file))})
+cfg1 = confreader.Config(config_path)
+cfg1.load()
+
+top_mod = sys.modules["config"]
+top_mod.bad_obj = ThrowingAttr()
+
+specless_mod = ModuleType("specless")
+specless_mod.__file__ = str(Path({repr(str(tmp_path))}) / "specless.py")
+specless_mod.__spec__ = None
+(Path({repr(str(tmp_path))}) / "specless.py").write_text("# specless")
+top_mod.specless = specless_mod
+
+sys.modules["stub_module"] = None
+
+helper_path = Path({repr(str(helper_file))})
+helper_path.unlink()
+
+cfg2 = confreader.Config(config_path)
+cfg2._reload_config_submodules(config_path)
+
+sys.modules["config"] = None
+cfg2._reload_config_submodules(config_path)
+
+print("SUCCESS")
+""")
+
+    res = subprocess.run(
+        [sys.executable, str(runner_file)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert res.returncode == 0, (
+        f"Subprocess failed:\nstdout:\n{res.stdout}\nstderr:\n{res.stderr}"
+    )
+    assert "SUCCESS" in res.stdout
 
 
 def cmd(x):

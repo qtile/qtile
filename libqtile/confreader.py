@@ -4,7 +4,7 @@ import importlib
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from types import FunctionType
+from types import FunctionType, ModuleType
 from typing import Any, Literal
 
 from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
@@ -88,25 +88,76 @@ class Config:
             setattr(self, key, value)
 
     def _reload_config_submodules(self, path: Path) -> None:
-        """Reloads python files from same folder as config file."""
-        folder = path.parent
-        for module in sys.modules.copy().values():
-            # Skip built-ins and anything with no filepath.
-            if hasattr(module, "__file__") and module.__file__ is not None:
-                subpath = Path(module.__file__)
+        """Reloads python files imported by the config file from the config folder."""
+        name = path.stem
+        top_module = sys.modules.get(name)
+        if not isinstance(top_module, ModuleType):
+            return
 
-                if subpath == path:
-                    # do not reevaluate config itself here, we want only
-                    # reload all submodules. Also we cant reevaluate config
-                    # here, because it will cache all current modules before they
-                    # are reloaded. Thus, config file should be reloaded after
-                    # this routine.
+        folder = path.parent.resolve()
+        config_file = path.resolve()
+
+        visited: set[ModuleType] = set()
+        modules_to_reload: list[ModuleType] = []
+
+        def _walk(module: ModuleType) -> None:
+            if module in visited:
+                return
+            visited.add(module)
+
+            candidates: list[ModuleType] = []
+
+            for val in list(module.__dict__.values()):
+                mod = None
+                if isinstance(val, ModuleType):
+                    mod = val
+                else:
+                    try:
+                        mod_name = getattr(val, "__module__", None)
+                        if isinstance(mod_name, str):
+                            mod = sys.modules.get(mod_name)
+                    except Exception:
+                        pass
+
+                if mod is not None and isinstance(mod, ModuleType) and mod not in visited:
+                    candidates.append(mod)
+
+            mod_name = getattr(module, "__name__", "")
+            if mod_name:
+                prefix = mod_name + "."
+                for sys_mod_name, sys_mod in list(sys.modules.items()):
+                    if (
+                        sys_mod_name.startswith(prefix)
+                        and isinstance(sys_mod, ModuleType)
+                        and sys_mod not in visited
+                    ):
+                        candidates.append(sys_mod)
+
+            for mod in candidates:
+                if mod in visited:
                     continue
 
-                # Check if the module is in the config folder or subfolder
-                # and the file still exists.  If so, reload it
-                if folder in subpath.parents and subpath.exists():
-                    importlib.reload(module)
+                file_attr = getattr(mod, "__file__", None)
+                if file_attr is None:
+                    continue
+
+                try:
+                    mod_file = Path(file_attr).resolve()
+                except Exception:
+                    continue
+
+                if folder in mod_file.parents and mod_file != config_file and mod_file.exists():
+                    _walk(mod)
+                    if (
+                        getattr(mod, "__spec__", None) is not None
+                        and mod not in modules_to_reload
+                    ):
+                        modules_to_reload.append(mod)
+
+        _walk(top_module)
+
+        for mod in modules_to_reload:
+            importlib.reload(mod)
 
     def load(self):
         if not self.file_path:
