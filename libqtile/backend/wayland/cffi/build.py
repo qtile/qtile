@@ -190,6 +190,7 @@ TEST_CLIENTS: list[TestClient] = [
 # Build configuration
 
 CDEF_FILES = [
+    "animation.h",
     "log.h",
     "session-lock.h",
     "server.h",
