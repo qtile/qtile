@@ -109,6 +109,18 @@ void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *
     struct qw_session_lock_surface *sls = wl_container_of(listener, sls, surface_destroy);
     struct qw_server *server = sls->server;
 
+    // Outputs keep a lock_surface back-pointer to this wlr_session_lock_surface_v1,
+    // which is freed after this handler. It is otherwise cleared only on explicit
+    // unlock in qw_session_lock_destroy, so an output-layout change after this
+    // surface dies (output destroyed on VT switch / display drop while locked)
+    // would dereference freed memory in qw_session_lock_output_change().
+    struct qw_output *o;
+    wl_list_for_each(o, &server->outputs, link) {
+        if (o->lock_surface == sls->lock_surface) {
+            o->lock_surface = NULL;
+        }
+    }
+
     if (server->lock != NULL && server->lock->lock != NULL &&
         !wl_list_empty(&server->lock->lock->surfaces)) {
         qw_session_lock_focus_first_lock_surface(server);
