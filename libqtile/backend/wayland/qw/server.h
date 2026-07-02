@@ -15,6 +15,8 @@
 #include <wlr/render/allocator.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_alpha_modifier_v1.h>
+#include <wlr/types/wlr_color_management_v1.h>
+#include <wlr/types/wlr_color_representation_v1.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_data_control_v1.h>
 #include <wlr/types/wlr_data_device.h>
@@ -241,6 +243,8 @@ struct qw_server {
     struct wlr_output_layout *output_layout;
     struct wl_list outputs;
     struct wlr_output_manager_v1 *output_mgr;
+    struct wlr_color_manager_v1 *color_mgr;
+    struct wlr_color_representation_manager_v1 *color_representation_mgr;
     struct wl_listener output_manager_apply;
     struct wl_listener output_manager_test;
     struct wl_listener new_output;

@@ -911,6 +911,56 @@ struct qw_server *qw_server_create() {
     server->set_output_power_mode.notify = qw_server_handle_output_power_set_mode;
     wl_signal_add(&server->output_power_manager->events.set_mode, &server->set_output_power_mode);
 
+    if (server->renderer->features.input_color_transform) {
+        const enum wp_color_manager_v1_render_intent render_intents[] = {
+            WP_COLOR_MANAGER_V1_RENDER_INTENT_PERCEPTUAL,
+        };
+
+        size_t transfer_functions_len = 0;
+        enum wp_color_manager_v1_transfer_function *transfer_functions =
+            wlr_color_manager_v1_transfer_function_list_from_renderer(server->renderer,
+                                                                      &transfer_functions_len);
+
+        size_t primaries_len = 0;
+        enum wp_color_manager_v1_primaries *primaries =
+            wlr_color_manager_v1_primaries_list_from_renderer(server->renderer, &primaries_len);
+
+        server->color_mgr =
+            wlr_color_manager_v1_create(server->display, 2,
+                                        &(struct wlr_color_manager_v1_options){
+                                            .features =
+                                                {
+                                                    .parametric = true,
+                                                    .set_mastering_display_primaries = true,
+                                                },
+
+                                            .render_intents = render_intents,
+                                            .render_intents_len = 1,
+
+                                            .transfer_functions = transfer_functions,
+                                            .transfer_functions_len = transfer_functions_len,
+
+                                            .primaries = primaries,
+                                            .primaries_len = primaries_len,
+                                        });
+
+        free(transfer_functions);
+        free(primaries);
+
+        if (server->color_mgr != NULL) {
+            wlr_scene_set_color_manager_v1(server->scene, server->color_mgr);
+        } else {
+            wlr_log(WLR_ERROR, "Unable to create color manager.");
+        }
+    }
+
+    server->color_representation_mgr = wlr_color_representation_manager_v1_create_with_renderer(
+        server->display, 1, server->renderer);
+
+    if (server->color_representation_mgr == NULL) {
+        wlr_log(WLR_ERROR, "Unable to create color representation manager.");
+    }
+
     // TODO: setup listeners
 
     return server;
