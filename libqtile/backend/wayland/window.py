@@ -294,6 +294,12 @@ class Internal(Base, base.Internal):
 
     @property
     def surface(self) -> ffi.CData:
+        # qw_internal_view_kill() frees the C view struct, so once killed
+        # self._internal_ptr dangles and reading image_surface yields stale
+        # non-NULL garbage that crashes cairo_surface_reference in the drawer.
+        # Report no surface so callers' existing NULL guard skips drawing.
+        if self._killed:
+            return ffi.NULL
         return ffi.cast("void *", self._internal_ptr.image_surface)
 
     @property
