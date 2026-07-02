@@ -107,6 +107,10 @@ static bool dispatch_line(struct client_state *state, char *line) {
 }
 
 static void client_state_cleanup(struct client_state *state) {
+    if (state->shm) {
+        wl_shm_destroy(state->shm);
+    }
+
     if (state->seat) {
         wl_seat_destroy(state->seat);
     }
@@ -298,4 +302,14 @@ struct buffer *create_buffer(struct client_state *state, uint32_t width, uint32_
     buf->size = size;
 
     return buf;
+}
+
+void destroy_buffer(struct buffer *buf) {
+    if (!buf) {
+        return;
+    }
+
+    wl_buffer_destroy(buf->wl_buffer);
+    munmap(buf->data, buf->size);
+    free(buf);
 }

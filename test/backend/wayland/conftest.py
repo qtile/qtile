@@ -140,6 +140,7 @@ class ClientHandler:
 
         self.process = None
         self.manager = manager
+        self.clones = []
 
     def __enter__(self):
         self._run()
@@ -147,6 +148,8 @@ class ClientHandler:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
+        for clone in self.clones:
+            clone.stop()
 
     def _run(self):
         if self.cmd is None:
@@ -292,6 +295,13 @@ class ClientHandler:
 
     def flush_manager(self):
         self.manager.c.core.flush()
+
+    def clone(self, start=True):
+        clone = ClientHandler(self.cmd, self.manager)
+        if start:
+            clone._run()
+        self.clones.append(clone)
+        return clone
 
 
 @pytest.fixture

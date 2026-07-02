@@ -737,6 +737,8 @@ class Bar(Gap, configurable.Configurable, CommandObject):
             position=self.position,
             widgets=[i.info() for i in self.widgets],
             window=self.window.wid if self.window else None,
+            x=self.x,
+            y=self.y,
         )
 
     def is_show(self) -> bool:
