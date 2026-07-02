@@ -33,9 +33,9 @@ def pytest_generate_tests(metafunc):
         metafunc.parametrize("backend_name", backends)
 
 
-@pytest.fixture(scope="session", params=[1])
+@pytest.fixture(scope="session")
 def outputs(request):
-    return request.param
+    return getattr(request, "param", 1)
 
 
 dualmonitor = pytest.mark.parametrize("outputs", [2], indirect=True)
@@ -91,14 +91,6 @@ def manager(request, manager_nospawn):
     config = getattr(request, "param", BareConfig)
 
     manager_nospawn.start(config)
-    yield manager_nospawn
-
-
-@pytest.fixture(scope="function")
-def manager_withlogs(request, manager_nospawn):
-    config = getattr(request, "param", BareConfig)
-
-    manager_nospawn.start(config, want_logs=True)
     yield manager_nospawn
 
 

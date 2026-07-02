@@ -5,6 +5,14 @@ from libqtile import bar, images
 from libqtile.widget import Volume
 from test.widgets.conftest import TEST_DIR, FakeBar
 
+# Setting up the volume widget's images decodes them in-process (libqtile.images
+# -> cairocffi.pixbuf -> glycin), which spawns persistent glycin/GLib worker
+# threads. Those threads would be inherited by every qtile instance the suite
+# later fork()s, deadlocking pango font loading (g_cond_wait) in the child. Run
+# each test in its own subprocess so the threads die with it and the main pytest
+# process stays fork-safe.
+pytestmark = pytest.mark.forked
+
 
 def test_images_fail():
     vol = Volume(theme_path=TEST_DIR)
