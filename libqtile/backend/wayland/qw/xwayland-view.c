@@ -621,7 +621,8 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     if (xwayland_surface->parent != NULL && xwayland_surface->parent->data != NULL) {
         // move surface kunder parent
         struct qw_xwayland_view *parent_view = xwayland_surface->parent->data;
-        wlr_scene_node_reparent(&xwayland_view->base.content_tree->node, parent_view->base.child_tree);
+        wlr_scene_node_reparent(&xwayland_view->base.content_tree->node,
+                                parent_view->base.child_tree);
     }
 
     // Create a subsurface tree for this view under the content tree.

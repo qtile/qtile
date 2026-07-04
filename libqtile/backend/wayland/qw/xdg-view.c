@@ -48,9 +48,11 @@ static bool surface_is_child(struct wlr_surface *surface, struct wlr_surface *po
     while (xdg_surface != NULL) {
         struct wlr_surface *parent_surface = NULL;
 
-        if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel->parent != NULL) {
+        if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL &&
+            xdg_surface->toplevel->parent != NULL) {
             parent_surface = xdg_surface->toplevel->parent->base->surface;
-        } else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP && xdg_surface->popup->parent != NULL) {
+        } else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP &&
+                   xdg_surface->popup->parent != NULL) {
             parent_surface = xdg_surface->popup->parent;
         } else {
             break;
@@ -262,8 +264,20 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
     xdg_view->base.width = width;
     xdg_view->base.height = height;
 
+    int node_x = x;
+    int node_y = y;
+
+    // Child coordinates are relative to parent
+    // TODO: handle nested children
+    if (xdg_view->xdg_toplevel->parent != NULL &&
+        xdg_view->xdg_toplevel->parent->base->data != NULL) {
+        struct qw_xdg_view *parent_view = xdg_view->xdg_toplevel->parent->base->data;
+        node_x -= parent_view->base.x;
+        node_y -= parent_view->base.y;
+    }
+
     // Set position of the content scene node
-    wlr_scene_node_set_position(&xdg_view->base.content_tree->node, x, y);
+    wlr_scene_node_set_position(&xdg_view->base.content_tree->node, node_x, node_y);
 
     if (needs_repos) {
         // Resize the toplevel surface and apply clipping if needed
