@@ -1,6 +1,10 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
     * bugfixes
+      - wayland: fix use-after-free crashes when a surface outlives its output.
+        Layer-shell surfaces that commit after their output is destroyed, session
+        lock surfaces on a destroyed output, and killed internal views no longer
+        dereference freed compositor state.
 
 Qtile 0.36.0, released 2026-05-22:
     * features
