@@ -21,13 +21,21 @@ from libqtile.config import Key
 from libqtile.lazy import lazy
 from test.helpers import BareConfig
 
-# evdev keycode for the physical "r" key (linux/input-event-codes.h KEY_R).
+# evdev keycodes (linux/input-event-codes.h).
 KEY_R = 19
+KEY_T = 20
+
+# Keycode bindings use XKB keycodes (evdev + 8).
+XKB_KEY_T = KEY_T + 8
 
 
 class KeybindLayoutConfig(BareConfig):
     keys = [
         Key([], "r", lazy.group["b"].toscreen()),
+        # Same scenario for a binding declared by raw keycode: it is converted
+        # to a keysym at grab time (qw_server_get_sym_from_code, i.e. "t" under
+        # the default layout), so runtime matching is keysym-based as well.
+        Key([], XKB_KEY_T, lazy.group["c"].toscreen()),
     ]
 
 
@@ -64,3 +72,23 @@ def test_keybinding_fires_with_nonprimary_layout_active(wmanager, test_client):
     test_client.assert_ok(f"release {KEY_R}")
 
     assert wait_for_group(wmanager, "b") == "b"
+
+
+@keybind_layout_config
+def test_keycode_binding_fires_with_nonprimary_layout_active(wmanager, test_client):
+    """
+    Bindings declared by raw keycode go through the same keysym matching: the
+    keycode is resolved to a keysym once at grab time, and key presses must
+    resolve to that same keysym regardless of the active layout. Before the
+    layout-0 fix, pressing the physical "t" key with Russian active yielded
+    Cyrillic_ie and the ``Key([], 28, ...)`` binding stopped firing too.
+    """
+    assert wmanager.c.group.info()["name"] == "a"
+
+    test_client.assert_ok("keymap us,ru")
+    test_client.assert_ok("group 1")
+
+    test_client.assert_ok(f"press {KEY_T}")
+    test_client.assert_ok(f"release {KEY_T}")
+
+    assert wait_for_group(wmanager, "c") == "c"
