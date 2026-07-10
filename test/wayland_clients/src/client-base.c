@@ -42,6 +42,16 @@ void test_message(const char *fmt, ...) {
     fflush(stdout);
 }
 
+void test_true(void) {
+    puts("true");
+    fflush(stdout);
+}
+
+void test_false(void) {
+    puts("false");
+    fflush(stdout);
+}
+
 void do_roundtrip(struct client_state *state) { wl_display_roundtrip(state->display); }
 
 static void registry_global(void *data, struct wl_registry *registry, uint32_t name,

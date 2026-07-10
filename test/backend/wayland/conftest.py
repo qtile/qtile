@@ -251,6 +251,21 @@ class ClientHandler:
         """Verify that the client outputs 'OK' after sending a command."""
         assert self.send(command) == "OK"
 
+    def assert_true(self, command: str) -> None:
+        """Verify that the client outputs 'true' after sending a command."""
+        assert self.send(command) == "true"
+
+    def assert_false(self, command: str) -> None:
+        """Verify that the client outputs 'false' after sending a command."""
+        assert self.send(command) == "false"
+
+    def assert_true_or_false(self, command: str, expected: bool) -> None:
+        """Verify that the client outputs an expected boolean state."""
+        if expected:
+            self.assert_true(command)
+        else:
+            self.assert_false(command)
+
     def assert_error(self, command: str, error: str) -> None:
         """Verify that the client outputs an error message."""
         assert self.send(command) == f"ERROR: {error}"
