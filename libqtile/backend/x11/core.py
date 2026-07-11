@@ -17,7 +17,7 @@ from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.idle_notify import IdleNotifier
 from libqtile.backend.x11.stacking import _StackingManager
 from libqtile.backend.x11.xkeysyms import keysyms
-from libqtile.config import ScreenRect
+from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 

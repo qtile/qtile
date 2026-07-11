@@ -1,22 +1,3 @@
-# Copyright (c) 2025 elParaguayo
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 from __future__ import annotations
 
 from enum import Enum
@@ -71,8 +52,13 @@ class TreeNode:
         self.win = window
         self.parent = None
         self.children = []
+
         self.layer_group = layer_group
         self.depth = 0
+
+        # Transient relationships
+        self.transient_parent = None
+        self.transient_children = []
 
     def __repr__(self):
         if self.parent is None and self.layer_group is None:
@@ -135,9 +121,36 @@ class TreeNode:
 
     @property
     def grouped_siblings(self):
+        if self.parent is None or self.win is None:
+            return []
+
         return [
             child for child in self.parent.children if child.win.group in (None, self.win.group)
         ]
+
+    @property
+    def layer(self):
+        node = self
+        while node.node_type is not NodeType.LAYER_GROUP:
+            node = node.parent
+        return node
+
+    def stack_index(self):
+        return self.grouped_siblings.index(self)
+
+    def is_above(self, other):
+        return self.layer.children.index(self) > other.layer.children.index(other)
+
+    def swap_with(self, other):
+        layer = self.layer
+
+        a = layer.children.index(self)
+        b = layer.children.index(other)
+
+        layer.children[a], layer.children[b] = (
+            layer.children[b],
+            layer.children[a],
+        )
 
     def get_stack_order(self):
         """Return self + all descendants in stacking order (parent first)."""
@@ -145,22 +158,6 @@ class TreeNode:
         for c in self.children:
             result.extend(c.get_stack_order())
         return [node for node in result if node.win]
-
-    def stack(self):
-        stack_order = self.tree_root.get_stack_order()
-        index = stack_order.index(self)
-        if len(stack_order) == 1:
-            return
-
-        above = index > 0
-        sibling = stack_order[index - 1 if above else index + 1]
-
-        self.win.window.configure(
-            stackmode=xcffib.xproto.StackMode.Above if above else xcffib.xproto.StackMode.Below,
-            sibling=sibling.win.wid,
-        )
-
-        self.stack_children()
 
     def stack_children(self):
         if not self.children:
@@ -182,20 +179,24 @@ class TreeNode:
 
     def add_child(self, node, position=-1):
         node.parent = self
-        node.depth = node.parent.depth + 1
+        node.depth = self.depth + 1
+
         if position == -1:
             self.children.append(node)
         else:
             self.children.insert(position, node)
 
     def remove(self):
-        # If we have children windows then transfer them to
-        # our parent
-        if self.children:
-            for child in self.children:
-                self.parent.add_child(child)
+        if self.parent:
+            self.parent.children.remove(self)
 
-        self.parent.children.remove(self)
+        if self.transient_parent:
+            self.transient_parent.transient_children.remove(self)
+
+        for child in self.transient_children:
+            child.transient_parent = None
+
+        self.parent = None
 
     def get_ordered_nodes(self):
         """Return self + all descendants in stacking order (parent first)."""
@@ -205,45 +206,98 @@ class TreeNode:
         return result
 
     def move_up(self):
-        """Move this node up among siblings, if possible."""
-        if not self.parent:
-            return  # top-level; handle differently if needed
         siblings = self.grouped_siblings
-        idx = siblings.index(self)
-        if idx < len(siblings) - 1:
-            dest_idx = self.parent.children.index(siblings[idx + 1])
-            self.parent.children.remove(self)
-            self.parent.add_child(self, dest_idx)
-        self.stack()
+
+        index = siblings.index(self)
+
+        # Already highest in this group
+        if index == len(siblings) - 1:
+            return
+
+        above = siblings[index + 1]
+
+        # If moving above a transient child would break the relationship,
+        # move the child up first.
+        if above in self.transient_children:
+            above.move_up()
+
+        self.parent.children.remove(self)
+
+        destination = self.parent.children.index(above)
+
+        self.parent.children.insert(destination + 1, self)
 
     def move_down(self):
-        """Move this node down among siblings, if possible."""
-        if not self.parent:
-            return
+
         siblings = self.grouped_siblings
-        idx = siblings.index(self)
-        if idx > 0:
-            dest_idx = self.parent.children.index(siblings[idx - 1])
-            self.parent.children.remove(self)
-            self.parent.add_child(self, dest_idx)
-        self.stack()
+
+        index = siblings.index(self)
+
+        # Already lowest in this group
+        if index == 0:
+            return
+
+        below = siblings[index - 1]
+
+        # Child cannot move below its transient parent.
+        # Move parent down first.
+        if below is self.transient_parent:
+            below.move_down()
+
+        self.parent.children.remove(self)
+
+        destination = self.parent.children.index(below)
+
+        self.parent.children.insert(destination, self)
 
     def move_to_top(self):
-        if not self.parent:
-            return
-        self.parent.children.remove(self)
-        self.parent.add_child(self)
-        self.stack()
+        layer = self.layer
+
+        layer.children.remove(self)
+        layer.children.append(self)
+
+        self.repair_transient_order()
 
     def move_to_bottom(self):
-        if not self.parent:
-            return
-        self.parent.children.remove(self)
-        self.parent.add_child(self, 0)
-        self.stack()
+
+        layer = self.layer
+
+        layer.children.remove(self)
+        layer.children.insert(0, self)
+
+        self.repair_transient_order()
 
     def move_to_layer(self, layer):
-        pass
+        old_layer = self.layer
+
+        old_layer.children.remove(self)
+
+        new_layer = self.tree_root.children[
+            list(
+                self.tree_root.children[i].layer_group
+                for i in range(len(self.tree_root.children))
+            ).index(layer)
+        ]
+
+        new_layer.add_child(self)
+
+        for child in self.transient_children:
+            child.move_to_layer(layer)
+
+    def repair_transient_order(self):
+
+        for child in self.transient_children:
+            # Parent and child must share a layer
+            if child.layer is not self.layer:
+                child.move_to_layer(self.layer.layer_group)
+
+            parent_group = self.grouped_siblings
+            child_group = child.grouped_siblings
+
+            if parent_group.index(self) > child_group.index(child):
+                child.move_up()
+
+            child.repair_transient_order()
 
     def info(self):
         x, y = self.position
@@ -289,39 +343,45 @@ class _StackingManager:
         return window in self.layer_map
 
     def add_window(
-        self, window: WindowType, layer: LayerGroup | None = None, position="top"
+        self,
+        window: WindowType,
+        layer: LayerGroup | None = None,
+        position="top",
     ) -> None:
-        """Adds new client window to the stacking tree."""
+
         if layer is None:
             layer = window.get_layering_information()
-        elif layer not in self.layers:
+
+        if layer not in self.layers:
             raise ValueError(f"Invalid layer: {layer}")
 
         if window in self.layer_map:
-            logger.warning("Can't add existing window to zmanager.")
+            logger.warning("Can't add existing window to stacking manager.")
             return
 
-        # Create a tree node and keep a reference to it
         node = TreeNode(window)
         self.layer_map[window] = node
 
-        # Check if window is transient and, if so, save info
-        parent = window.is_transient_for()
-        if parent and parent in self.layer_map:
-            # Transient windows are added as a child of their parent
-            # so they are always displayed above their parent and moved
-            # with them.
-            self.layer_map[parent].add_child(node)
+        transient = window.is_transient_for()
 
-        # Not transient so stack normally.
+        if transient and transient in self.layer_map:
+            parent = self.layer_map[transient]
+
+            # Child must be in parent's layer
+            layer = parent.layer.layer_group
+
+            node.transient_parent = parent
+            parent.transient_children.append(node)
+
+            parent.layer.add_child(node)
+
         else:
             if position == "bottom":
                 self.layers[layer].add_child(node, 0)
             else:
                 self.layers[layer].add_child(node)
 
-        # Display window in its correct location.
-        node.stack()
+        self.restack()
 
     def remove_window(self, wid) -> None:
         """Removes client window from the stacking tree."""
@@ -341,7 +401,12 @@ class _StackingManager:
         node = self.layer_map.pop(old_window)
         node.win = new_window
         self.layer_map[new_window] = node
-        self.update_client_lists()
+        self.restack()
+
+    def repair_transients(self):
+        for node in self.layer_map.values():
+            if node.transient_parent is None:
+                node.repair_transient_order()
 
     @check_window
     def move_up(self, window: WindowType) -> None:
@@ -353,7 +418,7 @@ class _StackingManager:
         """
         node = self.layer_map[window]
         node.move_up()
-        self.update_client_lists()
+        self.restack()
 
     @check_window
     def move_down(self, window) -> None:
@@ -365,21 +430,21 @@ class _StackingManager:
         """
         node = self.layer_map[window]
         node.move_down()
-        self.update_client_lists()
+        self.restack()
 
     @check_window
     def move_to_top(self, window) -> None:
         """Move window to the top of its layer group."""
         node = self.layer_map[window]
         node.move_to_top()
-        self.update_client_lists()
+        self.restack()
 
     @check_window
     def move_to_bottom(self, window) -> None:
         """Move window to the bottom of its layer group."""
         node = self.layer_map[window]
         node.move_to_bottom()
-        self.update_client_lists()
+        self.restack()
 
     @check_window
     def move_window_to_layer(self, window, new_layer, position="top") -> None:
@@ -388,8 +453,7 @@ class _StackingManager:
         root = node.root_node
         root.children.remove(node)
         self.layers[new_layer].add_child(node, 0 if position == "bottom" else -1)
-        node.stack()
-        self.update_client_lists()
+        self.restack()
 
     @check_window
     def move_to_index(self, window: WindowType, index: int) -> None:
@@ -437,6 +501,28 @@ class _StackingManager:
         nodes = self.root.get_stack_order()
         wids = [node.win.wid for node in nodes if isinstance(node.win, Window) and node.win.group]
         self._root.set_property("_NET_CLIENT_LIST_STACKING", wids)
+
+    def stack_all(self):
+        nodes = self.root.get_stack_order()
+
+        previous = None
+
+        for node in nodes:
+            if node.win is None:
+                continue
+
+            if previous:
+                node.win.window.configure(
+                    stackmode=xcffib.xproto.StackMode.Above,
+                    sibling=previous.win.wid,
+                )
+
+            previous = node
+
+    def restack(self):
+        self.repair_transients()
+        self.stack_all()
+        self.update_client_lists()
 
     @expose_command
     def stacking_info(self) -> dict[str, Any]:
