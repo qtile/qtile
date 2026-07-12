@@ -14,7 +14,7 @@
  *   release <evdev>    send a key release for the given evdev keycode
  */
 
-#define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -45,12 +45,10 @@ static uint32_t next_time(struct test_state *state) {
 }
 
 static int write_keymap_fd(const char *keymap, size_t size) {
-    char template[] = "/tmp/qtile-vkbd-keymap-XXXXXX";
-    int fd = mkstemp(template);
+    int fd = memfd_create("qtile-vkbd-keymap", MFD_CLOEXEC);
     if (fd < 0) {
         return -1;
     }
-    unlink(template);
 
     if (ftruncate(fd, (off_t)size) < 0) {
         close(fd);
