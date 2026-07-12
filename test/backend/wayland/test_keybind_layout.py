@@ -13,13 +13,11 @@ The test uses the virtual-keyboard protocol to attach a client-provided "us,ru"
 keymap, switch the active layout to Russian, and inject a physical "r" press.
 """
 
-import time
-
 import pytest
 
 from libqtile.config import Key
 from libqtile.lazy import lazy
-from test.helpers import BareConfig
+from test.helpers import BareConfig, Retry
 
 # evdev keycodes (linux/input-event-codes.h).
 KEY_R = 19
@@ -43,16 +41,9 @@ keybind_layout_config = pytest.mark.parametrize("wmanager", [KeybindLayoutConfig
 pytestmark = pytest.mark.parametrize("test_client", ["virtual-keyboard"], indirect=True)
 
 
-def wait_for_group(wmanager, name, timeout=5.0):
-    """Poll the current group name until it matches or the timeout elapses."""
-    deadline = time.monotonic() + timeout
-    current = None
-    while time.monotonic() < deadline:
-        current = wmanager.c.group.info()["name"]
-        if current == name:
-            return current
-        time.sleep(0.05)
-    return current
+@Retry(ignore_exceptions=(AssertionError,))
+def wait_for_group(wmanager, name):
+    assert wmanager.c.group.info()["name"] == name
 
 
 @keybind_layout_config
@@ -71,7 +62,7 @@ def test_keybinding_fires_with_nonprimary_layout_active(wmanager, test_client):
     test_client.assert_ok(f"press {KEY_R}")
     test_client.assert_ok(f"release {KEY_R}")
 
-    assert wait_for_group(wmanager, "b") == "b"
+    wait_for_group(wmanager, "b")
 
 
 @keybind_layout_config
@@ -91,4 +82,4 @@ def test_keycode_binding_fires_with_nonprimary_layout_active(wmanager, test_clie
     test_client.assert_ok(f"press {KEY_T}")
     test_client.assert_ok(f"release {KEY_T}")
 
-    assert wait_for_group(wmanager, "c") == "c"
+    wait_for_group(wmanager, "c")
