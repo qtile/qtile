@@ -59,6 +59,14 @@ static void qw_layer_view_handle_commit(struct wl_listener *listener, void *data
 
     struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, commit);
 
+    // The output this layer view lived on may already be destroyed:
+    // qw_output_handle_destroy nulls layer_view->output before freeing the output.
+    // Without this guard the qw_output_arrange_layers / layer_view->output->layers
+    // accesses below dereference a freed output. Mirrors qw_layer_view_handle_unmap.
+    if (layer_view->output == NULL) {
+        return;
+    }
+
     if (layer_view->surface->initial_commit) {
         struct qw_output *output = layer_view->surface->output->data;
         wlr_fractional_scale_v1_notify_scale(layer_view->surface->surface,
