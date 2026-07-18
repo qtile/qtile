@@ -1224,3 +1224,23 @@ void qw_server_add_dummy_input_devices(struct qw_server *server) {
     uint32_t caps = WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD;
     wlr_seat_set_capabilities(server->seat, caps);
 }
+
+void qw_server_test_destroy_output(struct qw_server *server, int index) {
+    // Destroying an output out from under a live client is only meaningful
+    // (and only safe to expose) in the test harness.
+    if (getenv("PYTEST_CURRENT_TEST") == NULL) {
+        wlr_log(WLR_ERROR, "qw_server_test_destroy_output is a test-only hook");
+        return;
+    }
+
+    struct qw_output *output;
+    int i = 0;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (i == index) {
+            wlr_output_destroy(output->wlr_output);
+            return;
+        }
+        i++;
+    }
+    wlr_log(WLR_ERROR, "qw_server_test_destroy_output: no output at index %d", index);
+}
