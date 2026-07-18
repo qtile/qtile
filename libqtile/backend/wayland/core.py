@@ -947,6 +947,11 @@ class Core(base.Core):
     def add_dummy_input_devices(self) -> None:
         lib.qw_server_add_dummy_input_devices(self.qw)
 
+    @expose_command
+    def test_destroy_output(self, index: int) -> None:
+        """Destroy the nth output at runtime. Only available in an active test."""
+        lib.qw_server_test_destroy_output(self.qw, index)
+
 
 class Painter:
     """
