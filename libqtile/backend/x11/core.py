@@ -15,6 +15,7 @@ from libqtile.backend import base
 from libqtile.backend.base.idle_inhibit import IdleInhibitorManager, Inhibitor
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.idle_notify import IdleNotifier
+from libqtile.backend.x11.stacking import _StackingManager
 from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
@@ -63,7 +64,7 @@ class ExistingWMException(Exception):
     pass
 
 
-class Core(base.Core):
+class Core(base.Core, _StackingManager):
     idle_notifier: IdleNotifier
 
     def __init__(self, display_name: str | None = None) -> None:
@@ -170,6 +171,8 @@ class Core(base.Core):
         self.idle_inhibitor_manager: IdleInhibitorManager[Inhibitor] = IdleInhibitorManager(self)
         self.idle_notifier = IdleNotifier(self)
 
+        self.init_stacking()
+
     @property
     def name(self):
         return "x11"
@@ -215,6 +218,14 @@ class Core(base.Core):
             loop = asyncio.get_running_loop()
             loop.remove_reader(self.fd)
             self.fd = None
+
+    def manage(self, window) -> None:
+        self.add_window(window)
+        self.qtile.manage(window)
+
+    def unmanage(self, window) -> None:
+        self.remove_window(window)
+        self.qtile.unmanage(window)
 
     def on_config_load(self, initial) -> None:
         """Assign windows to groups"""
@@ -280,10 +291,9 @@ class Core(base.Core):
                     win.static(self.qtile.current_screen.index)
                     continue
 
-            self.qtile.manage(win)
+            self.manage(win)
 
             self.update_client_lists()
-            win.change_layer()
 
     def warp_pointer(self, x, y):
         self._root.warp_pointer(x, y)
@@ -459,29 +469,6 @@ class Core(base.Core):
         """The name of the connected display"""
         return self._display_name
 
-    def update_client_lists(self) -> None:
-        """Updates the _NET_CLIENT_LIST and _NET_CLIENT_LIST_STACKING properties
-
-        This is needed for third party tasklists and drag and drop of tabs in
-        chrome
-        """
-        assert self.qtile
-        # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
-        wids = [wid for wid, c in self.qtile.windows_map.items() if isinstance(c, window.Window)]
-        self._root.set_property("_NET_CLIENT_LIST", wids)
-
-        # We rely on the stacking order from the X server
-        stacked_wids = []
-        for wid in self._root.query_tree():
-            win = self.qtile.windows_map.get(wid)
-            if not win:
-                continue
-
-            if isinstance(win, window.Window) and win.group:
-                stacked_wids.append(wid)
-
-        self._root.set_property("_NET_CLIENT_LIST_STACKING", stacked_wids)
-
     def update_desktops(self, groups, index: int) -> None:
         """Set the current desktops of the window manager
 
@@ -629,7 +616,7 @@ class Core(base.Core):
         internal = window.Internal(win, self.qtile, desired_depth=depth)
 
         internal.place(x, y, width, height, 0, None)
-        self.qtile.manage(internal)
+        self.manage(internal)
         return internal
 
     def handle_FocusOut(self, event) -> None:  # noqa: N802
@@ -777,7 +764,7 @@ class Core(base.Core):
 
         if internal:
             win = window.Internal(xwin, self.qtile)
-            self.qtile.manage(win)
+            self.manage(win)
             win.unhide()
         else:
             win = window.Window(xwin, self.qtile)
@@ -787,17 +774,16 @@ class Core(base.Core):
                 win.static(self.qtile.current_screen.index)
                 return
 
-            self.qtile.manage(win)
+            self.manage(win)
             if not win.group or not win.group.screen:
                 return
             win.unhide()
             self.update_client_lists()
-            win.change_layer()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
-        self.qtile.unmanage(event.window)
+        self.unmanage(event.window)
         self.update_client_lists()
         if self.qtile.current_window is None:
             self.conn.fixup_focus()
@@ -944,10 +930,16 @@ class Core(base.Core):
             return
 
         if self.last_focused and self.last_focused.fullscreen:
-            self.last_focused.change_layer()
+            # self.last_focused.change_layer()
+            pass
 
         self.last_focused = win
 
     @expose_command
     def idle_notify_activity(self) -> None:
         self._fake_input(xcbq.XCB_MOTION_NOTIFY, 0, 0, 0)
+
+    @property
+    def hovered_window(self) -> base.WindowType | None:
+        _hovered_window = self.conn.conn.core.QueryPointer(self._root.wid).reply().child
+        return self.qtile.windows_map.get(_hovered_window)
