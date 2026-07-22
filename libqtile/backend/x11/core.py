@@ -40,6 +40,9 @@ EVENT_TO_HANDLER = {
     xcffib.xproto.UnmapNotifyEvent: "handle_UnmapNotify",
 }
 
+if hasattr(xcffib, "xfixes"):
+    EVENT_TO_HANDLER[xcffib.xfixes.SelectionNotifyEvent] = "handle_SelectionNotify"
+
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
     xcffib.xproto.FocusInEvent,
