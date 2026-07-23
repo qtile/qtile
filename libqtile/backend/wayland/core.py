@@ -438,10 +438,10 @@ class Core(base.Core):
     def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
         assert self.qtile is not None
         if pressed:
-            handled = self.qtile.process_button_click(int(button), int(mask), x, y)
-
-            if not handled and not self.qw_cursor.implicit_grab.live:
+            if not self.qw_cursor.implicit_grab.live:
                 self._focus_by_click()
+
+            handled = self.qtile.process_button_click(int(button), int(mask), x, y)
 
             if isinstance(self.qtile.hovered_window, Internal):
                 self.qtile.hovered_window.process_button_click(
