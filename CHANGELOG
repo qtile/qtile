@@ -1,5 +1,7 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+      - Add screen_change_debounce_timeout config option (default 1 second) to
+        debounce screen_change events on both backends
     * bugfixes
 
 Qtile 0.36.0, released 2026-05-22:

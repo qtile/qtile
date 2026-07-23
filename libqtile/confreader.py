@@ -46,6 +46,7 @@ class Config:
     bring_front_click: bool | Literal["floating_only"]
     floats_kept_above: bool
     reconfigure_screens: bool
+    screen_change_debounce_timeout: int | float
     wmname: str
     auto_minimize: bool
     # Really we'd want to check this Any is libqtile.backend.wayland.ImportConfig, but
