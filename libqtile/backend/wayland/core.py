@@ -372,7 +372,7 @@ class Core(base.Core):
         # TODO: Also configure devices when a new device is added
 
     def handle_screen_change(self) -> None:
-        hook.fire("screen_change", None)
+        self.fire_screen_change(None)
 
     def get_screen_for_output(self, output: ffi.CData) -> Screen:
         assert self.qtile is not None

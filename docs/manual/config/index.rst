@@ -149,6 +149,12 @@ configuration variables that control specific aspects of Qtile's behavior:
       - ``True``
       - Controls whether or not to automatically reconfigure screens when there
         are changes in randr output configuration.
+    * - ``screen_change_debounce_timeout``
+      - ``1``
+      - How long (in seconds) to wait after a screen change event before firing
+        the ``screen_change`` hook. Bursts of events arriving within this time
+        are coalesced into a single hook invocation. Set to ``0`` to fire the
+        hook immediately on every event.
     * - ``widget_defaults``
       - ``dict(font='sans', fontsize=12, padding=3)``
       - Default settings for bar widgets.

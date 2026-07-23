@@ -214,6 +214,13 @@ class TestManager:
             print(f"{header}\n{logs}", file=sys.stderr)
 
     def start(self, config_class, no_spawn=False, state=None):
+        # the x server emits a real ScreenChangeNotify shortly after startup;
+        # debouncing it would fire the screen_change hook (and possibly
+        # reconfigure_screens()) at an arbitrary point mid-test, so configs
+        # that aren't explicitly testing the debounce opt out of it.
+        if not hasattr(config_class, "screen_change_debounce_timeout"):
+            config_class.screen_change_debounce_timeout = 0
+
         multiprocessing.set_start_method("fork", force=True)
         readlogs, writelogs = os.pipe()
         rpipe, wpipe = multiprocessing.Pipe()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import typing
 from abc import ABCMeta, abstractmethod
@@ -23,6 +24,7 @@ class Core(CommandObject, metaclass=ABCMeta):
     qtile: Qtile
     idle_inhibitor_manager: IdleInhibitorManager[Any]
     idle_notifier: IdleNotifier
+    screen_change_timer: asyncio.TimerHandle | None = None
 
     @property
     @abstractmethod
@@ -105,6 +107,32 @@ class Core(CommandObject, metaclass=ABCMeta):
 
     def flush(self) -> None:
         """If needed, flush the backend's event queue."""
+
+    def fire_screen_change(self, event: Any = None) -> None:
+        if self.screen_change_timer is not None:
+            self.screen_change_timer.cancel()
+            self.screen_change_timer = None
+
+        # the wayland backend generates a screen change event when the initial
+        # output is created in Core.__init__(), before the Qtile instance is
+        # attached to the core; there is nothing to debounce yet, so fire the
+        # hook directly
+        qtile = getattr(self, "qtile", None)
+        if qtile is None:
+            hook.fire("screen_change", event)
+            return
+
+        timeout = qtile.config.screen_change_debounce_timeout
+        if timeout > 0:
+            self.screen_change_timer = qtile.call_later(
+                timeout, self.debounced_screen_change, event
+            )
+        else:
+            hook.fire("screen_change", event)
+
+    def debounced_screen_change(self, event: Any) -> None:
+        self.screen_change_timer = None
+        hook.fire("screen_change", event)
 
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulate a keypress with given modifiers"""

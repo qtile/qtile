@@ -234,7 +234,7 @@ class Core(base.Core):
         # regardless of whether the screen had actually changed. so, we do
         # that here, since we had tests that enforced that behavior so
         # maybe someone depended on it.
-        hook.fire("screen_change", None)
+        self.fire_screen_change(None)
 
         if not initial:
             # We are just reloading config
@@ -829,7 +829,7 @@ class Core(base.Core):
             self.conn.fixup_focus()
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
-        hook.fire("screen_change", event)
+        self.fire_screen_change(event)
 
     def _fake_input(self, input_type, detail, x=0, y=0) -> None:
         self._xtest.FakeInput(
