@@ -42,6 +42,16 @@ void test_message(const char *fmt, ...) {
     fflush(stdout);
 }
 
+void test_true(void) {
+    puts("true");
+    fflush(stdout);
+}
+
+void test_false(void) {
+    puts("false");
+    fflush(stdout);
+}
+
 void do_roundtrip(struct client_state *state) { wl_display_roundtrip(state->display); }
 
 static void registry_global(void *data, struct wl_registry *registry, uint32_t name,
@@ -107,6 +117,10 @@ static bool dispatch_line(struct client_state *state, char *line) {
 }
 
 static void client_state_cleanup(struct client_state *state) {
+    if (state->shm) {
+        wl_shm_destroy(state->shm);
+    }
+
     if (state->seat) {
         wl_seat_destroy(state->seat);
     }
@@ -298,4 +312,14 @@ struct buffer *create_buffer(struct client_state *state, uint32_t width, uint32_
     buf->size = size;
 
     return buf;
+}
+
+void destroy_buffer(struct buffer *buf) {
+    if (!buf) {
+        return;
+    }
+
+    wl_buffer_destroy(buf->wl_buffer);
+    munmap(buf->data, buf->size);
+    free(buf);
 }

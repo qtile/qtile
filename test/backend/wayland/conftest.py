@@ -140,6 +140,7 @@ class ClientHandler:
 
         self.process = None
         self.manager = manager
+        self.clones = []
 
     def __enter__(self):
         self._run()
@@ -147,6 +148,8 @@ class ClientHandler:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
+        for clone in self.clones:
+            clone.stop()
 
     def _run(self):
         if self.cmd is None:
@@ -248,6 +251,21 @@ class ClientHandler:
         """Verify that the client outputs 'OK' after sending a command."""
         assert self.send(command) == "OK"
 
+    def assert_true(self, command: str) -> None:
+        """Verify that the client outputs 'true' after sending a command."""
+        assert self.send(command) == "true"
+
+    def assert_false(self, command: str) -> None:
+        """Verify that the client outputs 'false' after sending a command."""
+        assert self.send(command) == "false"
+
+    def assert_true_or_false(self, command: str, expected: bool) -> None:
+        """Verify that the client outputs an expected boolean state."""
+        if expected:
+            self.assert_true(command)
+        else:
+            self.assert_false(command)
+
     def assert_error(self, command: str, error: str) -> None:
         """Verify that the client outputs an error message."""
         assert self.send(command) == f"ERROR: {error}"
@@ -292,6 +310,13 @@ class ClientHandler:
 
     def flush_manager(self):
         self.manager.c.core.flush()
+
+    def clone(self, start=True):
+        clone = ClientHandler(self.cmd, self.manager)
+        if start:
+            clone._run()
+        self.clones.append(clone)
+        return clone
 
 
 @pytest.fixture

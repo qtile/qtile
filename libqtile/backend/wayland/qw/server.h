@@ -383,4 +383,6 @@ struct qw_view *qw_server_active_view(struct qw_server *server);
 
 void qw_server_add_dummy_input_devices(struct qw_server *server);
 
+void qw_server_test_destroy_output(struct qw_server *server, int index);
+
 #endif /* SERVER_H */

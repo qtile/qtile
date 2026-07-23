@@ -39,8 +39,11 @@ int client_run(struct client_state *state, const struct client_ops *ops);
 void test_ok(void);
 void test_error(const char *fmt, ...);
 void test_message(const char *fmt, ...);
+void test_true(void);
+void test_false(void);
 
 struct buffer *create_buffer(struct client_state *state, uint32_t width, uint32_t height,
                              uint32_t colour);
+void destroy_buffer(struct buffer *buf);
 
 #endif /* CLIENT_BASE_H */
