@@ -138,3 +138,48 @@ def test_fullscreen_restore_tiling(manager):
     assert not is_fullscreen("one")
     assert is_tiled("one")
     assert_geometry("one", 1186, 10, 732, 1068)
+
+
+@fakescreen_config
+def test_fullscreen_restore_floating(manager):
+    """A floating window stays floating after leaving fullscreen
+
+    See https://github.com/qtile/qtile/issues/5950
+    """
+    manager.c.group["b"].toscreen()
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.c.window.set_position_floating(50, 20)
+    manager.c.window.set_size_floating(1280, 720)
+    assert manager.c.window.info()["floating"]
+
+    manager.c.window.toggle_fullscreen()
+    assert manager.c.window.info()["fullscreen"]
+    assert manager.c.window.info()["width"] == 1920
+    assert manager.c.window.info()["height"] == 1080
+
+    manager.c.window.toggle_fullscreen()
+    info = manager.c.window.info()
+    assert not info["fullscreen"]
+    assert info["floating"]
+    assert (info["x"], info["y"], info["width"], info["height"]) == (50, 20, 1280, 720)
+
+
+@fakescreen_config
+def test_maximize_restore_floating(manager):
+    """A floating window stays floating after leaving maximize"""
+    manager.c.group["b"].toscreen()
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.c.window.set_position_floating(50, 20)
+    manager.c.window.set_size_floating(1280, 720)
+    assert manager.c.window.info()["floating"]
+
+    manager.c.window.toggle_maximize()
+    assert manager.c.window.info()["maximized"]
+
+    manager.c.window.toggle_maximize()
+    info = manager.c.window.info()
+    assert not info["maximized"]
+    assert info["floating"]
+    assert (info["x"], info["y"], info["width"], info["height"]) == (50, 20, 1280, 720)
