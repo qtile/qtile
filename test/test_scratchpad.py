@@ -44,6 +44,17 @@ class ScratchPadBaseConfig(Config):
             ],
             single=True,
         ),
+        libqtile.config.ScratchPad(
+            "GEOMETRY_SCRATCHPAD",
+            dropdowns=[
+                libqtile.config.DropDown(
+                    "dd-a", spawn_cmd("dd-a"), x=0.2, y=0.2, width=0.6, height=0.6
+                ),
+                libqtile.config.DropDown(
+                    "dd-b", spawn_cmd("dd-b"), x=0.2, y=0.2, width=0.6, height=0.6
+                ),
+            ],
+        ),
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
     ]
@@ -323,3 +334,43 @@ def test_skip_taskbar(manager):
         # check that window's _NET_WM_STATE contains _NET_WM_STATE_SKIP_TASKBAR
         net_wm_state = manager.c.window.eval("self.window.get_net_wm_state()")
         assert "_NET_WM_STATE_SKIP_TASKBAR" in net_wm_state
+
+
+@scratchpad_config
+def test_geometry(manager):
+    def assert_geometry(x, y, w, h):
+        info = manager.c.window.info()
+        assert (x, y, w, h) == (info["x"], info["y"], info["width"], info["height"])
+
+    def move_and_resize():
+        manager.c.window.set_size_floating(200, 200)
+        manager.c.window.set_position_floating(10, 10)
+
+    scratch = manager.c.group["GEOMETRY_SCRATCHPAD"]
+
+    # dd-a spawns with its configured geometry
+    scratch.dropdown_toggle("dd-a")
+    is_spawned(manager, "dd-a", "GEOMETRY_SCRATCHPAD")
+    assert_geometry(160, 120, 478, 358)
+    move_and_resize()
+    assert_geometry(10, 10, 200, 200)
+
+    # Geometry changes persist across hide/show
+    scratch.dropdown_toggle("dd-a")
+    scratch.dropdown_toggle("dd-a")
+    assert_geometry(10, 10, 200, 200)
+
+    scratch.dropdown_toggle("dd-a")
+
+    # dd-b's geometry is tracked independently: it still spawns at its
+    # configured position even though dd-a was moved
+    scratch.dropdown_toggle("dd-b")
+    is_spawned(manager, "dd-b", "GEOMETRY_SCRATCHPAD")
+    assert_geometry(160, 120, 478, 358)
+    move_and_resize()
+    assert_geometry(10, 10, 200, 200)
+
+    # Geometry changes persist across hide/show
+    scratch.dropdown_toggle("dd-b")
+    scratch.dropdown_toggle("dd-b")
+    assert_geometry(10, 10, 200, 200)
