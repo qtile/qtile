@@ -502,6 +502,10 @@ class Qtile(CommandObject):
             )
             new_screens.append(scr)
 
+        # There needs to be at least one screen.
+        if len(new_screens) == 0:
+            new_screens.append(Screen())
+
         for screen in self.screens:
             if screen not in new_screens:
                 screen.finalize_gaps()
