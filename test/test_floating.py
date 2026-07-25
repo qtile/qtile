@@ -14,6 +14,7 @@ class FakeScreenConfig(Config):
             "a",
             layouts=[floating_layout],
         ),
+        libqtile.config.Group("b"),
     ]
     layouts = [
         layout.Tile(),
@@ -88,3 +89,52 @@ def test_fullscreen(manager):
     assert manager.c.window.info()["x"] == 50
     assert manager.c.window.info()["y"] == 20
     assert manager.c.window.info()["group"] == "a"
+
+
+@fakescreen_config
+def test_fullscreen_restore_tiling(manager):
+    """Ensure window is restored to tiling"""
+
+    def window(name):
+        for win in manager.c.windows():
+            if win["name"] == name:
+                return manager.c.window[win["id"]]
+        assert False, f"Cannot find window: {name}"
+
+    def is_floating(name):
+        return window(name).info()["floating"]
+
+    def is_tiled(name):
+        return not is_floating(name)
+
+    def is_fullscreen(name):
+        return window(name).info()["fullscreen"]
+
+    def assert_geometry(name, x, y, w, h):
+        win = window(name)
+        info = win.info()
+        assert (x, y, w, h) == (info["x"], info["y"], info["width"], info["height"])
+
+    manager.c.group["b"].toscreen()
+
+    manager.test_window("one")
+    manager.test_window("two")
+
+    for win in ["one", "two"]:
+        assert is_tiled(win)
+        assert not is_fullscreen(win)
+
+    # Check window one's tiled geometry
+    assert_geometry("one", 1186, 10, 732, 1068)
+
+    # Fullscreen
+    window("one").toggle_fullscreen()
+    assert is_fullscreen("one")
+    assert not is_tiled("one")
+    assert_geometry("one", 0, 0, 1920, 1080)
+
+    # Revert to tiled
+    window("one").toggle_fullscreen()
+    assert not is_fullscreen("one")
+    assert is_tiled("one")
+    assert_geometry("one", 1186, 10, 732, 1068)
