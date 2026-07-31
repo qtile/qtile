@@ -13,6 +13,7 @@
 #include <wlr/types/wlr_virtual_pointer_v1.h>
 #include <wlr/types/wlr_xdg_decoration_v1.h>
 #include <wlr/types/wlr_xdg_output_v1.h>
+#include <wlr/types/wlr_xdg_system_bell_v1.h>
 
 #include "cursor.h"
 #include "input-device.h"
@@ -90,6 +91,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_idle_inhibitor.link);
     wl_list_remove(&server->set_output_power_mode.link);
     wl_list_remove(&server->new_shortcut_inhibitor.link);
+    wl_list_remove(&server->system_bell_ring.link);
 
 #if WLR_HAS_XWAYLAND
     if (server->xwayland != NULL) {
@@ -835,6 +837,26 @@ static void qw_handle_shortcut_new_inhibitor(struct wl_listener *listener, void 
     wlr_keyboard_shortcuts_inhibitor_v1_activate(wlr_inhibitor);
 }
 
+static void qw_server_handle_system_bell_ring(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, system_bell_ring);
+    struct wlr_xdg_system_bell_v1_ring_event *event = data;
+
+    struct qw_view *view;
+    void *view_data = NULL;
+
+    if (event->surface != NULL) {
+        bool is_layer_surface, is_session_lock_surface;
+        view =
+            qw_view_from_wlr_surface(event->surface, &is_layer_surface, &is_session_lock_surface);
+
+        if (view != NULL) {
+            view_data = view->cb_data;
+        }
+    }
+
+    server->on_system_bell_cb(server->cb_data, view_data);
+}
+
 // Initialize the server object with all components and listeners.
 bool qw_server_init(struct qw_server *server) {
     server->display = wl_display_create();
@@ -1117,6 +1139,11 @@ bool qw_server_init(struct qw_server *server) {
     server->new_shortcut_inhibitor.notify = qw_handle_shortcut_new_inhibitor;
     wl_signal_add(&server->shortcut_inhibitor_manager->events.new_inhibitor,
                   &server->new_shortcut_inhibitor);
+
+    // System bell
+    server->system_bell = wlr_xdg_system_bell_v1_create(server->display, 1); // Revision 1
+    server->system_bell_ring.notify = qw_server_handle_system_bell_ring;
+    wl_signal_add(&server->system_bell->events.ring, &server->system_bell_ring);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);

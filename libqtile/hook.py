@@ -1120,6 +1120,25 @@ hooks: list[Hook] = [
 
         """,
     ),
+    Hook(
+        "system_bell",
+        """
+        Called when the system bell is rung. Wayland only..
+
+        **Arguments**
+
+            ``window`` (Window | None):  Window ringing the bell
+
+        .. code::
+
+          from libqtile import hook
+
+          @hook.subscribe.system_bell
+          def on_system_bell(window):
+              window.urgent = True
+
+        """,
+    ),
 ]
 
 

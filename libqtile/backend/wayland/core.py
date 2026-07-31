@@ -245,6 +245,17 @@ def workspace_manager_group_action_cb(userdata: ffi.CData, groupname: str, actio
         core.handle_workspace_manager_group_create_workspace(group)
 
 
+@ffi.def_extern()
+def on_system_bell_cb(userdata: ffi.CData, view: ffi.CData) -> None:
+    core = ffi.from_handle(userdata)
+    if view != ffi.NULL:
+        window = ffi.from_handle(view)
+        wid = window.wid
+    else:
+        wid = -1
+    core.handle_system_bell(wid)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -300,6 +311,7 @@ class Core(base.Core):
         self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
         self.qw.idle_state_change_cb = lib.idle_state_change_cb
         self.qw.workspace_manager_group_action_cb = lib.workspace_manager_group_action_cb
+        self.qw.on_system_bell_cb = lib.on_system_bell_cb
         if not lib.qw_server_start(self.qw):
             sys.exit(1)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
@@ -1040,6 +1052,10 @@ class Core(base.Core):
 
     def handle_workspace_manager_group_create_workspace(self, groupname: str) -> None:
         self.qtile.add_group(groupname, label=groupname)
+
+    def handle_system_bell(self, wid: int) -> None:
+        window = self.qtile.windows_map.get(wid, None)
+        hook.fire("system_bell", window)
 
 
 class Painter:

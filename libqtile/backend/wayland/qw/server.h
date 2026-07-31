@@ -161,6 +161,9 @@ typedef void (*idle_state_change_cb_t)(void *userdata, int seconds, bool is_idle
 // Callbacks for workspace manager
 typedef void (*workspace_manager_group_action_cb_t)(void *userdata, const char *group, int action);
 
+// Callback for systemt bell
+typedef void (*on_system_bell_cb_t)(void *userdata, void *view);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -224,6 +227,7 @@ struct qw_server {
     get_qtile_config_cb_t get_qtile_config_cb;
     idle_state_change_cb_t idle_state_change_cb;
     workspace_manager_group_action_cb_t workspace_manager_group_action_cb;
+    on_system_bell_cb_t on_system_bell_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -287,6 +291,8 @@ struct qw_server {
     struct wlr_keyboard_shortcuts_inhibit_manager_v1 *shortcut_inhibitor_manager;
     struct wl_list shortcut_inhibitors; // list of qw_keyboard_shortcut_inhibitor
     struct wl_listener new_shortcut_inhibitor;
+    struct wlr_xdg_system_bell_v1 *system_bell;
+    struct wl_listener system_bell_ring;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
