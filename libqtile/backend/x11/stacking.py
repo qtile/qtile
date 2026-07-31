@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import Any
 
 import xcffib.xproto
 
@@ -11,9 +11,6 @@ from libqtile.backend.x11.window import Window, XWindow
 from libqtile.command.base import expose_command
 from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 def check_window(func):
