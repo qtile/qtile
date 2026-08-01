@@ -63,16 +63,22 @@ void qw_session_lock_output_create_blanking_rects(struct qw_output *output) {
 // blanking rect attached to that output.
 // Ensures lock surfaces always cover the full output geometry.
 void qw_session_lock_output_change(struct qw_output *output) {
+    if (output == NULL) {
+        return;
+    }
     int x, y, w, h;
     x = output->full_area.x;
     y = output->full_area.y;
     w = output->full_area.width;
     h = output->full_area.height;
 
-    if (output->lock_surface != NULL) {
+    /* Safely check that the lock_surface and its underlying scene tree exist */
+    if (output->lock_surface && output->lock_surface->surface) {
         struct wlr_scene_tree *scene_tree = output->lock_surface->surface->data;
-        wlr_scene_node_set_position(&scene_tree->node, x, y);
-        wlr_session_lock_surface_v1_configure(output->lock_surface, w, h);
+        if (scene_tree != NULL) {
+            wlr_scene_node_set_position(&scene_tree->node, x, y);
+            wlr_session_lock_surface_v1_configure(output->lock_surface, w, h);
+        }
     }
 
     if (output->blanking_rect != NULL) {
