@@ -27,6 +27,7 @@
 #include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_keyboard_group.h>
 #include <wlr/types/wlr_keyboard_shortcuts_inhibit_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
@@ -283,6 +284,12 @@ struct qw_server {
     struct wlr_keyboard_shortcuts_inhibit_manager_v1 *shortcut_inhibitor_manager;
     struct wl_list shortcut_inhibitors; // list of qw_keyboard_shortcut_inhibitor
     struct wl_listener new_shortcut_inhibitor;
+    struct wlr_keyboard_group *keyboard_group;
+    struct wl_listener keyboard_group_key;
+    struct wl_listener keyboard_group_modifiers;
+    bool key_pressed;
+    struct wl_event_source *repeat_source;
+    xkb_keysym_t repeat_keysym;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;

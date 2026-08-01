@@ -88,7 +88,8 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_idle_inhibitor.link);
     wl_list_remove(&server->set_output_power_mode.link);
     wl_list_remove(&server->new_shortcut_inhibitor.link);
-
+    wl_list_remove(&server->keyboard_group_key.link);
+    wl_list_remove(&server->keyboard_group_modifiers.link);
 #if WLR_HAS_XWAYLAND
     if (server->xwayland != NULL) {
         wl_list_remove(&server->new_xwayland_surface.link);
@@ -96,7 +97,7 @@ void qw_server_finalize(struct qw_server *server) {
         wlr_xwayland_destroy(server->xwayland);
     }
 #endif
-
+    qw_keyboard_group_destroy(server);
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
     qw_cursor_destroy(server->cursor);
@@ -616,10 +617,33 @@ static void qw_handle_activation_request(struct wl_listener *listener, void *dat
 
 void qw_server_set_keymap(struct qw_server *server, const char *layout, const char *options,
                           const char *variant) {
-    struct qw_keyboard *keyboard;
-    wl_list_for_each(keyboard, &server->keyboards, link) {
-        qw_keyboard_set_keymap(keyboard, layout, options, variant);
+    if (!server->keyboard_group) {
+        return;
     }
+
+    struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    if (!context) {
+        wlr_log(WLR_ERROR, "Failed to create XKB context");
+        return;
+    }
+
+    struct xkb_rule_names names = {
+        .layout = layout ? layout : "",
+        .options = options ? options : "",
+        .variant = variant ? variant : "",
+    };
+
+    struct xkb_keymap *keymap =
+        xkb_keymap_new_from_names(context, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    if (keymap) {
+        wlr_keyboard_set_keymap(&server->keyboard_group->keyboard, keymap);
+        xkb_keymap_unref(keymap);
+    } else {
+        wlr_log(WLR_ERROR, "Failed to compile XKB keymap for group");
+    }
+
+    xkb_context_unref(context);
 }
 
 static void qw_server_handle_request_set_selection(struct wl_listener *listener, void *data) {
@@ -998,6 +1022,49 @@ bool qw_server_init(struct qw_server *server) {
         // already logged in the create if failed
         return false;
     }
+
+    // Set up keyboard group
+    server->keyboard_group = wlr_keyboard_group_create();
+    if (server->keyboard_group == NULL) {
+        wlr_log(WLR_ERROR, "failed to create keyboard group");
+        return false;
+    }
+
+    // Default keymap for group keyboard
+    struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    if (context == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xkb context");
+        wlr_keyboard_group_destroy(server->keyboard_group);
+        server->keyboard_group = NULL;
+        return false;
+    }
+
+    struct xkb_keymap *keymap =
+        xkb_keymap_new_from_names(context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    if (keymap == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xkb keymap");
+        xkb_context_unref(context);
+        wlr_keyboard_group_destroy(server->keyboard_group);
+        server->keyboard_group = NULL;
+        return false;
+    }
+    wlr_keyboard_set_keymap(&server->keyboard_group->keyboard, keymap);
+    xkb_keymap_unref(keymap);
+    xkb_context_unref(context);
+
+    // Set default repeat info
+    wlr_keyboard_set_repeat_info(&server->keyboard_group->keyboard, 25, 600);
+
+    // Only hook up listeners once nothing else can fail
+    server->keyboard_group_key.notify = qw_keyboard_group_handle_key;
+    wl_signal_add(&server->keyboard_group->keyboard.events.key, &server->keyboard_group_key);
+
+    server->keyboard_group_modifiers.notify = qw_keyboard_group_handle_modifiers;
+    wl_signal_add(&server->keyboard_group->keyboard.events.modifiers,
+                  &server->keyboard_group_modifiers);
+
+    // Assign the group keyboard to the seat
+    wlr_seat_set_keyboard(server->seat, &server->keyboard_group->keyboard);
 
     server->drag_icon = wlr_scene_tree_create(server->scene_windows_layers[LAYER_DRAG_ICON]);
     server->request_start_drag.notify = qw_server_handle_request_start_drag;
