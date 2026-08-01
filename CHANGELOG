@@ -1,5 +1,6 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+    - Add `auto_group` config variable
     * bugfixes
       - wayland: fix use-after-free crashes when a surface outlives its output.
         Layer-shell surfaces that commit after their output is destroyed, session
