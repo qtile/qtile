@@ -724,32 +724,6 @@ class Window(Base, base.Window):
                 self.group.mark_floating(self, False)
             hook.fire("float_change")
 
-    @property
-    def fullscreen(self) -> bool:
-        return self._float_state == FloatStates.FULLSCREEN
-
-    @fullscreen.setter
-    def fullscreen(self, do_full: bool) -> None:
-        if do_full and self._float_state != FloatStates.FULLSCREEN:
-            screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
-                self.x, self.y
-            )
-
-            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
-                self._save_geometry()
-
-            bw = self.group.floating_layout.fullscreen_border_width if self.group else 0
-            self._reconfigure_floating(
-                screen.x,
-                screen.y,
-                screen.width - 2 * bw,
-                screen.height - 2 * bw,
-                new_float_state=FloatStates.FULLSCREEN,
-            )
-        elif self._float_state == FloatStates.FULLSCREEN:
-            self._restore_geometry()
-            self.floating = False
-
     def _update_fullscreen(self, do_full: bool, old_state: FloatStates) -> None:
         if not (do_full or old_state == FloatStates.FULLSCREEN):
             return
@@ -763,33 +737,6 @@ class Window(Base, base.Window):
 
         self.qtile.core.check_screen_fullscreen_background(screen)
         self.core.check_inhibited()
-
-    @property
-    def maximized(self) -> bool:
-        return self._float_state == FloatStates.MAXIMIZED
-
-    @maximized.setter
-    def maximized(self, do_maximize: bool) -> None:
-        if do_maximize:
-            screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
-                self.x, self.y
-            )
-
-            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
-                self._save_geometry()
-
-            bw = self.group.floating_layout.max_border_width if self.group else 0
-            self._reconfigure_floating(
-                screen.dx,
-                screen.dy,
-                screen.dwidth - 2 * bw,
-                screen.dheight - 2 * bw,
-                new_float_state=FloatStates.MAXIMIZED,
-            )
-        else:
-            if self._float_state == FloatStates.MAXIMIZED:
-                self._restore_geometry()
-                self.floating = False
 
     def _update_maximized(self, do_max: bool, old_state: FloatStates) -> None:
         if do_max or old_state == FloatStates.MAXIMIZED:

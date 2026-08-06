@@ -6,6 +6,7 @@ from typing import Any
 
 from libqtile import config, hook
 from libqtile.backend.base import Drawer
+from libqtile.backend.base.float_states import FloatStates
 from libqtile.command.base import CommandError, CommandObject, ItemT, expose_command
 from libqtile.group import _Group
 from libqtile.log_utils import logger
@@ -17,6 +18,11 @@ if typing.TYPE_CHECKING:
 
 
 class _Window(CommandObject, metaclass=ABCMeta):
+    x: int
+    y: int
+    width: int
+    height: int
+
     def __init__(self):
         self.borderwidth: int = 0
         self.name: str = "<no name>"
@@ -125,24 +131,6 @@ class _Window(CommandObject, metaclass=ABCMeta):
     def _select(self, name, sel):
         return None
 
-    def _save_geometry(self):
-        """Save current window geometry."""
-        self.base_x = self.x
-        self.base_y = self.y
-        self.base_width = self.width
-        self.base_height = self.height
-
-    def _restore_geometry(self):
-        """Restore previously saved window geometry."""
-        if self.base_x is not None:
-            self.x = self.base_x
-        if self.base_y is not None:
-            self.y = self.base_y
-        if self.base_width is not None:
-            self.width = self.base_width
-        if self.base_height is not None:
-            self.height = self.base_height
-
     @abstractmethod
     @expose_command()
     def info(self) -> dict[str, Any]:
@@ -244,6 +232,11 @@ class Window(_Window, metaclass=ABCMeta):
     float_y: int | None
     bordercolor: ColorsType | None
 
+    _float_state: FloatStates
+    # The float state saved by save_float_state(), restored when leaving
+    # fullscreen or maximized
+    saved_float_state: FloatStates = FloatStates.NOT_FLOATING
+
     def __repr__(self):
         return f"{self.__class__.__name__!s}(name={self.name!r}, wid={self.wid:d})"
 
@@ -268,11 +261,28 @@ class Window(_Window, metaclass=ABCMeta):
     @property
     def maximized(self) -> bool:
         """Whether this window is maximized."""
-        return False
+        return self._float_state == FloatStates.MAXIMIZED
 
     @maximized.setter
     def maximized(self, do_maximize: bool) -> None:
-        raise NotImplementedError
+        if do_maximize:
+            screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
+                self.x, self.y
+            )
+
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self.save_float_state()
+
+            bw = self.group.floating_layout.max_border_width if self.group else 0
+            self._reconfigure_floating(
+                screen.dx,
+                screen.dy,
+                screen.dwidth - 2 * bw,
+                screen.dheight - 2 * bw,
+                new_float_state=FloatStates.MAXIMIZED,
+            )
+        elif self._float_state == FloatStates.MAXIMIZED:
+            self.restore_float_state()
 
     @property
     def minimized(self) -> bool:
@@ -286,16 +296,69 @@ class Window(_Window, metaclass=ABCMeta):
     @property
     def fullscreen(self) -> bool:
         """Whether this window is fullscreened."""
-        return False
+        return self._float_state == FloatStates.FULLSCREEN
 
     @fullscreen.setter
     def fullscreen(self, do_full: bool) -> None:
-        raise NotImplementedError
+        self._set_fullscreen(do_full)
+
+    def _set_fullscreen(self, do_full: bool) -> None:
+        if do_full:
+            screen = (self.group and self.group.screen) or self.qtile.find_closest_screen(
+                self.x, self.y
+            )
+
+            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
+                self.save_float_state()
+
+            bw = self.group.floating_layout.fullscreen_border_width if self.group else 0
+            self._reconfigure_floating(
+                screen.x,
+                screen.y,
+                screen.width - 2 * bw,
+                screen.height - 2 * bw,
+                new_float_state=FloatStates.FULLSCREEN,
+            )
+        elif self._float_state == FloatStates.FULLSCREEN:
+            self.restore_float_state()
 
     @property
     def wants_to_fullscreen(self) -> bool:
         """Does this window want to be fullscreen?"""
         return False
+
+    def _reconfigure_floating(
+        self,
+        x: int | None = None,
+        y: int | None = None,
+        w: int | None = None,
+        h: int | None = None,
+        new_float_state: FloatStates = FloatStates.FLOATING,
+    ) -> None:
+        raise NotImplementedError
+
+    def save_float_state(self) -> None:
+        """Save current window geometry and float state."""
+        self.base_x = self.x
+        self.base_y = self.y
+        self.base_width = self.width
+        self.base_height = self.height
+        self.saved_float_state = self._float_state
+
+    def restore_float_state(self) -> None:
+        """Restore previously saved window geometry and float state."""
+        if self.base_x is not None:
+            self.x = self.base_x
+        if self.base_y is not None:
+            self.y = self.base_y
+        if self.base_width is not None:
+            self.width = self.base_width
+        if self.base_height is not None:
+            self.height = self.base_height
+        if self.saved_float_state == FloatStates.NOT_FLOATING:
+            self.floating = False
+        else:
+            self._reconfigure_floating(new_float_state=self.saved_float_state)
 
     def match(self, match: config._Match) -> bool:
         """Compare this window against a Match instance."""
@@ -631,10 +694,6 @@ class Static(_Window, metaclass=ABCMeta):
     """A window bound to a screen rather than a group."""
 
     screen: config.Screen
-    x: Any
-    y: Any
-    width: Any
-    height: Any
 
     def __repr__(self):
         return f"{self.__class__.__name__!s}(name={self.name!r}, wid={self.wid:d})"

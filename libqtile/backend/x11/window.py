@@ -1719,7 +1719,7 @@ class Window(_Window, base.Window):
         if do_float and self._float_state == FloatStates.NOT_FLOATING:
             if self.is_placed():
                 screen = self.group.screen
-                self._enablefloating(
+                self._reconfigure_floating(
                     screen.x + self.float_x,
                     screen.y + self.float_y,
                     self._float_width,
@@ -1792,56 +1792,11 @@ class Window(_Window, base.Window):
 
     @fullscreen.setter
     def fullscreen(self, do_full):
-        if do_full:
-            needs_change = self._float_state != FloatStates.FULLSCREEN
-            screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
-
-            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
-                self._save_geometry()
-
-            bw = self.group.floating_layout.fullscreen_border_width
-            self._enablefloating(
-                screen.x,
-                screen.y,
-                screen.width - 2 * bw,
-                screen.height - 2 * bw,
-                new_float_state=FloatStates.FULLSCREEN,
-            )
-            # Only restack layers if floating state has changed
-            if needs_change:
-                self.change_layer()
-            return
-
-        if self._float_state == FloatStates.FULLSCREEN:
-            self._restore_geometry()
-            self.floating = False
+        # Only restack layers if floating state has changed
+        needs_change = do_full != self.fullscreen
+        self._set_fullscreen(do_full)
+        if needs_change:
             self.change_layer()
-            return
-
-    @property
-    def maximized(self):
-        return self._float_state == FloatStates.MAXIMIZED
-
-    @maximized.setter
-    def maximized(self, do_maximize):
-        if do_maximize:
-            screen = self.group.screen or self.qtile.find_closest_screen(self.x, self.y)
-
-            if self._float_state not in (FloatStates.MAXIMIZED, FloatStates.FULLSCREEN):
-                self._save_geometry()
-
-            bw = self.group.floating_layout.max_border_width
-            self._enablefloating(
-                screen.dx,
-                screen.dy,
-                screen.dwidth - 2 * bw,
-                screen.dheight - 2 * bw,
-                new_float_state=FloatStates.MAXIMIZED,
-            )
-        else:
-            if self._float_state == FloatStates.MAXIMIZED:
-                self._restore_geometry()
-                self.floating = False
 
     @property
     def minimized(self):
@@ -1851,7 +1806,7 @@ class Window(_Window, base.Window):
     def minimized(self, do_minimize):
         if do_minimize:
             if self._float_state != FloatStates.MINIMIZED:
-                self._enablefloating(new_float_state=FloatStates.MINIMIZED)
+                self._reconfigure_floating(new_float_state=FloatStates.MINIMIZED)
         else:
             if self._float_state == FloatStates.MINIMIZED:
                 self.floating = False
@@ -1932,7 +1887,18 @@ class Window(_Window, base.Window):
     def get_position(self):
         return (self.x, self.y)
 
-    def _reconfigure_floating(self, new_float_state=FloatStates.FLOATING):
+    def _reconfigure_floating(
+        self, x=None, y=None, w=None, h=None, new_float_state=FloatStates.FLOATING
+    ):
+        if new_float_state != FloatStates.MINIMIZED:
+            if x is not None:
+                self.x = x
+            if y is not None:
+                self.y = y
+            if w is not None:
+                self.width = w
+            if h is not None:
+                self.height = h
         self.update_fullscreen_wm_state(new_float_state == FloatStates.FULLSCREEN)
         if new_float_state == FloatStates.MINIMIZED:
             self.state = IconicState
@@ -1958,16 +1924,6 @@ class Window(_Window, base.Window):
             elif new_float_state == FloatStates.MAXIMIZED:
                 self.move_to_top()
             hook.fire("float_change")
-
-    def _enablefloating(
-        self, x=None, y=None, w=None, h=None, new_float_state=FloatStates.FLOATING
-    ):
-        if new_float_state != FloatStates.MINIMIZED:
-            self.x = x
-            self.y = y
-            self.width = w
-            self.height = h
-        self._reconfigure_floating(new_float_state=new_float_state)
 
     def set_group(self):
         # add to group by position according to _NET_WM_DESKTOP property
