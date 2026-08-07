@@ -305,13 +305,17 @@ class Core(base.Core):
     # Callback to fetch qtile config parameters from wayc
     # Add additional parameters as needed (server.h: struct qw_qtile_config)
     def get_config(self) -> ffi.CData:
-        config = ffi.new("struct qw_qtile_config *")
         theme = self.qtile.config.wl_xcursor_theme
-        config.wl_xcursor_theme = (
-            ffi.new("char[]", theme.encode()) if theme is not None else ffi.NULL
+        theme_buf = ffi.new("char[]", theme.encode()) if theme is not None else ffi.NULL
+        config = ffi.new(
+            "struct qw_qtile_config *",
+            {
+                "wl_xcursor_theme": theme_buf,
+                "wl_xcursor_size": self.qtile.config.wl_xcursor_size,
+            },
         )
-        config.wl_xcursor_size = self.qtile.config.wl_xcursor_size
-        self._config = config  # Reference to keep config alive
+        # References to keep alive for c caller
+        self._config_keepalive = [theme_buf, config]
         return config
 
     def on_config_load(self, initial: bool) -> None:
