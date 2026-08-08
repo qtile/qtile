@@ -14,16 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     container: quay.io/pypa/manylinux_2_34_x86_64
     env:
-      libdrm-version: "2.4.122"
+      libdrm-version: "2.4.129"
       seatd-version: "0.6.4"
-      pixman-version: "0.43.0"
-      xkbcommon-version: "1.7.0"
+      pixman-version: "0.46.4"
+      xkbcommon-version: "1.8.1"
+      xcbproto-version: "1.17.0"
+      libxcb-version: "1.17.0"
       xwayland-version: "22.1.9"
       xcvt-version: "0.1.2"
       inputproto-version: "2021.5"
-      wayland-protocols-version: "1.41"
+      wayland-protocols-version: "1.47"
       wayland-version: "1.24.0"
-      wlroots-version: "0.19.2"
+      wlroots-version: "0.20.2"
     steps:
       - name: Install dependencies
         run: |
@@ -68,6 +70,8 @@ jobs:
           wget $WAYLAND_URL
           wget $WAYLAND_PROTOCOLS_URL
           wget $XKBCOMMON_URL
+          wget $XCBPROTO_URL
+          wget $LIBXCB_URL
           wget $XCVT_URL
           wget $INPUTPROTO_URL
           wget $XWAYLAND_URL
@@ -78,6 +82,8 @@ jobs:
           tar -xJf wayland-${{ env.wayland-version }}.tar.xz
           tar -xJf wayland-protocols-${{ env.wayland-protocols-version }}.tar.xz
           tar -xzf xkbcommon-${{ env.xkbcommon-version }}.tar.gz
+          tar -xJf xcb-proto-${{ env.xcbproto-version }}.tar.xz
+          tar -xJf libxcb-${{ env.libxcb-version }}.tar.xz
           tar -xzf xorgproto-xorgproto-${{ env.inputproto-version }}.tar.gz
           tar -xzf libxcvt-libxcvt-${{ env.xcvt-version }}.tar.gz
           tar -xzf xserver-xwayland-${{ env.xwayland-version }}.tar.gz
@@ -89,6 +95,8 @@ jobs:
           WAYLAND_URL: https://gitlab.freedesktop.org/wayland/wayland/-/releases/${{ env.wayland-version }}/downloads/wayland-${{ env.wayland-version }}.tar.xz
           WAYLAND_PROTOCOLS_URL: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/releases/${{ env.wayland-protocols-version }}/downloads/wayland-protocols-${{ env.wayland-protocols-version }}.tar.xz
           XKBCOMMON_URL: https://github.com/xkbcommon/libxkbcommon/archive/refs/tags/xkbcommon-${{ env.xkbcommon-version }}.tar.gz
+          XCBPROTO_URL: https://xorg.freedesktop.org/archive/individual/proto/xcb-proto-${{ env.xcbproto-version }}.tar.xz
+          LIBXCB_URL: https://xorg.freedesktop.org/archive/individual/lib/libxcb-${{ env.libxcb-version }}.tar.xz
           XWAYLAND_URL: https://gitlab.freedesktop.org/xorg/xserver/-/archive/xwayland-${{ env.xwayland-version }}/xserver-xwayland-${{ env.xwayland-version }}.tar.gz
           XCVT_URL: https://gitlab.freedesktop.org/xorg/lib/libxcvt/-/archive/libxcvt-${{ env.xcvt-version }}/libxcvt-libxcvt-${{ env.xcvt-version }}.tar.gz
           INPUTPROTO_URL: https://gitlab.freedesktop.org/xorg/proto/xorgproto/-/archive/xorgproto-${{ env.inputproto-version}}/xorgproto-xorgproto-${{ env.inputproto-version}}.tar.gz
@@ -120,6 +128,20 @@ jobs:
           ninja -C build
           DESTDIR=~/wayland ninja -C build install
           ninja -C build install
+      - name: Build xcb-proto
+        working-directory: xcb-proto-${{ env.xcbproto-version }}
+        run: |
+          ./configure --prefix=/usr
+          make
+          DESTDIR=~/wayland make install
+          make install
+      - name: Build libxcb
+        working-directory: libxcb-${{ env.libxcb-version }}
+        run: |
+          ./configure --prefix=/usr
+          make
+          DESTDIR=~/wayland make install
+          make install
       - name: Build libdrm
         working-directory: libdrm-libdrm-${{ env.libdrm-version }}
         run: |
@@ -193,6 +215,7 @@ jobs:
           libudev-devel \
           libinput-devel \
           libpciaccess \
+          libXdmcp \
           mesa-libEGL \
           mesa-libgbm \
           xcb-util \
