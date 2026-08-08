@@ -82,7 +82,12 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
 
     bool handled = false;
     // Get current keyboard modifiers (shift, ctrl, alt, etc.)
-    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+    // check all keyboard devices in certain keys are represented as a separate device
+    uint32_t modifiers = 0;
+    struct qw_keyboard *kbd;
+    wl_list_for_each(kbd, &server->keyboards, link) {
+        modifiers |= wlr_keyboard_get_modifiers(kbd->wlr_keyboard);
+    }
 
     // If key is pressed...
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
