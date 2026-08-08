@@ -9,9 +9,7 @@
 #include <wlr/types/wlr_scene.h>
 #include <wlr/types/wlr_session_lock_v1.h>
 
-struct qw_server;
-
-enum qw_wallpaper_mode;
+#include "server.h"
 
 struct qw_output_background_wallpaper {
     struct wlr_scene_buffer *buffer;
