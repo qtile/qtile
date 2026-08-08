@@ -2,6 +2,10 @@ qtile.desktop: A desktop file for qtile telling session managers about qtile
     and how to run it. Install it to /usr/share/xsessions (to offer an X11
     session) and/or /usr/share/wayland-sessions (to offer a Wayland session).
 
+qtile-generic.desktop: A qtile desktop file for non sytemd users.
+    Install it to /usr/share/xsessions (to offer an X11 session) and/or
+    /usr/share/wayland-sessions (to offer a Wayland session).
+
 99-qtile.rules: udev rules for hardware that qtile can manage
 
 qtile-session.target, qtile.service: systemd user units that start qtile as a
