@@ -30,7 +30,8 @@ static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, 
 }
 
 // Change xdg surface activate state
-static void qw_xdg_view_activate(struct qw_xdg_view *xdg_view, bool activate) {
+static void qw_xdg_view_activate(void *self, bool activate) {
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_set_activated(xdg_view->xdg_toplevel, activate);
     if (xdg_view->base.ftl_handle != NULL) {
         wlr_foreign_toplevel_handle_v1_set_activated(xdg_view->base.ftl_handle, activate);
@@ -84,17 +85,8 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
 // Hide the xdg_view (disable scene node and clear keyboard focus if needed)
 static void qw_xdg_view_hide(void *self) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
-    wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, false);
     qw_xdg_view_activate(xdg_view, false);
-
-    // Clear keyboard focus if this view was focused
-    if (xdg_view->xdg_toplevel->base->surface ==
-        xdg_view->base.server->seat->keyboard_state.focused_surface) {
-        wlr_seat_keyboard_clear_focus(xdg_view->base.server->seat);
-    }
-
-    // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
+    qw_view_disable_and_clear_focus(&xdg_view->base, xdg_view->xdg_toplevel->base->surface);
 }
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
@@ -214,66 +206,44 @@ void dump_surface_outputs(void *self) {
     }
 }
 
+static void qw_xdg_view_reconfigure(void *self, int x, int y, int width, int height) {
+    UNUSED(x);
+    UNUSED(y);
+    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
+    wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, width, height);
+}
+
 // Place the xdg_view at given position and size with border and stacking info
 static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
                               const struct qw_border *borders, int border_count, int above) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
-    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
     struct wlr_xdg_toplevel_state state = xdg_view->xdg_toplevel->current;
 
-    // Check if placement or geometry changed
     bool place_changed = xdg_view->base.x != x || xdg_view->base.y != y ||
                          xdg_view->base.width != width || xdg_view->base.height != height ||
                          state.width != width || state.height != height;
 
-    struct wlr_box geom = surface->geometry;
-    bool geom_changed = xdg_view->geom.x != geom.x || xdg_view->geom.y != geom.y ||
-                        xdg_view->geom.width != geom.width || xdg_view->geom.height != geom.height;
+    struct wlr_box geom = xdg_view->xdg_toplevel->base->geometry;
+    struct qw_view_place_args args = {.x = x,
+                                      .y = y,
+                                      .width = width,
+                                      .height = height,
+                                      .borders = borders,
+                                      .border_count = border_count,
+                                      .above = above,
+                                      .place_changed = place_changed,
+                                      .geom_dst = &xdg_view->geom,
+                                      .geom_src = geom,
+                                      .surface = xdg_view->xdg_toplevel->base->surface,
+                                      .reconfigure = qw_xdg_view_reconfigure,
+                                      .clip = (void (*)(void *))qw_xdg_view_clip};
 
-    bool needs_repos = place_changed || geom_changed;
-
-    // Update stored geometry and base view rectangle
-    xdg_view->geom = geom;
-    xdg_view->base.x = x;
-    xdg_view->base.y = y;
-    xdg_view->base.width = width;
-    xdg_view->base.height = height;
-
-    // Set position of the content scene node
-    wlr_scene_node_set_position(&xdg_view->base.content_tree->node, x, y);
-
-    if (needs_repos) {
-        // Resize the toplevel surface and apply clipping if needed
-        wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, width, height);
-        qw_xdg_view_clip(xdg_view);
-
-        qw_view_update_ftl_outputs(&xdg_view->base, xdg_view->xdg_toplevel->base->surface);
-    }
-
-    // Paint borders around the view with given border colors and width
-    qw_view_paint_borders((struct qw_view *)xdg_view, borders, border_count);
-
-    // Raise view if requested
-    if (above != 0) {
-        qw_view_raise_to_top(&xdg_view->base);
-    }
-
-    // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
+    qw_view_do_place(&xdg_view->base, args);
 }
-
 // Send close event to the xdg_toplevel surface (kill the view)
 static void qw_xdg_view_kill(void *self) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_xdg_toplevel_send_close(xdg_view->xdg_toplevel);
-}
-
-// Unhide the xdg_view by enabling its content_tree scene node if currently disabled
-static void qw_xdg_view_unhide(void *self) {
-    struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
-    if (!xdg_view->base.content_tree->node.enabled) {
-        wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, true);
-    }
 }
 
 // Focus the xdg_view if it is mapped (visible), calling internal focus helper
@@ -708,7 +678,7 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     xdg_view->base.get_parent = qw_xdg_view_get_parent;
     xdg_view->base.kill = qw_xdg_view_kill;
     xdg_view->base.hide = qw_xdg_view_hide;
-    xdg_view->base.unhide = qw_xdg_view_unhide;
+    xdg_view->base.unhide = qw_view_unhide;
     xdg_view->base.has_fixed_size = qw_xdg_view_has_fixed_size;
 
     // Add listeners for surface lifecycle events (map, unmap, commit)
