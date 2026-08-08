@@ -1,7 +1,19 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
+    * bugfixes
+
+Qtile 0.37.0, released 2026-08-07:
+    * features
       - Add screen_change_debounce_timeout config option (default 1 second) to
         debounce screen_change events on both backends
+      - qtile start now autodetects the backend from the environment when -b
+        is not given, preferring XDG_SESSION_TYPE and falling back to a
+        DISPLAY heuristic
+      - wayland: implement the wp-cursor-shape-v1 protocol, allowing clients
+        to request standard cursor shapes by name instead of providing their
+        own pixel buffers
+      - wayland: upgrade wlroots 0.19 -> 0.20
+      - Bar info() now includes the bar's x and y position
     * bugfixes
       - wayland: fix use-after-free crashes when a surface outlives its output.
         Layer-shell surfaces that commit after their output is destroyed, session
@@ -9,6 +21,28 @@ Qtile x.xx.x, released xxxx-xx-xx:
         dereference freed compositor state.
       - Fix window configuration order so the current window is configured
         before other windows, reducing flickering
+      - Restore a window's floating state correctly when it leaves fullscreen
+      - Make scratchpad geometry changes persist across hide/show cycles
+      - Fix a crash when the backend reports no screens (e.g. during randr
+        reconfiguration) by always falling back to at least one screen
+      - Stop drawing finalized widgets and bars, fixing "Widget failed to
+        draw" tracebacks on restart and config reload
+      - x11: fix selection hooks when xfixes is available
+      - wayland: improve icon rendering and scaling on HiDPI displays,
+        removing blurriness from widget icons
+      - Create the IPC socket with owner-only (0600) permissions so other
+        users on the system cannot connect to it
+      - wayland: fix crashes when unplugging a display, including while the
+        session is locked or after a lock/unlock cycle
+      - wayland: fix a use-after-free of the xcursor theme name when
+        configuring the cursor
+      - wayland: foreign-toplevel-management protocol bugfixes
+      - StatusNotifier: handle DBus errors when fetching icons and activating
+        items, and fix icon byte ordering
+      - Wttr widget: strip trailing newline from response
+      - Don't spuriously warn that both screens and generate_screens are
+        defined when screens only comes from the config defaults
+      - Use an absolute Exec path in the qtile.desktop session file
 
 Qtile 0.36.0, released 2026-05-22:
     * features
