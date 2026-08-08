@@ -71,9 +71,12 @@ static struct wlr_scene_node *qw_internal_view_get_tree_node(void *self) {
 // Place the internal view at a new position and resize if needed
 // If 'above' is nonzero, bring the view to the front
 static void qw_internal_view_place(void *self, int x, int y, int width, int height,
-                                   const struct qw_border *borders, int border_count, int above) {
+                                   const struct qw_border *borders, int border_count, int above,
+                                   int duration, qw_easing_t ease) {
     UNUSED(borders);
     UNUSED(border_count);
+    UNUSED(duration);
+    UNUSED(ease);
 
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     if (above != 0) {
@@ -119,7 +122,9 @@ static void qw_internal_view_unhide(void *self) {
     wlr_scene_node_set_enabled(&view->base.content_tree->node, true);
 }
 
-static void qw_internal_view_kill(void *self) {
+static void qw_internal_view_kill(void *self, int duration, qw_easing_t ease) {
+    UNUSED(duration);
+    UNUSED(ease);
     struct qw_internal_view *view = (struct qw_internal_view *)self;
     cairo_surface_destroy(view->image_surface);
     view->image_surface = NULL;
