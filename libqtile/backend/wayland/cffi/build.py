@@ -432,6 +432,8 @@ def build_c_objects(config: BuildConfig, *, debug: bool = False, asan: bool = Fa
 
         preargs = ["-g3", "-Og"] if (debug or asan) else ["-O2"]
         preargs += ["-fPIC", "-Wall", "-Wextra"]
+        if asan:
+            preargs += ["-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer"]
 
         cmd.shlib_compiler.compile(
             [os.path.basename(p) for p in config.source_files],

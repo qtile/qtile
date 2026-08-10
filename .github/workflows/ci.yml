@@ -22,7 +22,7 @@ jobs:
             - uses: actions/checkout@v6
             - name: Build Docker image
               run: |
-                docker build -t qtile-ci .
+                docker buildx build -t qtile-ci .
             - name: Run tests in container
               run: |
                 mkdir coredumps
@@ -38,6 +38,68 @@ jobs:
                 COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
                 COVERALLS_PARALLEL: true
                 COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
+
+    asan-tests:
+        runs-on: ubuntu-24.04
+        name: "ASan wayc (python ${{ matrix.python-version }})"
+        strategy:
+            matrix:
+                python-version: ['3.14']
+        steps:
+            - uses: actions/checkout@v6
+            - name: Build base Docker image
+              run: |
+                docker buildx build -t qtile-ci .
+            - name: Build ASan Docker image
+              run: |
+                docker buildx build -f ./Dockerfile.asan -t qtile-ci .
+            - name: Run tests under ASan
+              run: |
+                make asan-ci-check
+              env:
+                QTILE_CI_PYTHON: ${{ matrix.python-version }}
+                QTILE_CI_BACKEND: wayland
+                ASAN_OPTIONS: log_path=/workspace/asan.log
+            - name: List and filter ASan log files
+              if: always()
+              run: |
+                asan_failed=0
+                lsan_failed=0
+                echo "=== AddressSanitizer errors ==="
+                if ls -1 asan.log.* 2>/dev/null; then
+                  asan_failed=1
+                else
+                  echo "  none"
+                fi
+                echo ""
+                echo "=== Leaks referencing libwayc ==="
+                PATTERN="libqtile/backend/wayland/qw"
+                matches=$(grep -lE "$PATTERN" lsan.log.* 2>/dev/null) || true
+                if [ -n "$matches" ]; then
+                  echo "$matches"
+                  lsan_failed=1
+                else
+                  echo "  none"
+                fi
+                echo ""
+                echo "=== Other LeakSanitizer errors ==="
+                other_matches=$(grep -LE "$PATTERN" lsan.log.* 2>/dev/null) || true
+                if [ -n "$other_matches" ]; then
+                  echo "$other_matches"
+                else
+                  echo "  none"
+                fi
+                exit $(($asan_failed || $lsan_failed))
+            - name: Upload ASan log files
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                name: asan-log
+                path: |
+                  asan.log*
+                  lsan.log*
+                if-no-files-found: warn
+                retention-days: 10
 
     coverage:
         name: Finalize Coverage
