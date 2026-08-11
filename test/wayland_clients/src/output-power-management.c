@@ -215,7 +215,22 @@ static bool dispatch_command(struct client_state *base, const char *cmd, const c
     return true;
 }
 
-void cleanup(struct client_state *base) { struct test_state *state = (struct test_state *)base; }
+void cleanup(struct client_state *base) {
+    struct test_state *state = (struct test_state *)base;
+
+    struct output_entry *oe, *tmp;
+    wl_list_for_each_safe(oe, tmp, &state->outputs, link) {
+        wl_list_remove(&oe->link);
+        zwlr_output_power_v1_destroy(oe->power);
+        wl_output_destroy(oe->wl_output);
+        free(oe->name);
+        free(oe);
+    }
+
+    if (state->power_manager) {
+        zwlr_output_power_manager_v1_destroy(state->power_manager);
+    }
+}
 
 void setup(struct client_state *base) {
     struct test_state *state = (struct test_state *)base;
