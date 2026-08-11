@@ -163,6 +163,7 @@ def test_crashed(lock_manager, test_client):
     test_client.assert_error("unlock", "no active lock")
 
 
+@pytest.mark.skipif(asan_enabled, reason="crash test intentionally leaks")
 def test_crashed_ipc_disabled(lock_manager, test_client):
     """Confirm IPC is still locked when in crashed state."""
     test_client.assert_ok("lock")

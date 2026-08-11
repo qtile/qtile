@@ -267,6 +267,9 @@ static void cmd_destroy_surface(struct test_state *state) {
 
     struct surface_entry *se, *tmp;
     wl_list_for_each_safe(se, tmp, &state->surfaces, link) {
+        if (se->buffer) {
+            destroy_buffer(se->buffer);
+        }
         ext_session_lock_surface_v1_destroy(se->lock_surface);
         wl_surface_destroy(se->wl_surface);
         wl_list_remove(&se->link);
@@ -349,12 +352,24 @@ void cleanup(struct client_state *base) {
     if (!state->do_crash) {
         struct surface_entry *se, *stmp;
         wl_list_for_each_safe(se, stmp, &state->surfaces, link) {
+            if (se->buffer) {
+                destroy_buffer(se->buffer);
+            }
             ext_session_lock_surface_v1_destroy(se->lock_surface);
             wl_surface_destroy(se->wl_surface);
             free(se);
         }
+        struct output_entry *oe, *otmp;
+        wl_list_for_each_safe(oe, otmp, &state->outputs, link) {
+            wl_output_destroy(oe->wl_output);
+            wl_list_remove(&oe->link);
+            free(oe);
+        }
         if (state->lock) {
             ext_session_lock_v1_destroy(state->lock);
+        }
+        if (state->lock_manager) {
+            ext_session_lock_manager_v1_destroy(state->lock_manager);
         }
     }
 }
