@@ -51,7 +51,7 @@ let
           $out/share/systemd/user/qtile-session.target
 
         substituteInPlace $out/share/systemd/user/qtile.service \
-          --replace-fail '%h/.local/bin/qtile' '${placeholder "out"}/bin/qtile' \
+          --replace-fail '/usr/bin/qtile' '${placeholder "out"}/bin/qtile' \
           --replace-fail '/usr/bin/systemctl' '${pkgs.systemd}/bin/systemctl'
       '';
     };
