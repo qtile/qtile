@@ -135,6 +135,10 @@ toplevel_closed(void *data,
 
     wl_list_remove(&te->link);
     te->test_state->pending_close = false;
+    free(te->title);
+    free(te->app_id);
+    free(te->output_enter);
+    free(te->output_leave);
     free(te);
 }
 
@@ -411,7 +415,7 @@ static bool dispatch_command(struct client_state *base, const char *cmd, const c
         cmd_check_state(state, arg, STATE_ACTIVATED);
     else if (strcmp(cmd, "check_maximized") == 0)
         cmd_check_state(state, arg, STATE_MAXIMIZED);
-    else if (strcmp(cmd, "check_maximized") == 0)
+    else if (strcmp(cmd, "check_minimized") == 0)
         cmd_check_state(state, arg, STATE_MINIMIZED);
     else if (strcmp(cmd, "check_fullscreen") == 0)
         cmd_check_state(state, arg, STATE_FULLSCREEN);
@@ -436,7 +440,26 @@ static bool dispatch_command(struct client_state *base, const char *cmd, const c
     return true;
 }
 
-void cleanup(struct client_state *base) { struct test_state *state = (struct test_state *)base; }
+void cleanup(struct client_state *base) {
+    struct test_state *state = (struct test_state *)base;
+
+    struct toplevel_entry *te, *te_tmp;
+    wl_list_for_each_safe(te, te_tmp, &state->toplevels, link) {
+        toplevel_closed(te, te->ftl_handle);
+    }
+
+    struct output_entry *oe, *oe_tmp;
+    wl_list_for_each_safe(oe, oe_tmp, &state->outputs, link) {
+        wl_list_remove(&oe->link);
+        wl_output_destroy(oe->wl_output);
+        free(oe->name);
+        free(oe);
+    }
+
+    if (state->ftl_manager) {
+        zwlr_foreign_toplevel_manager_v1_destroy(state->ftl_manager);
+    }
+}
 
 void setup(struct client_state *base) {
     struct test_state *state = (struct test_state *)base;
