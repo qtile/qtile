@@ -268,8 +268,30 @@ void setup(struct client_state *base) {
 
 void cleanup(struct client_state *base) {
     struct test_state *state = (struct test_state *)base;
+    if (state->buffer) {
+        wl_buffer_destroy(state->buffer->wl_buffer);
+        free(state->buffer);
+    }
+    if (state->toplevel) {
+        xdg_toplevel_destroy(state->toplevel);
+    }
+    if (state->xdg_surface) {
+        xdg_surface_destroy(state->xdg_surface);
+    }
     if (state->surface) {
         wl_surface_destroy(state->surface);
+    }
+    if (state->cursor_device) {
+        wp_cursor_shape_device_v1_destroy(state->cursor_device);
+    }
+    if (state->cursor_manager) {
+        wp_cursor_shape_manager_v1_destroy(state->cursor_manager);
+    }
+    if (state->pointer) {
+        wl_pointer_destroy(state->pointer);
+    }
+    if (state->xdg_wm_base) {
+        xdg_wm_base_destroy(state->xdg_wm_base);
     }
 }
 
