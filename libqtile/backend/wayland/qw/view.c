@@ -394,6 +394,10 @@ struct qw_output *qw_view_get_primary_output(struct qw_view *view) {
         }
     }
 
+    if (primary_output == NULL) {
+        return NULL;
+    }
+
     return primary_output->data;
 }
 
