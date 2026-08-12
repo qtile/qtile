@@ -12,6 +12,7 @@ static void qw_layer_view_handle_destroy(struct wl_listener *listener, void *dat
     UNUSED(data);
 
     struct qw_layer_view *layer_view = wl_container_of(listener, layer_view, destroy);
+
     wl_list_remove(&layer_view->link);
     wl_list_remove(&layer_view->destroy.link);
     wl_list_remove(&layer_view->unmap.link);
@@ -135,10 +136,10 @@ static void qw_layer_popup_handle_destroy(struct wl_listener *listener, void *da
     UNUSED(data);
 
     struct qw_layer_popup *popup = wl_container_of(listener, popup, destroy);
-
     wl_list_remove(&popup->new_popup.link);
     wl_list_remove(&popup->destroy.link);
     wl_list_remove(&popup->surface_commit.link);
+    qw_cursor_update_pointer_focus(popup->toplevel->base.server->cursor);
     free(popup);
 }
 

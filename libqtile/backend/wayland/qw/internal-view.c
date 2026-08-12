@@ -125,6 +125,7 @@ static void qw_internal_view_kill(void *self) {
     view->image_surface = NULL;
     wlr_buffer_drop(view->buffer);
     wlr_scene_node_destroy(&view->base.content_tree->node);
+    qw_cursor_update_pointer_focus(view->base.server->cursor);
     free(view);
 }
 

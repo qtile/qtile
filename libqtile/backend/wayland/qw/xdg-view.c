@@ -384,6 +384,7 @@ static void qw_xdg_popup_handle_destroy(struct wl_listener *listener, void *data
     wl_list_remove(&popup->surface_commit.link);
     wl_list_remove(&popup->reposition.link);
     wlr_scene_node_destroy(&popup->scene_tree->node);
+    qw_cursor_update_pointer_focus(popup->base.server->cursor);
     free(popup);
 }
 
