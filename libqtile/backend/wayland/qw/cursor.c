@@ -19,6 +19,9 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
     wl_list_remove(&cursor->request_set_cursor_shape.link);
 
     wlr_xcursor_manager_destroy(cursor->mgr);
+#if WLR_HAS_XWAYLAND
+    wlr_xcursor_manager_destroy(cursor->xwayland_mgr);
+#endif
     wlr_cursor_destroy(cursor->cursor);
 
     free(cursor);
