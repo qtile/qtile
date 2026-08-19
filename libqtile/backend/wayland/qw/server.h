@@ -157,6 +157,9 @@ typedef struct qw_qtile_config *(*get_qtile_config_cb_t)(void *userdata);
 // Callback for idle state change
 typedef void (*idle_state_change_cb_t)(void *userdata, int seconds, bool is_idle);
 
+// Callbacks for workspace manager
+typedef void (*workspace_manager_group_action_cb_t)(void *userdata, const char *group, int action);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -219,6 +222,7 @@ struct qw_server {
     check_inhibited_cb_t check_inhibited_cb;
     get_qtile_config_cb_t get_qtile_config_cb;
     idle_state_change_cb_t idle_state_change_cb;
+    workspace_manager_group_action_cb_t workspace_manager_group_action_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -291,6 +295,9 @@ struct qw_server {
     struct wlr_pointer_constraints_v1 *pointer_constraints;
     struct wl_listener new_pointer_constraint;
     struct wlr_keyboard *dummy_keyboard;
+    struct wlr_ext_workspace_manager_v1 *workspace_manager;
+    struct wlr_ext_workspace_group_handle_v1 *workspace_group;
+    struct wl_listener workspace_commit;
 };
 
 struct qw_drag_icon {

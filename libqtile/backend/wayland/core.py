@@ -56,6 +56,7 @@ from libqtile.backend.wayland.idle_notify import IdleNotifier
 from libqtile.backend.wayland.window import Base, Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import Output, Screen, ScreenRect
+from libqtile.group import _Group
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.utils import ColorType, QtileError, reap_zombies, rgb
@@ -228,6 +229,22 @@ def idle_state_change_cb(userdata: ffi.CData, seconds: int, is_idle: bool) -> No
     core.handle_idle_state_change(seconds, is_idle)
 
 
+@ffi.def_extern()
+def workspace_manager_group_action_cb(userdata: ffi.CData, groupname: str, action: int) -> None:
+    group = ffi.string(groupname).decode()
+    if not group:
+        return
+
+    core = ffi.from_handle(userdata)
+
+    if action == lib.WORKSPACE_GROUP_ACTIVATE:
+        core.handle_workspace_manager_group_activate(group)
+    elif action == lib.WORKSPACE_GROUP_REMOVE:
+        core.handle_workspace_manager_group_remove(group)
+    elif action == lib.WORKSPACE_GROUP_CREATE_WORKSPACE:
+        core.handle_workspace_manager_group_create_workspace(group)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -280,6 +297,7 @@ class Core(base.Core):
         self.qw.check_inhibited_cb = lib.check_inhibited_cb
         self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
         self.qw.idle_state_change_cb = lib.idle_state_change_cb
+        self.qw.workspace_manager_group_action_cb = lib.workspace_manager_group_action_cb
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
@@ -288,6 +306,13 @@ class Core(base.Core):
         self._locked = False
         self.idle_inhibitor_manager = IdleInhibitorManager(self)
         self.idle_notifier = IdleNotifier(self)
+
+        # Hooks to group events for the workspace manager protocol
+        hook.subscribe.addgroup(self.handle_addgroup)
+        hook.subscribe.delgroup(self.handle_delgroup)
+        hook.subscribe.client_urgent_hint_changed(self.handle_urgency)
+        hook.subscribe.changegroup(self.handle_group_changes)
+        hook.subscribe.setgroup(self.handle_group_changes)
 
     def update_backend_log_level(self) -> None:
         """Update the wlr log level based on Qtile's log level."""
@@ -955,6 +980,55 @@ class Core(base.Core):
     def test_destroy_output(self, index: int) -> None:
         """Destroy the nth output at runtime. Only available in an active test."""
         lib.qw_server_test_destroy_output(self.qw, index)
+
+    def _update_workspace_state(self, group: _Group) -> None:
+        # Group is active if it's allocated to a screen
+        active = group.screen is not None
+
+        # Groups with an empty label or scratchpads should be marked as hidden
+        # This is same behaviour as GroupBox widget
+        hidden = group.label == "" or hasattr(group, "dropdowns")
+
+        # Check if any window in the group is flagged as urgent
+        urgent = any(win.urgent for win in group.windows)
+
+        label = group.label if group.label is not None else ""
+
+        lib.qw_workspace_set_state(
+            self.qw, group.name.encode(), label.encode(), active, hidden, urgent
+        )
+
+    def handle_addgroup(self, groupname: str) -> None:
+        group = self.qtile.groups_map[groupname]
+        group_id = group.name
+        group_name = group.label or groupname
+
+        lib.qw_workspace_manager_create_workspace(self.qw, group_id.encode(), group_name.encode())
+
+    def handle_delgroup(self, groupname: str) -> None:
+        lib.qw_workspace_manager_delete_workspace(self.qw, groupname.encode())
+
+    def handle_urgency(self, client: Window) -> None:
+        if not client.group:
+            return
+
+        self._update_workspace_state(client.group)
+
+    def handle_group_changes(self) -> None:
+        for group in self.qtile.groups_map.values():
+            self._update_workspace_state(group)
+
+    def handle_workspace_manager_group_activate(self, groupname: str) -> None:
+        group = self.qtile.groups_map.get(groupname)
+        if group is None:
+            return
+        group.toscreen()
+
+    def handle_workspace_manager_group_remove(self, groupname: str) -> None:
+        self.qtile.delete_group(groupname)
+
+    def handle_workspace_manager_group_create_workspace(self, groupname: str) -> None:
+        self.qtile.add_group(groupname, label=groupname)
 
 
 class Painter:

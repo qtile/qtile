@@ -8,6 +8,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <wlr/types/wlr_ext_workspace_v1.h>
 
 static void qw_output_handle_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -209,6 +210,8 @@ void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_outpu
     struct wlr_output_layout_output *l_output =
         wlr_output_layout_add_auto(server->output_layout, wlr_output);
     wlr_scene_output_layout_add_output(server->scene_layout, l_output, output->scene);
+
+    wlr_ext_workspace_group_handle_v1_output_enter(server->workspace_group, wlr_output);
 }
 
 void qw_output_background_destroy(struct qw_output *output) {
