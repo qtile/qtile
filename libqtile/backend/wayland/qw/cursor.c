@@ -475,7 +475,9 @@ static void warp_to_constraint_cursor_hint(struct qw_cursor *cursor) {
         double sx = constraint->current.cursor_hint.x;
         double sy = constraint->current.cursor_hint.y;
 
-        struct qw_view *view = constraint->surface->data;
+        bool is_layer_surface, is_session_lock_surface;
+        struct qw_view *view = qw_view_from_wlr_surface(constraint->surface, &is_layer_surface,
+                                                        &is_session_lock_surface);
         if (!view) {
             return;
         }
