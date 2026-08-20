@@ -56,6 +56,11 @@ pango_ffi.cdef(
     // https://developer.gnome.org/pango/stable/pango-Layout-Objects.html
     PangoLayout *pango_cairo_create_layout (cairo_t *cr);
     void g_object_unref(gpointer object);
+    void g_free(gpointer mem);
+    void g_error_free(GError *error);
+
+    void
+    pango_attr_list_unref (PangoAttrList *list);
 
     void
     pango_layout_set_font_description (PangoLayout *layout,

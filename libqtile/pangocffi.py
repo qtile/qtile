@@ -136,9 +136,20 @@ def parse_markup(value, accel_marker=0):
     )
 
     if ret == 0:
+        if error[0] != ffi.NULL:
+            gobject.g_error_free(error[0])
         raise BadMarkup(f"parse_markup() failed for: {value}")
 
-    return attr_list[0], ffi.string(text[0]), chr(accel_marker)
+    # pango_parse_markup() transfers ownership of both out-parameters to the
+    # caller: the text is a freshly allocated buffer, and the attribute list
+    # carries a reference that pango_layout_set_attributes() does not take
+    # over. Copy the text out and free it, and tie the list's reference to the
+    # lifetime of the cdata we hand back.
+    parsed_text = ffi.string(text[0])
+    gobject.g_free(text[0])
+    attrs = ffi.gc(attr_list[0], pango.pango_attr_list_unref)
+
+    return attrs, parsed_text, chr(accel_marker)
 
 
 def markup_escape_text(text):
