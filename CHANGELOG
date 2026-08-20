@@ -1,6 +1,10 @@
 Qtile x.xx.x, released xxxx-xx-xx:
     * features
     * bugfixes
+      - Free the buffers handed over by pango_parse_markup() and
+        g_markup_escape_text(). Both transfer ownership to the caller, so every
+        update of a widget with markup enabled leaked the rendered text and its
+        attribute list
 
 Qtile 0.37.0, released 2026-08-07:
     * features
