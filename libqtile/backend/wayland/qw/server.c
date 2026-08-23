@@ -59,6 +59,8 @@ static void qw_server_destroy_dummy_input_devices(struct qw_server *server) {
     }
 }
 
+static void qw_remove_shortcut_inhibitors(struct qw_server *server);
+
 // Cleanup routine to destroy the compositor and free resources.
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
@@ -85,6 +87,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_pointer_constraint.link);
     wl_list_remove(&server->new_idle_inhibitor.link);
     wl_list_remove(&server->set_output_power_mode.link);
+    wl_list_remove(&server->new_shortcut_inhibitor.link);
 
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
@@ -95,6 +98,7 @@ void qw_server_finalize(struct qw_server *server) {
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
     qw_cursor_destroy(server->cursor);
+    qw_remove_shortcut_inhibitors(server);
     wlr_allocator_destroy(server->allocator);
     wlr_renderer_destroy(server->renderer);
     wlr_backend_destroy(server->backend);
@@ -756,6 +760,49 @@ static void qw_server_handle_output_power_set_mode(struct wl_listener *listener,
     }
 }
 
+static void qw_shortcut_inhibitor_destroy(struct qw_keyboard_shortcut_inhibitor *inhibitor) {
+    if (inhibitor == NULL) {
+        return;
+    }
+    wl_list_remove(&inhibitor->link);
+    wl_list_remove(&inhibitor->destroy.link);
+    free(inhibitor);
+}
+
+static void qw_remove_shortcut_inhibitors(struct qw_server *server) {
+    struct qw_keyboard_shortcut_inhibitor *inhibitor, *tmp_inhibitor;
+    wl_list_for_each_safe(inhibitor, tmp_inhibitor, &server->shortcut_inhibitors, link) {
+        qw_shortcut_inhibitor_destroy(inhibitor);
+    }
+}
+
+static void qw_handle_shortcut_inhibitor_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+    struct qw_keyboard_shortcut_inhibitor *inhibitor =
+        wl_container_of(listener, inhibitor, destroy);
+    qw_shortcut_inhibitor_destroy(inhibitor);
+}
+
+static void qw_handle_shortcut_new_inhibitor(struct wl_listener *listener, void *data) {
+    struct qw_server *server = wl_container_of(listener, server, new_shortcut_inhibitor);
+    struct wlr_keyboard_shortcuts_inhibitor_v1 *wlr_inhibitor = data;
+
+    struct qw_keyboard_shortcut_inhibitor *inhibitor = calloc(1, sizeof(*inhibitor));
+    if (inhibitor == NULL) {
+        wlr_log(WLR_ERROR, "Could not create qw_keyboard_shortcut_inhibitor.\n");
+        return;
+    }
+
+    inhibitor->server = server;
+    inhibitor->wlr_inhibitor = wlr_inhibitor;
+    wl_list_insert(&server->shortcut_inhibitors, &inhibitor->link);
+
+    inhibitor->destroy.notify = qw_handle_shortcut_inhibitor_destroy;
+    wl_signal_add(&wlr_inhibitor->events.destroy, &inhibitor->destroy);
+
+    wlr_keyboard_shortcuts_inhibitor_v1_activate(wlr_inhibitor);
+}
+
 // Initialize the server object with all components and listeners.
 bool qw_server_init(struct qw_server *server) {
     server->display = wl_display_create();
@@ -1027,6 +1074,17 @@ bool qw_server_init(struct qw_server *server) {
 
     // Initialize idle timers list
     wl_list_init(&server->idle_timers);
+
+    // Keyboard shortcut inhibitors
+    wl_list_init(&server->shortcut_inhibitors);
+    server->shortcut_inhibitor_manager = wlr_keyboard_shortcuts_inhibit_v1_create(server->display);
+    if (server->shortcut_inhibitor_manager == NULL) {
+        wlr_log(WLR_ERROR, "failed to create keyboard shortcut inhibitor manager");
+        return false;
+    }
+    server->new_shortcut_inhibitor.notify = qw_handle_shortcut_new_inhibitor;
+    wl_signal_add(&server->shortcut_inhibitor_manager->events.new_inhibitor,
+                  &server->new_shortcut_inhibitor);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
