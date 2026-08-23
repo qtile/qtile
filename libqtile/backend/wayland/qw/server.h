@@ -27,6 +27,7 @@
 #include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_keyboard_shortcuts_inhibit_v1.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -279,6 +280,9 @@ struct qw_server {
     struct wlr_output_power_manager_v1 *output_power_manager;
     struct wl_listener set_output_power_mode;
     struct wl_list idle_timers; // list of qw_idle_timer
+    struct wlr_keyboard_shortcuts_inhibit_manager_v1 *shortcut_inhibitor_manager;
+    struct wl_list shortcut_inhibitors; // list of qw_keyboard_shortcut_inhibitor
+    struct wl_listener new_shortcut_inhibitor;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
@@ -315,6 +319,15 @@ struct qw_idle_timer {
     // Private data
     struct wl_event_source *event_source;
     struct wl_list link; // server->idle_timers
+};
+
+struct qw_keyboard_shortcut_inhibitor {
+    struct qw_server *server;
+
+    // Private data
+    struct wlr_keyboard_shortcuts_inhibitor_v1 *wlr_inhibitor;
+    struct wl_listener destroy;
+    struct wl_list link; // Link for server->inhibitors list
 };
 
 // Utility functions exposed by the server API

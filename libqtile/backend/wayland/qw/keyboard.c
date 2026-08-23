@@ -6,6 +6,23 @@
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
 
+static bool qw_is_keyboard_inhibited(struct qw_server *server,
+                                     struct wlr_surface *focused_surface) {
+    if (focused_surface == NULL) {
+        return false;
+    }
+
+    struct qw_keyboard_shortcut_inhibitor *inhibitor;
+    wl_list_for_each(inhibitor, &server->shortcut_inhibitors, link) {
+        if (inhibitor->wlr_inhibitor->surface == focused_surface &&
+            inhibitor->wlr_inhibitor->active) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 // Called when the keyboard device is destroyed
 static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data) {
     UNUSED(data);
@@ -103,13 +120,16 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     // Get current keyboard modifiers (shift, ctrl, alt, etc.)
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
 
+    // Check if keyboard is inhibited
+    bool inhibited = qw_is_keyboard_inhibited(server, seat->keyboard_state.focused_surface);
+
     // If key is pressed...
     if (event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
         // Track key for repeat
         keyboard->key_pressed = true;
 
         // Don't handle presses if an exclusive layer has focus
-        if (server->exclusive_layer == NULL) {
+        if (server->exclusive_layer == NULL && !inhibited) {
             // Call user callback for each symbol to check if handled
             for (int i = 0; i < nsyms; ++i) {
                 // TODO: for efficiency maybe let c take control of the key list?
