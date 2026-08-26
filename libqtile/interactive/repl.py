@@ -120,8 +120,11 @@ class QtileREPLServer:
         async def send(message, end=True):
             """Wrapper to send data to client."""
             suffix = TERMINATOR if end else ""
-            writer.write(f"{message}{suffix}\n".encode())
-            await writer.drain()
+            try:
+                writer.write(f"{message}{suffix}\n".encode())
+                await writer.drain()
+            except ConnectionResetError:
+                return
 
         await send("Connected to Qtile REPL\nPress Ctrl+C to exit.\n")
 
