@@ -73,12 +73,12 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     // keycode offset by 8 as per evdev conventions
     uint32_t keycode = event->keycode + 8;
 
-    int layout_index = xkb_state_key_get_layout(keyboard->wlr_keyboard->xkb_state, keycode);
-
-    // Get the symbols for this key in the current layout and level 0
+    // Resolve keysyms against the first layout (index 0) instead of the active
+    // one, so keybindings stay constant regardless of the selected keyboard
+    // layout (mirrors X11 grabbing on the initial layout). Fixes qtile #4259.
     const xkb_keysym_t *syms;
-    int nsyms = xkb_keymap_key_get_syms_by_level(keyboard->wlr_keyboard->keymap, keycode,
-                                                 layout_index, 0, &syms);
+    int nsyms =
+        xkb_keymap_key_get_syms_by_level(keyboard->wlr_keyboard->keymap, keycode, 0, 0, &syms);
 
     bool handled = false;
     // Get current keyboard modifiers (shift, ctrl, alt, etc.)
