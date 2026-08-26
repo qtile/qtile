@@ -328,3 +328,9 @@ def test_client(wmanager, request):
 
     with ClientHandler(script, wmanager) as client:
         yield client
+
+
+@pytest.fixture
+def virtual_keyboard(wmanager):
+    with ClientHandler("virtual-keyboard", wmanager) as keyboard:
+        yield keyboard
