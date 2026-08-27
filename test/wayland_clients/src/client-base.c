@@ -54,6 +54,26 @@ void test_false(void) {
 
 void do_roundtrip(struct client_state *state) { wl_display_roundtrip(state->display); }
 
+// Wraps compositor error messages in our test script error function.
+static void custom_wl_log_handler(const char *fmt, va_list args) {
+    char buf[512];
+    vsnprintf(buf, sizeof(buf), fmt, args);
+
+    size_t len = strlen(buf);
+    if (len > 0 && buf[len - 1] == '\n') {
+        buf[len - 1] = '\0';
+    }
+
+    test_error(buf);
+}
+
+bool compositor_raised_error(struct client_state *state) {
+    if (wl_display_get_error(state->display) != 0) {
+        return true;
+    }
+    return false;
+}
+
 static void registry_global(void *data, struct wl_registry *registry, uint32_t name,
                             const char *interface, uint32_t version) {
     struct client_state *state = data;
@@ -141,6 +161,8 @@ static void client_state_cleanup(struct client_state *state) {
 int client_run(struct client_state *state, const struct client_ops *ops) {
     ops_ptr = ops;
 
+    wl_log_set_handler_client(custom_wl_log_handler);
+
     state->display = wl_display_connect(NULL);
     if (!state->display) {
         fprintf(stderr, "ERROR: failed to connect to display: %s\n", strerror(errno));
@@ -196,6 +218,10 @@ int client_run(struct client_state *state, const struct client_ops *ops) {
 
         if (fds[1].revents & POLLIN) {
             wl_display_dispatch(state->display);
+            if (compositor_raised_error(state)) {
+                running = false;
+                break;
+            }
         }
 
         if (fds[0].revents & POLLIN) {
