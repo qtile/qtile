@@ -42,6 +42,8 @@ void test_message(const char *fmt, ...);
 void test_true(void);
 void test_false(void);
 
+bool compositor_raised_error(struct client_state *state);
+
 struct buffer *create_buffer(struct client_state *state, uint32_t width, uint32_t height,
                              uint32_t colour);
 void destroy_buffer(struct buffer *buf);
