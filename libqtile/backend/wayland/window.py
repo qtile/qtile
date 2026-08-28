@@ -162,7 +162,10 @@ class Base(base._Window):
 
     @urgent.setter
     def urgent(self, urgent: bool) -> None:
+        needs_hook = self._ptr.urgent != urgent
         self._ptr.urgent = urgent
+        if needs_hook:
+            hook.fire("client_urgent_hint_changed", self)
 
     def kill(self) -> None:
         self._ptr.kill(self._ptr)
@@ -276,6 +279,7 @@ class Base(base._Window):
 
         if self.urgent:
             self.urgent = False
+            hook.fire("client_urgent_hint_changed", self)
 
         if self.group and self.group.current_window is not self:
             self.group.focus(self)
