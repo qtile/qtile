@@ -12,6 +12,11 @@ static void qw_keyboard_handle_destroy(struct wl_listener *listener, void *data)
 
     struct qw_keyboard *keyboard = wl_container_of(listener, keyboard, destroy);
 
+    if (keyboard->repeat_source != NULL) {
+        wl_event_source_remove(keyboard->repeat_source);
+        keyboard->repeat_source = NULL;
+    }
+
     wl_list_remove(&keyboard->modifiers.link);
     wl_list_remove(&keyboard->key.link);
     wl_list_remove(&keyboard->destroy.link);
