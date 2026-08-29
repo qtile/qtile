@@ -87,7 +87,12 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
     // keycode offset by 8 as per evdev conventions
     uint32_t keycode = event->keycode + 8;
 
-    int layout_index = xkb_state_key_get_layout(keyboard->wlr_keyboard->xkb_state, keycode);
+    xkb_layout_index_t layout_index =
+        xkb_state_key_get_layout(keyboard->wlr_keyboard->xkb_state, keycode);
+    if (layout_index == XKB_LAYOUT_INVALID) {
+        wlr_log(WLR_ERROR, "failed to get correct layout index");
+        return;
+    }
 
     // Get the symbols for this key in the current layout and level 0
     const xkb_keysym_t *syms;
