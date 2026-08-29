@@ -51,6 +51,15 @@ static int qw_keyboard_do_repeat(void *data) {
         return 0;
     }
 
+    if (server->exclusive_layer != NULL) {
+        // Something exclusive grabbed focus mid-repeat; stop delivering.
+        if (keyboard->repeat_source) {
+            wl_event_source_remove(keyboard->repeat_source);
+            keyboard->repeat_source = NULL;
+        }
+        return 0;
+    }
+
     // Repeat handled key: send callback
     uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
     server->keyboard_key_cb(keyboard->repeat_keysym, modifiers, server->cb_data);
