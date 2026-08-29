@@ -280,7 +280,8 @@ class Core(base.Core):
         self.qw.check_inhibited_cb = lib.check_inhibited_cb
         self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
         self.qw.idle_state_change_cb = lib.idle_state_change_cb
-        lib.qw_server_start(self.qw)
+        if not lib.qw_server_start(self.qw):
+            sys.exit(1)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
 

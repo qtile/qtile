@@ -329,7 +329,7 @@ void qw_server_poll(struct qw_server *server);
 void qw_server_finalize(struct qw_server *server);
 
 // Start the server event loop (blocking)
-void qw_server_start(struct qw_server *server);
+bool qw_server_start(struct qw_server *server);
 
 // Get file descriptor of the event loop (for integration with other event loops)
 int qw_server_get_event_loop_fd(struct qw_server *server);

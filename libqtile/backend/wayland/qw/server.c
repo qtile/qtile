@@ -63,6 +63,7 @@ static void qw_server_destroy_dummy_input_devices(struct qw_server *server) {
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
     qw_server_destroy_dummy_input_devices(server);
+
     wl_list_remove(&server->new_input.link);
     wl_list_remove(&server->new_output.link);
     wl_list_remove(&server->output_layout_change.link);
@@ -84,11 +85,13 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_pointer_constraint.link);
     wl_list_remove(&server->new_idle_inhibitor.link);
     wl_list_remove(&server->set_output_power_mode.link);
+
 #if WLR_HAS_XWAYLAND
     wl_list_remove(&server->new_xwayland_surface.link);
     wl_list_remove(&server->xwayland_ready.link);
     wlr_xwayland_destroy(server->xwayland);
 #endif
+
     wl_display_destroy_clients(server->display);
     wlr_scene_node_destroy(&server->scene->tree.node);
     qw_cursor_destroy(server->cursor);
@@ -112,20 +115,26 @@ void qw_server_loop_output_dims(struct qw_server *server, output_dims_cb_t cb) {
 }
 
 // Initializes event loop and starts the Wayland backend
-void qw_server_start(struct qw_server *server) {
+bool qw_server_start(struct qw_server *server) {
     server->event_loop = wl_display_get_event_loop(server->display);
+    if (server->event_loop == NULL) {
+        wlr_log(WLR_ERROR, "failed to get event loop");
+        return false;
+    }
+
     server->socket = wl_display_add_socket_auto(server->display);
     if (!server->socket) {
-        wlr_backend_destroy(server->backend);
-        return;
+        wlr_log(WLR_ERROR, "failed to add socket to wl_display");
+        return false;
     }
+
     if (!wlr_backend_start(server->backend)) {
-        wlr_backend_destroy(server->backend);
-        wl_display_destroy(server->display);
-        return;
+        wlr_log(WLR_ERROR, "failed to start wlr_backend");
+        return false;
     }
 
     wlr_log(WLR_INFO, "Running Wayland compositor on WAYLAND_DISPLAY=%s", server->socket);
+    return true;
 }
 
 // Stub function – maybe used for keymap introspection in the future
@@ -747,75 +756,170 @@ static void qw_server_handle_output_power_set_mode(struct wl_listener *listener,
     }
 }
 
-// Create and initialize the server object with all components and listeners.
-struct qw_server *qw_server_create() {
-    struct qw_server *server = calloc(1, sizeof(*server));
-    if (!server) {
-        wlr_log(WLR_ERROR, "failed to create qw_server struct");
-        return NULL;
+// Initialize the server object with all components and listeners.
+bool qw_server_init(struct qw_server *server) {
+    server->display = wl_display_create();
+    if (server->display == NULL) {
+        wlr_log(WLR_ERROR, "failed to create wl_display struct");
+        return false;
     }
 
-    server->display = wl_display_create();
     server->backend =
         wlr_backend_autocreate(wl_display_get_event_loop(server->display), &server->session);
     if (!server->backend) {
         wlr_log(WLR_ERROR, "failed to create wlr_backend");
-        free(server);
-        return NULL;
+        return false;
     }
+
     server->renderer = wlr_renderer_autocreate(server->backend);
     if (!server->renderer) {
         wlr_log(WLR_ERROR, "failed to create wlr_renderer");
-        free(server);
-        return NULL;
+        return false;
     }
 
     // TODO: do
     // https://codeberg.org/dwl/dwl/src/commit/bd59573f07f27fff7870a1e1a70e72493bb42453/dwl.c#L2473-L2479
     // instead?
-    wlr_renderer_init_wl_display(server->renderer, server->display);
+    if (!wlr_renderer_init_wl_display(server->renderer, server->display)) {
+        wlr_log(WLR_ERROR, "failed to initialize wl_display");
+        return false;
+    }
+
     server->allocator = wlr_allocator_autocreate(server->backend, server->renderer);
     if (!server->allocator) {
         wlr_log(WLR_ERROR, "failed to create wlr_allocator");
-        free(server);
-        return NULL;
+        return false;
     }
 
     server->compositor = wlr_compositor_create(server->display, 6, server->renderer);
-    wlr_subcompositor_create(server->display);
-    wlr_data_device_manager_create(server->display);
-    wlr_export_dmabuf_manager_v1_create(server->display);
-    wlr_screencopy_manager_v1_create(server->display);
-    wlr_data_control_manager_v1_create(server->display);
-    wlr_ext_data_control_manager_v1_create(server->display, 1);
-    wlr_primary_selection_v1_device_manager_create(server->display);
-    wlr_viewporter_create(server->display);
-    wlr_single_pixel_buffer_manager_v1_create(server->display);
-    wlr_fractional_scale_manager_v1_create(server->display, 1);
-    wlr_presentation_create(server->display, server->backend, 2);
-    wlr_alpha_modifier_v1_create(server->display);
+    if (server->compositor == NULL) {
+        wlr_log(WLR_ERROR, "failed to create compositor");
+        return false;
+    }
+
+    if (wlr_subcompositor_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create subcompositor");
+        return false;
+    }
+
+    if (wlr_data_device_manager_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create data device manager");
+        return false;
+    }
+
+    if (wlr_export_dmabuf_manager_v1_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create dmabuf manager");
+        return false;
+    }
+
+    if (wlr_screencopy_manager_v1_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create screencopy manager");
+        return false;
+    }
+
+    if (wlr_data_control_manager_v1_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create data control manager");
+        return false;
+    }
+
+    if (wlr_ext_data_control_manager_v1_create(server->display, 1) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create data control manager extension");
+        return false;
+    }
+
+    if (wlr_primary_selection_v1_device_manager_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create primary selection device manager");
+        return false;
+    }
+
+    if (wlr_viewporter_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create viewporter");
+        return false;
+    }
+
+    if (wlr_single_pixel_buffer_manager_v1_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create single pixel buffer manager");
+        return false;
+    }
+
+    if (wlr_fractional_scale_manager_v1_create(server->display, 1) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create fractional scale manager");
+        return false;
+    }
+
+    if (wlr_presentation_create(server->display, server->backend, 2) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create presentation");
+        return false;
+    }
+
+    if (wlr_alpha_modifier_v1_create(server->display) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create alpha modifier");
+        return false;
+    }
+
     server->scene = wlr_scene_create();
+    if (server->scene == NULL) {
+        wlr_log(WLR_ERROR, "failed to create scene");
+        return false;
+    }
+
     server->scene_wallpaper_tree = wlr_scene_tree_create(&server->scene->tree);
+    if (server->scene_wallpaper_tree == NULL) {
+        wlr_log(WLR_ERROR, "failed to create scene tree for wallpaper");
+        return false;
+    }
+
     server->scene_windows_tree = wlr_scene_tree_create(&server->scene->tree);
+    if (server->scene_windows_tree == NULL) {
+        wlr_log(WLR_ERROR, "failed to create scene tree for windows");
+        return false;
+    }
+
     for (int i = 0; i < LAYER_END; ++i) {
         server->scene_windows_layers[i] = wlr_scene_tree_create(server->scene_windows_tree);
+        if (server->scene_windows_layers[i] == NULL) {
+            wlr_log(WLR_ERROR, "failed to create scene tree for layer: %d", i);
+            return false;
+        }
     }
 
     wl_list_init(&server->outputs);
+
     server->output_layout = wlr_output_layout_create(server->display);
+    if (server->output_layout == NULL) {
+        wlr_log(WLR_ERROR, "failed to create output layout");
+        return false;
+    }
+
     server->output_layout_change.notify = qw_server_handle_output_layout_change;
-    wlr_xdg_output_manager_v1_create(server->display, server->output_layout);
+    if (wlr_xdg_output_manager_v1_create(server->display, server->output_layout) == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xdg output manager");
+        return false;
+    }
     wl_signal_add(&server->output_layout->events.change, &server->output_layout_change);
+
     server->scene_layout = wlr_scene_attach_output_layout(server->scene, server->output_layout);
+    if (server->scene_layout == NULL) {
+        wlr_log(WLR_ERROR, "failed to attach output layout to scene");
+        return false;
+    }
+
     server->new_output.notify = qw_server_handle_new_output;
     wl_signal_add(&server->backend->events.new_output, &server->new_output);
+
     wl_list_init(&server->keyboards);
     wl_list_init(&server->input_devices);
+
     server->seat = wlr_seat_create(server->display, "seat0");
+    if (server->seat == NULL) {
+        wlr_log(WLR_ERROR, "failed to create seat");
+        return false;
+    }
+
     server->cursor = qw_server_cursor_create(server);
     if (!server->cursor) {
         // already logged in the create if failed
-        return NULL;
+        return false;
     }
 
     server->drag_icon = wlr_scene_tree_create(server->scene_windows_layers[LAYER_DRAG_ICON]);
@@ -825,26 +929,49 @@ struct qw_server *qw_server_create() {
     wl_signal_add(&server->seat->events.start_drag, &server->start_drag);
 
     server->output_mgr = wlr_output_manager_v1_create(server->display);
+    if (server->output_mgr == NULL) {
+        wlr_log(WLR_ERROR, "failed to create output manager");
+        return false;
+    }
     server->output_manager_apply.notify = qw_server_handle_output_manager_apply;
     wl_signal_add(&server->output_mgr->events.apply, &server->output_manager_apply);
     server->output_manager_test.notify = qw_server_handle_output_manager_test;
     wl_signal_add(&server->output_mgr->events.test, &server->output_manager_test);
+
     server->new_input.notify = qw_server_handle_new_input;
     wl_signal_add(&server->backend->events.new_input, &server->new_input);
+
     server->xdg_shell = wlr_xdg_shell_create(server->display, 3);
+    if (server->xdg_shell == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xdg shell");
+        return false;
+    }
     server->new_xdg_toplevel.notify = qw_server_handle_new_xdg_toplevel;
     wl_signal_add(&server->xdg_shell->events.new_toplevel, &server->new_xdg_toplevel);
 
-    wlr_server_decoration_manager_set_default_mode(
-        wlr_server_decoration_manager_create(server->display),
-        WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
+    struct wlr_server_decoration_manager *decoration_mgr =
+        wlr_server_decoration_manager_create(server->display);
+    if (decoration_mgr == NULL) {
+        wlr_log(WLR_ERROR, "failed to create server decoration manager");
+        return false;
+    }
+    wlr_server_decoration_manager_set_default_mode(decoration_mgr,
+                                                   WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 
     server->xdg_decoration_mgr = wlr_xdg_decoration_manager_v1_create(server->display);
+    if (server->xdg_decoration_mgr == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xdg decoration manager");
+        return false;
+    }
     server->new_decoration.notify = qw_server_handle_new_decoration;
     wl_signal_add(&server->xdg_decoration_mgr->events.new_toplevel_decoration,
                   &server->new_decoration);
 
     server->layer_shell = wlr_layer_shell_v1_create(server->display, 3);
+    if (server->layer_shell == NULL) {
+        wlr_log(WLR_ERROR, "failed to create layer shell");
+        return false;
+    }
     server->new_layer_surface.notify = qw_server_handle_new_layer_surface;
     wl_signal_add(&server->layer_shell->events.new_surface, &server->new_layer_surface);
     server->renderer_lost.notify = qw_server_handle_renderer_lost;
@@ -857,11 +984,19 @@ struct qw_server *qw_server_create() {
                   &server->request_set_primary_selection);
 
     server->virtual_keyboard = wlr_virtual_keyboard_manager_v1_create(server->display);
+    if (server->virtual_keyboard == NULL) {
+        wlr_log(WLR_ERROR, "failed to create virtual keyboard manager");
+        return false;
+    }
     server->virtual_keyboard_new.notify = qw_server_handle_virtual_keyboard;
     wl_signal_add(&server->virtual_keyboard->events.new_virtual_keyboard,
                   &server->virtual_keyboard_new);
 
     server->virtual_pointer = wlr_virtual_pointer_manager_v1_create(server->display);
+    if (server->virtual_pointer == NULL) {
+        wlr_log(WLR_ERROR, "failed to create virtual pointer manager");
+        return false;
+    }
     server->virtual_pointer_new.notify = qw_server_handle_virtual_pointer;
     wl_signal_add(&server->virtual_pointer->events.new_virtual_pointer,
                   &server->virtual_pointer_new);
@@ -870,19 +1005,35 @@ struct qw_server *qw_server_create() {
     qw_session_lock_init(server);
 
     server->ftl_mgr = wlr_foreign_toplevel_manager_v1_create(server->display);
+    if (server->ftl_mgr == NULL) {
+        wlr_log(WLR_ERROR, "failed to create foreign toplevel manager");
+        return false;
+    }
 
     server->idle_inhibit_manager = wlr_idle_inhibit_v1_create(server->display);
+    if (server->idle_inhibit_manager == NULL) {
+        wlr_log(WLR_ERROR, "failed to create idle inhibit manager");
+        return false;
+    }
     wl_list_init(&server->idle_inhibitors);
     server->new_idle_inhibitor.notify = qw_server_handle_new_idle_inhibitor;
     wl_signal_add(&server->idle_inhibit_manager->events.new_inhibitor, &server->new_idle_inhibitor);
 
     server->idle_notifier = wlr_idle_notifier_v1_create(server->display);
+    if (server->idle_notifier == NULL) {
+        wlr_log(WLR_ERROR, "failed to create idle notifier");
+        return false;
+    }
 
     // Initialize idle timers list
     wl_list_init(&server->idle_timers);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
+    if (server->xwayland == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xwayland");
+        return false;
+    }
     wlr_xwayland_set_seat(server->xwayland, server->seat);
     server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
     wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
@@ -892,26 +1043,62 @@ struct qw_server *qw_server_create() {
 
     // Initializes the interface used to implement urgency hints
     server->activation = wlr_xdg_activation_v1_create(server->display);
+    if (server->activation == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xdg activation");
+        return false;
+    }
     server->request_activate.notify = qw_handle_activation_request;
     wl_signal_add(&server->activation->events.request_activate, &server->request_activate);
     server->new_token.notify = qw_xdg_activation_new_token;
     wl_signal_add(&server->activation->events.new_token, &server->new_token);
 
-    wlr_scene_set_gamma_control_manager_v1(server->scene,
-                                           wlr_gamma_control_manager_v1_create(server->display));
+    struct wlr_gamma_control_manager_v1 *gamma_mgr =
+        wlr_gamma_control_manager_v1_create(server->display);
+    if (gamma_mgr == NULL) {
+        wlr_log(WLR_ERROR, "failed to create gamma control manager");
+        return false;
+    }
+    wlr_scene_set_gamma_control_manager_v1(server->scene, gamma_mgr);
 
     server->relative_pointer_manager = wlr_relative_pointer_manager_v1_create(server->display);
+    if (server->relative_pointer_manager == NULL) {
+        wlr_log(WLR_ERROR, "failed to create relative pointer manager");
+        return false;
+    }
 
     server->pointer_constraints = wlr_pointer_constraints_v1_create(server->display);
+    if (server->pointer_constraints == NULL) {
+        wlr_log(WLR_ERROR, "failed to create pointer constraints");
+        return false;
+    }
     server->new_pointer_constraint.notify = qw_server_handle_new_pointer_constraint;
     wl_signal_add(&server->pointer_constraints->events.new_constraint,
                   &server->new_pointer_constraint);
 
     server->output_power_manager = wlr_output_power_manager_v1_create(server->display);
+    if (server->output_power_manager == NULL) {
+        wlr_log(WLR_ERROR, "failed to create output power manager");
+        return false;
+    }
     server->set_output_power_mode.notify = qw_server_handle_output_power_set_mode;
     wl_signal_add(&server->output_power_manager->events.set_mode, &server->set_output_power_mode);
 
     // TODO: setup listeners
+    return true;
+}
+
+struct qw_server *qw_server_create() {
+    struct qw_server *server = calloc(1, sizeof(*server));
+
+    if (server == NULL) {
+        wlr_log(WLR_ERROR, "failed to create qw_server struct");
+        return NULL;
+    }
+
+    if (!qw_server_init(server)) {
+        free(server);
+        return NULL;
+    }
 
     return server;
 }
