@@ -395,10 +395,13 @@ class _StackingManager:
 
         Currently only called when a window is converted to Static.
         """
-        node = self.layer_map.pop(old_window)
-        node.win = new_window
-        self.layer_map[new_window] = node
-        self.restack()
+        if old_window in self.layer_map:
+            node = self.layer_map.pop(old_window)
+            node.win = new_window
+            self.layer_map[new_window] = node
+            self.restack()
+        else:
+            self.add_window(new_window)
 
     def repair_transients(self):
         for node in self.layer_map.values():
