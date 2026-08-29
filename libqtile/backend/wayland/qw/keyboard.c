@@ -169,11 +169,22 @@ static void keyboard_handle_modifiers(struct wl_listener *listener, void *data) 
 void qw_keyboard_set_keymap(struct qw_keyboard *keyboard, const char *layout, const char *options,
                             const char *variant) {
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    if (context == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xkb context");
+        return;
+    }
 
     struct xkb_rule_names names = {.layout = layout, .options = options, .variant = variant};
 
     struct xkb_keymap *keymap =
         xkb_keymap_new_from_names(context, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    if (keymap == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xkb keymap for layout='%s' variant='%s' options='%s'",
+                layout ? layout : "", variant ? variant : "", options ? options : "");
+        xkb_context_unref(context);
+        return;
+    }
 
     wlr_keyboard_set_keymap(keyboard->wlr_keyboard, keymap);
     xkb_keymap_unref(keymap);
@@ -195,16 +206,35 @@ void qw_server_keyboard_new(struct qw_server *server, struct wlr_input_device *d
 
     struct wlr_keyboard *wlr_keyboard = wlr_keyboard_from_input_device(device);
 
+    if (wlr_keyboard == NULL) {
+        wlr_log(WLR_ERROR, "failed to get keyboard from input device");
+        free(keyboard);
+        return;
+    }
+
     keyboard->server = server;
     keyboard->wlr_keyboard = wlr_keyboard;
 
-    // Give keyboard input devices a reference to qw_keyboard
-    device->data = keyboard;
-
     // Create new xkb context and default keymap
     struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    if (context == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xkb context");
+        free(keyboard);
+        return;
+    }
+
     struct xkb_keymap *keymap =
         xkb_keymap_new_from_names(context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
+
+    if (keymap == NULL) {
+        wlr_log(WLR_ERROR, "failed to create xkb keymap");
+        xkb_context_unref(context);
+        free(keyboard);
+        return;
+    }
+
+    // Give keyboard input devices a reference to qw_keyboard
+    device->data = keyboard;
 
     // Assign the keymap to the keyboard and clean up refs
     wlr_keyboard_set_keymap(wlr_keyboard, keymap);
