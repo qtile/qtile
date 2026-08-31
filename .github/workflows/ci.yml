@@ -72,8 +72,8 @@ jobs:
                   echo "  none"
                 fi
                 echo ""
-                echo "=== Leaks referencing libwayc ==="
-                PATTERN="libqtile/backend/wayland/qw"
+                echo "=== Leaks referencing libwayc and wayland clients ==="
+                PATTERN="libqtile/backend/wayland/qw|test/wayland_clients/bin"
                 matches=$(grep -lE "$PATTERN" lsan.log.* 2>/dev/null) || true
                 if [ -n "$matches" ]; then
                   echo "$matches"
