@@ -27,6 +27,7 @@
 #include <wlr/types/wlr_idle_notify_v1.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_keyboard_group.h>
 #include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
@@ -279,6 +280,9 @@ struct qw_server {
     struct wlr_output_power_manager_v1 *output_power_manager;
     struct wl_listener set_output_power_mode;
     struct wl_list idle_timers; // list of qw_idle_timer
+    struct wlr_keyboard_group *keyboard_group;
+    struct wl_listener keyboard_group_key;
+    struct wl_listener keyboard_group_modifiers;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
