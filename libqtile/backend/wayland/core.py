@@ -228,6 +228,17 @@ def idle_state_change_cb(userdata: ffi.CData, seconds: int, is_idle: bool) -> No
     core.handle_idle_state_change(seconds, is_idle)
 
 
+@ffi.def_extern()
+def on_system_bell_cb(userdata: ffi.CData, view: ffi.CData) -> None:
+    core = ffi.from_handle(userdata)
+    if view != ffi.NULL:
+        window = ffi.from_handle(view)
+        wid = window.wid
+    else:
+        wid = -1
+    core.handle_system_bell(wid)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -280,6 +291,7 @@ class Core(base.Core):
         self.qw.check_inhibited_cb = lib.check_inhibited_cb
         self.qw.get_qtile_config_cb = lib.get_qtile_config_cb
         self.qw.idle_state_change_cb = lib.idle_state_change_cb
+        self.qw.on_system_bell_cb = lib.on_system_bell_cb
         lib.qw_server_start(self.qw)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
@@ -955,6 +967,10 @@ class Core(base.Core):
     def test_destroy_output(self, index: int) -> None:
         """Destroy the nth output at runtime. Only available in an active test."""
         lib.qw_server_test_destroy_output(self.qw, index)
+
+    def handle_system_bell(self, wid: int) -> None:
+        window = self.qtile.windows_map.get(wid, None)
+        hook.fire("system_bell", window)
 
 
 class Painter:

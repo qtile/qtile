@@ -157,6 +157,8 @@ typedef struct qw_qtile_config *(*get_qtile_config_cb_t)(void *userdata);
 // Callback for idle state change
 typedef void (*idle_state_change_cb_t)(void *userdata, int seconds, bool is_idle);
 
+typedef void (*on_system_bell_cb_t)(void *userdata, void *view);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -219,6 +221,7 @@ struct qw_server {
     check_inhibited_cb_t check_inhibited_cb;
     get_qtile_config_cb_t get_qtile_config_cb;
     idle_state_change_cb_t idle_state_change_cb;
+    on_system_bell_cb_t on_system_bell_cb;
     void *view_activation_cb_data;
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
@@ -279,6 +282,8 @@ struct qw_server {
     struct wlr_output_power_manager_v1 *output_power_manager;
     struct wl_listener set_output_power_mode;
     struct wl_list idle_timers; // list of qw_idle_timer
+    struct wlr_xdg_system_bell_v1 *system_bell;
+    struct wl_listener system_bell_ring;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
