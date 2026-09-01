@@ -270,7 +270,7 @@ class ClientHandler:
         """Verify that the client outputs an error message."""
         assert self.send(command) == f"ERROR: {error}"
 
-    def send_read_until(self, command, expected, timeout_ms=2000):
+    def send_read_until(self, command, expected, timeout_ms=2000, exclude_expected=True):
         """
         Send command and read stdout until `expected` is seen.
 
@@ -303,7 +303,17 @@ class ClientHandler:
             lines.extend(raw_lines)
 
             if expected in lines:
+                if exclude_expected:
+                    return lines[:-1]
                 return lines
+
+    def send_read_ok(self, command):
+        """
+        Sends a command and reads until OK is received.
+
+        Returns output excluding "OK".
+        """
+        return self.send_read_until(command, "OK")
 
     def restart(self):
         self._run()

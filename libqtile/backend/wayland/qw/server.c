@@ -27,6 +27,7 @@
 #include "wayland-server-protocol.h"
 #include "wayland-util.h"
 #include "wlr/util/log.h"
+#include "workspace-manager.h"
 #include "xdg-view.h"
 #if WLR_HAS_XWAYLAND
 #include "xwayland-view.h"
@@ -63,6 +64,7 @@ static void qw_server_destroy_dummy_input_devices(struct qw_server *server) {
 void qw_server_finalize(struct qw_server *server) {
     // TODO: what else to finalize?
     qw_server_destroy_dummy_input_devices(server);
+    qw_workspace_manager_finish(server);
     wl_list_remove(&server->new_input.link);
     wl_list_remove(&server->new_output.link);
     wl_list_remove(&server->output_layout_change.link);
@@ -910,6 +912,11 @@ struct qw_server *qw_server_create() {
     server->output_power_manager = wlr_output_power_manager_v1_create(server->display);
     server->set_output_power_mode.notify = qw_server_handle_output_power_set_mode;
     wl_signal_add(&server->output_power_manager->events.set_mode, &server->set_output_power_mode);
+
+    // Workspace manager
+    if (!qw_workspace_manager_init(server)) {
+        wlr_log(WLR_ERROR, "Unable to create workspace manager.\n");
+    }
 
     // TODO: setup listeners
 

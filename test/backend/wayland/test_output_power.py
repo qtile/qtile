@@ -45,7 +45,7 @@ def test_opm_dual_monitor(wmanager, test_client):
     """Check each output can be powered individually."""
 
     def get_output_state():
-        return test_client.send_read_until("identify", "OK")
+        return test_client.send_read_ok("identify")
 
     # Check client is notified about two outputs
     wait_for_outputs(test_client, 2)

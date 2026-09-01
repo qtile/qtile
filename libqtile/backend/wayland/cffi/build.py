@@ -134,6 +134,11 @@ PROTOS: list[Protocol] = [
     Protocol(
         f"{WAYLAND_PROTOCOLS}/stable/tablet/tablet-v2.xml", build_client=True, build_server=False
     ),
+    Protocol(
+        f"{WAYLAND_PROTOCOLS}/staging/ext-workspace/ext-workspace-v1.xml",
+        build_client=True,
+        build_server=False,
+    ),
 ]
 
 TEST_CLIENTS: list[TestClient] = [
@@ -195,6 +200,15 @@ TEST_CLIENTS: list[TestClient] = [
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),
+    TestClient(
+        name="workspace-manager",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "workspace-manager.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "ext-workspace-v1-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
 ]
 
 # Build configuration
@@ -210,6 +224,7 @@ CDEF_FILES = [
     "cursor.h",
     "input-device.h",
     "keyboard.h",
+    "workspace-manager.h",
 ]
 XWAYLAND_ONLY_SOURCES = ["xwayland-view.c"]
 
@@ -349,6 +364,7 @@ extern "Python" bool remove_idle_inhibitor_cb(void *userdata, void *inhibitor);
 extern "Python" bool check_inhibited_cb(void *userdata);
 extern "Python" struct qw_qtile_config *get_qtile_config_cb(void *userdata);
 extern "Python" void idle_state_change_cb(void *userdata, int seconds, bool is_idle);
+extern "Python" void workspace_manager_group_action_cb(void *userdata, const char *group, int action);
 
 extern "Python" int request_focus_cb(void *userdata);
 extern "Python" int request_close_cb(void *userdata);
