@@ -633,6 +633,7 @@ static struct qw_xdg_popup *qw_server_xdg_popup_new(struct wlr_xdg_popup *wlr_po
 
     popup->wlr_popup = wlr_popup;
     popup->xdg_view = xdg_view;
+    popup->base.server = xdg_view->base.server;
     popup->base.view_type = QW_VIEW_XDG_POPUP;
 
     popup->scene_tree = wlr_scene_tree_create(parent);
