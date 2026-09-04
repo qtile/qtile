@@ -649,8 +649,19 @@ static void qw_server_handle_start_drag(struct wl_listener *listener, void *data
     }
 
     struct qw_drag_icon *drag_icon = calloc(1, sizeof(*drag_icon));
+    if (drag_icon == NULL) {
+        wlr_log(WLR_ERROR, "failed to allocate qw_drag_icon");
+        return;
+    }
+
     drag_icon->server = server;
     drag_icon->scene_icon = wlr_scene_drag_icon_create(server->drag_icon, drag->icon);
+    if (drag_icon->scene_icon == NULL) {
+        wlr_log(WLR_ERROR, "failed to create scene drag icon");
+        free(drag_icon);
+        return;
+    }
+
     drag_icon->destroy.notify = qw_server_handle_drag_icon_destroy;
     wl_signal_add(&drag->events.destroy, &drag_icon->destroy);
 }
