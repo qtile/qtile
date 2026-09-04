@@ -27,6 +27,7 @@ static void qw_xdg_view_handle_decoration_destroy(struct wl_listener *listener, 
 
     wl_list_remove(&xdg_view->decoration_destroy.link);
     wl_list_remove(&xdg_view->decoration_request_mode.link);
+    xdg_view->decoration = NULL;
 }
 
 // Change xdg surface activate state
@@ -125,6 +126,10 @@ static void qw_xdg_view_handle_destroy(struct wl_listener *listener, void *data)
     wl_list_remove(&xdg_view->destroy.link);
     wl_list_remove(&xdg_view->new_popup.link);
     // TODO: Remove request_move and request_resize listeners if added
+
+    if (xdg_view->decoration != NULL) {
+        qw_xdg_view_handle_decoration_destroy(&xdg_view->decoration_destroy, NULL);
+    }
 
     // Destroy the foreign toplevel manager and listeners
     qw_view_ftl_manager_handle_destroy(&xdg_view->base);
