@@ -390,6 +390,7 @@ void qw_output_paint_background_color(struct qw_output *output, float color[4]) 
         wlr_scene_rect_create(output->server->scene_wallpaper_tree, o_width, o_height, color);
     if (rect == NULL) {
         wlr_log(WLR_ERROR, "Failed to create scene_rect for background.");
+        return;
     }
 
     // Save reference to scene rect so we can destroy it later
