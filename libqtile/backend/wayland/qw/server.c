@@ -663,7 +663,9 @@ void qw_server_handle_new_pointer_constraint(struct wl_listener *listener, void 
 }
 
 void qw_server_set_inhibited(struct qw_server *server, bool inhibited) {
-    wlr_idle_notifier_v1_set_inhibited(server->idle_notifier, inhibited);
+    if (server->idle_notifier != NULL) {
+        wlr_idle_notifier_v1_set_inhibited(server->idle_notifier, inhibited);
+    }
 }
 
 static void qw_server_handle_idle_inhibitor_destroy(struct wl_listener *listener, void *data) {
@@ -686,6 +688,10 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
     struct wlr_idle_inhibitor_v1 *wlr_inhibitor = data;
 
     struct qw_idle_inhibitor *inhibitor = calloc(1, sizeof(struct qw_idle_inhibitor));
+    if (inhibitor == NULL) {
+        wlr_log(WLR_ERROR, "failed to allocate qw_idle_inhibitor");
+        return;
+    }
 
     inhibitor->server = server;
     inhibitor->wlr_inhibitor = wlr_inhibitor;
@@ -1251,7 +1257,7 @@ struct wlr_output *qw_server_get_current_output(struct qw_server *server) {
 }
 
 void qw_server_idle_notify_activity(struct qw_server *server) {
-    if (server->idle_inhibit_manager != NULL) {
+    if (server->idle_notifier != NULL) {
         wlr_idle_notifier_v1_notify_activity(server->idle_notifier, server->seat);
     }
     // Fire resume for each timer that is currently idle
@@ -1299,11 +1305,22 @@ void qw_server_add_idle_timer(struct qw_server *server, int seconds) {
     }
 
     struct qw_idle_timer *timer = calloc(1, sizeof(*timer));
+    if (timer == NULL) {
+        wlr_log(WLR_ERROR, "failed to allocate qw_idle_timer");
+        return;
+    }
+
     timer->server = server;
     timer->seconds = seconds;
     timer->is_idle = false;
     timer->event_source =
         wl_event_loop_add_timer(server->event_loop, qw_server_idle_timer_cb, timer);
+    if (timer->event_source == NULL) {
+        wlr_log(WLR_ERROR, "failed to create idle timer event source");
+        free(timer);
+        return;
+    }
+
     wl_list_insert(&server->idle_timers, &timer->link);
 
     wl_event_source_timer_update(timer->event_source, seconds * 1000);
