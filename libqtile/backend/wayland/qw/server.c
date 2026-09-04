@@ -1002,7 +1002,9 @@ bool qw_server_init(struct qw_server *server) {
                   &server->virtual_pointer_new);
 
     // Session lock setup
-    qw_session_lock_init(server);
+    if (!qw_session_lock_init(server)) {
+        return false;
+    }
 
     server->ftl_mgr = wlr_foreign_toplevel_manager_v1_create(server->display);
     if (server->ftl_mgr == NULL) {
