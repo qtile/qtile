@@ -13,6 +13,11 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#if __SANITIZE_ADDRESS__
+#include <sanitizer/lsan_interface.h>
+#define HAVE_LSAN 1
+#endif
+
 static const struct client_ops *ops_ptr;
 
 void test_ok(void) {
@@ -245,6 +250,13 @@ int client_run(struct client_state *state, const struct client_ops *ops) {
     }
 
     client_state_cleanup(state);
+
+#if HAVE_LSAN
+    if (getenv("QTILE_LSAN_ENABLE") != NULL) {
+        __sanitizer_set_report_path("lsan.log");
+        __lsan_do_recoverable_leak_check();
+    }
+#endif
 
     return 0;
 }

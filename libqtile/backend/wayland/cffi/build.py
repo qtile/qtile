@@ -432,6 +432,8 @@ def build_c_objects(config: BuildConfig, *, debug: bool = False, asan: bool = Fa
 
         preargs = ["-g3", "-Og"] if (debug or asan) else ["-O2"]
         preargs += ["-fPIC", "-Wall", "-Wextra"]
+        if asan:
+            preargs += ["-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer"]
 
         cmd.shlib_compiler.compile(
             [os.path.basename(p) for p in config.source_files],
@@ -442,13 +444,13 @@ def build_c_objects(config: BuildConfig, *, debug: bool = False, asan: bool = Fa
         )
 
 
-def build_test_clients() -> None:
+def build_test_clients(asan: bool = False) -> None:
     TEST_CLIENT_OUT_PATH.mkdir(parents=True, exist_ok=True)
     for client in TEST_CLIENTS:
-        _build_test_client(client)
+        _build_test_client(client, asan)
 
 
-def _build_test_client(client: TestClient) -> None:
+def _build_test_client(client: TestClient, asan: bool) -> None:
     def to_str(v: str | Path) -> str:
         return v.resolve().as_posix() if isinstance(v, Path) else v
 
@@ -458,10 +460,16 @@ def _build_test_client(client: TestClient) -> None:
     libs = (
         subprocess.check_output(["pkg-config", "--libs", *client.all_packages]).decode().split()
     )
+    asan_flags = (
+        ["-fsanitize=address,leak,undefined", "-fno-omit-frame-pointer", "-g3", "-Og"]
+        if asan
+        else []
+    )
 
     cmd = [
         "cc",
         *cflags,
+        *asan_flags,
         *(to_str(s) for s in client.sources),
         *(arg for inc in client.includes for arg in ("-I", to_str(inc))),
         *client.extra_args,
@@ -511,7 +519,7 @@ def ffi_compile(*, verbose: bool = False, debug: bool = False, asan: bool = Fals
     generate_protocols()
     build_c_objects(config, debug=debug, asan=asan)
     compile_ffi(config, verbose=verbose, debug=debug, asan=asan)
-    build_test_clients()
+    build_test_clients(asan=asan)
 
 
 if __name__ == "__main__":
