@@ -298,9 +298,13 @@ static void qw_xwayland_view_clip(struct qw_xwayland_view *xwayland_view) {
     wlr_scene_subsurface_tree_set_clip(&xwayland_view->scene_tree->node, &clip);
 }
 
+// Forward declaration
+static void qw_xwayland_view_do_close_window(struct qw_view *base);
+
 // Place the xwayland_view at given position and size with border and stacking info
 static void qw_xwayland_view_place(void *self, int x, int y, int width, int height,
-                                   const struct qw_border *borders, int border_count, int above) {
+                                   const struct qw_border *borders, int border_count, int above,
+                                   int duration, qw_easing_t ease) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
 
@@ -324,15 +328,20 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
 
     bool needs_repos = place_changed || geom_changed;
 
-    // Update stored geometry and base view rectangle
-    xwayland_view->geom = geom;
-    xwayland_view->base.x = x;
-    xwayland_view->base.y = y;
-    xwayland_view->base.width = width;
-    xwayland_view->base.height = height;
+    // clang-format off
+    qw_anim_box anim_box = {
+        .geom_dst = &xwayland_view->geom,
+        .geom_src = geom,
+        .target = {
+            .x = x,
+            .y = y,
+            .width = width,
+            .height = height,
+        },
+    };
+    // clang-format on
 
-    // Set position of the content scene node
-    wlr_scene_node_set_position(&xwayland_view->base.content_tree->node, x, y);
+    qw_anim_try_animate_resize(&xwayland_view->base, anim_box, duration, needs_repos, ease);
 
     // TODO: don't force repo
     if (needs_repos) {
@@ -356,9 +365,21 @@ static void qw_xwayland_view_place(void *self, int x, int y, int width, int heig
 }
 
 // Send close event to the xwayland surface (kill the view)
-static void qw_xwayland_view_kill(void *self) {
-    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+static void qw_xwayland_view_do_close_window(struct qw_view *base) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)base;
     wlr_xwayland_surface_close(xwayland_view->xwayland_surface);
+}
+
+// Animate then kill the view
+static void qw_xwayland_view_kill(void *self, int duration, qw_easing_t ease) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+
+    qw_view_prepare_kill(&xwayland_view->base, xwayland_view->xwayland_surface->surface,
+                         xwayland_view->base.server->seat, qw_xwayland_view_do_close_window,
+                         (void (*)(void *, bool))qw_xwayland_view_activate);
+    qw_anim_kill_slide_down(&xwayland_view->base, duration, ease, qw_xwayland_view_do_close_window);
+
+    qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
 }
 
 // Hide the xwayland_view (disable scene node and clear keyboard focus if needed)
@@ -606,6 +627,8 @@ static void qw_xwayland_view_handle_map(struct wl_listener *listener, void *data
     xwayland_view->base.role = xwayland_surface->role;
 
     xwayland_view->base.skip_taskbar = xwayland_surface->skip_taskbar;
+    xwayland_view->base.on_anim_complete = NULL;
+    wl_list_insert(&xwayland_view->base.server->views, &xwayland_view->base.link);
 
     // Create foreign toplevel manager and listeners
     if (xwayland_view->base.ftl_handle == NULL) {
@@ -669,6 +692,7 @@ static void qw_xwayland_view_handle_unmap(struct wl_listener *listener, void *da
                                                  xwayland_view->base.server->cb_data);
     qw_xwayland_view_hide(xwayland_view);
 
+    wl_list_remove(&xwayland_view->base.link);
     wl_list_remove(&xwayland_view->commit.link);
     wl_list_remove(&xwayland_view->request_fullscreen.link);
     wl_list_remove(&xwayland_view->request_minimize.link);
