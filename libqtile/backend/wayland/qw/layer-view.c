@@ -139,7 +139,7 @@ static void qw_layer_popup_handle_destroy(struct wl_listener *listener, void *da
     wl_list_remove(&popup->new_popup.link);
     wl_list_remove(&popup->destroy.link);
     wl_list_remove(&popup->surface_commit.link);
-    qw_cursor_update_pointer_focus(popup->toplevel->base.server->cursor);
+    qw_cursor_update_pointer_focus(popup->toplevel->server->cursor);
     free(popup);
 }
 
