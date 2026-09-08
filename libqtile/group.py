@@ -145,7 +145,11 @@ class _Group(CommandObject):
 
     def set_screen(self, screen, warp=True):
         """Set this group's screen to screen"""
+        if screen is self.screen:
+            return
         if screen == self.screen:
+            # Same logical screen. Just update reference
+            self.screen = screen
             return
         self.screen = screen
         if self.screen:
