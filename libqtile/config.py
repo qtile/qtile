@@ -582,7 +582,13 @@ class Screen(CommandObject):
         if new_group is None:
             return
 
+        if new_group.screen is self:
+            return
+
         if new_group.screen == self:
+            # Same logical screen. Update reference without peforming a
+            # screen change
+            new_group.screen = self
             return
 
         if save_prev and new_group is not self.group:
