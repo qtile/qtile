@@ -451,6 +451,11 @@ class Qtile(CommandObject):
         config_screens = self.get_screens_from_config(output_info)
         new_screens: list[Screen] = []
 
+        # Clear current_screen if there's no matching Screen in config
+        if hasattr(self, "current_screen"):
+            if self.current_screen not in config_screens:
+                del self.current_screen
+
         for i, info in enumerate(output_info):
             if i < len(config_screens):
                 scr = config_screens[i]
@@ -507,8 +512,16 @@ class Qtile(CommandObject):
             new_screens.append(Screen())
 
         for screen in self.screens:
-            if screen not in new_screens:
+            # Finalize_gaps for screen instances that are not in new_screens
+            if not any(screen is ns for ns in new_screens):
                 screen.finalize_gaps()
+
+        # With dynamically generated screens we need to update current_screen
+        # to a matching new Screen, or set a sensible default
+        if self.current_screen in new_screens:
+            self.current_screen = new_screens[new_screens.index(self.current_screen)]
+        else:
+            self.current_screen = new_screens[0]
 
         self.screens = new_screens
 
