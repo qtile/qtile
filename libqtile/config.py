@@ -608,15 +608,7 @@ class Screen(CommandObject):
             assert self.qtile is not None
             old_group = self.group
             self.group = new_group
-            with self.qtile.core.masked():
-                # display clients of the new group and then hide from old group
-                # to remove the screen flickering
-                new_group.set_screen(self, warp)
-
-                # Can be the same group only if the screen just got configured for the
-                # first time - see `Qtile._process_screens`.
-                if old_group is not new_group:
-                    old_group.set_screen(None, warp)
+            self.qtile.core.animate_group_switch(self, old_group, new_group, warp)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
@@ -1168,6 +1160,30 @@ class Rule:
             self, ["group", "float", "intrusive", "break_on_match"]
         )
         return f"<Rule match={self.matchlist!r} actions=({actions})>"
+
+
+@dataclass
+class Animation:
+    """Animation parameters for a single animation type."""
+
+    duration: int = 200
+    ease: str = "out_cubic"
+
+
+@dataclass
+class WaylandAnimations:
+    """
+    Wayland animation configuration. Pass to ``wl_animation`` in your config.
+    Set ``wl_animation = None`` to disable all animations entirely.
+
+    Unspecified fields fall back to ``Animation(duration=200, ease="out_cubic")``.
+    """
+
+    slide: Animation = field(default_factory=Animation)
+    spawn: Animation = field(default_factory=Animation)
+    kill: Animation = field(default_factory=Animation)
+    dropdown: Animation = field(default_factory=Animation)
+    default: Animation = field(default_factory=Animation)
 
 
 class IdleTimer:
