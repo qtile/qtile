@@ -586,6 +586,7 @@ class Core(base.Core):
         view = self.qw_cursor.view
 
         if view == ffi.NULL:
+            self.qtile.hovered_window = None
             return
 
         win = self.qtile.windows_map.get(view.wid)
