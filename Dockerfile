@@ -4,12 +4,14 @@ RUN dnf install -y \
     cairo-devel \
     cairo-gobject-devel \
     dbus-x11 \
-    gcc git make\
+    gcc git make \
     gdb \
     gobject-introspection \
     gtk3 \
     ImageMagick \
+    libasan \
     libnotify \
+    libubsan \
     pango \
     procps \
     pulseaudio-libs \

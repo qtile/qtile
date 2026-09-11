@@ -1,3 +1,4 @@
+import os
 from functools import partial
 from types import MethodType
 
@@ -143,6 +144,10 @@ def test_ipc_disabled(lock_manager, test_client):
     lock_manager.assert_unlocked()
 
 
+asan_enabled = os.environ.get("ASAN_OPTIONS") is not None
+
+
+@pytest.mark.skipif(asan_enabled, reason="crash test intentionally leaks")
 @enable_ipc
 def test_crashed(lock_manager, test_client):
     """Confirm crashed state is still locked."""
@@ -158,6 +163,7 @@ def test_crashed(lock_manager, test_client):
     test_client.assert_error("unlock", "no active lock")
 
 
+@pytest.mark.skipif(asan_enabled, reason="crash test intentionally leaks")
 def test_crashed_ipc_disabled(lock_manager, test_client):
     """Confirm IPC is still locked when in crashed state."""
     test_client.assert_ok("lock")
