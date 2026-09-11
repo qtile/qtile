@@ -41,6 +41,14 @@ let
       postPatch = "";
 
       patches = [ ];
+
+      postInstall = ''
+        install resources/qtile.desktop -Dt $out/share/xsessions
+        install resources/qtile-wayland.desktop -Dt $out/share/wayland-sessions
+
+        substituteInPlace $out/share/xsessions/qtile.desktop \
+          --replace-fail '/usr/bin/qtile' ${placeholder "out"}/bin/qtile
+      '';
     };
 in
 (pkgs.python3Packages.qtile.overrideAttrs qtile-override-func).override {
