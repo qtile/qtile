@@ -11,12 +11,12 @@ from xcffib.xproto import EventMask, SetMode
 
 from libqtile import hook, utils
 from libqtile.backend import base
-from libqtile.backend.base import FloatStates, LayerGroup
+from libqtile.backend.base import FloatStates
+from libqtile.backend.base.layer_group import LayerGroup
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.drawer import Drawer
 from libqtile.command.base import CommandError, ItemT, expose_command
 from libqtile.log_utils import logger
-from libqtile.scratchpad import ScratchPad
 
 # ICCM Constants
 NoValue = 0x0000
@@ -1559,10 +1559,7 @@ class Window(_Window, base.Window):
             self.group.mark_floating(self, False)
             if self.kept_above and self.qtile.config.floats_kept_above:
                 self.keep_above(enable=False)
-            if tiled_stack:
-                self.window.configure(
-                    stackmode=xcffib.xproto.StackMode.Above, sibling=tiled_stack[-1]
-                )
+
             hook.fire("float_change")
 
         # Whatever we do, make sure window is at top of its layer group

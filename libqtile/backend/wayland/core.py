@@ -53,6 +53,7 @@ from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
+from libqtile.backend.wayland.stacking import WaylandStackingManager
 from libqtile.backend.wayland.window import Base, Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import Output, Screen, ScreenRect
@@ -238,7 +239,7 @@ def get_wlr_log_level() -> int:
     return lib.WLR_SILENT
 
 
-class Core(base.Core):
+class Core(base.Core, WaylandStackingManager):
     supports_restarting: bool = False
     idle_inhibitor_manager: IdleInhibitorManager
     idle_notifier: IdleNotifier

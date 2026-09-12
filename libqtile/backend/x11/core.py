@@ -15,7 +15,7 @@ from libqtile.backend import base
 from libqtile.backend.base.idle_inhibit import IdleInhibitorManager, Inhibitor
 from libqtile.backend.x11 import window, xcbq
 from libqtile.backend.x11.idle_notify import IdleNotifier
-from libqtile.backend.x11.stacking import _StackingManager
+from libqtile.backend.x11.stacking import X11StackingManager
 from libqtile.backend.x11.xkeysyms import keysyms
 from libqtile.command.base import expose_command
 from libqtile.log_utils import logger
@@ -64,12 +64,11 @@ class ExistingWMException(Exception):
     pass
 
 
-class Core(base.Core, _StackingManager):
+class Core(base.Core, X11StackingManager):
     idle_notifier: IdleNotifier
 
     def __init__(self, display_name: str | None = None) -> None:
         """Setup the X11 core backend
-
         :param display_name:
             The display name to setup the X11 connection to.  Uses the DISPLAY
             environment variable if not given.

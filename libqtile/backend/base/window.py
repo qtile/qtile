@@ -6,6 +6,7 @@ from typing import Any
 
 from libqtile import config, hook
 from libqtile.backend.base import Drawer
+from libqtile.backend.base.layer_group import LayerGroup
 from libqtile.command.base import CommandError, CommandObject, ItemT, expose_command
 from libqtile.group import _Group
 from libqtile.log_utils import logger
@@ -161,6 +162,9 @@ class _Window(CommandObject, metaclass=ABCMeta):
 
         """
         return {}
+
+    def get_layering_information(self) -> LayerGroup:
+        return LayerGroup.LAYOUT
 
     @expose_command()
     def keep_above(self, enable: bool | None = None):
