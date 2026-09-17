@@ -289,22 +289,27 @@ class StatusNotifierItem:  # noqa: E303
                 break
 
         else:
-            # No icon found at the image path, let's search recursively
-            glob = icon_path.rglob(f"{icon_name}.*")
-            found = [
-                icon for icon in glob if icon.is_file() and icon.suffix.lower() in ICON_FORMATS
-            ]
+            if Path(icon_name).is_absolute() and Path(icon_name).exists():
+                icon = Path(icon_name)
+            else:
+                # No icon found at the image path, let's search recursively
+                glob = icon_path.rglob(f"{icon_name}.*")
+                found = [
+                    icon
+                    for icon in glob
+                    if icon.is_file() and icon.suffix.lower() in ICON_FORMATS
+                ]
 
-            # Found a matching icon in subfolder
-            if found:
-                # We'd prefer an svg file
-                svg = [icon for icon in found if icon.suffix.lower() == ".svg"]
-                if svg:
-                    icon = svg[0]
-                else:
-                    # If not, we'll take what there is
-                    # NOTE: not clear how we can handle multiple matches with different icon sizes 16x16, 32x32 etc
-                    icon = found[0]
+                # Found a matching icon in subfolder
+                if found:
+                    # We'd prefer an svg file
+                    svg = [icon for icon in found if icon.suffix.lower() == ".svg"]
+                    if svg:
+                        icon = svg[0]
+                    else:
+                        # If not, we'll take what there is
+                        # NOTE: not clear how we can handle multiple matches with different icon sizes 16x16, 32x32 etc
+                        icon = found[0]
 
         if icon is not None:
             return Img.from_path(icon.resolve().as_posix())
