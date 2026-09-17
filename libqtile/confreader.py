@@ -49,6 +49,7 @@ class Config:
     screen_change_debounce_timeout: int | float
     wmname: str
     auto_minimize: bool
+    auto_group: bool
     # Really we'd want to check this Any is libqtile.backend.wayland.ImportConfig, but
     # doing so forces the import, creating a hard dependency for wlroots.
     wl_input_rules: dict[str, Any] | None
