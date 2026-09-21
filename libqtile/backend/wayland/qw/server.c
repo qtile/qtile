@@ -432,7 +432,12 @@ static void qw_server_handle_new_xdg_toplevel(struct wl_listener *listener, void
 static void qw_server_handle_new_decoration(struct wl_listener *listener, void *data) {
     UNUSED(listener);
     struct wlr_xdg_toplevel_decoration_v1 *decoration = data;
-    qw_xdg_view_decoration_new(decoration->toplevel->base->data, decoration);
+    struct qw_xdg_view *xdg_view = decoration->toplevel->base->data;
+    if (xdg_view == NULL) {
+        wlr_log(WLR_ERROR, "received decoration for a toplevel with no associated view");
+        return;
+    }
+    qw_xdg_view_decoration_new(xdg_view, decoration);
 }
 
 static void qw_server_handle_new_layer_surface(struct wl_listener *listener, void *data) {
@@ -653,8 +658,19 @@ static void qw_server_handle_start_drag(struct wl_listener *listener, void *data
     }
 
     struct qw_drag_icon *drag_icon = calloc(1, sizeof(*drag_icon));
+    if (drag_icon == NULL) {
+        wlr_log(WLR_ERROR, "failed to allocate qw_drag_icon");
+        return;
+    }
+
     drag_icon->server = server;
     drag_icon->scene_icon = wlr_scene_drag_icon_create(server->drag_icon, drag->icon);
+    if (drag_icon->scene_icon == NULL) {
+        wlr_log(WLR_ERROR, "failed to create scene drag icon");
+        free(drag_icon);
+        return;
+    }
+
     drag_icon->destroy.notify = qw_server_handle_drag_icon_destroy;
     wl_signal_add(&drag->events.destroy, &drag_icon->destroy);
 }
@@ -667,7 +683,9 @@ void qw_server_handle_new_pointer_constraint(struct wl_listener *listener, void 
 }
 
 void qw_server_set_inhibited(struct qw_server *server, bool inhibited) {
-    wlr_idle_notifier_v1_set_inhibited(server->idle_notifier, inhibited);
+    if (server->idle_notifier != NULL) {
+        wlr_idle_notifier_v1_set_inhibited(server->idle_notifier, inhibited);
+    }
 }
 
 static void qw_server_handle_idle_inhibitor_destroy(struct wl_listener *listener, void *data) {
@@ -690,6 +708,10 @@ static void qw_server_handle_new_idle_inhibitor(struct wl_listener *listener, vo
     struct wlr_idle_inhibitor_v1 *wlr_inhibitor = data;
 
     struct qw_idle_inhibitor *inhibitor = calloc(1, sizeof(struct qw_idle_inhibitor));
+    if (inhibitor == NULL) {
+        wlr_log(WLR_ERROR, "failed to allocate qw_idle_inhibitor");
+        return;
+    }
 
     inhibitor->server = server;
     inhibitor->wlr_inhibitor = wlr_inhibitor;
@@ -1049,7 +1071,9 @@ bool qw_server_init(struct qw_server *server) {
                   &server->virtual_pointer_new);
 
     // Session lock setup
-    qw_session_lock_init(server);
+    if (!qw_session_lock_init(server)) {
+        return false;
+    }
 
     server->ftl_mgr = wlr_foreign_toplevel_manager_v1_create(server->display);
     if (server->ftl_mgr == NULL) {
@@ -1307,7 +1331,7 @@ struct wlr_output *qw_server_get_current_output(struct qw_server *server) {
 }
 
 void qw_server_idle_notify_activity(struct qw_server *server) {
-    if (server->idle_inhibit_manager != NULL) {
+    if (server->idle_notifier != NULL) {
         wlr_idle_notifier_v1_notify_activity(server->idle_notifier, server->seat);
     }
     // Fire resume for each timer that is currently idle
@@ -1355,11 +1379,22 @@ void qw_server_add_idle_timer(struct qw_server *server, int seconds) {
     }
 
     struct qw_idle_timer *timer = calloc(1, sizeof(*timer));
+    if (timer == NULL) {
+        wlr_log(WLR_ERROR, "failed to allocate qw_idle_timer");
+        return;
+    }
+
     timer->server = server;
     timer->seconds = seconds;
     timer->is_idle = false;
     timer->event_source =
         wl_event_loop_add_timer(server->event_loop, qw_server_idle_timer_cb, timer);
+    if (timer->event_source == NULL) {
+        wlr_log(WLR_ERROR, "failed to create idle timer event source");
+        free(timer);
+        return;
+    }
+
     wl_list_insert(&server->idle_timers, &timer->link);
 
     wl_event_source_timer_update(timer->event_source, seconds * 1000);

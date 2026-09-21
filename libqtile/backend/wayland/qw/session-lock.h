@@ -39,7 +39,7 @@ struct qw_session_lock {
     struct wl_listener destroy;
 };
 
-void qw_session_lock_init(struct qw_server *server);
+bool qw_session_lock_init(struct qw_server *server);
 void qw_session_lock_output_create_blanking_rects(struct qw_output *output);
 void qw_session_lock_output_change(struct qw_output *output);
 void qw_session_lock_focus_first_lock_surface(struct qw_server *server);
