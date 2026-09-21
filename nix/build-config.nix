@@ -66,16 +66,21 @@ in
     "--config-setting=${varname}=${lib.getLib pkg}/lib/${libname}"
   ) runtime-libs;
 
-  resolved-env-vars = lib.foldr (a: b: a // b) { } (
-    map (
-      {
-        varname,
-        pkg,
-        header-dir,
-      }:
-      {
-        "QTILE_${varname}_PATH" = "${lib.getDev pkg}/include/${header-dir}";
-      }
-    ) headers-location
-  );
+  resolved-env-vars =
+    lib.foldr (a: b: a // b) { } (
+      map (
+        {
+          varname,
+          pkg,
+          header-dir,
+        }:
+        {
+          "QTILE_${varname}_PATH" = "${lib.getDev pkg}/include/${header-dir}";
+        }
+      ) headers-location
+    )
+    // {
+      # The sandbox does not provide /etc/fonts/fonts.conf.
+      FONTCONFIG_FILE = "${pkgs.fontconfig}/etc/fonts/fonts.conf";
+    };
 }
