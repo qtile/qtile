@@ -15,7 +15,8 @@
 #include <xcb/xcb_icccm.h>
 
 // Change xwayland surface activate state
-static void qw_xwayland_view_activate(struct qw_xwayland_view *xwayland_view, bool activate) {
+static void qw_xwayland_view_activate(void *self, bool activate) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
     wlr_xwayland_surface_activate(xwayland_view->xwayland_surface, activate);
     if (xwayland_view->base.ftl_handle != NULL) {
         wlr_foreign_toplevel_handle_v1_set_activated(xwayland_view->base.ftl_handle, activate);
@@ -298,63 +299,45 @@ static void qw_xwayland_view_clip(struct qw_xwayland_view *xwayland_view) {
     wlr_scene_subsurface_tree_set_clip(&xwayland_view->scene_tree->node, &clip);
 }
 
+static void qw_xwayland_view_reconfigure(void *self, int x, int y, int width, int height) {
+    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
+    wlr_xwayland_surface_configure(xwayland_view->xwayland_surface, x, y, width, height);
+}
+
 // Place the xwayland_view at given position and size with border and stacking info
 static void qw_xwayland_view_place(void *self, int x, int y, int width, int height,
                                    const struct qw_border *borders, int border_count, int above) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
     struct wlr_xwayland_surface *qw_xsurface = xwayland_view->xwayland_surface;
 
-    // Check if placement or geometry changed
     bool place_changed = xwayland_view->base.x != x || xwayland_view->base.y != y ||
                          xwayland_view->base.width != width || xwayland_view->base.height != height;
 
-    // For XWayland, we need to check the surface geometry differently
     // clang-format off
     struct wlr_box geom = {
-        .x = qw_xsurface->x, 
-        .y = qw_xsurface->y, 
-        .width = qw_xsurface->width, 
+        .x = qw_xsurface->x,
+        .y = qw_xsurface->y,
+        .width = qw_xsurface->width,
         .height = qw_xsurface->height
     };
     // clang-format on
 
-    bool geom_changed = xwayland_view->geom.x != geom.x || xwayland_view->geom.y != geom.y ||
-                        xwayland_view->geom.width != geom.width ||
-                        xwayland_view->geom.height != geom.height;
+    struct qw_view_place_args args = {.x = x,
+                                      .y = y,
+                                      .width = width,
+                                      .height = height,
+                                      .borders = borders,
+                                      .border_count = border_count,
+                                      .above = above,
+                                      .place_changed = place_changed,
+                                      .geom_dst = &xwayland_view->geom,
+                                      .geom_src = geom,
+                                      .surface = qw_xsurface->surface,
+                                      .reconfigure = qw_xwayland_view_reconfigure,
+                                      .clip = (void (*)(void *))qw_xwayland_view_clip};
 
-    bool needs_repos = place_changed || geom_changed;
-
-    // Update stored geometry and base view rectangle
-    xwayland_view->geom = geom;
-    xwayland_view->base.x = x;
-    xwayland_view->base.y = y;
-    xwayland_view->base.width = width;
-    xwayland_view->base.height = height;
-
-    // Set position of the content scene node
-    wlr_scene_node_set_position(&xwayland_view->base.content_tree->node, x, y);
-
-    // TODO: don't force repo
-    if (needs_repos) {
-        // For XWayland, we configure the surface position and size
-        wlr_xwayland_surface_configure(qw_xsurface, x, y, width, height);
-        qw_xwayland_view_clip(xwayland_view);
-
-        qw_view_update_ftl_outputs(&xwayland_view->base, xwayland_view->xwayland_surface->surface);
-    }
-
-    // Paint borders around the view with given border colors and width
-    qw_view_paint_borders((struct qw_view *)xwayland_view, borders, border_count);
-
-    // Raise view if requested
-    if (above != 0) {
-        qw_view_raise_to_top(&xwayland_view->base);
-    }
-
-    // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
+    qw_view_do_place(&xwayland_view->base, args);
 }
-
 // Send close event to the xwayland surface (kill the view)
 static void qw_xwayland_view_kill(void *self) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
@@ -364,25 +347,8 @@ static void qw_xwayland_view_kill(void *self) {
 // Hide the xwayland_view (disable scene node and clear keyboard focus if needed)
 static void qw_xwayland_view_hide(void *self) {
     struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
-    wlr_scene_node_set_enabled(&xwayland_view->base.content_tree->node, false);
     qw_xwayland_view_activate(xwayland_view, false);
-
-    // Clear keyboard focus if this view was focused
-    if (xwayland_view->xwayland_surface->surface ==
-        xwayland_view->base.server->seat->keyboard_state.focused_surface) {
-        wlr_seat_keyboard_clear_focus(xwayland_view->base.server->seat);
-    }
-
-    // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(xwayland_view->base.server->cursor);
-}
-
-// Unhide the xwayland_view by enabling its content_tree scene node if currently disabled
-static void qw_xwayland_view_unhide(void *self) {
-    struct qw_xwayland_view *xwayland_view = (struct qw_xwayland_view *)self;
-    if (!xwayland_view->base.content_tree->node.enabled) {
-        wlr_scene_node_set_enabled(&xwayland_view->base.content_tree->node, true);
-    }
+    qw_view_disable_and_clear_focus(&xwayland_view->base, xwayland_view->xwayland_surface->surface);
 }
 
 // Retrieve the PID of the client owning this xwayland_view
@@ -950,7 +916,7 @@ void qw_server_xwayland_view_new(struct qw_server *server,
     xwayland_view->base.focus = qw_xwayland_view_focus;
     xwayland_view->base.kill = qw_xwayland_view_kill;
     xwayland_view->base.hide = qw_xwayland_view_hide;
-    xwayland_view->base.unhide = qw_xwayland_view_unhide;
+    xwayland_view->base.unhide = qw_view_unhide;
     xwayland_view->base.get_pid = qw_xwayland_view_get_pid;
     xwayland_view->base.get_wm_type = qw_xwayland_view_get_window_type;
     xwayland_view->base.get_parent = qw_xwayland_get_parent;
