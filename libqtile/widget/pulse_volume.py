@@ -35,9 +35,6 @@ class PulseConnection:
             if self.configured:
                 return
 
-            # Create pulse async object but don't connect
-            self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
-
             # Try to connect
             await self._check_pulse_connection()
 
@@ -48,7 +45,15 @@ class PulseConnection:
         The PulseAsync object subscribes to connection state events so we
         need to check periodically whether the connection has been lost.
         """
-        if not self.pulse.connected:
+        if self.pulse is None or not self.pulse.connected:
+            # Can't reuse a closed PulseAsync: close() clears the mainloop
+            # pointer it holds, so calling connect() on one crashes inside
+            # pulsectl_asyncio. Build a fresh object on every attempt.
+            if self.pulse is not None:
+                self.pulse.close()
+
+            self.pulse = pulsectl_asyncio.PulseAsync("qtile-pulse")
+
             # Check if we were previously connected to the server and,
             # if so, stop the event handler
             if self._subscribed:
@@ -69,8 +74,12 @@ class PulseConnection:
                 self._event_handler = create_task(self._event_listener())
                 self._subscribed = True
 
-        # Set a timer to check status in 10 seconds time
-        self.timer = self.qtile.call_later(10, create_task, self._check_pulse_connection())
+        # Only re-arm while clients are subscribed, so a finalized
+        # widget never leaves a zombie retry loop behind.
+        if self.callbacks:
+            self.timer = self.qtile.call_later(10, create_task, self._check_pulse_connection())
+        else:
+            self.timer = None
 
     async def _event_listener(self):
         """Listens for sink and server events from the server."""
@@ -107,7 +116,7 @@ class PulseConnection:
 
     def get_volume(self):
         """Gets volume and mute status for default sink."""
-        if not self.pulse.connected:
+        if self.pulse is None or not self.pulse.connected:
             return None, None
 
         if self.default_sink:
@@ -147,7 +156,8 @@ class PulseConnection:
         self.callbacks.discard(callback)
 
         if not self.callbacks:
-            self.pulse.close()
+            if self.pulse is not None:
+                self.pulse.close()
 
             # Prevent future calls to connect to the server
             if self.timer:
@@ -197,6 +207,11 @@ class PulseVolume(VolumeBase):
         VolumeBase._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
+        # The shared PulseConnection is created at import time, before qtile
+        # exists, so it must be told which qtile it belongs to. This matters
+        # for tests that fork qtile into a subprocess, but is also correct in
+        # general: the connection schedules retries on this qtile's loop.
+        pulse.qtile = qtile
         pulse.subscribe(self.get_vals)
 
     async def _change_volume(self, volume):
