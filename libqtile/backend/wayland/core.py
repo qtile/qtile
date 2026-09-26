@@ -593,6 +593,7 @@ class Core(base.Core):
         if self.qtile.hovered_window is not win:
             # We only want to fire client_mouse_enter once, so check
             # self.qtile.hovered_window.
+            self.qtile.hovered_window = win
             hook.fire("client_mouse_enter", win)
 
         if win is not self.qtile.current_window:
@@ -608,8 +609,6 @@ class Core(base.Core):
                         and self.qtile.current_screen != win.group.screen
                     ):
                         self.qtile.focus_screen(win.group.screen.index, False)
-
-        self.qtile.hovered_window = win
 
     def handle_view_activation(self, view: ffi.CData) -> None:
         """Handle view urgency notification"""
