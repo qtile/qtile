@@ -282,6 +282,21 @@ class Base(base._Window):
 
         hook.fire("client_focus", self)
 
+    def handle_EnterNotify(self) -> None:  # noqa: N802
+        if self is not self.qtile.current_window:
+            if self.qtile.config.follow_mouse_focus is True:
+                if isinstance(self, Static):
+                    self.qtile.focus_screen(self.screen.index, False)
+                elif isinstance(self, base.Window):
+                    if self.group and self.group.current_window != self:
+                        self.group.focus(self, False)
+                    if (
+                        self.group
+                        and self.group.screen
+                        and self.qtile.current_screen != self.group.screen
+                    ):
+                        self.qtile.focus_screen(self.group.screen.index, False)
+
 
 class Internal(Base, base.Internal):
     def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):

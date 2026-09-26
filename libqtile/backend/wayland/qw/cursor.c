@@ -24,7 +24,7 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 }
 
 // Forward declaration: dispatch Internal-view enter/leave/motion to compositor.
-static void qw_cursor_dispatch_internal_pointer(struct qw_cursor *cursor, double sx, double sy);
+static void qw_cursor_dispatch_pointer(struct qw_cursor *cursor, double sx, double sy);
 
 // Pointer focus helper function
 static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *surface, double sx,
@@ -34,44 +34,60 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
     if (surface == NULL) {
         wlr_seat_pointer_clear_focus(seat);
         // Reset cursor if we're not over a surface and we're not dragging
-        if (cursor->server->seat->drag == NULL) {
+        if (seat->drag == NULL) {
             wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
         }
     } else {
-        struct wlr_surface *prev_surface = seat->pointer_state.focused_surface;
-        if (surface != prev_surface) {
-            wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
-        }
+        // no-op if surface is already focused
+        wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
     }
-    qw_cursor_dispatch_internal_pointer(cursor, sx, sy);
+
+    // qw_cursor_dispatch_pointer(cursor, sx, sy);
 }
 
-// Notify the compositor about pointer enter/leave/motion on Internal views.
-static void qw_cursor_dispatch_internal_pointer(struct qw_cursor *cursor, double sx, double sy) {
-    if (!cursor->server->pointer_internal_event_cb) {
+static void qw_cursor_dispatch_pointer(struct qw_cursor *cursor, double sx, double sy) {
+    struct qw_server *server = cursor->server;
+    struct qw_view *view = cursor->view;
+
+    if (cursor->pointer_masked || !server->pointer_event_cb) {
         return;
     }
 
-    int new_wid = -1;
-    if (cursor->view != NULL && cursor->view->view_type == QW_VIEW_INTERNAL) {
-        new_wid = cursor->view->wid;
-    }
+    int new_wid = view ? view->wid : -1;
+    bool new_internal = view && view->view_type == QW_VIEW_INTERNAL;
 
-    int prev_wid = cursor->prev_internal_wid;
-    if (new_wid != prev_wid) {
-        if (prev_wid != -1) {
-            cursor->server->pointer_internal_event_cb(prev_wid, 0, 0, QW_POINTER_INTERNAL_LEAVE,
-                                                      cursor->server->cb_data);
+    if (new_wid != cursor->prev_wid) {
+        // pointer moved over a different window
+        int old_wid = cursor->prev_wid;
+        bool old_internal = cursor->prev_was_internal;
+        int event_type;
+
+        cursor->prev_wid = new_wid;
+        cursor->prev_was_internal = new_internal;
+
+        // pointer moved from one client window to another.
+        bool client_to_client = old_wid != -1 && new_wid != -1 && !old_internal && !new_internal;
+
+        if (old_wid != -1 && !client_to_client) {
+            // pointer left a window.
+            // If moved from client to client, no need for LEAVE event
+            event_type = old_internal ? QW_POINTER_INTERNAL_LEAVE : QW_POINTER_CLIENT_LEAVE;
+            server->pointer_event_cb(old_wid, 0, 0, event_type, server->cb_data);
         }
         if (new_wid != -1) {
-            cursor->server->pointer_internal_event_cb(
-                new_wid, (int)sx, (int)sy, QW_POINTER_INTERNAL_ENTER, cursor->server->cb_data);
+            // pointer entered a new window
+            event_type = new_internal ? QW_POINTER_INTERNAL_ENTER : QW_POINTER_CLIENT_ENTER;
+            server->pointer_event_cb(new_wid, (int)sx, (int)sy, event_type, server->cb_data);
         }
-        cursor->prev_internal_wid = new_wid;
-    } else if (new_wid != -1) {
-        cursor->server->pointer_internal_event_cb(
-            new_wid, (int)sx, (int)sy, QW_POINTER_INTERNAL_MOTION, cursor->server->cb_data);
+    } else if (new_wid != -1 && new_internal) {
+        // pointer moved within an internal window
+        server->pointer_event_cb(new_wid, (int)sx, (int)sy, QW_POINTER_INTERNAL_MOTION,
+                                 server->cb_data);
     }
+}
+
+void qw_cursor_mask_pointer_events(struct qw_cursor *cursor, bool masked) {
+    cursor->pointer_masked = masked;
 }
 
 // Update pointer focus without motion
@@ -144,9 +160,17 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
     wlr_cursor_move(cursor->cursor, device, dx, dy);
 
     update_pointer_focus(cursor, surface, sx, sy);
+    qw_cursor_dispatch_pointer(cursor, sx, sy);
 
     // Notify server callback with current cursor position
-    cursor->server->cursor_motion_cb(cursor->server->cb_data);
+    // cursor->server->cursor_motion_cb(cursor->server->cb_data);
+    if (seat->pointer_state.button_count > 0) {
+        uint32_t rate = cursor->drag_polling_rate; // 0 = unlimited
+        if (rate == 0 || (time - cursor->last_motion_time) > 1000 / rate) {
+            cursor->last_motion_time = time;
+            cursor->server->cursor_motion_cb(cursor->server->cb_data);
+        }
+    }
 
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);
@@ -208,6 +232,12 @@ void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y, bool mo
     wlr_cursor_warp_closest(cursor->cursor, NULL, x, y);
     qw_cursor_update_pointer_focus(cursor);
     if (motion) {
+        // TODO: come up with something better than calling view_at again
+        struct wlr_surface *surface = NULL;
+        double sx = 0.0, sy = 0.0;
+        cursor->view = qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y,
+                                         &surface, &sx, &sy);
+        qw_cursor_dispatch_pointer(cursor, sx, sy);
         cursor->server->cursor_motion_cb(cursor->server->cb_data);
     }
 }
@@ -405,7 +435,9 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     }
 
     cursor->server = server;
-    cursor->prev_internal_wid = -1;
+    cursor->prev_wid = -1;
+    cursor->last_motion_time = 0;
+    cursor->drag_polling_rate = 0;
     cursor->cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(cursor->cursor, server->output_layout);
     cursor->mgr = wlr_xcursor_manager_create(NULL, 24);
@@ -726,4 +758,8 @@ static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, voi
     cursor->current_shape_name = name;
 
     wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+}
+
+void qw_cursor_drag_polling_rate(struct qw_cursor *cursor, int32_t rate) {
+    cursor->drag_polling_rate = rate;
 }
