@@ -40,6 +40,7 @@ def test_pomodoro(fake_qtile, fake_window):
         color_active=COLOR_ACTIVE,
         color_inactive=COLOR_INACTIVE,
         color_break=COLOR_BREAK,
+        display_hours=True,
         num_pomodori=2,
         length_pomodori=15,
         length_short_break=5,
@@ -107,3 +108,39 @@ def test_pomodoro(fake_qtile, fake_window):
     # Right-click again resets status
     widget.toggle_active()
     assert widget.poll() == f"{PREFIX_ACTIVE}0:15:00"
+
+    # Set up a second widget to test display without hours
+    widget_alt = pomodoro.Pomodoro(
+        update_interval=100,
+        color_active=COLOR_ACTIVE,
+        color_inactive=COLOR_INACTIVE,
+        color_break=COLOR_BREAK,
+        display_hours=False,
+        num_pomodori=2,
+        length_pomodori=15,
+        length_short_break=5,
+        length_long_break=10,
+        notification_on=False,
+        prefix_inactive=PREFIX_INACTIVE,
+        prefix_active=PREFIX_ACTIVE,
+        prefix_break=PREFIX_BREAK,
+        prefix_long_break=PREFIX_LONG_BREAK,
+        prefix_paused=PREFIX_PAUSED,
+    )
+    widget_alt._configure(fake_qtile, fakebar)
+
+    # Left clicking toggles state, and show time without hours
+    widget_alt.toggle_break()
+    assert widget_alt.poll() == f"{PREFIX_ACTIVE}15:00"
+
+    # Add 5 mins should take 5 mins off our timer, similar with 7 mins
+    MockDatetime._adjustment += timedelta(minutes=5)
+    assert widget_alt.poll() == f"{PREFIX_ACTIVE}10:00"
+    MockDatetime._adjustment += timedelta(minutes=7)
+    assert widget_alt.poll() == f"{PREFIX_ACTIVE}03:00"
+
+    # Add 5 mins should take us into the break
+    MockDatetime._adjustment += timedelta(minutes=3)
+    assert widget_alt.poll() == f"{PREFIX_BREAK}05:00"
+    MockDatetime._adjustment += timedelta(minutes=3)
+    assert widget_alt.poll() == f"{PREFIX_BREAK}02:00"
