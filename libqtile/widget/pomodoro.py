@@ -25,6 +25,7 @@ class Pomodoro(base.InLoopPollText):
         ("prefix_break", "B ", "Prefix during short break"),
         ("prefix_long_break", "LB ", "Prefix during long break"),
         ("prefix_paused", "PAUSE", "Prefix during pause"),
+        ("display_hours", True, "Display hours in the timer"),
         (
             "update_interval",
             1,
@@ -119,7 +120,12 @@ class Pomodoro(base.InLoopPollText):
         else:
             self.layout.colour = self.color_break
 
-        time_string = f"{time_left.seconds // 3600:d}:{time_left.seconds % 3600 // 60:02d}:{time_left.seconds % 60:02d}"
+        # Add hours to the start of the timer if applicable.
+        time_string = ""
+        if self.display_hours is True:
+            time_string += f"{time_left.seconds // 3600:d}:"
+
+        time_string += f"{time_left.seconds % 3600 // 60:02d}:{time_left.seconds % 60:02d}"
         return self.prefix[self.status] + time_string
 
     @expose_command()
