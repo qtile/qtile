@@ -19,6 +19,7 @@ class Pomodoro(base.InLoopPollText):
         ("color_break", "ffff00", "Colour then it is break time"),
         ("notification_on", True, "Turn notifications on"),
         ("notification_urgent", True, "Mark notifications as urgent"),
+        ("notification_title", "Pomodoro", "Title of the notifications sent"),
         ("prefix_inactive", "POMODORO", "Prefix when app is inactive"),
         ("prefix_active", "", "Prefix then app is active"),
         ("prefix_break", "B ", "Prefix during short break"),
@@ -157,7 +158,7 @@ class Pomodoro(base.InLoopPollText):
             self.status = self.STATUS_START
 
     def _send_notification(self, message):
-        send_notification("Pomodoro", message, urgent=self.notification_urgent)
+        send_notification(self.notification_title, message, urgent=self.notification_urgent)
 
     def poll(self):
         return self._get_text()
