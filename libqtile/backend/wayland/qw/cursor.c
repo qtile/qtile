@@ -312,20 +312,19 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     uint32_t button = qw_util_get_button_code(event->button);
     bool pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED;
     bool handled = false;
-    static int pressed_button_count = 0;
     // TODO: exclusive client
 
     if (button != 0) {
         if (pressed) {
-            pressed_button_count++;
+            cursor->pressed_button_count++;
         } else {
-            pressed_button_count--;
+            cursor->pressed_button_count--;
         }
 
         if (cursor->implicit_grab.live) {
             wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                            event->state);
-            if (pressed_button_count == 0) {
+            if (cursor->pressed_button_count == 0) {
                 qw_cursor_release_implicit_grab(cursor, event->time_msec);
             }
             return;
@@ -338,7 +337,7 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
             if (!handled) {
                 struct wlr_surface *surface = seat->pointer_state.focused_surface;
                 struct wlr_drag *drag = cursor->server->seat->drag;
-                if (pressed_button_count == 1 && surface != NULL && drag == NULL) {
+                if (cursor->pressed_button_count == 1 && surface != NULL && drag == NULL) {
                     qw_cursor_create_implicit_grab(cursor, event->time_msec);
                 }
             }
@@ -430,6 +429,7 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     cursor->prev_wid = -1;
     cursor->last_motion_time = 0;
     cursor->drag_polling_rate = 0;
+    cursor->pressed_button_count = 0;
     cursor->cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(cursor->cursor, server->output_layout);
     cursor->mgr = wlr_xcursor_manager_create(NULL, 24);
