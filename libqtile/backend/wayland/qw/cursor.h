@@ -47,6 +47,7 @@ struct qw_cursor {
     bool pointer_masked;
     uint32_t drag_polling_rate;
     uint32_t last_motion_time;
+    int pressed_button_count;
 };
 
 struct qw_pointer_constraint {
