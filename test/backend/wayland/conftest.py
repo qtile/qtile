@@ -334,3 +334,9 @@ def test_client(wmanager, request):
 def virtual_keyboard(wmanager):
     with ClientHandler("virtual-keyboard", wmanager) as keyboard:
         yield keyboard
+
+
+@pytest.fixture
+def virtual_pointer(wmanager):
+    with ClientHandler("virtual-pointer", wmanager) as pointer:
+        yield pointer

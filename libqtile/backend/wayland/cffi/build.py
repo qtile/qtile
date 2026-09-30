@@ -144,6 +144,11 @@ PROTOS: list[Protocol] = [
         build_client=True,
         build_server=False,
     ),
+    Protocol(
+        f"{QW_PROTO_IN_PATH}/wlr-virtual-pointer-unstable-v1.xml",
+        build_client=True,
+        build_server=False,
+    ),
 ]
 
 TEST_CLIENTS: list[TestClient] = [
@@ -221,6 +226,15 @@ TEST_CLIENTS: list[TestClient] = [
             CLIENT_BASE,
             QW_PROTO_OUT_PATH / "keyboard-shortcuts-inhibit-unstable-v1-protocol.c",
             QW_PROTO_OUT_PATH / "xdg-shell-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
+    TestClient(
+        name="virtual-pointer",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "virtual-pointer.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "wlr-virtual-pointer-unstable-v1-protocol.c",
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),
