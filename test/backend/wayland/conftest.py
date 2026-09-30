@@ -60,6 +60,7 @@ class WaylandBackend(Backend):
         self.core = Core
         self.manager = None
         self._keyboard = None
+        self._pointer = None
 
     @property
     def keyboard(self):
@@ -68,6 +69,20 @@ class WaylandBackend(Backend):
             self._keyboard = ClientHandler("virtual-keyboard", self.manager)
             self._keyboard._run()
         return self._keyboard
+
+    @property
+    def pointer(self):
+        if self._pointer is None:
+            self._pointer = ClientHandler("virtual-pointer", self.manager)
+            self._pointer._run()
+            # Find the combined extent of all screens
+            screens = self.manager.c.get_screens()
+            min_x = min(s["x"] for s in screens)
+            min_y = min(s["y"] for s in screens)
+            extent_x = max(s["x"] + s["width"] for s in screens) - min_x
+            extent_y = max(s["y"] + s["height"] for s in screens) - min_y
+            self._pointer.assert_ok(f"extent {extent_x} {extent_y}")
+        return self._pointer
 
     def create(self):
         """This is used to instantiate the Core"""
@@ -84,8 +99,7 @@ class WaylandBackend(Backend):
 
     def fake_motion(self, x, y):
         """Move pointer to the specified coordinates"""
-        self.warp_pointer(x, y)
-        # TODO: Implement fake motion using virtual pointer
+        self.pointer.assert_ok(f"move {x} {y}")
 
     def warp_pointer(self, x, y):
         self.manager.c.eval(f"self.core.warp_pointer({x}, {y}, motion=True)")
@@ -104,16 +118,17 @@ class WaylandBackend(Backend):
         self.keyboard.assert_ok(f"release {keycode}")
 
     def fake_button_press(self, button=1):
-        self.manager.c.eval(f"self.core.fake_click({button})")
+        button_code = self.manager.c.eval(f"self.core.get_button_code({button})")
+        self.pointer.assert_ok(f"button_press {button_code}")
 
     def fake_button_release(self, button=1):
-        # TODO: Use virtual pointer for button presses
-        pass
+        button_code = self.manager.c.eval(f"self.core.get_button_code({button})")
+        self.pointer.assert_ok(f"button_release {button_code}")
 
     def hold_modifier(self, name):
         self.keyboard.assert_ok(f"set_modifier {name}")
 
-    # This method signature is slightly misleading: it release all modifiers
+    # This method signature is slightly misleading: on wayland, it releases all modifiers
     def release_modifier(self, name):
         self.keyboard.assert_ok("clear_modifiers")
 

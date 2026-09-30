@@ -2,6 +2,7 @@ import pytest
 
 from libqtile import bar, config, hook, layout, log_utils, resources, widget
 from libqtile.confreader import Config
+from libqtile.lazy import lazy
 from test.conftest import BareConfig, dualmonitor
 from test.helpers import window_by_name
 from test.layouts.layout_utils import assert_focused, assert_unfocused
@@ -678,3 +679,41 @@ def test_move_float_above_tiled(manager):
 
     window_by_name(manager.c, "two").toggle_floating()
     assert _clients() == ["one", "three", "two"]
+
+
+class DragToMoveConfig(BareConfig):
+    mouse = [
+        config.Drag(
+            ["mod4"],
+            "Button3",
+            lazy.window.set_position_floating(),
+            start=lazy.window.get_position(),
+        ),
+    ]
+
+
+@pytest.mark.parametrize("manager", [DragToMoveConfig], indirect=True)
+def test_drag_to_move_window(manager):
+    """Test that dragging a floating window with the mouse moves it."""
+
+    manager.test_window("one")
+    manager.c.window.enable_floating()
+    manager.c.window.set_position_floating(100, 100)
+    manager.c.window.set_size_floating(200, 150)
+
+    info = manager.c.window.info()
+    assert (info["x"], info["y"]) == (100, 100)
+
+    # Put the cursor over the window before pressing anything.
+    manager.backend.fake_motion(150, 150)
+
+    # Hold Super, press button3 and drag by (150, 80), release.
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_motion(300, 230)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+
+    info = manager.c.window.info()
+    assert (info["x"], info["y"]) == (250, 180)  # 100 + 150, 100 + 80
+    assert (info["width"], info["height"]) == (200, 150)
