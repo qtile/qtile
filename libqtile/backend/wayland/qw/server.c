@@ -90,9 +90,11 @@ void qw_server_finalize(struct qw_server *server) {
     wl_list_remove(&server->new_shortcut_inhibitor.link);
 
 #if WLR_HAS_XWAYLAND
-    wl_list_remove(&server->new_xwayland_surface.link);
-    wl_list_remove(&server->xwayland_ready.link);
-    wlr_xwayland_destroy(server->xwayland);
+    if (server->xwayland != NULL) {
+        wl_list_remove(&server->new_xwayland_surface.link);
+        wl_list_remove(&server->xwayland_ready.link);
+        wlr_xwayland_destroy(server->xwayland);
+    }
 #endif
 
     wl_display_destroy_clients(server->display);
@@ -497,7 +499,7 @@ static void qw_server_handle_xwayland_ready(struct wl_listener *listener, void *
 }
 
 const char *qw_server_xwayland_display_name(struct qw_server *server) {
-    return server->xwayland->display_name;
+    return server->xwayland ? server->xwayland->display_name : NULL;
 }
 #else
 const char *qw_server_xwayland_display_name(struct qw_server *server) {
@@ -1089,14 +1091,14 @@ bool qw_server_init(struct qw_server *server) {
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     if (server->xwayland == NULL) {
-        wlr_log(WLR_ERROR, "failed to create xwayland");
-        return false;
+        wlr_log(WLR_ERROR, "failed to set up xwayland, continuing without X11 support");
+    } else {
+        wlr_xwayland_set_seat(server->xwayland, server->seat);
+        server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
+        wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
+        server->xwayland_ready.notify = qw_server_handle_xwayland_ready;
+        wl_signal_add(&server->xwayland->events.ready, &server->xwayland_ready);
     }
-    wlr_xwayland_set_seat(server->xwayland, server->seat);
-    server->new_xwayland_surface.notify = qw_server_handle_new_xwayland_surface;
-    wl_signal_add(&server->xwayland->events.new_surface, &server->new_xwayland_surface);
-    server->xwayland_ready.notify = qw_server_handle_xwayland_ready;
-    wl_signal_add(&server->xwayland->events.ready, &server->xwayland_ready);
 #endif
 
     // Initializes the interface used to implement urgency hints
