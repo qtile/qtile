@@ -562,6 +562,27 @@ def test_client_mouse_enter(manager_nospawn):
     assert_window(manager_nospawn, "Test Client")
 
 
+class FocusOnEnter(CallWindow):
+    def __call__(self, window):
+        super().__call__(window)  # records name and increments count
+        window.group.focus(window)
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_client_mouse_enter_without_recursion(manager_nospawn):
+    class MouseEnterLoopConfig(BareConfig):
+        test = FocusOnEnter()
+        hook.subscribe.client_mouse_enter(test)
+
+    manager_nospawn.start(MouseEnterLoopConfig)
+    manager_nospawn.test_window("Test Client")
+    manager_nospawn.backend.fake_click(0, 0)
+
+    count = int(manager_nospawn.c.eval("self.config.test.count"))
+    # wayland count = 1, x11 count = 2
+    assert 1 <= count <= 2
+
+
 @pytest.mark.usefixtures("hook_fixture")
 def test_client_focus_by_click(manager_nospawn):
     class ClientMouseClickConfig(BareConfig):
