@@ -282,20 +282,14 @@ class Base(base._Window):
 
         hook.fire("client_focus", self)
 
-    def handle_EnterNotify(self) -> None:  # noqa: N802
-        if self is not self.qtile.current_window:
-            if self.qtile.config.follow_mouse_focus is True:
-                if isinstance(self, Static):
-                    self.qtile.focus_screen(self.screen.index, False)
-                elif isinstance(self, base.Window):
-                    if self.group and self.group.current_window != self:
-                        self.group.focus(self, False)
-                    if (
-                        self.group
-                        and self.group.screen
-                        and self.qtile.current_screen != self.group.screen
-                    ):
-                        self.qtile.focus_screen(self.group.screen.index, False)
+    def handle_pointer_notify_enter(self, sx: int, sy: int) -> None:
+        pass
+
+    def handle_pointer_notify_leave(self, sx: int, sy: int) -> None:
+        pass
+
+    def handle_pointer_notify_motion(self, sx: int, sy: int) -> bool:
+        return False
 
 
 class Internal(Base, base.Internal):
@@ -332,6 +326,17 @@ class Internal(Base, base.Internal):
         lib.qw_internal_view_set_buffer_with_damage(
             self._internal_ptr, offsetx, offsety, width, height
         )
+
+    def handle_pointer_notify_enter(self, x, y) -> None:
+        self.qtile.hovered_window = self
+        self.process_pointer_enter(x, y)
+
+    def handle_pointer_notify_leave(self, x, y) -> None:
+        self.process_pointer_leave(x, y)
+
+    def handle_pointer_notify_motion(self, x, y) -> bool:
+        self.process_pointer_motion(x, y)
+        return True
 
     @expose_command()
     def kill(self) -> None:
@@ -479,6 +484,11 @@ class Window(Base, base.Window):
     @expose_command()
     def is_visible(self) -> bool:
         return lib.qw_view_is_visible(self._ptr)
+
+    def handle_pointer_notify_enter(self, x, y) -> None:
+        self.qtile.hovered_window = self
+        hook.fire("client_mouse_enter", self)
+        self._focus_on_pointer_enter()
 
     @expose_command()
     def static(

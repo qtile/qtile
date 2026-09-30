@@ -651,6 +651,13 @@ class Window(_Window, metaclass=ABCMeta):
         """Remove inhibitor rule for this window."""
         self.qtile.core.idle_inhibitor_manager.remove_window_inhibitor(self)
 
+    def _focus_on_pointer_enter(self) -> None:
+        if self.qtile.config.follow_mouse_focus is True and self.group is not None:
+            if self.group.current_window != self:
+                self.group.focus(self, False)
+            if self.group.screen and self.qtile.current_screen != self.group.screen:
+                self.qtile.focus_screen(self.group.screen.index, False)
+
 
 class Internal(_Window, metaclass=ABCMeta):
     """An Internal window belonging to Qtile."""

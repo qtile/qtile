@@ -121,12 +121,6 @@ def unmanage_view_cb(view: ffi.CData, userdata: ffi.CData) -> None:
 
 
 @ffi.def_extern()
-def cursor_motion_cb(userdata: ffi.CData) -> None:
-    core = ffi.from_handle(userdata)
-    core.handle_cursor_motion()
-
-
-@ffi.def_extern()
 def cursor_button_cb(
     button: int, mask: int, pressed: bool, x: int, y: int, userdata: ffi.CData
 ) -> int:
@@ -262,7 +256,6 @@ class Core(base.Core):
         self.qw.keyboard_key_cb = lib.keyboard_key_cb
         self.qw.manage_view_cb = lib.manage_view_cb
         self.qw.unmanage_view_cb = lib.unmanage_view_cb
-        self.qw.cursor_motion_cb = lib.cursor_motion_cb
         self.qw.cursor_button_cb = lib.cursor_button_cb
         self.qw.pointer_event_cb = lib.pointer_event_cb
         self.qw.on_screen_change_cb = lib.on_screen_change_cb
@@ -420,40 +413,24 @@ class Core(base.Core):
             self.qtile.reserve_space(delta, screen)
             self._output_reserved_space[screen] = new_reserved_space
 
-    def handle_cursor_motion(self) -> None:
-        # TODO: see x11 core.handle_MotionNotify rate limiting
-        assert self.qtile is not None
-        # self._focus_pointer(motion=True)
+    def handle_pointer_notify_motion(self, x, y) -> bool:
         self.qtile.process_button_motion(
             int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
         )
+        return True
 
     def handle_pointer_event(self, wid: int, sx: int, sy: int, event_type: int) -> None:
-        # TODO: Tidy up all the isinstances going on here (mypy!!)
-        assert self.qtile is not None
         win = self.qtile.windows_map.get(wid)
-        if event_type == lib.QW_POINTER_CLIENT_ENTER or event_type == lib.QW_POINTER_CLIENT_LEAVE:
-            if win is None or isinstance(win, base.Internal):
-                return
-            if event_type == lib.QW_POINTER_CLIENT_ENTER:
-                self.qtile.hovered_window = win
-                hook.fire("client_mouse_enter", win)
-                if not isinstance(win, Base):
-                    return
-                win.handle_EnterNotify()
-            if event_type == lib.QW_POINTER_CLIENT_LEAVE:
-                self.qtile.hovered_window = None
-        else:
-            if not isinstance(win, base.Internal):
-                return
-            if event_type == lib.QW_POINTER_INTERNAL_ENTER:
-                self.qtile.hovered_window = win
-                win.process_pointer_enter(sx, sy)
-            elif event_type == lib.QW_POINTER_INTERNAL_LEAVE:
-                self.qtile.hovered_window = None
-                win.process_pointer_leave(sx, sy)
-            elif event_type == lib.QW_POINTER_INTERNAL_MOTION:
-                win.process_pointer_motion(sx, sy)
+        if win is None or not isinstance(win, Base):
+            return
+
+        if event_type == lib.QW_POINTER_ENTER:
+            win.handle_pointer_notify_enter(sx, sy)
+        elif event_type == lib.QW_POINTER_LEAVE:
+            win.handle_pointer_notify_leave(sx, sy)
+        elif event_type == lib.QW_POINTER_MOTION:
+            if not win.handle_pointer_notify_motion(sx, sy):
+                self.handle_pointer_notify_motion(sx, sy)
 
     def update_drag_polling_rate(self):
         rate = self.qtile.current_screen.x11_drag_polling_rate or 0
@@ -601,36 +578,6 @@ class Core(base.Core):
 
         return view
 
-    def _focus_pointer(self, motion: bool) -> None:
-        assert self.qtile is not None
-        view = self.qw_cursor.view
-
-        if view == ffi.NULL:
-            return
-
-        win = self.qtile.windows_map.get(view.wid)
-
-        # if self.qtile.hovered_window is not win:
-        #     # We only want to fire client_mouse_enter once, so check
-        #     # self.qtile.hovered_window.
-        #     hook.fire("client_mouse_enter", win)
-
-        if win is not self.qtile.current_window:
-            if motion and self.qtile.config.follow_mouse_focus is True:
-                if isinstance(win, Static):
-                    self.qtile.focus_screen(win.screen.index, False)
-                elif isinstance(win, base.Window):
-                    if win.group and win.group.current_window != win:
-                        win.group.focus(win, False)
-                    if (
-                        win.group
-                        and win.group.screen
-                        and self.qtile.current_screen != win.group.screen
-                    ):
-                        self.qtile.focus_screen(win.group.screen.index, False)
-
-        # self.qtile.hovered_window = win
-
     def handle_view_activation(self, view: ffi.CData) -> None:
         """Handle view urgency notification"""
         assert self.qtile is not None
@@ -722,7 +669,6 @@ class Core(base.Core):
         lib.qw_cursor_mask_pointer_events(self.qw_cursor, False)
         # Update pointer focus without cursor motion
         lib.qw_cursor_update_pointer_focus(self.qw_cursor)
-        # self._focus_pointer(motion=False)
 
     @property
     def name(self) -> str:

@@ -24,7 +24,8 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 }
 
 // Forward declaration: dispatch Internal-view enter/leave/motion to compositor.
-static void qw_cursor_dispatch_pointer(struct qw_cursor *cursor, double sx, double sy);
+static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, double sx, double sy,
+                                                    uint32_t time);
 
 // Pointer focus helper function
 static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *surface, double sx,
@@ -45,7 +46,8 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
     // qw_cursor_dispatch_pointer(cursor, sx, sy);
 }
 
-static void qw_cursor_dispatch_pointer(struct qw_cursor *cursor, double sx, double sy) {
+static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, double sx, double sy,
+                                                    uint32_t time) {
     struct qw_server *server = cursor->server;
     struct qw_view *view = cursor->view;
 
@@ -60,7 +62,6 @@ static void qw_cursor_dispatch_pointer(struct qw_cursor *cursor, double sx, doub
         // pointer moved over a different window
         int old_wid = cursor->prev_wid;
         bool old_internal = cursor->prev_was_internal;
-        int event_type;
 
         cursor->prev_wid = new_wid;
         cursor->prev_was_internal = new_internal;
@@ -70,19 +71,21 @@ static void qw_cursor_dispatch_pointer(struct qw_cursor *cursor, double sx, doub
 
         if (old_wid != -1 && !client_to_client) {
             // pointer left a window.
-            // If moved from client to client, no need for LEAVE event
-            event_type = old_internal ? QW_POINTER_INTERNAL_LEAVE : QW_POINTER_CLIENT_LEAVE;
-            server->pointer_event_cb(old_wid, 0, 0, event_type, server->cb_data);
+            // When moved from client to client, no need for LEAVE event
+            server->pointer_event_cb(old_wid, (int)sx, (int)sy, QW_POINTER_LEAVE, server->cb_data);
         }
         if (new_wid != -1) {
             // pointer entered a new window
-            event_type = new_internal ? QW_POINTER_INTERNAL_ENTER : QW_POINTER_CLIENT_ENTER;
-            server->pointer_event_cb(new_wid, (int)sx, (int)sy, event_type, server->cb_data);
+            server->pointer_event_cb(new_wid, (int)sx, (int)sy, QW_POINTER_ENTER, server->cb_data);
         }
-    } else if (new_wid != -1 && new_internal) {
+    } else if ((new_wid != -1 && new_internal) || cursor->pressed_button_count > 0) {
         // pointer moved within an internal window
-        server->pointer_event_cb(new_wid, (int)sx, (int)sy, QW_POINTER_INTERNAL_MOTION,
-                                 server->cb_data);
+        // or we're dragging
+        uint32_t rate = cursor->drag_polling_rate; // 0 = unlimited
+        if (rate == 0 || (time - cursor->last_motion_time) > 1000 / rate) {
+            cursor->last_motion_time = time;
+            server->pointer_event_cb(new_wid, (int)sx, (int)sy, QW_POINTER_MOTION, server->cb_data);
+        }
     }
 }
 
@@ -128,7 +131,8 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
         }
 
         // Still notify the server of cursor position for UI updates
-        cursor->server->cursor_motion_cb(cursor->server->cb_data);
+        // TODO: Not sure what to do here, if this call is necessary?
+        // cursor->server->cursor_motion_cb(cursor->server->cb_data);
         return;
     }
 
@@ -160,17 +164,7 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
     wlr_cursor_move(cursor->cursor, device, dx, dy);
 
     update_pointer_focus(cursor, surface, sx, sy);
-    qw_cursor_dispatch_pointer(cursor, sx, sy);
-
-    // Notify server callback with current cursor position
-    // cursor->server->cursor_motion_cb(cursor->server->cb_data);
-    if (seat->pointer_state.button_count > 0) {
-        uint32_t rate = cursor->drag_polling_rate; // 0 = unlimited
-        if (rate == 0 || (time - cursor->last_motion_time) > 1000 / rate) {
-            cursor->last_motion_time = time;
-            cursor->server->cursor_motion_cb(cursor->server->cb_data);
-        }
-    }
+    qw_cursor_dispatch_pointer_notification(cursor, sx, sy, time);
 
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);
@@ -230,15 +224,13 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
 
 void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y, bool motion) {
     wlr_cursor_warp_closest(cursor->cursor, NULL, x, y);
-    qw_cursor_update_pointer_focus(cursor);
+    struct wlr_surface *surface = NULL;
+    double sx = 0.0, sy = 0.0;
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+    update_pointer_focus(cursor, surface, sx, sy);
     if (motion) {
-        // TODO: come up with something better than calling view_at again
-        struct wlr_surface *surface = NULL;
-        double sx = 0.0, sy = 0.0;
-        cursor->view = qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y,
-                                         &surface, &sx, &sy);
-        qw_cursor_dispatch_pointer(cursor, sx, sy);
-        cursor->server->cursor_motion_cb(cursor->server->cb_data);
+        qw_cursor_dispatch_pointer_notification(cursor, sx, sy, 0);
     }
 }
 
