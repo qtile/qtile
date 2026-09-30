@@ -681,6 +681,9 @@ class Core(base.Core):
             )
         return code
 
+    def get_button_code(self, button: int) -> int:
+        return lib.qw_util_get_button_code(button)
+
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         if isinstance(key.key, str):
             keysym = lib.qwu_keysym_from_name(key.key.encode())
