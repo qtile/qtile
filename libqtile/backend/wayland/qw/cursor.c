@@ -287,14 +287,19 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
     struct wlr_keyboard *kb = wlr_seat_get_keyboard(cursor->server->seat);
     uint32_t modifiers = kb ? wlr_keyboard_get_modifiers(kb) : 0;
 
+    if (cursor->view == NULL) {
+        return false;
+    }
+
     // TODO: Callback should only fire for bound modifier + button combos
-    if (cursor->view != NULL && !cursor->view->grabbed_click && modifiers == 0) {
+    if (!cursor->view->grabbed_click && modifiers == 0) {
         return false;
     }
 
     // Call server's button callback with button info and modifiers
     return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
-                                            (int)cursor->cursor->y, cursor->server->cb_data) != 0;
+                                            (int)cursor->cursor->y, cursor->pressed_wid,
+                                            cursor->server->cb_data) != 0;
 }
 
 static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
@@ -313,6 +318,10 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
 
     if (button != 0) {
         if (pressed) {
+            // on first press capture window wid
+            if (cursor->pressed_button_count == 0) {
+                cursor->pressed_wid = cursor->view ? cursor->view->wid : -1;
+            }
             cursor->pressed_button_count++;
         } else {
             cursor->pressed_button_count--;
