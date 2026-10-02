@@ -378,7 +378,7 @@ extern "Python" void view_activation_cb(struct qw_view *view, void *userdata);
 extern "Python" int keyboard_key_cb(xkb_keysym_t, uint32_t, void *userdata);
 extern "Python" void manage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void unmanage_view_cb(struct qw_view *view, void *userdata);
-extern "Python" int cursor_button_cb(int button, uint32_t mask, bool pressed, int x, int y, void *userdata);
+extern "Python" int cursor_button_cb(int button, uint32_t mask, bool pressed, int x, int y, int wid, void *userdata);
 extern "Python" void pointer_event_cb(int wid, int sx, int sy, int event_type, void *userdata);
 extern "Python" void on_screen_change_cb(void *userdata);
 extern "Python" void on_screen_reserve_space_cb(struct qw_output *output, void *userdata);

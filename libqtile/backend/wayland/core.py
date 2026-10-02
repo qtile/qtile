@@ -122,10 +122,10 @@ def unmanage_view_cb(view: ffi.CData, userdata: ffi.CData) -> None:
 
 @ffi.def_extern()
 def cursor_button_cb(
-    button: int, mask: int, pressed: bool, x: int, y: int, userdata: ffi.CData
+    button: int, mask: int, pressed: bool, x: int, y: int, wid: int, userdata: ffi.CData
 ) -> int:
     core = ffi.from_handle(userdata)
-    if core.handle_cursor_button(button, mask, pressed, x, y):
+    if core.handle_cursor_button(button, mask, pressed, x, y, wid):
         return 1
     return 0
 
@@ -437,24 +437,46 @@ class Core(base.Core):
         lib.qw_cursor_drag_polling_rate(self.qw_cursor, rate)
         logger.debug(f"x11_drag_polling_rate updated: {rate}")
 
-    def handle_cursor_button(self, button: int, mask: int, pressed: bool, x: int, y: int) -> bool:
-        assert self.qtile is not None
-        if pressed:
-            handled = self.qtile.process_button_click(int(button), int(mask), x, y)
+    def handle_cursor_button(
+        self, button: int, mask: int, pressed: bool, x: int, y: int, wid: int
+    ) -> bool:
+        # TODO: Consider refactor to bring closer to x11 backend.
+        # focus_by_click could be a common method?
+        win = self.qtile.windows_map.get(wid)
 
-            if not handled and not self.qw_cursor.implicit_grab.live:
+        if pressed:
+            if self.qtile.process_button_click(int(button), int(mask), x, y):
+                return True
+
+            if not self.qw_cursor.implicit_grab.live:
                 self._focus_by_click()
 
-            if isinstance(self.qtile.hovered_window, Internal):
-                self.qtile.hovered_window.process_button_click(
-                    int(self.qw_cursor.cursor.x - self.qtile.hovered_window.x),
-                    int(self.qw_cursor.cursor.y - self.qtile.hovered_window.y),
+            if win is not None and isinstance(win, Internal):
+                win.process_button_click(
+                    int(self.qw_cursor.cursor.x - win.x),
+                    int(self.qw_cursor.cursor.y - win.y),
                     int(button),
                 )
+                return True
 
-            return handled
+            return False
         else:
-            return self.qtile.process_button_release(button, mask)
+            if self.qtile.process_button_release(button, mask):
+                return True
+
+            if wid != -1 and win is None:
+                # pressed window no longer exists
+                return True
+
+            if win is not None and isinstance(win, Internal):
+                win.process_button_release(
+                    int(self.qw_cursor.cursor.x - win.x),
+                    int(self.qw_cursor.cursor.y - win.y),
+                    int(button),
+                )
+                return True
+
+            return False
 
     @expose_command
     def get_cursor_shape_v1(self) -> str:

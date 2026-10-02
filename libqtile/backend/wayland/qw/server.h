@@ -94,7 +94,7 @@ typedef void (*unmanage_view_cb_t)(struct qw_view *view, void *userdata);
 typedef void (*manage_view_cb_t)(struct qw_view *view, void *userdata);
 
 // Cursor button event callback: button, modifiers, pressed state, position, user data
-typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x, int y,
+typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x, int y, int wid,
                                   void *userdata);
 
 // Pointer enter/leave/motion event on an Internal view (e.g. a bar).
