@@ -5,8 +5,8 @@ Xwayland is an optional dependency for running Qtile on Wayland with X11 support
 This test ensures that Qtile can run correctly without Xwayland.
 
 The test is skipped when Xwayland is installed. In CI it runs in the matrix entry
-with QTILE_CI_XWAYLAND=false (set in .github/workflows/ci.yml), for which
-scripts/ci-entrypoint removes Xwayland from the container.
+without Xwayland, where the workflow removes Xwayland from the Docker image
+(see .github/workflows/ci.yml).
 """
 
 import shutil

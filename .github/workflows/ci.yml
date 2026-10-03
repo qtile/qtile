@@ -28,6 +28,13 @@ jobs:
             - name: Build Docker image
               run: |
                 docker build -t qtile-ci .
+            - name: Remove Xwayland from image
+              if: ${{ !matrix.xwayland }}
+              run: |
+                docker build -t qtile-ci - <<'EOF'
+                FROM qtile-ci
+                RUN rpm -e --nodeps xorg-x11-server-Xwayland && ! command -v Xwayland
+                EOF
             - name: Run tests in container
               run: |
                 mkdir coredumps
@@ -36,7 +43,6 @@ jobs:
               env:
                 QTILE_CI_PYTHON: ${{ matrix.python-version }}
                 QTILE_CI_BACKEND: ${{ matrix.backend }}
-                QTILE_CI_XWAYLAND: ${{ matrix.xwayland }}
                 GITHUB_ACTIONS: true
                 GITHUB_REF: ${{ github.ref }}
                 GITHUB_SHA: ${{ github.sha }}
