@@ -329,11 +329,17 @@ static qw_anim_progress qw_anim_get_state(qw_anim *anim) {
 
 void qw_anim_setup(qw_anim *anim, struct qw_view *base, struct wlr_box target, int duration,
                    bool repos, qw_easing_t ease) {
-    anim->start_pos = (Vec2){base->x, base->y};
+    if (anim->is_active) {
+        anim->start_pos = anim->current_pos;
+        anim->start_width = anim->current_width;
+        anim->start_height = anim->current_height;
+    } else {
+        anim->start_pos = (Vec2){base->x, base->y};
+        anim->start_width = base->width;
+        anim->start_height = base->height;
+    }
     anim->target_pos = (Vec2){target.x, target.y};
     anim->start_time = qw_anim_get_time_ms();
-    anim->start_width = base->width;
-    anim->start_height = base->height;
     anim->target_width = target.width;
     anim->target_height = target.height;
     anim->duration = (double)duration;
@@ -342,14 +348,23 @@ void qw_anim_setup(qw_anim *anim, struct qw_view *base, struct wlr_box target, i
     anim->ease = qw_anim_get_ease(ease);
 }
 
+void qw_anim_seed_offset(struct qw_view *view, int dx, int dy, int duration, qw_easing_t ease) {
+    struct wlr_box target = {view->x, view->y, view->width, view->height};
+    qw_anim_setup(&view->anim, view, target, duration, false, ease);
+    view->anim.start_pos = (Vec2){view->x + dx, view->y + dy};
+}
+
 void qw_anim_step(struct qw_view *base) {
     if (!base->anim.is_active || !base->content_tree)
         return;
 
     qw_anim_progress c_state = qw_anim_get_state(&base->anim);
 
-    Vec2 curr;
-    qw_anim_update_position(&base->anim, c_state.elapsed, &curr);
+    Vec2 curr = {
+        .x = qw_anim_lerp(base->anim.start_pos.x, base->anim.target_pos.x, c_state.eased_t),
+        .y = qw_anim_lerp(base->anim.start_pos.y, base->anim.target_pos.y, c_state.eased_t),
+    };
+    base->anim.current_pos = curr;
     wlr_scene_node_set_position(&base->content_tree->node, (int)curr.x, (int)curr.y);
 
     if (base->anim.needs_scale) {
@@ -357,15 +372,20 @@ void qw_anim_step(struct qw_view *base) {
             (int)qw_anim_lerp(base->anim.start_width, base->anim.target_width, c_state.eased_t);
         int cur_h =
             (int)qw_anim_lerp(base->anim.start_height, base->anim.target_height, c_state.eased_t);
+        base->anim.current_width = cur_w;
+        base->anim.current_height = cur_h;
         qw_anim_apply_view_scale(base, cur_w, cur_h);
     }
 
     if (c_state.elapsed >= base->anim.duration) {
         wlr_scene_node_set_position(&base->content_tree->node, base->anim.target_pos.x,
                                     base->anim.target_pos.y);
+        base->anim.current_pos = base->anim.target_pos;
 
         if (base->anim.needs_scale) {
             qw_anim_apply_view_scale(base, base->anim.target_width, base->anim.target_height);
+            base->anim.current_width = base->anim.target_width;
+            base->anim.current_height = base->anim.target_height;
         }
 
         if (base->on_anim_complete) {
@@ -377,7 +397,6 @@ void qw_anim_step(struct qw_view *base) {
         }
 
         base->anim.is_active = false;
-        return;
     }
 }
 

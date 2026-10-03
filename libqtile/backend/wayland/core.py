@@ -291,7 +291,7 @@ class Core(base.Core):
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
         self.qw.anim_complete_cb = lib.anim_complete_cb
-        self._anim_complete_callbacks: dict[int, list[Callable[[], None]]] = {}
+        self._anim_complete_callbacks: dict[int, list[tuple[int, Callable[[], None]]]] = {}
         self._anim_generation: dict[int, int] = defaultdict(int)
 
         self.painter = Painter(self)
@@ -971,12 +971,18 @@ class Core(base.Core):
         self._anim_complete_callbacks.pop(wid, None)
 
     def register_anim_complete(self, wid: int, callback: Callable[[], None]) -> None:
-        self._anim_complete_callbacks.setdefault(wid, []).append(callback)
+        gen = self._anim_generation.get(wid, 0)
+        self._anim_complete_callbacks.setdefault(wid, []).append((gen, callback))
 
     def on_animation_complete(self, wid: int) -> None:
+        gen = self._anim_generation.get(wid)
+        if gen is None:
+            return
+
         callbacks = self._anim_complete_callbacks.pop(wid, [])
-        for cb in callbacks:
-            cb()
+        for cb_gen, cb in callbacks:
+            if cb_gen == gen:
+                cb()
 
     def animate_group_switch(self, screen, old_group, new_group, warp) -> None:
         old_index = self.qtile.groups.index(old_group)
@@ -990,24 +996,10 @@ class Core(base.Core):
             super().animate_group_switch(screen, old_group, new_group, warp)
             return
 
-        with self.qtile.core.masked():
-            sliding_out = list(old_group.windows)
-            for win in sliding_out:
-                orig_x = win.x
-                win.place(
-                    win.x - offset,
-                    win.y,
-                    win.width,
-                    win.height,
-                    win.borderwidth,
-                    win.bordercolor,
-                    duration=duration,
-                    ease=ease,
-                )
-                win.x = orig_x
+        sliding_out = list(old_group.windows)
+        old_group.screen = None
 
-            old_group.screen = None
-
+        if sliding_out:
             remaining = len(sliding_out)
 
             def _on_slide_out_done():
@@ -1016,34 +1008,30 @@ class Core(base.Core):
                 if remaining == 0:
                     old_group.hide()
 
-            if sliding_out:
-                for win in sliding_out:
-                    self.register_anim_complete(win.wid, _on_slide_out_done)
-            else:
-                old_group.hide()
-
-            new_group.set_screen(screen, warp)
-            for win in new_group.windows:
-                target_x = win.x
-                win.place(
-                    target_x + offset,
+            for win in sliding_out:
+                win.animate_to(
+                    win.x - offset,
                     win.y,
                     win.width,
                     win.height,
-                    win.borderwidth,
-                    win.bordercolor,
-                    duration=0,
-                )
-                win.place(
-                    target_x,
-                    win.y,
-                    win.width,
-                    win.height,
-                    win.borderwidth,
-                    win.bordercolor,
                     duration=duration,
                     ease=ease,
+                    on_complete=_on_slide_out_done,
                 )
+        else:
+            old_group.hide()
+
+        new_group.set_screen(screen, warp)
+        for win in new_group.windows:
+            win.animate_to(
+                win.x,
+                win.y,
+                win.width,
+                win.height,
+                duration=duration,
+                ease=ease,
+            )
+            win.seed_anim_offset(offset, 0, duration, ease)
 
 
 class Painter:

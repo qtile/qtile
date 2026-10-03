@@ -7,7 +7,12 @@ from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
 from libqtile.backend.base.window import WindowType
 from libqtile.backend.wayland.drawer import Drawer
-from libqtile.command.base import CommandError, CommandObject, ItemT, expose_command
+from libqtile.command.base import (
+    CommandError,
+    CommandObject,
+    ItemT,
+    expose_command,
+)
 from libqtile.core.manager import Qtile
 from libqtile.group import _Group
 from libqtile.log_utils import logger
@@ -212,18 +217,15 @@ class Base(base._Window):
         """
         duration, ease = resolve_animation(self.qtile, "kill", duration, ease)
 
-        # early escape if we've already marked this window as dead
         if self.defunct:
             return
 
-        # safely eject the window from the layout engine right now
         if self.group:
             group_ref = self.group
             group_ref.remove(self)
 
             self.defunct = True
             self.group = None
-
         self._ptr.kill(self._ptr, duration, get_ease(ease))
 
     def hide(self) -> None:
@@ -350,7 +352,16 @@ class Base(base._Window):
         self._placed = True
         self.core.bump_anim_generation(self.wid)
         self._ptr.place(
-            self._ptr, x, y, width, height, c_layers, n, int(above), duration, get_ease(ease)
+            self._ptr,
+            x,
+            y,
+            width,
+            height,
+            c_layers,
+            n,
+            int(above),
+            duration,
+            get_ease(ease),
         )
 
     @expose_command()
@@ -432,11 +443,9 @@ class Internal(Base, base.Internal):
         if not self._killed:
             duration, ease = resolve_animation(self.qtile, "kill", duration, ease)
 
-            # early escape if we've already marked this window as dead
             if self.defunct:
                 return
 
-            # safely eject the window from the layout engine right now
             if self.group:
                 group_ref = self.group
                 group_ref.remove(self)
@@ -637,7 +646,11 @@ class Window(Base, base.Window):
         hook.fire("client_managed", win)
 
     def _to_static(
-        self, x: int | None, y: int | None, width: int | None, height: int | None
+        self,
+        x: int | None,
+        y: int | None,
+        width: int | None,
+        height: int | None,
     ) -> Static:
         return Static(
             self.qtile,
@@ -709,140 +722,137 @@ class Window(Base, base.Window):
                 self.group.remove(self)
             group.add(self)
 
-    def _togroup_slide(self, group, switch_group, toggle, duration, ease):
-        if self.group is not None:
-            old_group = self.group
+    def seed_anim_offset(self, dx: int, dy: int, duration: int, ease: str) -> None:
+        """Seed the animation start position with an offset without changing logical geometry."""
+        if self._ptr:
+            lib.qw_anim_seed_offset(self._ptr, dx, dy, duration, get_ease(ease))
+
+    def animate_to(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        duration: int | None,
+        ease: str,
+        on_complete=None,
+        seed: tuple[int, int] | None = None,
+    ) -> None:
+        """
+        Move/resize the window, then optionally run on_complete once the
+        visual transition finishes (immediately if duration == 0).
+        """
+        self.place(
+            x,
+            y,
+            width,
+            height,
+            self.borderwidth,
+            self.bordercolor,
+            duration=duration,
+            ease=ease,
+        )
+
+        if seed is not None and duration is not None:
+            self.seed_anim_offset(seed[0], seed[1], duration=duration, ease=ease)
+
+        if on_complete is None:
+            return
+        if duration == 0:
+            on_complete()
         else:
+            self.core.register_anim_complete(self.wid, on_complete)
+
+    def _detach_from_group(self, old_group):
+        """Remove self from old_group's bookkeeping immediately, so remaining
+        windows reflow right away instead of waiting for the slide to finish."""
+        if old_group:
+            old_group.remove(self)
+            dgroups = getattr(self.qtile, "dgroups", None)
+            if dgroups and old_group.name in dgroups.groups_map:
+                if not dgroups.groups_map[old_group.name].persist and len(old_group.windows) <= 0:
+                    self.group = old_group
+                    dgroups._del(self)
+                    self.group = None
+
+    def _attach_to_group(self, group, switch_group=False, toggle=False):
+        group.add(self)
+        if switch_group:
+            group.toscreen(toggle=toggle)
+
+    def _move_between_groups(self, group, old_group=None, switch_group=False, toggle=False):
+        self._detach_from_group(old_group or self.group)
+        self._attach_to_group(group, switch_group=switch_group, toggle=toggle)
+
+    def _togroup_slide(self, group, switch_group, toggle, duration, ease):
+        if self.group is None:
             return
 
         duration, ease = resolve_animation(self.qtile, "slide", duration, ease)
+        old_group = self.group
 
         try:
             old_index = self.qtile.groups.index(old_group)
             new_index = self.qtile.groups.index(group)
         except ValueError:
-            # Group not in main list (e.g. dynamic dgroups or post-reload); skip animation
-            if old_group:
-                old_group.remove(self)
-            group.add(self)
-            if switch_group:
-                group.toscreen(toggle=toggle)
+            self._move_between_groups(group, switch_group=switch_group, toggle=toggle)
             return
 
-        direction = -1 if new_index > old_index else 1
+        direction = 1 if new_index > old_index else -1
         screen = old_group.screen or self.qtile.current_screen
-        offset = (screen.dwidth - self.x) if direction == 1 else -(self.x + self.width)
+        offset = (self.x - screen.dwidth) if direction == 1 else (self.x + self.width)
         orig_x = self.x
 
-        with self.qtile.core.masked():
-            self.place(
-                x=self.x - offset,
-                y=self.y,
-                width=self.width,
-                height=self.height,
-                borderwidth=self.borderwidth,
-                bordercolor=self.bordercolor,
-                duration=duration,
-                ease=ease,
-            )
+        self._detach_from_group(old_group)
 
-            if self in old_group.windows:
-                old_group.windows.remove(self)
-            old_group._remove_from_focus_history(self)
-            if hasattr(old_group.layout, "clients") and self in old_group.layout.clients:
-                old_group.layout.clients.remove(self)
-            old_group.layout_all()
-            if hasattr(old_group.layout, "remove"):
-                old_group.layout.remove(self)
-            if old_group.windows:
-                if old_group.screen:
-                    old_group.focus(old_group.windows[-1], force=True)
-
-        def complete_migration():
-            if self.defunct:
-                return
+        def finish():
             self.x = orig_x
-            if (
-                not self.qtile.dgroups.groups_map[old_group.name].persist
-                and len(old_group.windows) <= 0
-            ):
-                self.group = old_group
-                self.qtile.dgroups._del(self)
-                self.group = None
-            self.hide()
             if group.screen and self.x < group.screen.x:
                 self.x += group.screen.x
-            group.add(self)
-            if switch_group:
-                group.toscreen(toggle=toggle)
+            self.hide()
+            self._attach_to_group(group, switch_group=switch_group, toggle=toggle)
 
-        if switch_group or duration == 0:
-            complete_migration()
-        else:
-            self.qtile.core.register_anim_complete(self.wid, complete_migration)
+        self.animate_to(
+            self.x - offset,
+            self.y,
+            self.width,
+            self.height,
+            duration=duration,
+            ease=ease,
+            on_complete=finish,
+        )
 
     def _togroup_scratchpad(self, group, duration, ease, target_is_scratchpad):
-        if not getattr(self, "_placed", False):
-            if self.group:
-                self.group.remove(self)
-            group.add(self)
-            return
-
         duration, ease = resolve_animation(self.qtile, "dropdown", duration, ease)
-        orig_y = self.y
+        screen = self.group.screen if self.group else self.qtile.current_screen
+        hidden_y = screen.dy - self.height if screen is not None else self.y - self.height
 
         if target_is_scratchpad:
-            offset_y = orig_y + self.height + self.borderwidth * 2
-            self.place(
-                x=self.x,
-                y=orig_y - offset_y,
-                width=self.width,
-                height=self.height,
-                borderwidth=self.borderwidth,
-                bordercolor=self.bordercolor,
-                duration=duration,
-                ease=ease,
-            )
 
-            def complete_hide():
-                if self.defunct:
-                    return
-                self.y = orig_y
+            def finish():
                 self.hide()
-                if self.group:
-                    self.group.remove(self)
-                group.add(self)
+                self._move_between_groups(group)
 
-            if duration == 0:
-                complete_hide()
-            else:
-                self.qtile.core.register_anim_complete(self.wid, complete_hide)
-
-        else:
-            offset_y = self.height + self.borderwidth * 2
-            target_y = self.y
-            self._float_state = FloatStates.TOP
-            if self.group:
-                self.group.remove(self)
-            group.add(self)
-            self.place(
-                x=self.x,
-                y=target_y - offset_y,
-                width=self.width,
-                height=self.height,
-                borderwidth=self.borderwidth,
-                bordercolor=self.bordercolor,
-                duration=0,
-            )
-            self.place(
-                x=self.x,
-                y=target_y,
-                width=self.width,
-                height=self.height,
-                borderwidth=self.borderwidth,
-                bordercolor=self.bordercolor,
+            self.animate_to(
+                self.x,
+                hidden_y,
+                self.width,
+                self.height,
                 duration=duration,
                 ease=ease,
+                on_complete=finish,
+            )
+        else:
+            self._move_between_groups(group)
+            self.unhide()
+            self.animate_to(
+                self.x,
+                self.y,
+                self.width,
+                self.height,
+                duration=duration,
+                ease=ease,
+                seed=(0, hidden_y - self.y),
             )
 
     def _items(self, name: str) -> ItemT:
@@ -1041,6 +1051,7 @@ class Window(Base, base.Window):
         w: int | None = None,
         h: int | None = None,
         new_float_state: FloatStates = FloatStates.FLOATING,
+        duration: int | None = None,
     ) -> None:
         if self._float_state != new_float_state:
             old_state = self._float_state
@@ -1057,7 +1068,15 @@ class Window(Base, base.Window):
             self.hide()
         else:
             self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
+                x,
+                y,
+                w,
+                h,
+                self.borderwidth,
+                self.bordercolor,
+                above=False,
+                respect_hints=True,
+                duration=duration,
             )
 
     def _tweak_float(
@@ -1070,6 +1089,7 @@ class Window(Base, base.Window):
         h: int | None = None,
         dw: int = 0,
         dh: int = 0,
+        duration: int | None = None,
     ) -> None:
         if x is None:
             x = self.x
@@ -1098,7 +1118,7 @@ class Window(Base, base.Window):
             self.qtile.focus_screen(screen.index)
             screen.group.add(self, force=True)
 
-        self._reconfigure_floating(x, y, w, h)
+        self._reconfigure_floating(x, y, w, h, duration=duration)
 
     @expose_command()
     def move_floating(self, dx: int, dy: int) -> None:
@@ -1110,7 +1130,7 @@ class Window(Base, base.Window):
 
     @expose_command()
     def set_position_floating(self, x: int, y: int) -> None:
-        self._tweak_float(x=x, y=y)
+        self._tweak_float(x=x, y=y, duration=0)
 
     @expose_command()
     def set_position(self, x: int, y: int) -> None:
@@ -1133,7 +1153,7 @@ class Window(Base, base.Window):
 
     @expose_command()
     def set_size_floating(self, w: int, h: int) -> None:
-        self._tweak_float(w=w, h=h)
+        self._tweak_float(w=w, h=h, duration=0)
 
     @expose_command()
     def toggle_floating(self) -> None:
@@ -1265,7 +1285,16 @@ class Static(Base, base.Static):
         self._place = True
         self.core.bump_anim_generation(self.wid)
         self._ptr.place(
-            self._ptr, x, y, width, height, ffi.NULL, n, int(above), duration, get_ease(ease)
+            self._ptr,
+            x,
+            y,
+            width,
+            height,
+            ffi.NULL,
+            n,
+            int(above),
+            duration,
+            get_ease(ease),
         )
 
     @expose_command()
