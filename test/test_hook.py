@@ -1,4 +1,5 @@
 import asyncio
+import shutil
 import time
 from multiprocessing import Value
 
@@ -593,7 +594,10 @@ def test_client_name_updated(manager_nospawn):
 
 
 @pytest.mark.usefixtures("hook_fixture")
-def test_client_urgent_hint_changed(manager_nospawn):
+def test_client_urgent_hint_changed(manager_nospawn, backend_name):
+    if backend_name == "wayland" and shutil.which("Xwayland") is None:
+        pytest.skip("Needs Xwayland.")
+
     class ClientUrgentHintChangedConfig(BareConfig):
         test = CallWindow()
         hook.subscribe.client_urgent_hint_changed(test)

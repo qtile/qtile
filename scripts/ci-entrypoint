@@ -5,6 +5,15 @@
 # UID:GID, then dropping down to that user
 
 if [ "$(id -u)" -eq 0 ]; then
+    # Prepare for running without XWayland.
+    if [ "$QTILE_CI_XWAYLAND" = "false" ]; then
+        rpm -e --nodeps xorg-x11-server-Xwayland || exit 1
+        if command -v Xwayland >/dev/null; then
+            echo "Xwayland is still installed" >&2
+            exit 1
+        fi
+    fi
+
     USERNAME=${USERNAME:-ci}
     groupadd -g $USER_GID $USERNAME
     useradd -m -u $USER_UID -g $USERNAME -s /bin/bash $USERNAME
