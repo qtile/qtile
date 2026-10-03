@@ -51,14 +51,21 @@ typedef struct {
 typedef struct {
     bool is_active;
     bool needs_scale;
+
     size_t start_time;
+    double duration;
+
+    Vec2 current_pos;
     Vec2 start_pos;
     Vec2 target_pos;
+
     int start_width;
     int start_height;
+    int current_width;
+    int current_height;
     int target_width;
     int target_height;
-    double duration;
+
     qw_easing_func_t ease;
 } qw_anim;
 
@@ -70,7 +77,7 @@ typedef struct {
 
 // Capture time states for the animation
 typedef struct {
-    size_t now;
+    long now;
     double elapsed;
     double t;
     double eased_t;
@@ -86,5 +93,6 @@ void qw_anim_try_animate_resize(struct qw_view *view, qw_anim_box anim_box, int 
                                 bool needs_repos, qw_easing_t ease);
 void qw_anim_kill_slide_down(struct qw_view *view, int duration, qw_easing_t ease,
                              qw_anim_cb kill_complete);
+void qw_anim_seed_offset(struct qw_view *view, int dx, int dy, int duration, qw_easing_t ease);
 
 #endif
