@@ -525,6 +525,22 @@ class Screen(CommandObject):
             self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
 
+    def _adopt_config(self, other: Screen) -> None:
+        """
+        Adopt the configuration of Screen `other`
+        """
+        for position in ("top", "bottom", "left", "right"):
+            old_gap = getattr(self, position)
+            new_gap = getattr(other, position)
+            if old_gap is not None and old_gap is not new_gap:
+                old_gap.finalize()
+            setattr(self, position, new_gap)
+        self.background = other.background
+        self.wallpaper = other.wallpaper
+        self.wallpaper_mode = other.wallpaper_mode
+        self.x11_drag_polling_rate = other.x11_drag_polling_rate
+        self.output = other.output
+
     def paint(self, path: str, mode: str | None = None) -> None:
         if self.qtile:
             self.qtile.paint_screen(self, path, mode)
