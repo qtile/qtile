@@ -211,3 +211,57 @@ def test_generate_screens_serial_matching(manager_nospawn, minimal_conf_noscreen
     assert manager_nospawn.c.screen[0].info()["serial"] == "monitor_left"
     assert manager_nospawn.c.screen[1].bar["top"].widget["textbox"].get() == "right_config"
     assert manager_nospawn.c.screen[1].info()["serial"] == "monitor_right"
+
+
+def test_generate_screens_reuses_existing_screens(
+    manager_nospawn, minimal_conf_noscreen, monkeypatch
+):
+    # When screens are reconfigured, and generate_screens returns a new Screen
+    # object for an existing output, the existing Screen object must be reused
+    # (with the new configuration adopted onto it)
+    minimal_conf_noscreen.generate_screens = staticmethod(
+        lambda outputs: [make_screen(text=o.port) for o in outputs]
+    )
+
+    def two_outputs(self) -> list[Output]:
+        # DP-1 is always present; the second output can be swapped from the test
+        second = getattr(self, "second_port", "DP-2")
+        return [
+            Output("DP-1", None, None, None, ScreenRect(0, 0, 800, 600)),
+            Output(second, None, None, None, ScreenRect(800, 0, 800, 600)),
+        ]
+
+    monkeypatch.setattr(
+        f"libqtile.backend.{manager_nospawn.backend.name}.core.Core.get_output_info", two_outputs
+    )
+    manager_nospawn.start(minimal_conf_noscreen)
+
+    assert manager_nospawn.c.screen[0].info()["port"] == "DP-1"
+    assert manager_nospawn.c.screen[1].info()["port"] == "DP-2"
+    assert manager_nospawn.c.screen.info()["index"] == 0
+
+    screen_0_id_before = manager_nospawn.c.eval("id(self.screens[0])")
+    screen_1_id_before = manager_nospawn.c.eval("id(self.screens[1])")
+    current_screen_id_before = manager_nospawn.c.eval("id(self.current_screen)")
+
+    # Swap DP-2 for DP-3, then reconfigure
+    manager_nospawn.c.eval("setattr(self.core, 'second_port', 'DP-3')")
+    manager_nospawn.c.reconfigure_screens()
+
+    assert manager_nospawn.c.screen[0].info()["port"] == "DP-1"
+    assert manager_nospawn.c.screen[1].info()["port"] == "DP-3"
+
+    screen_0_id_after = manager_nospawn.c.eval("id(self.screens[0])")
+    screen_1_id_after = manager_nospawn.c.eval("id(self.screens[1])")
+    assert screen_0_id_after == screen_0_id_before  # DP-1 reused
+    assert screen_1_id_after != screen_1_id_before  # DP-2 -> DP-3, new Screen
+
+    # Groups must reference live Screen objects
+    assert manager_nospawn.c.eval("all(s.group.screen is s for s in self.screens)") == "True"
+
+    # current_screen object hasn't changed
+    assert manager_nospawn.c.eval("id(self.current_screen)") == current_screen_id_before
+
+    # Replaced screens' bars must have been finalized: one bar window per
+    # remaining screen, no leaks from reconfigure
+    assert len(manager_nospawn.c.internal_windows()) == 2
