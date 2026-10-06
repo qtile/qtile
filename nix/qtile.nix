@@ -41,6 +41,11 @@ let
       postPatch = "";
 
       patches = [ ];
+
+      postInstall = ''
+        install -Dm644 resources/qtile.desktop $out/share/xsessions/qtile.desktop
+        install -Dm644 resources/qtile-wayland.desktop $out/share/wayland-sessions/qtile.desktop
+      '';
     };
 in
 (pkgs.python3Packages.qtile.overrideAttrs qtile-override-func).override {
