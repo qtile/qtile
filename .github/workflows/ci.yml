@@ -7,7 +7,7 @@ on:
 jobs:
     tests:
         runs-on: ubuntu-24.04
-        name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}"
+        name: "python ${{ matrix.python-version }} on ${{ matrix.backend }}${{ !matrix.xwayland && ' without Xwayland' || '' }}"
         strategy:
             matrix:
                 # If you change one of these, be sure to update:
@@ -18,11 +18,23 @@ jobs:
                 # https://github.com/pypy/pypy/issues/4956 is resolved
                 python-version: ['3.12', '3.13', '3.14']
                 backend: ['x11', 'wayland']
+                xwayland: [true]
+                include:
+                    - python-version: '3.14'
+                      backend: wayland
+                      xwayland: false
         steps:
             - uses: actions/checkout@v6
             - name: Build Docker image
               run: |
                 docker build -t qtile-ci .
+            - name: Remove Xwayland from image
+              if: ${{ !matrix.xwayland }}
+              run: |
+                docker build -t qtile-ci - <<'EOF'
+                FROM qtile-ci
+                RUN rpm -e --nodeps xorg-x11-server-Xwayland && ! command -v Xwayland
+                EOF
             - name: Run tests in container
               run: |
                 mkdir coredumps
@@ -35,7 +47,7 @@ jobs:
                 GITHUB_REF: ${{ github.ref }}
                 GITHUB_SHA: ${{ github.sha }}
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                COVERALLS_FLAG_NAME: ${{ format('{0}-{1}', matrix.python-version, matrix.backend) }}
+                COVERALLS_FLAG_NAME: ${{ format('{0}-{1}{2}', matrix.python-version, matrix.backend, !matrix.xwayland && '-no-xwayland' || '') }}
                 COVERALLS_PARALLEL: true
                 COVERALLS_SERVICE_JOB_ID: ${{ github.run_id }}
 
