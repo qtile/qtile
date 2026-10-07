@@ -45,6 +45,9 @@ let
       postInstall = ''
         install -Dm644 resources/qtile.desktop $out/share/xsessions/qtile.desktop
         install -Dm644 resources/qtile-wayland.desktop $out/share/wayland-sessions/qtile.desktop
+
+        substituteInPlace $out/share/xsessions/qtile.desktop \
+          --replace-fail '/usr/bin/qtile' ${placeholder "out"}/bin/qtile
       '';
     };
 in
