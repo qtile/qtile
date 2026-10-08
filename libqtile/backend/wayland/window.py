@@ -7,7 +7,12 @@ from libqtile import hook, utils
 from libqtile.backend.base import FloatStates
 from libqtile.backend.base.window import WindowType
 from libqtile.backend.wayland.drawer import Drawer
-from libqtile.command.base import CommandError, CommandObject, ItemT, expose_command
+from libqtile.command.base import (
+    CommandError,
+    CommandObject,
+    ItemT,
+    expose_command,
+)
 from libqtile.core.manager import Qtile
 from libqtile.group import _Group
 from libqtile.log_utils import logger
@@ -24,6 +29,38 @@ except ModuleNotFoundError:
 
 if typing.TYPE_CHECKING:
     from libqtile.backend.wayland.core import Core
+
+
+def get_ease(ease_name: str | None) -> int:
+    if ease_name is None:
+        return lib.QW_EASE_OUT_CUBIC
+    name = f"QW_EASE_{ease_name.upper()}"
+    return getattr(lib, name, lib.QW_EASE_OUT_CUBIC)
+
+
+def resolve_animation(
+    qtile: Qtile,
+    which: str,
+    duration: int | None,
+    ease: str | None,
+) -> tuple[int, str]:
+    """
+    Resolve duration/ease for an animation, falling back through
+    wl_<which>_* config values to wl_default_* to hardcoded defaults.
+    """
+    anim = qtile.config.wl_animation
+    specific = getattr(anim, which, None) if anim else None
+    default = anim.default if anim else None
+    resolved = specific or default
+
+    resolved_duration: int = (
+        duration if duration is not None else (resolved.duration if resolved else 0)
+    )
+    resolved_ease: str = (
+        ease if ease is not None else (resolved.ease if resolved else "out_cubic")
+    )
+
+    return resolved_duration, resolved_ease
 
 
 class Base(base._Window):
@@ -43,6 +80,7 @@ class Base(base._Window):
         self.defunct = False
         self.group: _Group | None = None
         self.core: Core = typing.cast("Core", qtile.core)
+        self._placed = False
         # Just in case
         self._opacity = 1.0
         if self._ptr != ffi.NULL:
@@ -164,8 +202,31 @@ class Base(base._Window):
     def urgent(self, urgent: bool) -> None:
         self._ptr.urgent = urgent
 
-    def kill(self) -> None:
-        self._ptr.kill(self._ptr)
+    def kill(self, duration: int | None = None, ease: str | None = None) -> None:
+        """
+        Kill the window.
+
+        Parameters
+        ==========
+        duration : int | None
+            The duration of the kill animation in milliseconds. If None,
+            the value from `wl_kill_duration` or `wl_default_duration` in the config is used.
+        ease : str | None
+            The easing function for the kill animation. If None,
+            the value from `wl_kill_ease` or `wl_default_ease` in the config is used.
+        """
+        duration, ease = resolve_animation(self.qtile, "kill", duration, ease)
+
+        if self.defunct:
+            return
+
+        if self.group:
+            group_ref = self.group
+            group_ref.remove(self)
+
+            self.defunct = True
+            self.group = None
+        self._ptr.kill(self._ptr, duration, get_ease(ease))
 
     def hide(self) -> None:
         self._ptr.hide(self._ptr)
@@ -187,7 +248,39 @@ class Base(base._Window):
         above: bool = False,
         margin: int | list[int] | None = None,
         respect_hints: bool = False,
+        duration: int | None = None,
+        ease: str | None = None,
     ) -> None:
+        """
+        Place the window.
+
+        Parameters
+        ==========
+        x : int | None
+            The x coordinate of the window.
+        y : int | None
+            The y coordinate of the window.
+        width : int | None
+            The width of the window.
+        height : int | None
+            The height of the window.
+        borderwidth : int | None
+            The border width of the window.
+        bordercolor : ColorsType | None
+            The border color of the window.
+        above : bool
+            Whether to place the window above other windows.
+        margin : int | list[int] | None
+            The margin around the window.
+        respect_hints : bool
+            Whether to respect window hints.
+        duration : int | None
+            The duration of the move/resize animation in milliseconds. If None,
+            the value from `wl_spawn_duration` or `wl_default_duration` in the config is used.
+        ease : str | None
+            The easing function for the animation. If None,
+            the value from `wl_spawn_ease` or `wl_default_ease` in the config is used.
+        """
         # Adjust the placement to account for layout margins, if there are any.
         # TODO: is respect_hints only for X11?
         assert ffi is not None
@@ -212,6 +305,8 @@ class Base(base._Window):
             height -= margin[0] + margin[2]
 
         # TODO: respect hints
+
+        duration, ease = resolve_animation(self.qtile, "spawn", duration, ease)
 
         if self.group is not None and self.group.screen is not None:
             self.float_x = x - self.group.screen.x
@@ -254,7 +349,20 @@ class Base(base._Window):
 
         self.bordercolor = bordercolor
         self.borderwidth = borderwidth
-        self._ptr.place(self._ptr, x, y, width, height, c_layers, n, int(above))
+        self._placed = True
+        self.core.bump_anim_generation(self.wid)
+        self._ptr.place(
+            self._ptr,
+            x,
+            y,
+            width,
+            height,
+            c_layers,
+            n,
+            int(above),
+            duration,
+            get_ease(ease),
+        )
 
     @expose_command()
     def focus(self, warp: bool = True) -> None:
@@ -319,9 +427,33 @@ class Internal(Base, base.Internal):
         )
 
     @expose_command()
-    def kill(self) -> None:
+    def kill(self, duration: int | None = None, ease: str | None = None) -> None:
+        """
+        Kill the internal window.
+
+        Parameters
+        ==========
+        duration : int | None
+            The duration of the kill animation in milliseconds. If None,
+            the value from `wl_kill_duration` or `wl_default_duration` in the config is used.
+        ease : str | None
+            The easing function for the kill animation. If None,
+            the value from `wl_kill_ease` or `wl_default_ease` in the config is used.
+        """
         if not self._killed:
-            self._ptr.kill(self._ptr)
+            duration, ease = resolve_animation(self.qtile, "kill", duration, ease)
+
+            if self.defunct:
+                return
+
+            if self.group:
+                group_ref = self.group
+                group_ref.remove(self)
+
+                self.defunct = True
+                self.group = None
+
+            self._ptr.kill(self._ptr, duration, get_ease(ease))
             self._killed = True
         if self.wid in self.qtile.windows_map:
             # It will be present during config reloads; absent during shutdown as this
@@ -514,7 +646,11 @@ class Window(Base, base.Window):
         hook.fire("client_managed", win)
 
     def _to_static(
-        self, x: int | None, y: int | None, width: int | None, height: int | None
+        self,
+        x: int | None,
+        y: int | None,
+        width: int | None,
+        height: int | None,
     ) -> Static:
         return Static(
             self.qtile,
@@ -522,9 +658,17 @@ class Window(Base, base.Window):
             self._wid,
         )
 
+    def _is_scratchpad(self, group):
+        return group is not None and hasattr(group, "dropdowns")
+
     @expose_command()
     def togroup(
-        self, group_name: str | None = None, switch_group: bool = False, toggle: bool = False
+        self,
+        group_name: str | None = None,
+        switch_group: bool = False,
+        toggle: bool = False,
+        duration: int | None = None,
+        ease: str | None = None,
     ) -> None:
         """
         Move window to a specified group
@@ -533,6 +677,23 @@ class Window(Base, base.Window):
 
         If `toggle` is True and and the specified group is already on the screen,
         use the last used group as target instead.
+
+        Parameters
+        ==========
+        group_name : str | None
+            The name of the group to move the window to.
+        switch_group : bool
+            Whether to switch to the group after moving the window.
+        toggle : bool
+            Whether to toggle between groups.
+        duration : int | None
+            The duration of the slide animation in milliseconds. If None,
+            the value from `wl_slide_group_duration` or `wl_dropdown_duration`
+            (depending on whether it's a scratchpad) or `wl_default_duration` in the config is used.
+        ease : str | None
+            The easing function for the animation. If None,
+            the value from `wl_slide_group_ease` or `wl_dropdown_ease`
+            (depending on whether it's a scratchpad) or `wl_default_ease` in the config is used.
         """
         if group_name is None:
             group = self.qtile.current_group
@@ -542,33 +703,157 @@ class Window(Base, base.Window):
             group = self.qtile.groups_map[group_name]
 
         if self.group is group:
-            if toggle and self.group.screen.previous_group:
-                group = self.group.screen.previous_group
+            if toggle and group.screen and group.screen.previous_group:
+                group = group.screen.previous_group
             else:
                 return
 
-        self.hide()
-        if self.group:
-            if self.group.screen:
-                # for floats remove window offset
-                self.x -= self.group.screen.x
-            group_ref = self.group
-            self.group.remove(self)
-            # delete groups with `persist=False`
-            if (
-                not self.qtile.dgroups.groups_map[group_ref.name].persist
-                and len(group_ref.windows) <= 1
-            ):
-                # set back original group so _del() can grab it
-                self.group = group_ref
-                self.qtile.dgroups._del(self)
-                self.group = None
+        target_is_scratchpad = self._is_scratchpad(group)
+        source_is_scratchpad = self._is_scratchpad(self.group) or (
+            self.group is None and not target_is_scratchpad and getattr(self, "floating", False)
+        )
 
-        if group.screen and self.x < group.screen.x:
-            self.x += group.screen.x
+        if target_is_scratchpad or source_is_scratchpad:
+            self._togroup_scratchpad(group, duration, ease, target_is_scratchpad)
+        elif self.group:
+            self._togroup_slide(group, switch_group, toggle, duration, ease)
+        else:
+            if self.group:
+                self.group.remove(self)
+            group.add(self)
+
+    def seed_anim_offset(self, dx: int, dy: int, duration: int, ease: str) -> None:
+        """Seed the animation start position with an offset without changing logical geometry."""
+        if self._ptr:
+            lib.qw_anim_seed_offset(self._ptr, dx, dy, duration, get_ease(ease))
+
+    def animate_to(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        duration: int | None,
+        ease: str,
+        on_complete=None,
+        seed: tuple[int, int] | None = None,
+    ) -> None:
+        """
+        Move/resize the window, then optionally run on_complete once the
+        visual transition finishes (immediately if duration == 0).
+        """
+        self.place(
+            x,
+            y,
+            width,
+            height,
+            self.borderwidth,
+            self.bordercolor,
+            duration=duration,
+            ease=ease,
+        )
+
+        if seed is not None and duration is not None:
+            self.seed_anim_offset(seed[0], seed[1], duration=duration, ease=ease)
+
+        if on_complete is None:
+            return
+        if duration == 0:
+            on_complete()
+        else:
+            self.core.register_anim_complete(self.wid, on_complete)
+
+    def _detach_from_group(self, old_group):
+        """Remove self from old_group's bookkeeping immediately, so remaining
+        windows reflow right away instead of waiting for the slide to finish."""
+        if old_group:
+            old_group.remove(self)
+            dgroups = getattr(self.qtile, "dgroups", None)
+            if dgroups and old_group.name in dgroups.groups_map:
+                if not dgroups.groups_map[old_group.name].persist and len(old_group.windows) <= 0:
+                    self.group = old_group
+                    dgroups._del(self)
+                    self.group = None
+
+    def _attach_to_group(self, group, switch_group=False, toggle=False):
         group.add(self)
         if switch_group:
             group.toscreen(toggle=toggle)
+
+    def _move_between_groups(self, group, old_group=None, switch_group=False, toggle=False):
+        self._detach_from_group(old_group or self.group)
+        self._attach_to_group(group, switch_group=switch_group, toggle=toggle)
+
+    def _togroup_slide(self, group, switch_group, toggle, duration, ease):
+        if self.group is None:
+            return
+
+        duration, ease = resolve_animation(self.qtile, "slide", duration, ease)
+        old_group = self.group
+
+        try:
+            old_index = self.qtile.groups.index(old_group)
+            new_index = self.qtile.groups.index(group)
+        except ValueError:
+            self._move_between_groups(group, switch_group=switch_group, toggle=toggle)
+            return
+
+        direction = 1 if new_index > old_index else -1
+        screen = old_group.screen or self.qtile.current_screen
+        offset = (self.x - screen.dwidth) if direction == 1 else (self.x + self.width)
+        orig_x = self.x
+
+        self._detach_from_group(old_group)
+
+        def finish():
+            self.x = orig_x
+            if group.screen and self.x < group.screen.x:
+                self.x += group.screen.x
+            self.hide()
+            self._attach_to_group(group, switch_group=switch_group, toggle=toggle)
+
+        self.animate_to(
+            self.x - offset,
+            self.y,
+            self.width,
+            self.height,
+            duration=duration,
+            ease=ease,
+            on_complete=finish,
+        )
+
+    def _togroup_scratchpad(self, group, duration, ease, target_is_scratchpad):
+        duration, ease = resolve_animation(self.qtile, "dropdown", duration, ease)
+        screen = self.group.screen if self.group else self.qtile.current_screen
+        hidden_y = screen.dy - self.height if screen is not None else self.y - self.height
+
+        if target_is_scratchpad:
+
+            def finish():
+                self.hide()
+                self._move_between_groups(group)
+
+            self.animate_to(
+                self.x,
+                hidden_y,
+                self.width,
+                self.height,
+                duration=duration,
+                ease=ease,
+                on_complete=finish,
+            )
+        else:
+            self._move_between_groups(group)
+            self.unhide()
+            self.animate_to(
+                self.x,
+                self.y,
+                self.width,
+                self.height,
+                duration=duration,
+                ease=ease,
+                seed=(0, hidden_y - self.y),
+            )
 
     def _items(self, name: str) -> ItemT:
         if name == "group":
@@ -766,6 +1051,7 @@ class Window(Base, base.Window):
         w: int | None = None,
         h: int | None = None,
         new_float_state: FloatStates = FloatStates.FLOATING,
+        duration: int | None = None,
     ) -> None:
         if self._float_state != new_float_state:
             old_state = self._float_state
@@ -782,7 +1068,15 @@ class Window(Base, base.Window):
             self.hide()
         else:
             self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
+                x,
+                y,
+                w,
+                h,
+                self.borderwidth,
+                self.bordercolor,
+                above=False,
+                respect_hints=True,
+                duration=duration,
             )
 
     def _tweak_float(
@@ -795,6 +1089,7 @@ class Window(Base, base.Window):
         h: int | None = None,
         dw: int = 0,
         dh: int = 0,
+        duration: int | None = None,
     ) -> None:
         if x is None:
             x = self.x
@@ -823,7 +1118,7 @@ class Window(Base, base.Window):
             self.qtile.focus_screen(screen.index)
             screen.group.add(self, force=True)
 
-        self._reconfigure_floating(x, y, w, h)
+        self._reconfigure_floating(x, y, w, h, duration=duration)
 
     @expose_command()
     def move_floating(self, dx: int, dy: int) -> None:
@@ -835,7 +1130,7 @@ class Window(Base, base.Window):
 
     @expose_command()
     def set_position_floating(self, x: int, y: int) -> None:
-        self._tweak_float(x=x, y=y)
+        self._tweak_float(x=x, y=y, duration=0)
 
     @expose_command()
     def set_position(self, x: int, y: int) -> None:
@@ -858,7 +1153,7 @@ class Window(Base, base.Window):
 
     @expose_command()
     def set_size_floating(self, w: int, h: int) -> None:
-        self._tweak_float(w=w, h=h)
+        self._tweak_float(w=w, h=h, duration=0)
 
     @expose_command()
     def toggle_floating(self) -> None:
@@ -946,14 +1241,61 @@ class Static(Base, base.Static):
         above: bool = False,
         margin: int | list[int] | None = None,
         respect_hints: bool = False,
+        duration: int | None = None,
+        ease: str | None = None,
     ) -> None:
+        """
+        Place the static window.
+
+        Parameters
+        ==========
+        x : int
+            The x coordinate of the window.
+        y : int
+            The y coordinate of the window.
+        width : int
+            The width of the window.
+        height : int
+            The height of the window.
+        borderwidth : int
+            The border width of the window.
+        bordercolor : ColorsType | None
+            The border color of the window.
+        above : bool
+            Whether to place the window above other windows.
+        margin : int | list[int] | None
+            The margin around the window.
+        respect_hints : bool
+            Whether to respect window hints.
+        duration : int | None
+            The duration of the move/resize animation in milliseconds. If None,
+            the value from `wl_spawn_duration` or `wl_default_duration` in the config is used.
+        ease : str | None
+            The easing function for the animation. If None,
+            the value from `wl_spawn_ease` or `wl_default_ease` in the config is used.
+        """
         self.x = x
         self.y = y
         self._width = width
         self._height = height
 
+        duration, ease = resolve_animation(self.qtile, "spawn", duration, ease)
+
         n = 0
-        self._ptr.place(self._ptr, x, y, width, height, ffi.NULL, n, int(above))
+        self._place = True
+        self.core.bump_anim_generation(self.wid)
+        self._ptr.place(
+            self._ptr,
+            x,
+            y,
+            width,
+            height,
+            ffi.NULL,
+            n,
+            int(above),
+            duration,
+            get_ease(ease),
+        )
 
     @expose_command()
     def info(self) -> dict:
