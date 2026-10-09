@@ -144,6 +144,11 @@ PROTOS: list[Protocol] = [
         build_client=True,
         build_server=False,
     ),
+    Protocol(
+        f"{QW_PROTO_IN_PATH}/wlr-virtual-pointer-unstable-v1.xml",
+        build_client=True,
+        build_server=False,
+    ),
 ]
 
 TEST_CLIENTS: list[TestClient] = [
@@ -221,6 +226,15 @@ TEST_CLIENTS: list[TestClient] = [
             CLIENT_BASE,
             QW_PROTO_OUT_PATH / "keyboard-shortcuts-inhibit-unstable-v1-protocol.c",
             QW_PROTO_OUT_PATH / "xdg-shell-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
+    TestClient(
+        name="virtual-pointer",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "virtual-pointer.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "wlr-virtual-pointer-unstable-v1-protocol.c",
         ],
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),
@@ -364,9 +378,8 @@ extern "Python" void view_activation_cb(struct qw_view *view, void *userdata);
 extern "Python" int keyboard_key_cb(xkb_keysym_t, uint32_t, void *userdata);
 extern "Python" void manage_view_cb(struct qw_view *view, void *userdata);
 extern "Python" void unmanage_view_cb(struct qw_view *view, void *userdata);
-extern "Python" void cursor_motion_cb(void *userdata);
-extern "Python" int cursor_button_cb(int button, uint32_t mask, bool pressed, int x, int y, void *userdata);
-extern "Python" void pointer_internal_event_cb(int wid, int sx, int sy, int event_type, void *userdata);
+extern "Python" int cursor_button_cb(int button, uint32_t mask, bool pressed, int x, int y, int wid, void *userdata);
+extern "Python" void pointer_event_cb(int wid, int sx, int sy, int event_type, void *userdata);
 extern "Python" void on_screen_change_cb(void *userdata);
 extern "Python" void on_screen_reserve_space_cb(struct qw_output *output, void *userdata);
 extern "Python" void on_input_device_added_cb(void *userdata);

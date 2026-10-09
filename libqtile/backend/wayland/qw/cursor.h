@@ -41,8 +41,14 @@ struct qw_cursor {
     struct wlr_pointer_constraint_v1 *active_constraint;
     bool active_confine_requires_warp;
     pixman_region32_t confine;
-    // Wid of the Internal view currently under the pointer (-1 if none).
-    int prev_internal_wid;
+    // wids of the Internal or client view currently under the pointer (-1 if none).
+    int prev_wid;
+    bool prev_was_internal;
+    bool pointer_masked;
+    uint32_t drag_polling_rate;
+    uint32_t last_motion_time;
+    int pressed_button_count;
+    int pressed_wid;
 };
 
 struct qw_pointer_constraint {
@@ -78,5 +84,9 @@ void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
                                 struct wlr_pointer_constraint_v1 *constraint);
 
 void qw_cursor_fake_click(struct qw_cursor *cursor);
+
+void qw_cursor_mask_pointer_events(struct qw_cursor *cursor, bool masked);
+
+void qw_cursor_drag_polling_rate(struct qw_cursor *cursor, int32_t rate);
 
 #endif /* CURSOR_H */

@@ -1,10 +1,12 @@
 import pytest
 
 import libqtile.layout
+from libqtile import config
 from libqtile.backend.wayland._ffi import lib
+from libqtile.lazy import lazy
 from test.backend.wayland.conftest import new_layer_client, new_xdg_client
 from test.conftest import BareConfig
-from test.helpers import window_by_name
+from test.helpers import Retry, window_by_name
 from test.layouts.test_common import AllLayoutsConfig
 
 try:
@@ -158,3 +160,51 @@ def test_window_opacity_commands(wmanager):
 
     # Should be firmly clamped at 1.0
     assert wmanager.c.window.info()["opacity"] == pytest.approx(1.0)
+
+
+BTN_RIGHT = 0x111  # evdev BTN_RIGHT, matches Button3
+
+
+class DragToMoveConfig(BareConfig):
+    mouse = [
+        config.Drag(
+            ["mod4"],
+            "Button3",
+            lazy.window.set_position_floating(),
+            start=lazy.window.get_position(),
+        ),
+    ]
+
+
+@pytest.mark.parametrize("wmanager", [DragToMoveConfig], indirect=True)
+def test_drag_to_move_window(wmanager, virtual_keyboard, virtual_pointer):
+    """Super + right-button drag moves a floating window."""
+    wmanager.test_window("one")  # see note below
+    wmanager.c.window.enable_floating()
+    wmanager.c.window.set_position_floating(100, 100)
+    wmanager.c.window.set_size_floating(200, 150)
+
+    info = wmanager.c.window.info()
+    assert (info["x"], info["y"]) == (100, 100)
+
+    # Absolute coordinates are scaled against the layout size, so read the real one.
+    screen = wmanager.c.screen.info()
+    virtual_pointer.assert_ok(f"extent {screen['width']} {screen['height']}")
+
+    # Put the cursor over the window before pressing anything.
+    virtual_pointer.assert_ok("move 150 150")
+
+    # Hold Super, drag by (150, 80), release.
+    virtual_keyboard.assert_ok("set_modifier super")
+    virtual_pointer.assert_ok(f"button_press {BTN_RIGHT}")
+    virtual_pointer.assert_ok("move 300 230")
+    virtual_pointer.assert_ok(f"button_release {BTN_RIGHT}")
+    virtual_keyboard.assert_ok("clear_modifiers")
+
+    @Retry(ignore_exceptions=(AssertionError,))
+    def check():
+        info = wmanager.c.window.info()
+        assert (info["x"], info["y"]) == (250, 180)  # 100 + 150, 100 + 80
+        assert (info["width"], info["height"]) == (200, 150)
+
+    check()

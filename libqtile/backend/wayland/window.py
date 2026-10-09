@@ -282,6 +282,15 @@ class Base(base._Window):
 
         hook.fire("client_focus", self)
 
+    def handle_pointer_notify_enter(self, sx: int, sy: int) -> None:
+        pass
+
+    def handle_pointer_notify_leave(self, sx: int, sy: int) -> None:
+        pass
+
+    def handle_pointer_notify_motion(self, sx: int, sy: int) -> bool:
+        return False
+
 
 class Internal(Base, base.Internal):
     def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
@@ -317,6 +326,17 @@ class Internal(Base, base.Internal):
         lib.qw_internal_view_set_buffer_with_damage(
             self._internal_ptr, offsetx, offsety, width, height
         )
+
+    def handle_pointer_notify_enter(self, x, y) -> None:
+        self.qtile.hovered_window = self
+        self.process_pointer_enter(x, y)
+
+    def handle_pointer_notify_leave(self, x, y) -> None:
+        self.process_pointer_leave(x, y)
+
+    def handle_pointer_notify_motion(self, x, y) -> bool:
+        self.process_pointer_motion(x, y)
+        return True
 
     @expose_command()
     def kill(self) -> None:
@@ -464,6 +484,11 @@ class Window(Base, base.Window):
     @expose_command()
     def is_visible(self) -> bool:
         return lib.qw_view_is_visible(self._ptr)
+
+    def handle_pointer_notify_enter(self, x, y) -> None:
+        self.qtile.hovered_window = self
+        hook.fire("client_mouse_enter", self)
+        self._focus_on_pointer_enter()
 
     @expose_command()
     def static(
