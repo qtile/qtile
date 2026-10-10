@@ -1,0 +1,5 @@
+FROM qtile-ci
+
+RUN dnf -y install 'dnf-command(copr)' \
+       && dnf -y copr enable richcarni/glycin-2.2 \
+       && dnf -y upgrade glycin-libs glycin-loaders

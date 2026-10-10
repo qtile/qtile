@@ -5,6 +5,7 @@ Defining them here rather than in conftest.py avoids issues with circular import
 between test/conftest.py and test/backend/<backend>/conftest.py files.
 """
 
+import ctypes
 import faulthandler
 import functools
 import logging
@@ -255,6 +256,15 @@ class TestManager:
             except Exception:
                 wpipe.send(traceback.format_exc())
             finally:
+                if os.environ.get("QTILE_LSAN_ENABLE"):
+                    try:
+                        # libasan must be loaded via LD_PRELOAD
+                        lib = ctypes.CDLL(None)
+                        getattr(lib, "__sanitizer_set_report_path")(b"lsan.log")
+                        getattr(lib, "__lsan_do_recoverable_leak_check")()
+                    except (OSError, AttributeError) as e:
+                        print(f"error: {type(e).__name__}: {e}")
+                        traceback.print_exc()
                 wpipe.close()
 
         self.proc = multiprocessing.Process(target=run_qtile)
