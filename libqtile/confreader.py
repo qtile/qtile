@@ -4,7 +4,7 @@ import importlib
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from types import FunctionType
+from types import FunctionType, ModuleType
 from typing import Any, Literal
 
 from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
@@ -88,25 +88,72 @@ class Config:
             setattr(self, key, value)
 
     def _reload_config_submodules(self, path: Path) -> None:
-        """Reloads python files from same folder as config file."""
-        folder = path.parent
-        for module in sys.modules.copy().values():
-            # Skip built-ins and anything with no filepath.
-            if hasattr(module, "__file__") and module.__file__ is not None:
-                subpath = Path(module.__file__)
+        """Reload Python files imported by the config from the config folder."""
+        name = path.stem
+        top_module = sys.modules.get(name)
+        if not isinstance(top_module, ModuleType):
+            return
 
-                if subpath == path:
-                    # do not reevaluate config itself here, we want only
-                    # reload all submodules. Also we cant reevaluate config
-                    # here, because it will cache all current modules before they
-                    # are reloaded. Thus, config file should be reloaded after
-                    # this routine.
+        folder = path.parent.resolve()
+        config_file = path.resolve()
+        visited: set[ModuleType] = set()
+        modules_to_reload: list[ModuleType] = []
+
+        def walk(module: ModuleType) -> None:
+            if module in visited:
+                return
+            visited.add(module)
+
+            candidates: list[ModuleType] = []
+            for value in module.__dict__.values():
+                candidate = None
+                if isinstance(value, ModuleType):
+                    candidate = value
+                else:
+                    try:
+                        module_name = getattr(value, "__module__")
+                    except AttributeError:
+                        continue
+                    candidate = sys.modules.get(module_name)
+
+                if isinstance(candidate, ModuleType) and candidate not in visited:
+                    candidates.append(candidate)
+
+            module_name = getattr(module, "__name__", "")
+            if module_name:
+                prefix = module_name + "."
+                candidates.extend(
+                    submodule
+                    for name, submodule in sys.modules.items()
+                    if name.startswith(prefix)
+                    and isinstance(submodule, ModuleType)
+                    and submodule not in visited
+                )
+
+            for candidate in candidates:
+                file = getattr(candidate, "__file__", None)
+                if file is None:
+                    continue
+                try:
+                    candidate_file = Path(file).resolve()
+                except (OSError, TypeError, ValueError):
                     continue
 
-                # Check if the module is in the config folder or subfolder
-                # and the file still exists.  If so, reload it
-                if folder in subpath.parents and subpath.exists():
-                    importlib.reload(module)
+                if folder not in candidate_file.parents or candidate_file == config_file:
+                    continue
+                if not candidate_file.exists():
+                    continue
+
+                walk(candidate)
+                if (
+                    getattr(candidate, "__spec__", None) is not None
+                    and candidate not in modules_to_reload
+                ):
+                    modules_to_reload.append(candidate)
+
+        walk(top_module)
+        for module in modules_to_reload:
+            importlib.reload(module)
 
     def load(self):
         if not self.file_path:
