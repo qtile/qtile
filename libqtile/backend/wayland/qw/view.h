@@ -139,6 +139,19 @@ struct qw_view {
     struct wl_list ftl_outputs;
 };
 
+struct qw_view_place_args {
+    int x, y, width, height;
+    const struct qw_border *borders;
+    int border_count;
+    int above;
+    bool place_changed;
+    struct wlr_box *geom_dst;
+    struct wlr_box geom_src;
+    struct wlr_surface *surface;
+    void (*reconfigure)(void *self, int x, int y, int width, int height);
+    void (*clip)(void *self);
+};
+
 void qw_view_reparent(struct qw_view *view, int layer);
 void qw_view_move_up(struct qw_view *view);
 void qw_view_move_down(struct qw_view *view);
@@ -146,6 +159,11 @@ void qw_view_raise_to_top(struct qw_view *view);
 void qw_view_lower_to_bottom(struct qw_view *view);
 
 bool qw_view_is_visible(struct qw_view *view);
+void qw_view_unhide(void *self);
+
+void qw_view_disable_and_clear_focus(struct qw_view *view, struct wlr_surface *surface);
+
+void qw_view_do_place(struct qw_view *view, struct qw_view_place_args args);
 
 // Free all border rectangles and clear border data
 void qw_view_cleanup_borders(struct qw_view *xdg_view);

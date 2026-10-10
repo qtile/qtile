@@ -1,5 +1,6 @@
 #include "view.h"
 #include "cairo-buffer.h"
+#include "cursor.h"
 #include "server.h"
 #include "util.h"
 #include <stdlib.h>
@@ -175,6 +176,27 @@ void qw_view_move_down(struct qw_view *view) {
 
 bool qw_view_is_visible(struct qw_view *view) { return view->content_tree->node.enabled; }
 
+// Unhide the view by enabling its content_tree scene node if currently disabled
+void qw_view_unhide(void *self) {
+    struct qw_view *view = (struct qw_view *)self;
+    if (!view->content_tree->node.enabled) {
+        wlr_scene_node_set_enabled(&view->content_tree->node, true);
+    }
+}
+
+// Disable the content tree, deactivate, and clear keyboard
+// focus if this view's surface currently holds it. `activate` is the
+// backend-specific activate function (xdg or xwayland).
+void qw_view_disable_and_clear_focus(struct qw_view *view, struct wlr_surface *surface) {
+    wlr_scene_node_set_enabled(&view->content_tree->node, false);
+
+    if (surface == view->server->seat->keyboard_state.focused_surface) {
+        wlr_seat_keyboard_clear_focus(view->server->seat);
+    }
+
+    qw_cursor_update_pointer_focus(view->server->cursor);
+}
+
 // Creates and paints multiple border layers around the view content.
 // borders: array of qw_border for each border.
 // border_count: number of border layers to draw.
@@ -255,6 +277,37 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
     }
 
     wlr_scene_node_raise_to_top(tree_node);
+}
+
+void qw_view_do_place(struct qw_view *view, struct qw_view_place_args args) {
+    bool geom_changed = args.geom_dst->x != args.geom_src.x ||
+                        args.geom_dst->y != args.geom_src.y ||
+                        args.geom_dst->width != args.geom_src.width ||
+                        args.geom_dst->height != args.geom_src.height;
+
+    *args.geom_dst = args.geom_src;
+    view->x = args.x;
+    view->y = args.y;
+    view->width = args.width;
+    view->height = args.height;
+
+    wlr_scene_node_set_position(&view->content_tree->node, args.x, args.y);
+
+    bool needs_repos = args.place_changed || geom_changed;
+
+    if (needs_repos) {
+        args.reconfigure(view, args.x, args.y, args.width, args.height);
+        args.clip(view);
+        qw_view_update_ftl_outputs(view, args.surface);
+    }
+
+    qw_view_paint_borders(view, args.borders, args.border_count);
+
+    if (args.above != 0) {
+        qw_view_raise_to_top(view);
+    }
+
+    qw_cursor_update_pointer_focus(view->server->cursor);
 }
 
 // Foreign toplevel manager requests
