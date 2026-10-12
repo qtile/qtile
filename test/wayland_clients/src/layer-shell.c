@@ -411,11 +411,20 @@ void setup(struct client_state *base) {
 void cleanup(struct client_state *base) {
     struct test_state *state = (struct test_state *)base;
 
+    if (state->buffer) {
+        destroy_buffer(state->buffer);
+    }
     if (state->layer_surface) {
         zwlr_layer_surface_v1_destroy(state->layer_surface);
     }
     if (state->surface) {
         wl_surface_destroy(state->surface);
+    }
+    if (state->keyboard) {
+        wl_keyboard_release(state->keyboard);
+    }
+    if (state->layer_shell) {
+        zwlr_layer_shell_v1_destroy(state->layer_shell);
     }
 }
 
