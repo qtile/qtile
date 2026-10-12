@@ -358,8 +358,9 @@ class Prompt(base._TextBox):
             "bell_style",
             "audible",
             "Alert at the begin/end of the command history. "
-            + "Possible values: 'audible' (X11 only), 'visual' and None.",
+            + "Possible values: 'audible' (X11 only), 'visual', 'callable' and None.",
         ),
+        ("bell_callable", None, "Callable run when bell_style is set to 'callable'."),
         ("visual_bell_color", "ff0000", "Color for the visual bell (changes prompt background)."),
         ("visual_bell_time", 0.2, "Visual bell duration (in seconds)."),
     ]
@@ -443,6 +444,17 @@ class Prompt(base._TextBox):
         if self.bell_style == "audible" and qtile.core.name != "x11":
             self.bell_style = "visual"
             logger.warning("Prompt widget only supports audible bell under X11")
+        elif self.bell_style == "callable":
+            if self.bell_callable is None:
+                self.bell_style = "visual"
+                logger.warning(
+                    "Prompt widget bell is set to callable but no callable was provided. Falling back to visual"
+                )
+            elif not callable(self.bell_callable):
+                self.bell_style = "visual"
+                logger.warning(
+                    "Prompt widget bell is set to callable but bell_callable is not a Callable. Falling back to visual"
+                )
         if self.bell_style == "visual":
             self.original_background = self.background
 
@@ -636,6 +648,8 @@ class Prompt(base._TextBox):
         elif self.bell_style == "visual":
             self.background = self.visual_bell_color
             self.timeout_add(self.visual_bell_time, self._stop_visual_alert)
+        elif self.bell_style == "callable":
+            self.bell_callable()
 
     def _stop_visual_alert(self):
         self.background = self.original_background
