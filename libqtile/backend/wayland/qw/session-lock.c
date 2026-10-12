@@ -23,6 +23,10 @@ void qw_session_lock_restore_focus(struct qw_server *server) {
 // Useful if one lock surface disappears (e.g. output disconnect)
 // but others remain.
 void qw_session_lock_focus_first_lock_surface(struct qw_server *server) {
+    if (wl_list_empty(&server->lock->lock->surfaces)) {
+        return;
+    }
+
     struct wlr_seat *seat = server->seat;
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
     struct wlr_session_lock_surface_v1 *surface;
@@ -51,6 +55,12 @@ void qw_session_lock_output_create_blanking_rects(struct qw_output *output) {
     wlr_output_effective_resolution(output->wlr_output, &o_width, &o_height);
     struct wlr_scene_rect *blanking_rect = wlr_scene_rect_create(
         server->scene_windows_layers[LAYER_LOCK], o_width, o_height, rect_color);
+
+    if (blanking_rect == NULL) {
+        wlr_log(WLR_ERROR, "failed to create blanking rect for session lock");
+        return;
+    }
+
     wlr_scene_node_set_position(&blanking_rect->node, output->x, output->y);
 
     // Make sure blanking rects are below any lock surfaces
@@ -102,10 +112,17 @@ void qw_session_lock_crashed_update_rects(struct qw_server *server) {
         struct wlr_scene_rect *blanking_rect =
             wlr_scene_rect_create(server->scene_windows_layers[LAYER_LOCK], width, height,
                                   QW_SESSION_LOCK_BLANKING_RECT_CRASHED);
+
+        if (blanking_rect == NULL) {
+            wlr_log(WLR_ERROR, "failed to create blanking rect for session lock");
+            continue;
+        }
+
         wlr_scene_node_set_position(&blanking_rect->node, o->x, o->y);
         o->blanking_rect = blanking_rect;
         if (old_rect != NULL) {
             wlr_scene_node_destroy(&old_rect->node);
+            old_rect = NULL;
         }
     }
 }
@@ -127,8 +144,7 @@ void qw_session_lock_surface_handle_destroy(struct wl_listener *listener, void *
         }
     }
 
-    if (server->lock != NULL && server->lock->lock != NULL &&
-        !wl_list_empty(&server->lock->lock->surfaces)) {
+    if (server->lock != NULL && server->lock->lock != NULL) {
         qw_session_lock_focus_first_lock_surface(server);
     }
 
@@ -196,6 +212,24 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
 
     struct wlr_scene_tree *scene_tree = lock_surface->surface->data =
         wlr_scene_subsurface_tree_create(lock->scene, lock_surface->surface);
+
+    if (scene_tree == NULL) {
+        wlr_log(WLR_ERROR, "failed to create scene tree");
+        return;
+    }
+
+    struct qw_session_lock_surface *sls = calloc(1, sizeof(*sls));
+    if (sls == NULL) {
+        wlr_log(WLR_ERROR, "failed to allocate qw_session_lock_surface");
+        wlr_scene_node_destroy(&scene_tree->node);
+        return;
+    }
+
+    sls->server = lock->server;
+    sls->lock_surface = lock_surface;
+    sls->surface_destroy.notify = qw_session_lock_surface_handle_destroy;
+    wl_signal_add(&lock_surface->surface->events.destroy, &sls->surface_destroy);
+
     output->lock_surface = lock_surface;
 
     // Make sure lock surface is at the top.
@@ -213,19 +247,12 @@ void qw_session_lock_handle_new_surface(struct wl_listener *listener, void *data
     // surface if a keyboard appears after the lock surface.
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(lock->server->seat);
     struct wlr_output *current_output = qw_server_get_current_output(lock->server);
-    if (keyboard && output->wlr_output == current_output) {
+    if (keyboard != NULL && output->wlr_output == current_output) {
         wlr_seat_keyboard_notify_enter(lock->server->seat, lock_surface->surface,
                                        keyboard->keycodes, keyboard->num_keycodes,
                                        &keyboard->modifiers);
         wlr_seat_pointer_notify_enter(lock->server->seat, lock_surface->surface, 0, 0);
     }
-
-    struct qw_session_lock_surface *sls = calloc(1, sizeof(*sls));
-    sls->server = lock->server;
-    sls->lock_surface = lock_surface;
-
-    sls->surface_destroy.notify = qw_session_lock_surface_handle_destroy;
-    wl_signal_add(&lock_surface->surface->events.destroy, &sls->surface_destroy);
 }
 
 void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
@@ -250,6 +277,13 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     }
 
     lock->scene = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LOCK]);
+    if (lock->scene == NULL) {
+        wlr_log(WLR_ERROR, "failed to create scene tree");
+        wlr_session_lock_v1_destroy(session_lock);
+        free(lock);
+        return;
+    }
+
     lock->server = server;
     lock->lock = session_lock;
     server->lock = lock;
@@ -270,10 +304,17 @@ void qw_session_lock_handle_new(struct wl_listener *listener, void *data) {
     server->on_session_lock_cb(true, server->cb_data);
 }
 
-void qw_session_lock_init(struct qw_server *server) {
+bool qw_session_lock_init(struct qw_server *server) {
     server->lock_state = QW_SESSION_LOCK_UNLOCKED;
     server->lock_manager = wlr_session_lock_manager_v1_create(server->display);
+    if (server->lock_manager == NULL) {
+        wlr_log(WLR_ERROR, "failed to create session lock manager");
+        return false;
+    }
+
     server->new_session_lock.notify = qw_session_lock_handle_new;
     wl_signal_add(&server->lock_manager->events.new_lock, &server->new_session_lock);
     wlr_scene_node_set_enabled(&server->scene_windows_layers[LAYER_LOCK]->node, false);
+
+    return true;
 }
