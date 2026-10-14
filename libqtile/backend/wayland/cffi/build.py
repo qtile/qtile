@@ -359,6 +359,7 @@ struct wlr_output {
 
 // main callbacks
 typedef uint32_t xkb_keysym_t;
+typedef uint32_t xkb_keycode_t;
 typedef struct _cairo_surface cairo_surface_t;
 extern "Python" void view_activation_cb(struct qw_view *view, void *userdata);
 extern "Python" int keyboard_key_cb(xkb_keysym_t, uint32_t, void *userdata);

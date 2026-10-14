@@ -904,6 +904,10 @@ class Qtile(CommandObject):
         window = self.hovered_window
         if window:
             if isinstance(window, base.Window):
+                if window.group:
+                    screen = window.group.screen
+                    if screen is not self.current_screen:
+                        self.focus_screen(self.screens.index(screen), warp=False)
                 window.focus()
 
     def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:

@@ -152,6 +152,34 @@ xkb_keysym_t qw_server_get_sym_from_code(struct qw_server *server, int code) {
     return xkb_state_key_get_one_sym(keyboard->xkb_state, code);
 }
 
+xkb_keycode_t qw_server_get_code_from_sym(struct qw_server *server, xkb_keysym_t sym) {
+    struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(server->seat);
+    if (keyboard == NULL || keyboard->keymap == NULL) {
+        return XKB_KEYCODE_INVALID;
+    }
+    struct xkb_keymap *keymap = keyboard->keymap;
+
+    xkb_keycode_t min = xkb_keymap_min_keycode(keymap);
+    xkb_keycode_t max = xkb_keymap_max_keycode(keymap);
+
+    for (xkb_keycode_t code = min; code <= max; code++) {
+        xkb_layout_index_t layouts = xkb_keymap_num_layouts_for_key(keymap, code);
+        for (xkb_layout_index_t layout = 0; layout < layouts; layout++) {
+            xkb_level_index_t levels = xkb_keymap_num_levels_for_key(keymap, code, layout);
+            for (xkb_level_index_t level = 0; level < levels; level++) {
+                const xkb_keysym_t *syms;
+                int n = xkb_keymap_key_get_syms_by_level(keymap, code, layout, level, &syms);
+                for (int i = 0; i < n; i++) {
+                    if (syms[i] == sym) {
+                        return code;
+                    }
+                }
+            }
+        }
+    }
+    return XKB_KEYCODE_INVALID;
+}
+
 void qw_server_keyboard_clear_focus(struct qw_server *server) {
     struct wlr_seat *seat = server->seat;
     wlr_seat_keyboard_clear_focus(seat);

@@ -77,6 +77,6 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor);
 void qw_cursor_constrain_cursor(struct qw_cursor *cursor,
                                 struct wlr_pointer_constraint_v1 *constraint);
 
-void qw_cursor_fake_click(struct qw_cursor *cursor);
+void qw_cursor_fake_click(struct qw_cursor *cursor, int button);
 
 #endif /* CURSOR_H */

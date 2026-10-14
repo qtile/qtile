@@ -19,7 +19,9 @@ enum BUTTON_SCROLL {
 
 // Function to convert a raw button code into a simplified button ID.
 // Returns an int representing the button index (1-based), or 0 if unknown.
-int qw_util_get_button_code(uint32_t button);
+int qw_util_get_button_idx(uint32_t button_code);
+
+uint32_t qw_util_get_button_code(int button_idx);
 
 // Function to convert a modifier key string name into the corresponding
 // wlr_keyboard_modifier enum value. Returns -1 if the modifier name is unknown.

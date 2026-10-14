@@ -287,7 +287,7 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     qw_server_idle_notify_activity(cursor->server);
 
     // Translate event button to internal code (e.g. BTN_LEFT)
-    uint32_t button = qw_util_get_button_code(event->button);
+    uint32_t button = qw_util_get_button_idx(event->button);
     bool pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED;
     bool handled = false;
     static int pressed_button_count = 0;
@@ -356,7 +356,7 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
         button = (event->delta > 0) ? BUTTON_SCROLL_RIGHT : BUTTON_SCROLL_LEFT;
     }
 
-    uint32_t button_mapped = qw_util_get_button_code(button);
+    uint32_t button_mapped = qw_util_get_button_idx(button);
 
     if (!cursor->implicit_grab.live) {
         // If it's a physical wheel fire callback immediately if there is a discrete delta
@@ -698,9 +698,10 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
     }
 }
 
-void qw_cursor_fake_click(struct qw_cursor *cursor) {
+void qw_cursor_fake_click(struct qw_cursor *cursor, int button) {
+    uint32_t button_code = qw_util_get_button_code(button);
     struct wlr_pointer_button_event event = {
-        .button = 0x110, // BTN_LEFT (0x110 from linux/input-event-codes.h)
+        .button = button_code,
         .state = WL_POINTER_BUTTON_STATE_PRESSED,
         .time_msec = 0,
     };

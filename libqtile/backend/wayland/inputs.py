@@ -201,7 +201,7 @@ def configure_input_devices(server: ffi.CData, configs: dict[str, Any]) -> None:
                         if conf.scroll_button == "disable":
                             button = 0
                         else:
-                            button = lib.qw_util_get_button_code(int(conf.scroll_button[-1]) - 1)
+                            button = lib.qw_util_get_button_code(int(conf.scroll_button[-1]))
                     else:
                         button = conf.scroll_button
                     lib.qw_input_device_config_scroll_set_button(device, button)
