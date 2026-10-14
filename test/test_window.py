@@ -370,7 +370,7 @@ def test_can_steal_focus(manager_nospawn):
     assert_focused(manager_nospawn, "three")
 
 
-class FollowMuseFocus(ManagerConfig):
+class FollowMouseFocus(ManagerConfig):
     mouse = [
         config.Click(["mod4"], "Button1"),
         config.Drag(["mod4"], "Button3"),
@@ -378,11 +378,11 @@ class FollowMuseFocus(ManagerConfig):
     follow_mouse_focus = True
 
 
-class FollowMuseFocusFalse(FollowMuseFocus):
+class FollowMouseFocusFalse(FollowMouseFocus):
     follow_mouse_focus = False
 
 
-class FollowMuseFocusClickOrDragOnly(FollowMuseFocus):
+class FollowMouseFocusClickOrDragOnly(FollowMouseFocus):
     follow_mouse_focus = "click_or_drag_only"
 
 
@@ -391,15 +391,18 @@ def follow_mouse_focus(request):
     return request.param
 
 
-@pytest.mark.parametrize(
+follow_mouse_focus_config = pytest.mark.parametrize(
     "manager, follow_mouse_focus",
     [
-        (FollowMuseFocus, True),
-        (FollowMuseFocusFalse, False),
-        (FollowMuseFocusClickOrDragOnly, "click_or_drag_only"),
+        (FollowMouseFocus, True),
+        (FollowMouseFocusFalse, False),
+        (FollowMouseFocusClickOrDragOnly, "click_or_drag_only"),
     ],
     indirect=True,
 )
+
+
+@follow_mouse_focus_config
 def test_follow_mouse_focus(manager, follow_mouse_focus):
     manager.test_window("one")
     manager.c.window.set_position_floating(50, 50)
@@ -432,6 +435,53 @@ def test_follow_mouse_focus(manager, follow_mouse_focus):
     # Send fake Click event
     manager.c.eval("self.process_button_click(1, 64, 0, 0)")
     manager.c.eval("self.process_button_release(1, 64)")
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_window = "two"
+    assert manager.c.window.info()["name"] == assert_window
+
+
+@dualmonitor
+@follow_mouse_focus_config
+def test_follow_mouse_focus_across_screens(manager, follow_mouse_focus):
+    manager.test_window("one")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.c.to_screen(1)
+    manager.test_window("two")
+    manager.c.window.set_position_floating(850, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    assert manager.c.screen[0].group.info()["windows"] == ["one"]
+    assert manager.c.screen[1].group.info()["windows"] == ["two"]
+
+    # Last focused windows
+    assert_window = manager.c.window.info()["name"]
+
+    # Go to window one
+    manager.backend.warp_pointer(55, 55)
+    if follow_mouse_focus is True:
+        assert_window = "one"
+    assert manager.c.window.info()["name"] == assert_window
+    # Send fake Drag event
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_window = "one"
+    assert manager.c.window.info()["name"] == assert_window
+
+    # Go to window two
+    manager.backend.warp_pointer(855, 55)
+    if follow_mouse_focus is True:
+        assert_window = "two"
+    assert manager.c.window.info()["name"] == assert_window
+    # Send fake Click event
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(1)
+    manager.backend.fake_button_release(1)
+    manager.backend.release_modifier("super")
     if follow_mouse_focus == "click_or_drag_only":
         assert_window = "two"
     assert manager.c.window.info()["name"] == assert_window

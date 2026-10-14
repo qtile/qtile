@@ -669,6 +669,14 @@ class Core(base.Core):
             raise QtileError("Unable to grab keycode. No active keyboard found.")
         return sym
 
+    def get_code_from_sym(self, keysym: int) -> int:
+        code = lib.qw_server_get_code_from_sym(self.qw, keysym)
+        if code == 0xFFFFFFFF:  # XKB_KEYCODE_INVALID
+            raise QtileError(
+                "Unable to grab keysym (No active keyboard or keysym isn't in layout)"
+            )
+        return code
+
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
         if isinstance(key.key, str):
             keysym = lib.qwu_keysym_from_name(key.key.encode())
@@ -948,8 +956,8 @@ class Core(base.Core):
     def idle_notify_activity(self) -> None:
         lib.qw_server_idle_notify_activity(self.qw)
 
-    def fake_click(self) -> None:
-        lib.qw_cursor_fake_click(self.qw_cursor)
+    def fake_click(self, button=1) -> None:
+        lib.qw_cursor_fake_click(self.qw_cursor, button)
 
     def add_dummy_input_devices(self) -> None:
         lib.qw_server_add_dummy_input_devices(self.qw)

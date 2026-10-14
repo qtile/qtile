@@ -335,6 +335,8 @@ struct qw_keyboard_shortcut_inhibitor {
 // Get  key sym from a key code
 xkb_keysym_t qw_server_get_sym_from_code(struct qw_server *server, int code);
 
+xkb_keycode_t qw_server_get_code_from_sym(struct qw_server *server, xkb_keysym_t sym);
+
 // Poll for server events (non-blocking)
 void qw_server_poll(struct qw_server *server);
 

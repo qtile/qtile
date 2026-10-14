@@ -109,7 +109,8 @@ static void send_key(struct test_state *state, uint32_t keycode, uint32_t key_st
     }
 
     // Ensure compositor has active modifier state before sending keypress
-    send_modifiers(state);
+    zwp_virtual_keyboard_v1_modifiers(state->vkeyboard, state->active_mods, 0, 0, 0);
+    do_roundtrip(&state->base);
 
     uint32_t time_ms = 0;
     zwp_virtual_keyboard_v1_key(state->vkeyboard, time_ms, keycode, key_state);

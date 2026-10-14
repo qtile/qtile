@@ -11,37 +11,47 @@
 #include "xwayland-view.h"
 #endif
 
-int qw_util_get_button_code(uint32_t button) {
-    // Array of Linux input event button codes (from linux/input-event-codes.h)
-    // These codes represent mouse buttons and scroll events
-    uint32_t mappings[] = {
-        // BTN_LEFT (left mouse button)
-        0x110,
-        // BTN_MIDDLE (middle mouse button)
-        0x112,
-        // BTN_RIGHT (right mouse button)
-        0x111,
-        BUTTON_SCROLL_UP,
-        BUTTON_SCROLL_DOWN,
-        BUTTON_SCROLL_LEFT,
-        BUTTON_SCROLL_RIGHT,
-        // BTN_SIDE (side mouse button)
-        0x113,
-        // BTN_EXTRA (extra mouse button)
-        0x114,
-    };
+// Array of Linux input event button codes (from linux/input-event-codes.h)
+// These codes represent mouse buttons and scroll events
+static const uint32_t button_mappings[] = {
+    // BTN_LEFT (left mouse button)
+    0x110,
+    // BTN_MIDDLE (middle mouse button)
+    0x112,
+    // BTN_RIGHT (right mouse button)
+    0x111,
+    BUTTON_SCROLL_UP,
+    BUTTON_SCROLL_DOWN,
+    BUTTON_SCROLL_LEFT,
+    BUTTON_SCROLL_RIGHT,
+    // BTN_SIDE (side mouse button)
+    0x113,
+    // BTN_EXTRA (extra mouse button)
+    0x114,
+};
 
+int qw_util_get_button_idx(uint32_t button_code) {
     // Calculate the number of elements in the mappings array
-    int n = sizeof(mappings) / sizeof(mappings[0]);
+    int n = sizeof(button_mappings) / sizeof(button_mappings[0]);
 
     for (int i = 0; i < n; ++i) {
-        if (button == mappings[i]) {
+        if (button_code == button_mappings[i]) {
             // Return the 1-based index of the button mapping
             return i + 1;
         }
     }
 
     return 0;
+}
+
+uint32_t qw_util_get_button_code(int button_idx) {
+    int n = sizeof(button_mappings) / sizeof(button_mappings[0]);
+
+    if (button_idx < 1 || button_idx > n) {
+        return 0;
+    }
+
+    return button_mappings[button_idx - 1];
 }
 
 int qw_util_get_modifier_code(const char *codestr) {

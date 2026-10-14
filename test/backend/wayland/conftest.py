@@ -59,6 +59,15 @@ class WaylandBackend(Backend):
         self.args = args
         self.core = Core
         self.manager = None
+        self._keyboard = None
+
+    @property
+    def keyboard(self):
+        """Virtual keyboard client, started on first use."""
+        if self._keyboard is None:
+            self._keyboard = ClientHandler("virtual-keyboard", self.manager)
+            self._keyboard._run()
+        return self._keyboard
 
     def create(self):
         """This is used to instantiate the Core"""
@@ -75,12 +84,38 @@ class WaylandBackend(Backend):
 
     def fake_motion(self, x, y):
         """Move pointer to the specified coordinates"""
+        self.warp_pointer(x, y)
+        # TODO: Implement fake motion using virtual pointer
+
+    def warp_pointer(self, x, y):
         self.manager.c.eval(f"self.core.warp_pointer({x}, {y}, motion=True)")
 
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
         self.fake_motion(x, y)
         self.manager.c.eval("self.core.fake_click()")
+
+    def fake_key_press(self, keysym):
+        keycode = int(self.manager.c.eval(f"self.core.get_code_from_sym({keysym})")) - 8
+        self.keyboard.assert_ok(f"press {keycode}")
+
+    def fake_key_release(self, keysym):
+        keycode = int(self.manager.c.eval(f"self.core.get_code_from_sym({keysym})")) - 8
+        self.keyboard.assert_ok(f"release {keycode}")
+
+    def fake_button_press(self, button=1):
+        self.manager.c.eval(f"self.core.fake_click({button})")
+
+    def fake_button_release(self, button=1):
+        # TODO: Use virtual pointer for button presses
+        pass
+
+    def hold_modifier(self, name):
+        self.keyboard.assert_ok(f"set_modifier {name}")
+
+    # This method signature is slightly misleading: it release all modifiers
+    def release_modifier(self, name):
+        self.keyboard.assert_ok("clear_modifiers")
 
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""

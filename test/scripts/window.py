@@ -9,7 +9,7 @@ title and type. Therefore this is intended to be called as:
 
 where <type> is "normal" or "notification"
 
-The window will close itself if it receives any key or button press events.
+The window will close itself if it receives a key press when launched with --urgent.
 """
 # flake8: noqa
 
@@ -178,9 +178,8 @@ if __name__ == "__main__":
     win = Gtk.Window(title=title)
     win.set_default_size(100, 100)
 
-    # Close on any key press
     def on_key_press(widget, event):
-        Gtk.main_quit()
+        pass
 
     if args.new_title:
 

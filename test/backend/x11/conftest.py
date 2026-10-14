@@ -21,6 +21,8 @@ from test.helpers import (
     TestManager,
 )
 
+_MOD_KEYSYMS = {"super": 0xFFEB, "shift": 0xFFE1, "control": 0xFFE3, "alt": 0xFFE9}
+
 
 @Retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
 def can_connect_x11(disp=":0", *, ok=None):
@@ -230,27 +232,66 @@ class XBackend(Backend):
         self.core = Core
         self.manager = None
 
-    def fake_motion(self, x, y):
-        """Move pointer to the specified coordinates"""
+    @contextlib.contextmanager
+    def _xtest(self):
         conn = Connection(self.env["DISPLAY"])
         root = conn.default_screen.root.wid
         xtest = conn.conn(xcffib.xtest.key)
-        xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, root, x, y, 0)
+        yield conn, root, xtest
         conn.conn.flush()
         self.manager.c.sync()
         conn.finalize()
 
+    def fake_motion(self, x, y):
+        """Move pointer to the specified coordinates"""
+        with self._xtest() as (_, root, xtest):
+            xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, root, x, y, 0)
+
+    # May be useful when testing multiple screens, since fake_motion gets stuck
+    # crossing screen boundaries
+    def warp_pointer(self, x, y):
+        with self._xtest() as (conn, root, _):
+            conn.conn.core.WarpPointer(
+                xcffib.xproto.Window._None,
+                root,
+                0,
+                0,
+                0,
+                0,
+                x,
+                y,
+            )
+
     def fake_click(self, x, y):
         """Click at the specified coordinates"""
-        conn = Connection(self.env["DISPLAY"])
-        root = conn.default_screen.root.wid
-        xtest = conn.conn(xcffib.xtest.key)
-        xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, root, x, y, 0)
-        xtest.FakeInput(4, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
-        xtest.FakeInput(5, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
-        conn.conn.flush()
-        self.manager.c.sync()
-        conn.finalize()
+        with self._xtest() as (_, root, xtest):
+            xtest.FakeInput(6, 0, xcffib.xproto.Time.CurrentTime, root, x, y, 0)
+            xtest.FakeInput(4, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+            xtest.FakeInput(5, 1, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+
+    def fake_button_press(self, button=1):
+        with self._xtest() as (_, root, xtest):
+            xtest.FakeInput(4, button, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+
+    def fake_button_release(self, button=1):
+        with self._xtest() as (_, root, xtest):
+            xtest.FakeInput(5, button, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+
+    def fake_key_press(self, keysym):
+        with self._xtest() as (conn, root, xtest):
+            keycode = conn.keysym_to_keycode(keysym)[0]
+            xtest.FakeInput(2, keycode, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+
+    def fake_key_release(self, keysym):
+        with self._xtest() as (conn, root, xtest):
+            keycode = conn.keysym_to_keycode(keysym)[0]
+            xtest.FakeInput(3, keycode, xcffib.xproto.Time.CurrentTime, root, 0, 0, 0)
+
+    def hold_modifier(self, name):
+        self.fake_key_press(_MOD_KEYSYMS[name])
+
+    def release_modifier(self, name):
+        self.fake_key_release(_MOD_KEYSYMS[name])
 
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
