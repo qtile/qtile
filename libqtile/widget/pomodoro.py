@@ -18,11 +18,14 @@ class Pomodoro(base.InLoopPollText):
         ("color_active", "00ff00", "Colour then pomodoro is running"),
         ("color_break", "ffff00", "Colour then it is break time"),
         ("notification_on", True, "Turn notifications on"),
+        ("notification_urgent", True, "Mark notifications as urgent"),
+        ("notification_title", "Pomodoro", "Title of the notifications sent"),
         ("prefix_inactive", "POMODORO", "Prefix when app is inactive"),
         ("prefix_active", "", "Prefix then app is active"),
         ("prefix_break", "B ", "Prefix during short break"),
         ("prefix_long_break", "LB ", "Prefix during long break"),
         ("prefix_paused", "PAUSE", "Prefix during pause"),
+        ("display_hours", True, "Display hours in the timer"),
         (
             "update_interval",
             1,
@@ -79,7 +82,6 @@ class Pomodoro(base.InLoopPollText):
             self.pomodoros = 1
             if self.notification_on:
                 self._send_notification(
-                    "normal",
                     "Please take a long break! End Time: " + self.end_time.strftime("%H:%M"),
                 )
             return
@@ -90,7 +92,6 @@ class Pomodoro(base.InLoopPollText):
             self.pomodoros += 1
             if self.notification_on:
                 self._send_notification(
-                    "normal",
                     "Please take a short break! End Time: " + self.end_time.strftime("%H:%M"),
                 )
             return
@@ -99,7 +100,6 @@ class Pomodoro(base.InLoopPollText):
         self.end_time = datetime.now() + timedelta(minutes=self.length_pomodori)
         if self.notification_on:
             self._send_notification(
-                "critical",
                 "Please start with the next Pomodori! End Time: "
                 + self.end_time.strftime("%H:%M"),
             )
@@ -120,7 +120,12 @@ class Pomodoro(base.InLoopPollText):
         else:
             self.layout.colour = self.color_break
 
-        time_string = f"{time_left.seconds // 3600:d}:{time_left.seconds % 3600 // 60:02d}:{time_left.seconds % 60:02d}"
+        # Add hours to the start of the timer if applicable.
+        time_string = ""
+        if self.display_hours is True:
+            time_string += f"{time_left.seconds // 3600:d}:"
+
+        time_string += f"{time_left.seconds % 3600 // 60:02d}:{time_left.seconds % 60:02d}"
         return self.prefix[self.status] + time_string
 
     @expose_command()
@@ -134,7 +139,7 @@ class Pomodoro(base.InLoopPollText):
             self.time_left = self.end_time - datetime.now()
             self.status = self.STATUS_PAUSED
             if self.notification_on:
-                self._send_notification("low", "Pomodoro has been paused")
+                self._send_notification("Pomodoro has been paused")
         else:
             self.status = self.paused_status
             self.paused_status = None
@@ -146,7 +151,6 @@ class Pomodoro(base.InLoopPollText):
                     status = "break"
 
                 self._send_notification(
-                    "normal",
                     f"Please continue on {status}! End Time: " + self.end_time.strftime("%H:%M"),
                 )
 
@@ -155,12 +159,12 @@ class Pomodoro(base.InLoopPollText):
         if self.status != self.STATUS_INACTIVE:
             self.status = self.STATUS_INACTIVE
             if self.notification_on:
-                self._send_notification("critical", "Pomodoro has been suspended")
+                self._send_notification("Pomodoro has been suspended")
         else:
             self.status = self.STATUS_START
 
-    def _send_notification(self, urgent, message):
-        send_notification("Pomodoro", message, urgent=urgent)
+    def _send_notification(self, message):
+        send_notification(self.notification_title, message, urgent=self.notification_urgent)
 
     def poll(self):
         return self._get_text()
