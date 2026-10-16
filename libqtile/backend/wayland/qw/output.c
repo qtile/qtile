@@ -1,4 +1,5 @@
 #include "output.h"
+#include "animation.h"
 #include "cairo-buffer.h"
 #include "cursor.h"
 #include "layer-view.h"
@@ -6,24 +7,36 @@
 #include "server.h"
 #include "session-lock.h"
 #include "util.h"
-#include <stdio.h>
+#include "xdg-view.h"
 #include <stdlib.h>
 
 static void qw_output_handle_frame(struct wl_listener *listener, void *data) {
     UNUSED(data);
-
-    // Called when the output is ready to display a new frame
     struct qw_output *output = wl_container_of(listener, output, frame);
-    struct wlr_scene *scene = output->server->scene;
+    struct qw_server *server = output->server;
+    struct wlr_scene *scene = server->scene;
+
+    bool anim_running = false;
+
+    // Update all active animations
+    struct qw_view *view;
+    wl_list_for_each(view, &server->views, link) {
+        if (view->anim.is_active) {
+            qw_anim_step(view);
+            anim_running = true;
+        }
+    }
 
     struct wlr_scene_output *scene_output = wlr_scene_get_scene_output(scene, output->wlr_output);
-
     wlr_scene_output_commit(scene_output, NULL);
 
-    // Send a frame done event with the current time
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     wlr_scene_output_send_frame_done(scene_output, &now);
+
+    if (anim_running) {
+        wlr_output_schedule_frame(output->wlr_output);
+    }
 }
 
 static void qw_output_handle_destroy(struct wl_listener *listener, void *data) {
