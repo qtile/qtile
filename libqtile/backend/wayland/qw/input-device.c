@@ -68,8 +68,14 @@ struct libinput_device *qw_input_device_get_libinput_handle(struct qw_input_devi
 }
 
 struct qw_keyboard *qw_input_device_get_keyboard(struct qw_input_device *input_device) {
-    struct qw_keyboard *keyboard = (struct qw_keyboard *)(input_device->device->data);
-    return keyboard;
+    struct qw_server *server = input_device->server;
+    struct qw_keyboard *kbd;
+    wl_list_for_each(kbd, &server->keyboards, link) {
+        if (kbd->wlr_keyboard == wlr_keyboard_from_input_device(input_device->device)) {
+            return kbd;
+        }
+    }
+    return NULL;
 }
 
 bool qw_input_device_is_touchpad(struct qw_input_device *input_device) {
