@@ -158,6 +158,9 @@ typedef struct qw_qtile_config *(*get_qtile_config_cb_t)(void *userdata);
 // Callback for idle state change
 typedef void (*idle_state_change_cb_t)(void *userdata, int seconds, bool is_idle);
 
+// Callback for animation completion
+typedef void (*qw_anim_complete_cb_t)(int wid, void *cb_data);
+
 enum {
     LAYER_BACKGROUND,   // background, layer shell
     LAYER_BOTTOM,       // bottom, layer shell
@@ -224,6 +227,7 @@ struct qw_server {
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
     enum qw_session_lock_state lock_state;
+    qw_anim_complete_cb_t anim_complete_cb;
 
     // Private data
     struct wl_event_loop *event_loop;
@@ -283,6 +287,7 @@ struct qw_server {
     struct wlr_keyboard_shortcuts_inhibit_manager_v1 *shortcut_inhibitor_manager;
     struct wl_list shortcut_inhibitors; // list of qw_keyboard_shortcut_inhibitor
     struct wl_listener new_shortcut_inhibitor;
+    struct wl_list views;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
