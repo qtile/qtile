@@ -100,3 +100,18 @@ build-wayland-asan: ## Build wayland backend with address sanitisation support.
 	@echo "Building wayland backend with address sanitisation support."
 	@echo "When starting qtile, you'll need to set 'LD_PRELOAD=$(gcc -print-file-name=libasan.so)' first."
 	@python libqtile/backend/wayland/cffi/build.py --asan
+
+.PHONY: wayland-protocols
+wayland-protocols: deps ## Regenerate docs/manual/wayland_protocols.rst (needs wlprobe)
+	uv run ./libqtile/backend/wayland/cffi/build.py
+	uv run ./scripts/gen-wayland-protocols
+
+.PHONY: check-wayland-protocols
+check-wayland-protocols: deps ## Check docs/manual/wayland_protocols.rst is up to date (needs wlprobe)
+	uv run $(UV_PYTHON_ARG) ./libqtile/backend/wayland/cffi/build.py
+	uv run $(UV_PYTHON_ARG) ./scripts/gen-wayland-protocols --check
+
+.PHONY: ci-check-wayland-protocols
+ci-check-wayland-protocols: ## Check the Wayland protocols page in the docker ci container
+	$(DOCKER_RUN) make check-wayland-protocols
+
