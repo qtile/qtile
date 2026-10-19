@@ -1059,7 +1059,7 @@ bool qw_server_init(struct qw_server *server) {
     wlr_server_decoration_manager_set_default_mode(decoration_mgr,
                                                    WLR_SERVER_DECORATION_MANAGER_MODE_SERVER);
 
-    server->xdg_decoration_mgr = wlr_xdg_decoration_manager_v1_create(server->display);
+    server->xdg_decoration_mgr = wlr_xdg_decoration_manager_v1_create(server->display, 2);
     if (server->xdg_decoration_mgr == NULL) {
         wlr_log(WLR_ERROR, "failed to create xdg decoration manager");
         return false;
