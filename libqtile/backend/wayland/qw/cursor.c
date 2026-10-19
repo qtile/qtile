@@ -321,6 +321,8 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
             // on first press capture window wid
             if (cursor->pressed_button_count == 0) {
                 cursor->pressed_wid = cursor->view ? cursor->view->wid : -1;
+                // For drag_polling_rate set start time
+                cursor->last_motion_time = event->time_msec;
             }
             cursor->pressed_button_count++;
         } else {
