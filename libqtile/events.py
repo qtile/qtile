@@ -3,8 +3,10 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import math
 import os
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self
 
 from libqtile import hook
@@ -25,17 +27,20 @@ MAX_LINE = 64 * 1024
 
 WILDCARD = "*"
 
-_serializers: list[tuple[type, Callable[[Any], Any]]] | None = None
+# Unpaired surrogates are not valid Unicode and so are not allowed in I-JSON strings.
+SURROGATES = re.compile("[\ud800-\udfff]")
+
+serializers: list[tuple[type, Callable[[Any], Any]]] | None = None
 
 
-def _load_serializers() -> list[tuple[type, Callable[[Any], Any]]]:
+def load_serializers() -> list[tuple[type, Callable[[Any], Any]]]:
     """Defines a list of serialisers for qtile object types."""
-    from libqtile.backend.base import Static, Window
+    from libqtile.backend.base import Window
     from libqtile.config import Screen
     from libqtile.group import _Group
     from libqtile.layout.base import Layout
 
-    def window(w: Window | Static) -> dict[str, Any]:
+    def window(w: Window) -> dict[str, Any]:
         group = getattr(w, "group", None)
         return {
             "wid": w.wid,
@@ -56,7 +61,12 @@ def _load_serializers() -> list[tuple[type, Callable[[Any], Any]]]:
     def layout(layout_: Layout) -> dict[str, Any]:
         return {"name": layout_.name}
 
-    return [(Window, window), (_Group, group), (Screen, screen), (Layout, layout)]
+    return [
+        (Window, window),
+        (_Group, group),
+        (Screen, screen),
+        (Layout, layout),
+    ]
 
 
 def to_jsonable(obj: Any, _depth: int = 0) -> Any:
@@ -65,22 +75,29 @@ def to_jsonable(obj: Any, _depth: int = 0) -> Any:
 
     Known qtile objects become small dicts of stable fields. Unknown objects
     fall back to ``repr`` so that a new hook argument type can never break the
-    feed.
+    feed. The result is valid JSON (and I-JSON): non-finite floats become
+    ``None`` and unpaired surrogates in strings are replaced.
     """
-    global _serializers
+    global serializers
 
-    if obj is None or isinstance(obj, (bool, int, float, str)):
+    if obj is None or isinstance(obj, (bool, int)):
         return obj
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, str):
+        return SURROGATES.sub("\ufffd", obj)
     if _depth > 4:
         return repr(obj)
-    if isinstance(obj, (list, tuple, set, frozenset)):
+    if isinstance(obj, (list, tuple, set)):
         return [to_jsonable(o, _depth + 1) for o in obj]
     if isinstance(obj, dict):
-        return {str(k): to_jsonable(v, _depth + 1) for k, v in obj.items()}
+        return {
+            SURROGATES.sub("\ufffd", str(k)): to_jsonable(v, _depth + 1) for k, v in obj.items()
+        }
 
-    if _serializers is None:
-        _serializers = _load_serializers()
-    for cls, fn in _serializers:
+    if serializers is None:
+        serializers = load_serializers()
+    for cls, fn in serializers:
         if isinstance(obj, cls):
             try:
                 return fn(obj)
@@ -90,12 +107,16 @@ def to_jsonable(obj: Any, _depth: int = 0) -> Any:
     return repr(obj)
 
 
+def encode_message(message: dict[str, Any]) -> bytes:
+    """Encode one protocol message as a line of strict JSON."""
+    return (json.dumps(message, allow_nan=False) + "\n").encode()
+
+
 @dataclass(eq=False)
-class _Client:
+class EventClient:
     writer: asyncio.StreamWriter
     # None means "everything".
     events: set[str] | None = None
-    task: asyncio.Task | None = field(default=None, repr=False)
 
     def wants(self, event: str) -> bool:
         return self.events is None or event in self.events
@@ -107,47 +128,47 @@ class EventServer:
 
     Clients connect to a Unix socket (default is current qtile socket plus ".events").
     Every message, in both directions, is a single JSON object terminated by a newline.
+    Every message has a ``type`` member. Receivers ignore unknown types and unknown members.
 
     Client -> server:
 
-        {"subscribe": ["client_new", "setgroup"]}       replace the event filter
-        {"subscribe": null}                             receive everything (default)
-        {"subscribe": ["*"]}                            receive everything
+        {"type": "subscribe", "events": ["client_new", "setgroup"]}   replace the event filter
+        {"type": "subscribe", "events": null}                         receive everything (default)
+        {"type": "subscribe", "events": ["*"]}                        receive everything
 
     Server -> client:
 
-        {"event": "hello", "args": [{"version": 1}]}
-        {"event": "<hook name>", "args": [<jsonable>, ...]}
+        {"type": "hello", "version": 1}
+        {"type": "event", "event": "<hook name>", "args": [<jsonable>, ...]}
 
-    ``args`` mirror what the hook was fired with, converted to serialisable data with `to_jsonable`.
+    ``args`` mirror what the hook was fired with, converted to serialisable data with
+    `to_jsonable`. A ``kwargs`` object is added only if the hook was fired with keyword arguments.
     """
 
     def __init__(self, path: str) -> None:
         self.path = path
-        self._clients: set[_Client] = set()
-        self._server: asyncio.AbstractServer | None = None
-        self._loop: asyncio.AbstractEventLoop | None = None
+        self.clients: set[EventClient] = set()
+        self.server: asyncio.AbstractServer | None = None
 
     async def start(self) -> None:
-        self._loop = asyncio.get_running_loop()
         with contextlib.suppress(FileNotFoundError):
             os.unlink(self.path)
 
-        self._server = await asyncio.start_unix_server(
-            self._handle, path=self.path, limit=MAX_LINE
+        self.server = await asyncio.start_unix_server(
+            self.handle_new_client, path=self.path, limit=MAX_LINE
         )
 
         hook.add_observer(self.publish)
 
     async def stop(self) -> None:
         hook.remove_observer(self.publish)
-        if self._server is not None:
-            self._server.close()
-        for client in list(self._clients):
-            self._remove_client(client)
-        if self._server is not None:
-            await self._server.wait_closed()
-            self._server = None
+        if self.server is not None:
+            self.server.close()
+        for client in list(self.clients):
+            self.remove_client(client)
+        if self.server is not None:
+            await self.server.wait_closed()
+            self.server = None
         with contextlib.suppress(FileNotFoundError):
             os.unlink(self.path)
 
@@ -160,74 +181,61 @@ class EventServer:
         """Close and shutdown the event server"""
         await self.stop()
 
-    @property
-    def has_clients(self) -> bool:
-        return bool(self._clients)
-
     def publish(self, event: str, *args: Any, **kwargs: Any) -> None:
-        """Publish an event to all subscribed clients."""
-        if not self._clients:
-            return
+        """
+        Publish an event to subscribed clients.
 
-        loop = self._loop
-        if loop is None:
-            return
-        try:
-            running = asyncio.get_running_loop()
-        except RuntimeError:
-            running = None
-        if running is loop:
-            self._publish(event, args, kwargs)
-        else:
-            loop.call_soon_threadsafe(self._publish, event, args, kwargs)
-
-    def _publish(self, event: str, args: tuple[Any, ...], kwargs: dict[str, Any]) -> None:
-        targets = [c for c in self._clients if c.wants(event)]
+        Must be called on the event loop's thread, like ``hook.fire``.
+        """
+        targets = [c for c in self.clients if c.wants(event)]
         if not targets:
             return
-        line = self._encode(
+        line = self.encode_event(
             event,
             [to_jsonable(a) for a in args],
             {k: to_jsonable(v) for k, v in kwargs.items()},
         )
         for client in targets:
-            self._send(client, line)
+            self.send_to_client(client, line)
 
     @staticmethod
-    def _encode(event: str, args: list[Any], kwargs: dict[str, Any] | None = None) -> bytes:
-        msg: dict[str, Any] = {"event": event, "args": args}
+    def encode_event(event: str, args: list[Any], kwargs: dict[str, Any] | None = None) -> bytes:
+        msg: dict[str, Any] = {"type": "event", "event": event, "args": args}
         if kwargs:
             msg["kwargs"] = kwargs
-        return (json.dumps(msg) + "\n").encode()
+        return encode_message(msg)
 
-    def _send(self, client: _Client, line: bytes) -> None:
+    def send_to_client(self, client: EventClient, line: bytes) -> None:
         transport = client.writer.transport
         if transport.is_closing():
-            self._remove_client(client)
+            self.remove_client(client)
         elif transport.get_write_buffer_size() > MAX_WRITE_BUFFER:
             logger.warning("Disconnecting slow event-feed client")
-            self._remove_client(client)
+            self.remove_client(client)
         else:
             client.writer.write(line)
 
-    def _remove_client(self, client: _Client) -> None:
-        self._clients.discard(client)
+    def remove_client(self, client: EventClient) -> None:
+        self.clients.discard(client)
+        # abort(), not close(): close() flushes the write buffer first, which never
+        # finishes for a stuck client, leaving the socket open and blocking stop().
         with contextlib.suppress(Exception):
-            client.writer.close()
-        # Don't cancel ourselves if called from within the client's own task.
-        if client.task is not None and client.task is not asyncio.current_task():
-            client.task.cancel()
+            client.writer.transport.abort()
 
-    async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    async def handle_new_client(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
         """
         Handles new client connection.
 
         Clients can update subscribed events during connection.
         """
-        client = _Client(writer, task=asyncio.current_task())
-        self._clients.add(client)
+        client = EventClient(writer)
+        self.clients.add(client)
         try:
-            self._send(client, self._encode("hello", [{"version": PROTOCOL_VERSION}]))
+            self.send_to_client(
+                client, encode_message({"type": "hello", "version": PROTOCOL_VERSION})
+            )
             while True:
                 try:
                     raw = await reader.readline()
@@ -235,20 +243,23 @@ class EventServer:
                     break
                 if not raw:
                     break
-                self._process_command(client, raw)
-        except (ConnectionError, asyncio.CancelledError):
+                self.process_client_command(client, raw)
+        except ConnectionError:
             pass
         finally:
-            self._remove_client(client)
+            self.remove_client(client)
 
-    def _process_command(self, client: _Client, raw: bytes) -> None:
+    def process_client_command(self, client: EventClient, raw: bytes) -> None:
+        """Apply a client message. Invalid or unrecognised messages are ignored."""
         try:
             msg = json.loads(raw)
         except ValueError:
             return
-        if not isinstance(msg, dict):
+        if not isinstance(msg, dict) or msg.get("type") != "subscribe" or "events" not in msg:
             return
 
-        wanted = msg.get("subscribe")
-        if isinstance(wanted, list) and all(isinstance(w, str) for w in wanted):
+        wanted = msg["events"]
+        if wanted is None:
+            client.events = None
+        elif isinstance(wanted, list) and all(isinstance(w, str) for w in wanted):
             client.events = None if WILDCARD in wanted else set(wanted)
