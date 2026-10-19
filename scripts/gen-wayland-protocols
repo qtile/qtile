@@ -1,0 +1,340 @@
+#!/usr/bin/env python3
+"""Generate docs/manual/wayland_protocols.rst from a running qtile compositor.
+
+The compositor is the source of truth: every protocol it supports is advertised
+as a wl_global in the registry, together with the highest version it supports.
+We read that list with `wlprobe` (https://github.com/PolyMeilex/wlprobe, install
+with `cargo install wlprobe`), map interface names to protocol names, and write
+an RST page.
+
+By default a headless qtile Wayland session is started for the probe and shut
+down again afterwards, so the page always reflects the backend you have built.
+
+Usage:
+    make wayland-protocols                      # build the backend + regenerate
+    scripts/gen-wayland-protocols               # regenerate (backend already built)
+    scripts/gen-wayland-protocols --check       # exit 1 if the page is out of date
+    scripts/gen-wayland-protocols --display wayland-1   # probe an existing session
+
+Exit codes:
+    0  page written / up to date
+    1  --check: page is out of date
+    2  the compositor advertises interfaces missing from INTERFACE_TO_PROTOCOL
+       (the page is still written, listing them under their raw names, but add
+       them to the map and re-run)
+    3  could not probe the compositor (wlprobe missing, qtile failed to start...)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+DEFAULT_OUTPUT = REPO / "docs" / "manual" / "wayland_protocols.rst"
+WAYLAND_APP = "https://wayland.app/protocols/"
+STARTUP_TIMEOUT = 30  # seconds to wait for the headless compositor
+
+# Same environment the Wayland tests use to get a headless session.
+HEADLESS_ENV = {
+    "WLR_BACKENDS": "headless",
+    "WLR_LIBINPUT_NO_DEVICES": "1",
+    "WLR_RENDERER_ALLOW_SOFTWARE": "1",
+    "WLR_RENDERER": "pixman",
+}
+
+# Minimal config: once qtile is up, tell us which WAYLAND_DISPLAY it is using.
+PROBE_CONFIG = """\
+import os
+
+from libqtile import hook
+
+
+@hook.subscribe.startup_complete
+def _report_display():
+    tmp = {path!r} + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(os.environ["WAYLAND_DISPLAY"])
+    os.replace(tmp, {path!r})
+"""
+
+# interface -> protocol name (as used on wayland.app / in the XML file names)
+INTERFACE_TO_PROTOCOL = {
+    # core
+    "wl_compositor": "wayland",
+    "wl_subcompositor": "wayland",
+    "wl_shm": "wayland",
+    "wl_data_device_manager": "wayland",
+    "wl_seat": "wayland",
+    "wl_output": "wayland",
+    # stable / staging (wayland-protocols)
+    "xdg_wm_base": "xdg-shell",
+    "wp_viewporter": "viewporter",
+    "wp_presentation": "presentation-time",
+    "zwp_linux_dmabuf_v1": "linux-dmabuf-v1",
+    "wp_fractional_scale_manager_v1": "fractional-scale-v1",
+    "wp_cursor_shape_manager_v1": "cursor-shape-v1",
+    "wp_single_pixel_buffer_manager_v1": "single-pixel-buffer-v1",
+    "wp_content_type_manager_v1": "content-type-v1",
+    "wp_security_context_manager_v1": "security-context-v1",
+    "wp_alpha_modifier_v1": "alpha-modifier-v1",
+    "wp_drm_lease_device_v1": "drm-lease-v1",
+    "wp_linux_drm_syncobj_manager_v1": "linux-drm-syncobj-v1",
+    "wp_color_manager_v1": "color-management-v1",
+    "xdg_activation_v1": "xdg-activation-v1",
+    "xdg_wm_dialog_v1": "xdg-dialog-v1",
+    "xdg_toplevel_drag_manager_v1": "xdg-toplevel-drag-v1",
+    "xdg_system_bell_v1": "xdg-system-bell-v1",
+    "xdg_toplevel_icon_manager_v1": "xdg-toplevel-icon-v1",
+    "xwayland_shell_v1": "xwayland-shell-v1",
+    "ext_idle_notifier_v1": "ext-idle-notify-v1",
+    "ext_session_lock_manager_v1": "ext-session-lock-v1",
+    "ext_foreign_toplevel_list_v1": "ext-foreign-toplevel-list-v1",
+    "ext_data_control_manager_v1": "ext-data-control-v1",
+    "ext_image_copy_capture_manager_v1": "ext-image-copy-capture-v1",
+    "ext_output_image_capture_source_manager_v1": "ext-image-capture-source-v1",
+    "ext_foreign_toplevel_image_capture_source_manager_v1": "ext-image-capture-source-v1",
+    "ext_transient_seat_manager_v1": "ext-transient-seat-v1",
+    "ext_workspace_manager_v1": "ext-workspace-v1",
+    # unstable (wayland-protocols)
+    "zxdg_decoration_manager_v1": "xdg-decoration-unstable-v1",
+    "zxdg_output_manager_v1": "xdg-output-unstable-v1",
+    "zxdg_exporter_v2": "xdg-foreign-unstable-v2",
+    "zxdg_importer_v2": "xdg-foreign-unstable-v2",
+    "zwp_pointer_constraints_v1": "pointer-constraints-unstable-v1",
+    "zwp_relative_pointer_manager_v1": "relative-pointer-unstable-v1",
+    "zwp_pointer_gestures_v1": "pointer-gestures-unstable-v1",
+    "zwp_idle_inhibit_manager_v1": "idle-inhibit-unstable-v1",
+    "zwp_primary_selection_device_manager_v1": "primary-selection-unstable-v1",
+    "zwp_text_input_manager_v3": "text-input-unstable-v3",
+    "zwp_input_method_manager_v2": "input-method-unstable-v2",
+    "zwp_virtual_keyboard_manager_v1": "virtual-keyboard-unstable-v1",
+    "zwp_keyboard_shortcuts_inhibit_manager_v1": "keyboard-shortcuts-inhibit-unstable-v1",
+    "zwp_tablet_manager_v2": "tablet-v2",
+    # wlr-protocols
+    "zwlr_layer_shell_v1": "wlr-layer-shell-unstable-v1",
+    "zwlr_foreign_toplevel_manager_v1": "wlr-foreign-toplevel-management-unstable-v1",
+    "zwlr_output_manager_v1": "wlr-output-management-unstable-v1",
+    "zwlr_output_power_manager_v1": "wlr-output-power-management-unstable-v1",
+    "zwlr_screencopy_manager_v1": "wlr-screencopy-unstable-v1",
+    "zwlr_gamma_control_manager_v1": "wlr-gamma-control-unstable-v1",
+    "zwlr_export_dmabuf_manager_v1": "wlr-export-dmabuf-unstable-v1",
+    "zwlr_data_control_manager_v1": "wlr-data-control-unstable-v1",
+    "zwlr_virtual_pointer_manager_v1": "wlr-virtual-pointer-unstable-v1",
+    "zwlr_input_inhibit_manager_v1": "wlr-input-inhibitor-unstable-v1",
+    # KDE
+    "org_kde_kwin_server_decoration_manager": "kde-server-decoration",
+}
+
+# Interfaces that are implementation details, not protocols worth documenting.
+IGNORED = {"wl_drm"}
+
+HEADER = """\
+..
+   This file is generated by scripts/gen-wayland-protocols - do not edit it by
+   hand, your changes will be overwritten. Run `make wayland-protocols` to
+   regenerate it (see the "Updating supported Wayland protocols" section of
+   the hacking guide).
+
+.. _wayland_protocols:
+
+=============================
+Supported Wayland protocols
+=============================
+
+These are the Wayland protocols advertised by qtile's compositor, together
+with the highest version of each that it supports. Clients may bind to any
+lower version.
+
+.. note::
+
+   Some globals depend on the backend in use (for example DRM leasing is only
+   available on the DRM backend), so not every protocol is available in every
+   session.
+
+"""
+
+
+class ProbeError(Exception):
+    pass
+
+
+def probe(display: str, extra_env: dict[str, str] | None = None) -> dict[str, int]:
+    """Return {interface: version} for every global advertised on `display`."""
+    wlprobe = shutil.which("wlprobe")
+    if wlprobe is None:
+        raise ProbeError("wlprobe not found; install it with `cargo install wlprobe`")
+
+    env = os.environ.copy()
+    env["WAYLAND_DISPLAY"] = display
+    env.update(extra_env or {})
+    try:
+        out = subprocess.run(
+            [wlprobe, "--unique"], env=env, check=True, capture_output=True, text=True
+        ).stdout
+        globals_ = json.loads(out)["globals"]
+    except subprocess.CalledProcessError as e:
+        raise ProbeError(f"wlprobe failed on {display!r}:\n{e.stderr}") from e
+    except (json.JSONDecodeError, KeyError) as e:
+        raise ProbeError(f"unexpected wlprobe output: {e}") from e
+
+    versions: dict[str, int] = {}
+    for g in globals_:
+        # wl_output / wl_seat can appear several times; keep the highest
+        versions[g["interface"]] = max(versions.get(g["interface"], 0), int(g["version"]))
+    return versions
+
+
+def probe_headless_qtile() -> dict[str, int]:
+    """Start a headless qtile Wayland session, probe it, and shut it down."""
+    with tempfile.TemporaryDirectory(prefix="qtile-wayland-protocols-") as tmp:
+        tmp_path = Path(tmp)
+        display_file = tmp_path / "display"
+        config = tmp_path / "config.py"
+        config.write_text(PROBE_CONFIG.format(path=str(display_file)))
+        # qtile logs to a file rather than stdout, so point it at one we can read
+        qtile_log = tmp_path / "qtile.log"
+        output = tmp_path / "output.txt"  # anything qtile prints to stdout/stderr
+
+        # The compositor socket lives in XDG_RUNTIME_DIR. Use a private one so we
+        # neither depend on the host's (which may not exist, e.g. in a container)
+        # nor collide with other sessions.
+        runtime_dir = tmp_path / "run"
+        runtime_dir.mkdir(mode=0o700)
+        runtime_env = {"XDG_RUNTIME_DIR": str(runtime_dir)}
+
+        env = os.environ.copy()
+        env.update(HEADLESS_ENV)
+        env.update(runtime_env)
+        env.pop("WAYLAND_DISPLAY", None)  # never nest into the developer's session
+
+        cmd = [
+            sys.executable,
+            "-m",
+            "libqtile.scripts.main",
+            "start",
+            "-l",
+            "INFO",
+            "-p",
+            str(qtile_log),
+            "-b",
+            "wayland",
+            "-c",
+            str(config),
+        ]
+
+        def diagnostics() -> str:
+            parts = [f"command: {shlex.join(cmd)}"]
+            for name, path in (("stdout/stderr", output), ("qtile log", qtile_log)):
+                text = path.read_text(errors="replace").strip() if path.exists() else ""
+                parts.append(f"--- {name} ---\n{text or '(empty)'}")
+            return "\n".join(parts)
+
+        with output.open("w") as out:
+            proc = subprocess.Popen(cmd, cwd=REPO, env=env, stdout=out, stderr=subprocess.STDOUT)
+        try:
+            deadline = time.monotonic() + STARTUP_TIMEOUT
+            while not display_file.exists():
+                if proc.poll() is not None:
+                    raise ProbeError(
+                        f"headless qtile exited early (exit code {proc.returncode}); "
+                        f"if there is nothing useful below, check the wayland backend is "
+                        f"built (`make build-wayland`)\n{diagnostics()}"
+                    )
+                if time.monotonic() > deadline:
+                    raise ProbeError(
+                        f"headless qtile did not finish starting within {STARTUP_TIMEOUT}s\n"
+                        f"{diagnostics()}"
+                    )
+                time.sleep(0.1)
+            return probe(display_file.read_text().strip(), runtime_env)
+        finally:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait()
+
+
+def render(globals_: dict[str, int]) -> tuple[str, list[str]]:
+    """Return the page content and the interfaces missing from the map."""
+    rows = []
+    unmapped = []
+    for iface, version in globals_.items():
+        if iface in IGNORED:
+            continue
+        protocol = INTERFACE_TO_PROTOCOL.get(iface)
+        if protocol is None:
+            unmapped.append(iface)
+        rows.append((protocol is None, protocol or iface, iface, version))
+    # known protocols first (alphabetical), unrecognised interfaces last
+    rows.sort(key=lambda r: (r[0], r[1], r[2]))
+
+    lines = [
+        ".. list-table::",
+        "   :header-rows: 1",
+        "   :widths: 45 40 15",
+        "",
+        "   * - Protocol",
+        "     - Interface",
+        "     - Version",
+    ]
+    for unknown, protocol, iface, version in rows:
+        name = f"``{protocol}``" if unknown else f"`{protocol} <{WAYLAND_APP}{protocol}>`__"
+        lines += [f"   * - {name}", f"     - ``{iface}``", f"     - {version}"]
+
+    return HEADER + "\n".join(lines) + "\n", sorted(unmapped)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument(
+        "--display",
+        help="WAYLAND_DISPLAY of an already running qtile session (default: start a headless one)",
+    )
+    parser.add_argument("-o", "--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--check", action="store_true", help="don't write; exit 1 if the page is out of date"
+    )
+    args = parser.parse_args()
+
+    try:
+        globals_ = probe(args.display) if args.display else probe_headless_qtile()
+    except ProbeError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 3
+
+    content, unmapped = render(globals_)
+    status = 0
+    if unmapped:
+        print(
+            "error: interfaces missing from INTERFACE_TO_PROTOCOL: " + ", ".join(unmapped),
+            file=sys.stderr,
+        )
+        status = 2
+
+    current = args.output.read_text() if args.output.exists() else None
+    if content == current:
+        print(f"{args.output} is up to date")
+        return status
+    if args.check:
+        print(f"{args.output} is out of date; run `make wayland-protocols`", file=sys.stderr)
+        return status or 1
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(content)
+    print(f"wrote {args.output}")
+    return status
+
+
+if __name__ == "__main__":
+    sys.exit(main())

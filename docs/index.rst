@@ -29,6 +29,7 @@ questions, you can find support in the following places:
     manual/install/index
     Wayland <manual/wayland>
     Wayland Status <manual/wayland_status>
+    Wayland Protocols <manual/wayland_protocols>
     manual/troubleshooting
     manual/commands/shell/index
 
