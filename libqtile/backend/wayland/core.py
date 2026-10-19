@@ -368,7 +368,8 @@ class Core(base.Core):
         # Apply xcursor settings
         lib.qw_cursor_configure_xcursor(self.qw_cursor)
 
-        hook.subscribe.startup_complete(self.update_drag_polling_rate)
+        self.update_drag_polling_rate()
+        hook.subscribe.current_screen_change(self.update_drag_polling_rate)
 
         if initial:
             # This backend does not support restarting
@@ -459,6 +460,11 @@ class Core(base.Core):
         return True
 
     def handle_pointer_event(self, wid: int, sx: int, sy: int, event_type: int) -> None:
+        # Always handle motion while dragging
+        if event_type == lib.QW_POINTER_MOTION and self.qtile._drag is not None:
+            self.handle_pointer_notify_motion(sx, sy)
+            return
+
         win = self.qtile.windows_map.get(wid)
         if win is None or not isinstance(win, Base):
             return
@@ -472,9 +478,9 @@ class Core(base.Core):
                 self.handle_pointer_notify_motion(sx, sy)
 
     def update_drag_polling_rate(self):
-        rate = self.qtile.current_screen.x11_drag_polling_rate or 0
+        rate = self.qtile.current_screen.drag_polling_rate or 0
         lib.qw_cursor_drag_polling_rate(self.qw_cursor, rate)
-        logger.debug(f"x11_drag_polling_rate updated: {rate}")
+        logger.debug(f"drag_polling_rate updated: {rate}")
 
     def handle_cursor_button(
         self, button: int, mask: int, pressed: bool, x: int, y: int, wid: int
