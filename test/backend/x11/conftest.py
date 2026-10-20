@@ -293,6 +293,12 @@ class XBackend(Backend):
     def release_modifier(self, name):
         self.fake_key_release(_MOD_KEYSYMS[name])
 
+    def fake_scroll(self, steps=1):
+        button = 5 if steps > 0 else 4
+        for _ in range(abs(steps)):
+            self.fake_button_press(button)
+            self.fake_button_release(button)
+
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
         conn = Connection(self.env["DISPLAY"])
