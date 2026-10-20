@@ -292,13 +292,15 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
     struct wlr_keyboard *kb = wlr_seat_get_keyboard(cursor->server->seat);
     uint32_t modifiers = kb ? wlr_keyboard_get_modifiers(kb) : 0;
 
-    if (cursor->view == NULL) {
-        return false;
-    }
+    if (pressed) {
+        if (cursor->view == NULL) {
+            return false;
+        }
 
-    // TODO: Callback should only fire for bound modifier + button combos
-    if (!cursor->view->grabbed_click && modifiers == 0) {
-        return false;
+        // TODO: Callback should only fire for bound modifier + button combos
+        if (!cursor->view->grabbed_click && modifiers == 0) {
+            return false;
+        }
     }
 
     // Call server's button callback with button info and modifiers
