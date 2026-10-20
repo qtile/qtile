@@ -15,7 +15,7 @@ from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorT
 from libqtile.log_utils import logger
 from libqtile.utils import ColorsType, ColorType  # noqa: F401
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from libqtile.command.graph import SelectorType
 
 SUCCESS = ipc.IPCStatus.SUCCESS

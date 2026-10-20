@@ -52,11 +52,13 @@ from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
+from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
 from libqtile.scratchpad import ScratchPad
 from libqtile.scripts.main import VERSION
 from libqtile.utils import (
+    ColorType,
     get_cache_dir,
     lget,
     remove_dbus_rules,

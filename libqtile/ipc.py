@@ -4,6 +4,8 @@ must be trusted, as IPC commands such as `eval`, or the repl allow arbitrary
 code execution.
 """
 
+from __future__ import annotations
+
 import asyncio
 import enum
 import fcntl
@@ -18,7 +20,6 @@ from collections.abc import Callable, Coroutine, Iterator
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Self
 
-from libqtile import hook
 from libqtile.interactive.repl import QtileREPL
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
@@ -462,7 +463,7 @@ class AsyncClient:
             self.stream = IPCStreamIO(reader, writer)
         except (ConnectionRefusedError, FileNotFoundError):
             raise IPCError(f"Could not open {self.socket_path}")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise IPCError("Connection to server timed out")
 
     def is_connected(self) -> bool:
@@ -488,7 +489,7 @@ class AsyncClient:
                 raise IPCError("Expected a reply message from the server")
 
             return response
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise IPCError("Server not responding")
 
     async def command(self, command: IPCCommandMessage) -> IPCReplyMessage:
@@ -566,7 +567,7 @@ class Server:
 
                 # Don't handle requests when session is locked
                 # Note: this check is done by `IPCCommandServer` as well
-                if self.locked.is_set():
+                if self.qtile.locked:
                     rep = IPCReplyMessage.error({"error": "Session locked."})
                 else:
                     match req:
