@@ -283,7 +283,7 @@ static void qw_cursor_create_implicit_grab(struct qw_cursor *cursor, uint32_t ti
     cursor->implicit_grab.live = true;
 }
 
-static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool pressed) {
+static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool pressed, int wid) {
     if (cursor->server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
         return false;
     }
@@ -305,7 +305,7 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
 
     // Call server's button callback with button info and modifiers
     return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
-                                            (int)cursor->cursor->y, cursor->pressed_wid,
+                                            (int)cursor->cursor->y, wid,
                                             cursor->server->cb_data) != 0;
 }
 
@@ -347,7 +347,7 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
 
         // When the pointer is constrained, skip further processing
         if (!cursor->active_constraint || event->pointer->base.type != WLR_INPUT_DEVICE_POINTER) {
-            handled = qw_cursor_process_button(cursor, button, pressed);
+            handled = qw_cursor_process_button(cursor, button, pressed, cursor->pressed_wid);
 
             if (!handled) {
                 struct wlr_surface *surface = seat->pointer_state.focused_surface;
@@ -395,9 +395,11 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     uint32_t button_mapped = qw_util_get_button_idx(button);
 
     if (!cursor->implicit_grab.live) {
+        int hovered_wid = cursor->view ? cursor->view->wid : 0;
+
         // If it's a physical wheel fire callback immediately if there is a discrete delta
         if (event->source == WL_POINTER_AXIS_SOURCE_WHEEL && event->delta_discrete != 0) {
-            handled = qw_cursor_process_button(cursor, button_mapped, true);
+            handled = qw_cursor_process_button(cursor, button_mapped, true, hovered_wid);
             // for anything else, we're using rate limiting
         } else if (event->source != WL_POINTER_AXIS_SOURCE_WHEEL) {
             // Touchpad or smooth scroll: integrate displacement
@@ -408,7 +410,7 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
                 int steps = (int)(abs_displacement / DISPLACEMENT_PER_STEP);
                 displacement = fmod(displacement, DISPLACEMENT_PER_STEP);
                 for (int step = 0; step < steps; step++) {
-                    handled = qw_cursor_process_button(cursor, button_mapped, true);
+                    handled = qw_cursor_process_button(cursor, button_mapped, true, hovered_wid);
                 }
             }
         }
