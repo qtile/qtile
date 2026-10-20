@@ -139,11 +139,12 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
 
     struct wlr_surface *surface = NULL;
     double sx = 0.0, sy = 0.0;
-    cursor->view =
-        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
     // Only apply pointer constraints to real pointer input.
     if (cursor->active_constraint && device != NULL && device->type == WLR_INPUT_DEVICE_POINTER) {
+        // Get current surface (before move)
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+
         if (cursor->active_constraint->surface != surface) {
             return;
         }
@@ -159,6 +160,10 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
     }
 
     wlr_cursor_move(cursor->cursor, device, dx, dy);
+
+    // Get surface and set view after move
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
     update_pointer_focus(cursor, surface, sx, sy);
     qw_cursor_dispatch_pointer_notification(cursor, sx, sy, time);
