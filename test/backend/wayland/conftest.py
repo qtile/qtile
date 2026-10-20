@@ -132,6 +132,9 @@ class WaylandBackend(Backend):
     def release_modifier(self, name):
         self.keyboard.assert_ok("clear_modifiers")
 
+    def fake_scroll(self, steps=1):
+        self.pointer.assert_ok(f"scroll {steps}")
+
     def get_all_windows(self):
         """Get a list of all windows in ascending order of Z position"""
         tree = self.manager.c.core.stacking_info()

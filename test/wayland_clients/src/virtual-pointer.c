@@ -87,6 +87,21 @@ static void cmd_button(struct test_state *state, const char *arg, uint32_t butto
     test_ok();
 }
 
+static void cmd_scroll(struct test_state *state, const char *arg) {
+    int steps = 1;
+    if (arg != NULL && sscanf(arg, "%d", &steps) != 1) {
+        test_error("scroll requires an integer step count.");
+        return;
+    }
+    // Fixed-point decimal: 24.8 -> steps * 15 * 256.
+    zwlr_virtual_pointer_v1_axis_discrete(state->vpointer, now_ms(),
+                                          WL_POINTER_AXIS_VERTICAL_SCROLL,
+                                          (wl_fixed_t)(steps * 15 * 256), steps);
+    zwlr_virtual_pointer_v1_frame(state->vpointer);
+    do_roundtrip(&state->base);
+    test_ok();
+}
+
 static bool dispatch_command(struct client_state *base, const char *cmd, const char *arg) {
     struct test_state *state = (struct test_state *)base;
 
@@ -107,6 +122,8 @@ static bool dispatch_command(struct client_state *base, const char *cmd, const c
         cmd_button(state, arg, WL_POINTER_BUTTON_STATE_PRESSED);
     } else if (strcmp(cmd, "button_release") == 0) {
         cmd_button(state, arg, WL_POINTER_BUTTON_STATE_RELEASED);
+    } else if (strcmp(cmd, "scroll") == 0) {
+        cmd_scroll(state, arg);
     } else {
         test_error("unknown command: %s", cmd);
     }
