@@ -5,6 +5,7 @@ from libqtile.config import Click
 from libqtile.lazy import lazy
 from libqtile.popup import Popup
 from test.conftest import BareConfig
+from test.test_window import DragToMoveConfig
 
 
 class ClickRecorder:
@@ -101,3 +102,43 @@ def test_click_internal_with_binding(manager):
     assert binding_hits == "1"
     assert presses == "0"
     assert releases == "1"
+
+
+@popup_config
+def test_release_after_leaving_internal(manager):
+    """A release should go to the internal window that received the press,
+    even if the pointer has moved off it before the release."""
+    manager.c.eval("self.config.make_popup1(self)")
+
+    manager.backend.fake_motion(10, 10)
+    manager.backend.fake_button_press(1)
+    # Move off the popup onto empty desktop/root, then release.
+    manager.backend.fake_motion(400, 400)
+    manager.backend.fake_button_release(1)
+
+    presses = manager.c.eval("self.config.recorders[0].presses")
+    releases = manager.c.eval("self.config.recorders[0].releases")
+
+    assert presses == "1"
+    assert releases == "1"
+
+
+@pytest.mark.parametrize("manager", [DragToMoveConfig], indirect=True)
+def test_drag_release_over_root_clears_drag(manager):
+    """Releasing a drag when there is no view under the pointer must still
+    deliver the release and clear Qtile._drag."""
+    manager.test_window("one")
+    manager.c.window.enable_floating()
+    manager.c.window.set_position_floating(100, 100)
+    manager.c.window.set_size_floating(200, 150)
+
+    manager.backend.fake_motion(150, 150)
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_motion(300, 230)
+    # Move outside the output so no view is under the cursor.
+    manager.backend.fake_motion(900, 900)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+
+    assert manager.c.eval("self._drag is None") == "True"
