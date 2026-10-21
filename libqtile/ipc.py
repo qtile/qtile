@@ -13,16 +13,16 @@ import json
 import os.path
 import socket
 import struct
-import threading
 import traceback
 from abc import ABCMeta, abstractmethod
-from collections.abc import Callable, Coroutine, Iterator
-from dataclasses import asdict, dataclass
+from collections.abc import Callable, Iterator
+from dataclasses import asdict, dataclass, field
 from typing import TYPE_CHECKING, Any, Self
 
+from libqtile.interactive.events import EventClient, EventServer
 from libqtile.interactive.repl import QtileREPL
 from libqtile.log_utils import logger
-from libqtile.utils import get_cache_dir
+from libqtile.utils import create_task, get_cache_dir
 
 if TYPE_CHECKING:
     from libqtile.command.graph import SelectorType
@@ -90,6 +90,10 @@ class MessageType(enum.StrEnum):
     REPL_START = "repl_start"
     REPL_STOP = "repl_stop"
     REPL_REQUEST = "repl_request"
+    # Event subscriptions
+    EVENTS_SUBSCRIBE = "events_subscribe"
+    EVENTS_UNSUBSCRIBE = "events_unsubscribe"
+    EVENTS_NOTIFY = "events_notify"
 
 
 class IPCMessage(metaclass=ABCMeta):
@@ -214,7 +218,6 @@ class IPCReplStopMessage(IPCMessage):
     def message_type(self):
         return MessageType.REPL_STOP
 
-    # This message doesn't carry any data
     def to_json(self) -> dict:
         return asdict(self)
 
@@ -247,6 +250,64 @@ class IPCReplRequestMessage(IPCMessage):
             raise IPCError("REPL request missing session id.")
         session_id = json.pop("session_id")
         return IPCReplRequestMessage(session_id, json)
+
+    def __iter__(self):
+        return iter(())
+
+
+@dataclass
+class IPCEventsSubscribeMessage(IPCMessage):
+    events: list[str] | None = None
+
+    @property
+    def message_type(self):
+        return MessageType.EVENTS_SUBSCRIBE
+
+    def to_json(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCEventsSubscribeMessage:
+        return IPCEventsSubscribeMessage(**json)
+
+    def __iter__(self):
+        return iter(())
+
+
+@dataclass
+class IPCEventsUnsubscribeMessage(IPCMessage):
+    @property
+    def message_type(self):
+        return MessageType.EVENTS_UNSUBSCRIBE
+
+    def to_json(self) -> dict:
+        return dict()
+
+    @classmethod
+    def from_json(cls, _json: dict) -> IPCEventsUnsubscribeMessage:
+        return IPCEventsUnsubscribeMessage()
+
+    def __iter__(self):
+        return iter(())
+
+
+@dataclass
+class IPCEventsNotifyMessage(IPCMessage):
+    event_name: str
+    args: tuple[Any, ...] = ()
+    kwargs: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def message_type(self):
+        return MessageType.EVENTS_NOTIFY
+
+    # This message doesn't carry any data
+    def to_json(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCReplStopMessage:
+        return IPCEventsNotifyMessage(**json)
 
     def __iter__(self):
         return iter(())
@@ -290,6 +351,15 @@ class _IPC:
 
                 case {"message_type": MessageType.REPL_REQUEST, "content": content}:
                     return IPCReplRequestMessage.from_json(content)
+
+                case {"message_type": MessageType.EVENTS_SUBSCRIBE, "content": content}:
+                    return IPCEventsSubscribeMessage.from_json(content)
+
+                case {"message_type": MessageType.EVENTS_UNSUBSCRIBE, "content": content}:
+                    return IPCEventsUnsubscribeMessage.from_json(content)
+
+                case {"message_type": MessageType.EVENTS_NOTIFY, "content": content}:
+                    return IPCEventsNotifyMessage.from_json(content)
 
                 case {"message_type": typ, "content": _}:
                     raise IPCError(f"Unknown message type: '{typ}'")
@@ -418,57 +488,6 @@ class ReconnectingClient:
             return await c.command(IPCCommandMessage(*msg))
 
 
-class PersistentClient:
-    def __init__(self, socket_path: str) -> None:
-        self._loop = asyncio.new_event_loop()
-        self._thread = threading.Thread(target=self._loop.run_forever, daemon=True)
-        self._thread.start()
-        self._client = AsyncClient(socket_path)
-
-    def _run[T](self, coro: Coroutine[Any, Any, T]) -> T:
-        future = asyncio.run_coroutine_threadsafe(coro, self._loop)
-        return future.result()
-
-    def connect(self) -> None:
-        self._run(self._client.connect())
-
-    def close(self) -> None:
-        self._run(self._client.close())
-
-    def send(self, msg: tuple) -> IPCReplyMessage:
-        # Since the PersistentClient retains the connection,
-        # the user should be aware of the need to close it.
-        # This can be done manually via `self.close()`, or
-        # using a with block. However, to remain compatible
-        # with the old `Client` implementation, we're gonna
-        # call `connect` ourselves here
-        if not self._client.is_connected():
-            # This should probably be a warning, but since none of the code
-            # using an IPC client is aware of closing right now, that would
-            # clutter the logs enormously
-            logger.debug("send called on PersistentClient that's not connected")
-            self._run(self._client.connect())
-
-        message = IPCCommandMessage(*msg)
-        return self._run(self._client.command(message))
-
-    def repl_start(self) -> IPCReplyMessage:
-        return self._run(self._client.repl_start())
-
-    def repl_stop(self, session_id: str) -> IPCReplyMessage:
-        return self._run(self._client.repl_stop(session_id))
-
-    def repl_request(self, session_id: str, data: dict[str, Any]) -> IPCReplyMessage:
-        return self._run(self._client.repl_request(session_id, data))
-
-    def __enter__(self) -> PersistentClient:
-        self.connect()
-        return self
-
-    def __exit__(self, _exc_type, _exc, _tb):
-        self.close()
-
-
 Client = ReconnectingClient
 
 
@@ -484,6 +503,8 @@ class AsyncClient:
         """
         self.socket_path = socket_path
         self.stream: IPCStreamIO | None = None
+        self.listen_task: asyncio.Task | None = None
+        self.listening = False
 
     async def connect(self):
         """Open the unix domain socket connection to the IPC server"""
@@ -501,14 +522,7 @@ class AsyncClient:
         return self.stream is not None
 
     async def send(self, message: IPCMessage) -> IPCReplyMessage:
-        """Send the message to the server using the existing connection.
-        `connect` must have been called, it is recommended to use async with:
-
-        ```
-        async with AsyncClient(sock_path) as c:
-            c.send(my_message)
-        ```
-        """
+        """Send the message to the server using the existing connection."""
         if self.stream is None:
             raise IPCError("AsyncClient is not connected, use 'async with' or call 'connect'")
 
@@ -523,6 +537,25 @@ class AsyncClient:
         except TimeoutError:
             raise IPCError("Server not responding")
 
+    async def _listen_loop(self, callback: Callable[[IPCMessage], Any]):
+        """Continuously listen for incoming messages pushed by the server (broadcasts/events)."""
+        try:
+            while self.listening and self.stream is not None:
+                message = await self.stream.read_message()
+                if message is None:
+                    break
+
+                result = callback(message)
+                if asyncio.iscoroutine(result):
+                    await result
+        except asyncio.CancelledError:
+            pass
+        except Exception:
+            if self.stream:
+                await self.close()
+        finally:
+            self.listening = False
+
     async def command(self, command: IPCCommandMessage) -> IPCReplyMessage:
         return await self.send(command)
 
@@ -535,7 +568,36 @@ class AsyncClient:
     async def repl_request(self, session_id, data: dict[str, Any]) -> IPCReplyMessage:
         return await self.send(IPCReplRequestMessage(session_id, data))
 
+    async def events_subscribe(
+        self,
+        events: list[str],
+        callback: Callable[[IPCMessage], Any],
+    ) -> IPCEventsSubscribeMessage:
+        msg = await self.send(IPCEventsSubscribeMessage(events))
+        # if msg.status == IPCStatus.SUCCESS:
+        #     self.start_listening(callback)
+        return msg
+
+    def start_listening(self, callback: Callable[[IPCMessage], Any]) -> None:
+        self.listening = True
+        self.listen_task = create_task(self._listen_loop(callback))
+
+    async def stop_listening(self):
+        self.listening = False
+        if self.listen_task is not None:
+            self.listen_task.cancel()
+            try:
+                await self.listen_task
+            except asyncio.CancelledError:
+                pass
+            self.listen_task = None
+
+    async def events_unsubscribe(self) -> IPCEventsUnsubscribeMessage:
+        return await self.send(IPCEventsUnsubscribeMessage())
+
     async def close(self):
+        await self.stop_listening()
+
         if self.stream is not None:
             await self.stream.close()
             self.stream = None
@@ -545,8 +607,7 @@ class AsyncClient:
         return self
 
     async def __aexit__(self, _exc_type, _exc, _tb):
-        assert self.stream is not None
-        await self.stream.close()
+        await self.close()
 
 
 class Server:
@@ -562,6 +623,7 @@ class Server:
         self.qtile = qtile
         self.server = None  # type: asyncio.AbstractServer | None
         self.repl = QtileREPL()
+        self.events_server = EventServer()
 
         if os.path.exists(socket_path):
             os.unlink(socket_path)
@@ -584,6 +646,7 @@ class Server:
         send the reply back to the client.
         """
         stream = IPCStreamIO(reader, writer)
+        event_client: EventClient | None = None
         logger.debug("Connection made to server")
         try:
             while True:
@@ -630,6 +693,19 @@ class Server:
                             rep = IPCReplyMessage.success(
                                 await self.repl.handle(req.session_id, req.data)
                             )
+
+                        case IPCEventsSubscribeMessage():
+                            event_client = EventClient(stream, req.events)
+                            self.events_server.clients.add(event_client)
+                            rep = IPCReplyMessage.success("Subscribe successful.")
+
+                        case IPCEventsUnsubscribeMessage():
+                            if event_client is not None:
+                                self.events_server.remove_client(event_client)
+                                event_client = None
+                                rep = IPCReplyMessage.success("Unsubscribe successful.")
+                            else:
+                                rep = IPCReplyMessage.error("No client subscribed.")
 
                         case _:
                             raise IPCError(f"Invalid request received: {req.message_type}")
