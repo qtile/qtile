@@ -17,6 +17,7 @@ __all__ = [
     "MonadThreeCol",
     "MonadWide",
     "Zoomy",
+    "Scroll",
 ]
 
 from libqtile.layout.bsp import Bsp
@@ -27,6 +28,7 @@ from libqtile.layout.max import Max
 from libqtile.layout.plasma import Plasma
 from libqtile.layout.ratiotile import RatioTile
 from libqtile.layout.screensplit import ScreenSplit
+from libqtile.layout.scroll import Scroll
 from libqtile.layout.slice import Slice
 from libqtile.layout.spiral import Spiral
 from libqtile.layout.stack import Stack
