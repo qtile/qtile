@@ -3,7 +3,7 @@ import re
 import sys
 from typing import TYPE_CHECKING
 
-from libqtile.ipc import PersistentClient, find_sockfile
+from libqtile.ipc import IPCStatus, PersistentClient, find_sockfile
 
 try:
     from prompt_toolkit import PromptSession
@@ -41,7 +41,12 @@ def start_repl(_args):
         sys.exit("You need to install prompt_toolkit to use the REPL client.")
 
     with PersistentClient(find_sockfile()) as client:
-        welcome_message = client.repl_start().data["output"]
+        reply = client.repl_start()
+        if not reply.status == IPCStatus.SUCCESS:
+            sys.exit("Could not connect to REPL server.")
+
+        session_id = reply.data["session_id"]
+        welcome_message = reply.data["output"]
 
         # Create the objects needed for the client
         class SocketCompleter(Completer):
@@ -60,7 +65,9 @@ def start_repl(_args):
                 start_position = -len(word)
 
                 # Send only the word to the REPL server
-                matches = self.client.repl_request({"completion": word}).data["matches"]
+                matches = self.client.repl_request(session_id, {"completion": word}).data[
+                    "matches"
+                ]
 
                 # Filter out empty strings
                 options = list(filter(None, matches))
@@ -96,7 +103,7 @@ def start_repl(_args):
                 # Save input line to print after
 
                 # Submit to server
-                response = client.repl_request({"code": text}).data["output"]
+                response = client.repl_request(session_id, {"code": text}).data["output"]
 
                 # Save our code to the history as `buffer.reset()`
                 # would otherwise prevent that from happening
@@ -123,6 +130,7 @@ def start_repl(_args):
                 except KeyboardInterrupt:
                     print("\nExiting.")
                     break
+            print(client.repl_stop(session_id + "oo"))
 
 
 def add_subcommand(subparsers, parents):

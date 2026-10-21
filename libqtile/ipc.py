@@ -88,6 +88,7 @@ class MessageType(enum.StrEnum):
     REPLY = "reply"
     # Maybe this could just be a repl_request?
     REPL_START = "repl_start"
+    REPL_STOP = "repl_stop"
     REPL_REQUEST = "repl_request"
 
 
@@ -206,9 +207,30 @@ class IPCReplStartMessage(IPCMessage):
 
 
 @dataclass
+class IPCReplStopMessage(IPCMessage):
+    session_id: str
+
+    @property
+    def message_type(self):
+        return MessageType.REPL_STOP
+
+    # This message doesn't carry any data
+    def to_json(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_json(cls, json: dict) -> IPCReplStopMessage:
+        return IPCReplStopMessage(**json)
+
+    def __iter__(self):
+        return iter(())
+
+
+@dataclass
 class IPCReplRequestMessage(IPCMessage):
     # We let the repl implementation decide what/how to
     # represent their messages, so we just pass them a dict
+    session_id: str
     data: dict[str, Any]
 
     @property
@@ -217,11 +239,14 @@ class IPCReplRequestMessage(IPCMessage):
 
     # This message doesn't carry any data
     def to_json(self) -> dict:
-        return self.data
+        return {**self.data, "session_id": self.session_id}
 
     @classmethod
     def from_json(cls, json: dict) -> IPCReplRequestMessage:
-        return IPCReplRequestMessage(json)
+        if "session_id" not in json:
+            raise IPCError("REPL request missing session id.")
+        session_id = json.pop("session_id")
+        return IPCReplRequestMessage(session_id, json)
 
     def __iter__(self):
         return iter(())
@@ -259,6 +284,9 @@ class _IPC:
 
                 case {"message_type": MessageType.REPL_START, "content": content}:
                     return IPCReplStartMessage.from_json(content)
+
+                case {"message_type": MessageType.REPL_STOP, "content": content}:
+                    return IPCReplStopMessage.from_json(content)
 
                 case {"message_type": MessageType.REPL_REQUEST, "content": content}:
                     return IPCReplRequestMessage.from_json(content)
@@ -427,8 +455,11 @@ class PersistentClient:
     def repl_start(self) -> IPCReplyMessage:
         return self._run(self._client.repl_start())
 
-    def repl_request(self, data: dict[str, Any]) -> IPCReplyMessage:
-        return self._run(self._client.repl_request(data))
+    def repl_stop(self, session_id: str) -> IPCReplyMessage:
+        return self._run(self._client.repl_stop(session_id))
+
+    def repl_request(self, session_id: str, data: dict[str, Any]) -> IPCReplyMessage:
+        return self._run(self._client.repl_request(session_id, data))
 
     def __enter__(self) -> PersistentClient:
         self.connect()
@@ -498,8 +529,11 @@ class AsyncClient:
     async def repl_start(self) -> IPCReplyMessage:
         return await self.send(IPCReplStartMessage())
 
-    async def repl_request(self, data: dict[str, Any]) -> IPCReplyMessage:
-        return await self.send(IPCReplRequestMessage(data))
+    async def repl_stop(self, session_id) -> IPCReplyMessage:
+        return await self.send(IPCReplStopMessage(session_id))
+
+    async def repl_request(self, session_id, data: dict[str, Any]) -> IPCReplyMessage:
+        return await self.send(IPCReplRequestMessage(session_id, data))
 
     async def close(self):
         if self.stream is not None:
@@ -527,6 +561,7 @@ class Server:
         # holds a reference to `qtile` as well
         self.qtile = qtile
         self.server = None  # type: asyncio.AbstractServer | None
+        self.repl = QtileREPL()
 
         if os.path.exists(socket_path):
             os.unlink(socket_path)
@@ -550,7 +585,6 @@ class Server:
         """
         stream = IPCStreamIO(reader, writer)
         logger.debug("Connection made to server")
-        repl = None
         try:
             while True:
                 # There is no timeout here to enable long lived connections
@@ -577,21 +611,25 @@ class Server:
                             rep = self.handler(req)
 
                         case IPCReplStartMessage():
-                            # Intentionally ignore if the repl was
-                            # already started like the original code did
-                            if repl is None:
-                                repl = QtileREPL()
-                                rep = IPCReplyMessage.success(await repl.start(self.qtile))
+                            rep = IPCReplyMessage.success(self.repl.new_client(self.qtile))
+
+                        case IPCReplStopMessage():
+                            disconnected = self.repl.remove_client(req.session_id)
+                            if disconnected:
+                                rep = IPCReplyMessage.success("Client disconnected.")
+                            else:
+                                rep = IPCReplyMessage.error(
+                                    "Could not disconnect client: Invalid session_id."
+                                )
 
                         # As mentioned in `MessageType`, it's possible to handle
                         # the repl being None by just creating one on demand,
                         # as the repl isn't really "running" at all, and getting
                         # rid of the `REPL_START` message type
                         case IPCReplRequestMessage():
-                            if repl is None:
-                                rep = IPCReplyMessage.error({"error": "REPL isn't running"})
-                            else:
-                                rep = IPCReplyMessage.success(await repl.handle(req.data))
+                            rep = IPCReplyMessage.success(
+                                await self.repl.handle(req.session_id, req.data)
+                            )
 
                         case _:
                             raise IPCError(f"Invalid request received: {req.message_type}")

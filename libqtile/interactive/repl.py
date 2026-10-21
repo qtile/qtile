@@ -5,6 +5,7 @@ import contextlib
 import io
 import re
 import traceback
+import uuid
 from typing import Any
 
 from libqtile.log_utils import logger
@@ -87,16 +88,25 @@ class QtileREPL:
     def __init__(self):
         self.buffer = ""
         self.compiler = codeop.Compile()
-
-    async def start(self, qtile) -> dict[str, Any]:
         logger.debug("Starting Qtile REPL")
-
-        self.locals = {"qtile": qtile, **make_safer_env()}
+        self.locals = {}
         self.compiler = codeop.CommandCompiler()
 
-        return {"output": "Connected to Qtile REPL\nPress Ctrl+C to exit.\n"}
+    def new_client(self, qtile) -> dict[str, Any]:
+        client_uuid = uuid.uuid4().hex
+        self.locals[client_uuid] = {"qtile": qtile, **make_safer_env()}
+        return {
+            "session_id": client_uuid,
+            "output": "Connected to Qtile REPL\nPress Ctrl+C to exit.\n",
+        }
 
-    def evaluate_code(self, code):
+    def remove_client(self, session_id: str) -> bool:
+        if session_id in self.locals:
+            del self.locals[session_id]
+            return True
+        return False
+
+    def evaluate_code(self, session_id, code):
         with io.StringIO() as stdout:
             # Capture any stdout and direct to a buffer
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stdout):
@@ -104,31 +114,34 @@ class QtileREPL:
                     try:
                         # Try eval (for expressions)
                         expr_code = compile(code, "<stdin>", "eval")
-                        result = eval(expr_code, self.locals)
+                        result = eval(expr_code, self.locals[session_id])
                         if result is not None:
                             # We can use print here as we've redirected stdout
                             print(repr(result))
                     except SyntaxError:
                         # Fallback to exec (for statements)
-                        exec(self.compiler(code), self.locals)
+                        exec(self.compiler(code), self.locals[session_id])
                 except Exception:
                     traceback.print_exc()
 
             return stdout.getvalue()
 
     # `request` and the return could potentially be typed more strongly
-    async def handle(self, request: dict[str, Any]) -> dict[str, Any]:
+    async def handle(self, session_id: str, request: dict[str, Any]) -> dict[str, Any]:
         """Handle a REPL request by the client. Caller must check that the session isn't locked"""
+        if session_id not in self.locals:
+            return {"output": "Invalid session id."}
+
         match request:
             case {"completion": prefix}:
-                matches = get_completions(prefix, self.locals)
+                matches = get_completions(prefix, self.locals[session_id])
                 return {"matches": matches}
 
             case {"code": code}:
                 if not code.strip():
                     return {"output": ""}
                 else:
-                    output = await asyncio.to_thread(self.evaluate_code, code)
+                    output = await asyncio.to_thread(self.evaluate_code, session_id, code)
                     return {"output": output.strip()}
 
             case _:
