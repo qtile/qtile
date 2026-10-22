@@ -267,26 +267,26 @@ def test_setgroup(manager_nospawn):
     manager_nospawn.setgroup_calls = Value("i", 0)
     hook.subscribe.setgroup(inc_setgroup_calls)
 
-    # Starts with two because of the dual screen
+    # Starts with one because the dual screen assignment is applied atomically
     manager_nospawn.start(BareConfig)
-    assert_inc_calls(2)
+    assert_inc_calls(1)
 
     manager_nospawn.c.switch_groups("a", "b")
+    assert_inc_calls(2)
+
+    manager_nospawn.c.to_screen(1)
+    assert_inc_calls(3)
+    manager_nospawn.c.to_screen(1)
     assert_inc_calls(3)
 
-    manager_nospawn.c.to_screen(1)
-    assert_inc_calls(4)
-    manager_nospawn.c.to_screen(1)
-    assert_inc_calls(4)
-
     manager_nospawn.c.next_screen()
-    assert_inc_calls(5)
+    assert_inc_calls(4)
 
     manager_nospawn.c.prev_screen()
-    assert_inc_calls(6)
+    assert_inc_calls(5)
 
     manager_nospawn.c.group.switch_groups("b")
-    assert_inc_calls(7)
+    assert_inc_calls(6)
 
 
 class CallGroupname:

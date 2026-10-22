@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
 from libqtile.layout.base import Layout
+from libqtile.screen_group_policy import ScreenGroupContext, ScreenGroupRequest
 
 
 class ConfigError(Exception):
@@ -22,6 +23,7 @@ from typing import Literal
 from types import FunctionType
 from libqtile.config import Group, IdleInhibitor, IdleTimer, Key, Mouse, Output, Rule, Screen
 from libqtile.layout.base import Layout
+from libqtile.screen_group_policy import ScreenGroupContext, ScreenGroupRequest
 
 """
 
@@ -58,6 +60,7 @@ class Config:
     idle_inhibitors: list[IdleInhibitor]
     fake_screens: list[Screen] | None
     generate_screens: Callable[[list[Output]], list[Screen]] | None
+    screen_group_policy: Callable[[ScreenGroupContext, ScreenGroupRequest | None], dict[str, str]]
 
     def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
@@ -72,6 +75,13 @@ class Config:
         from libqtile.resources import default_config
 
         default = vars(default_config)
+        policy = settings.get(
+            "screen_group_policy",
+            getattr(self, "screen_group_policy", default["screen_group_policy"]),
+        )
+        if not callable(policy):
+            raise ConfigError("screen_group_policy must be callable")
+
         for key in Config.__annotations__.keys():
             try:
                 value = settings[key]
