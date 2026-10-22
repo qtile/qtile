@@ -5,6 +5,7 @@ import libqtile.resources
 from libqtile import bar, layout, qtile, widget
 from libqtile.config import Click, Drag, Group, Key, Match, Output, Screen
 from libqtile.lazy import lazy
+from libqtile.screen_group_policy import swap_screen_groups
 from libqtile.utils import guess_terminal
 
 mod = "mod4"
@@ -167,6 +168,9 @@ fake_screens: list[Screen] | None = None
 # can decide based on e.g. the number of screens, or which ports are plugged
 # in exactly what do render in each bar for each screen.
 generate_screens: Callable[[list[Output]], list[Screen]] | None = None
+
+# Callback deciding which group each connected monitor displays.
+screen_group_policy = swap_screen_groups
 
 # Drag floating layouts.
 mouse = [

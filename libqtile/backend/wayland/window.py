@@ -546,9 +546,11 @@ class Window(Base, base.Window):
             group = self.qtile.groups_map[group_name]
 
         if self.group is group:
-            if toggle and self.group.screen.previous_group:
+            if toggle and self.group.screen and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
             else:
+                if switch_group:
+                    group.toscreen(toggle=toggle)
                 return
 
         self.hide()
@@ -825,7 +827,8 @@ class Window(Base, base.Window):
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
             self.qtile.focus_screen(screen.index)
-            screen.group.add(self, force=True)
+            if screen.group is not None:
+                screen.group.add(self, force=True)
 
         self._reconfigure_floating(x, y, w, h)
 

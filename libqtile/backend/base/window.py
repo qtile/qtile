@@ -528,7 +528,8 @@ class Window(_Window, metaclass=ABCMeta):
                 screen = self.qtile.screens[index]
             except IndexError:
                 raise CommandError(f"No such screen: {index:d}")
-        self.togroup(screen.group.name)
+        if screen.group is not None:
+            self.togroup(screen.group.name)
 
     @expose_command()
     def set_opacity(self, opacity: float) -> None:

@@ -139,7 +139,12 @@ class _Group(CommandObject):
                         # Screen has lost focus so we reset record of focused window so
                         # focus will warp when screen is focused again
                         self.last_focused = None
-        elif self.screen and not self.windows and self.screen == self.qtile.current_screen:
+        elif (
+            focus
+            and self.screen
+            and not self.windows
+            and self.screen == self.qtile.current_screen
+        ):
             # Clear active window when switching to an empty group on the current screen
             self.qtile.core.clear_focus()
 
@@ -148,10 +153,16 @@ class _Group(CommandObject):
         if screen == self.screen:
             return
         self.screen = screen
+        self._configure_screen(warp)
+
+    def _configure_screen(self, warp=True, focus=True):
+        """Apply layout changes after updating this group's screen reference."""
         if self.screen:
+            if self.screen is not self.qtile.current_screen:
+                self.last_focused = None
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
-            self.layout_all(warp=warp and self.qtile.config.cursor_warp)
+            self.layout_all(warp=warp and self.qtile.config.cursor_warp, focus=focus)
             screen_rect = self.screen.get_rect()
             self.floating_layout.show(screen_rect)
             self.layout.show(screen_rect)
@@ -386,13 +397,10 @@ class _Group(CommandObject):
         else:
             screen = self.qtile.screens[screen]
 
-        if screen.group == self:
-            if toggle:
-                screen.toggle_group(self)
+        if screen.group == self and toggle:
+            screen._toggle_group(self)
         else:
             screen.set_group(self)
-
-        self.qtile.core.check_screen_fullscreen_background(screen)
 
     def _get_group(self, direction, skip_empty=False, skip_managed=False):
         """Find a group walking the groups list in the specified direction

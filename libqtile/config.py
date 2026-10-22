@@ -12,6 +12,13 @@ from libqtile.bar import Bar, BarType
 from libqtile.command.base import CommandObject, ItemT, expose_command
 from libqtile.group import _Group
 from libqtile.log_utils import logger
+from libqtile.screen_group_policy import (
+    ScreenGroupContext,
+    ScreenGroupMonitor,
+    ScreenGroupRequest,
+    get_monitor_ids,
+    swap_screen_groups,
+)
 from libqtile.utils import ColorType
 
 if TYPE_CHECKING:
@@ -410,7 +417,6 @@ class Screen(CommandObject):
     rate. 60 would mean that we handle a drag event 60 times per second.
     """
 
-    group: _Group
     index: int
     # This is populated in manager.py's _process_screens()
     output: Output
@@ -439,6 +445,9 @@ class Screen(CommandObject):
         self.wallpaper_mode = wallpaper_mode
         self.x11_drag_polling_rate = x11_drag_polling_rate
         self.qtile: Qtile | None = None
+        # Screens can transiently have no group attached, for example while
+        # waiting for the screen group policy to assign one.
+        self.group: _Group | None = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
         self.x = x if x is not None else 0
@@ -499,8 +508,6 @@ class Screen(CommandObject):
         y: int,
         width: int,
         height: int,
-        group: _Group,
-        reconfigure_gaps: bool = False,
     ) -> None:
         self.qtile = qtile
         self.index = index
@@ -509,15 +516,16 @@ class Screen(CommandObject):
         self.width = width
         self.height = height
 
+    def _configure_gaps(self, reconfigure: bool = False) -> None:
+        """Configure gaps and bars once the screen has a group assigned."""
+        assert self.qtile is not None
         for gap in self.gaps:
             try:
-                gap._configure(qtile, self, reconfigure=reconfigure_gaps)
+                gap._configure(self.qtile, self, reconfigure=reconfigure)
             except Exception:
                 logger.exception(f"Error configuring {gap.position} gap/bar.")
                 # Call finalize to prevent future execution of the _actual_draw method
                 self.finalize_gap(gap.position)
-
-        self.set_group(group)
 
         if self.background is not None:
             self.qtile.fill_screen(self, self.background)
@@ -594,52 +602,169 @@ class Screen(CommandObject):
     def set_group(
         self, new_group: _Group | None, save_prev: bool = True, warp: bool = True
     ) -> None:
-        """Put group on this screen"""
+        """Select a group, resolving all monitor assignments before notifying hooks."""
         if new_group is None:
             return
+        assert self.qtile is not None
+        from libqtile.scratchpad import ScratchPad
 
-        if new_group.screen == self:
+        qtile = self.qtile
+        if isinstance(new_group, ScratchPad):
+            # Scratchpads are not eligible policy groups and bypass the policy.
+            self._set_group_direct(new_group, save_prev, warp)
             return
 
-        if save_prev and new_group is not self.group:
-            # new_group can be self.group only if the screen is getting configured for
-            # the first time
-            self.previous_group = self.group
+        monitor_ids = get_monitor_ids(qtile.screens)
+        monitor_id = next(
+            key for key, screen in zip(monitor_ids, qtile.screens) if screen is self
+        )
+        request = ScreenGroupRequest(monitor_id, new_group.name)
+        self._set_groups(request, save_prev=save_prev, warp=warp)
 
-        if new_group.screen:
-            # g1 <-> s1 (self)
-            # g2 (new_group) <-> s2 to
-            # g1 <-> s2
-            # g2 <-> s1
-            g1 = self.group
-            s1 = self
-            g2 = new_group
-            s2 = new_group.screen
+    def _set_group_direct(
+        self, new_group: _Group, save_prev: bool = True, warp: bool = False
+    ) -> None:
+        """Assign a group directly, without consulting the screen group policy.
 
-            s2.group = g1
-            g1.set_screen(s2, warp)
-            s1.group = g2
-            g2.set_screen(s1, warp)
-        else:
-            assert self.qtile is not None
-            old_group = self.group
-            self.group = new_group
-            with self.qtile.core.masked():
-                # display clients of the new group and then hide from old group
-                # to remove the screen flickering
-                new_group.set_screen(self, warp)
+        Used for assignments that must not reach the policy as selection
+        requests:
 
-                # Can be the same group only if the screen just got configured for the
-                # first time - see `Qtile._process_screens`.
-                if old_group is not new_group:
-                    old_group.set_screen(None, warp)
+        - ScratchPads, which are not eligible policy groups and can never be
+          part of a policy mapping.
+        - Session restore (QtileState.apply), which replays the saved
+          screen-to-group mapping. Restored assignments are pre-existing
+          state rather than fresh selections, so they are installed directly
+          and the reconciliation that follows presents them to the policy as
+          its snapshot. Routing them through requests would promote stale
+          groups in stateful policies such as ScreenGroupPreferences.
 
-        hook.fire("setgroup")
-        hook.fire("focus_change")
-        hook.fire("layout_change", self.group.layouts[self.group.current_layout], self.group)
+        If the group is displayed on another screen, that screen is displaced
+        within the same atomic operation.
+        """
+        pairs: list[tuple[Screen, _Group | None]] = [(self, new_group)]
+        if (
+            new_group.screen is not None
+            and new_group.screen is not self
+            and self.group is not new_group
+        ):
+            pairs.append((new_group.screen, self.group))
+        self._set_groups(None, pairs, save_prev, warp)
+
+    def _set_groups(
+        self,
+        request: ScreenGroupRequest | None,
+        pairs: list[tuple[Screen, _Group | None]] | None = None,
+        save_prev: bool = True,
+        warp: bool = False,
+    ) -> None:
+        """Complete one assignment, including policy resolution and notifications."""
+        assert self.qtile is not None
+        from libqtile.scratchpad import ScratchPad
+
+        qtile = self.qtile
+        if qtile._group_change_phase == "policy":
+            logger.warning("A screen_group_policy callback must not select groups")
+            return
+        if qtile._group_change_phase == "apply":
+            qtile.call_soon(lambda: self._set_groups(request, pairs, save_prev, warp))
+            return
+
+        qtile._group_change_phase = "policy"
+        try:
+            if pairs is None:
+                if not any(self is screen for screen in qtile.screens):
+                    return
+                monitor_ids = get_monitor_ids(qtile.screens)
+                context = ScreenGroupContext(
+                    tuple(
+                        ScreenGroupMonitor(
+                            key,
+                            screen.index,
+                            screen.output.port,
+                            screen.output.make,
+                            screen.output.model,
+                            screen.output.serial,
+                            screen.group.name if screen.group is not None else None,
+                        )
+                        for key, screen in zip(monitor_ids, qtile.screens)
+                    ),
+                    tuple(
+                        group.name for group in qtile.groups if not isinstance(group, ScratchPad)
+                    ),
+                    tuple(
+                        (group.name, group.screen_affinity)
+                        for group in qtile.groups
+                        if not isinstance(group, ScratchPad) and group.screen_affinity is not None
+                    ),
+                )
+                try:
+                    assignments = qtile.config.screen_group_policy(context, request)
+                    if not isinstance(assignments, dict) or set(assignments) != set(monitor_ids):
+                        raise ValueError(
+                            "Policy must assign every connected monitor exactly once"
+                        )
+                    names = list(assignments.values())
+                    if len(set(names)) != len(names) or not set(names) <= set(context.groups):
+                        raise ValueError(
+                            "Policy must select distinct existing non-scratchpad groups"
+                        )
+                except Exception:
+                    logger.exception("screen_group_policy failed; using default group assignment")
+                    assignments = swap_screen_groups(context, request)
+                pairs = [
+                    (screen, qtile.groups_map[assignments[key]])
+                    for key, screen in zip(monitor_ids, qtile.screens)
+                ]
+
+            qtile._group_change_phase = "apply"
+            old_groups = [screen.group for screen, _ in pairs]
+            targets = [group for _, group in pairs]
+            changed = [
+                screen
+                for (screen, target), old in zip(pairs, old_groups)
+                if old is not target or (target is not None and target.screen is not screen)
+            ]
+            affected = list(
+                dict.fromkeys(group for group in [*old_groups, *targets] if group is not None)
+            )
+            old_screens = {group: group.screen for group in affected}
+            with qtile.core.masked():
+                # Install both directions for every monitor before any layout or focus work.
+                for (screen, target), old in zip(pairs, old_groups):
+                    if old is not target and screen is self and save_prev:
+                        screen.previous_group = old
+                    screen.group = target
+                for group in old_groups:
+                    if group is not None and group not in targets:
+                        group.screen = None
+                for screen, group in pairs:
+                    if group is not None:
+                        group.screen = screen
+
+                # Show the new groups before hiding old ones to avoid flicker.
+                affected.sort(key=lambda group: group.screen is None)
+                for group in affected:
+                    if old_screens[group] is not group.screen:
+                        group._configure_screen(focus=False)
+                if changed:
+                    qtile.core.check_screen_fullscreen_background()
+                    if any(screen is qtile.current_screen for screen in changed):
+                        window = qtile.current_window
+                        if window:
+                            window.focus(warp and qtile.config.cursor_warp)
+                        else:
+                            qtile.core.clear_focus()
+
+            if changed:
+                hook.fire("setgroup")
+                hook.fire("focus_change")
+                if self.group is not None:
+                    hook.fire("layout_change", self.group.layout, self.group)
+        finally:
+            qtile._group_change_phase = "idle"
 
     def _toggle_group(self, group: _Group | None = None, warp: bool = True) -> None:
-        """Switch to the selected group or to the previously active one"""
+        """Switch to the selected group or to the previously active one."""
         if group in (self.group, None) and self.previous_group:
             group = self.previous_group
         self.set_group(group, warp=warp)
@@ -654,18 +779,18 @@ class Screen(CommandObject):
         elif name == "widget":
             bars = (g for g in self.gaps if isinstance(g, Bar))
             return False, [w.name for b in bars for w in b.widgets]
-        elif name == "group":
+        elif name == "group" and self.group is not None:
             return True, [self.group.name]
         return None
 
     def _select(self, name: str, sel: str | int | None) -> CommandObject | None:
-        if name == "layout":
+        if name == "layout" and self.group is not None:
             if sel is None:
                 return self.group.layout
             else:
                 assert isinstance(sel, int)
                 return utils.lget(self.group.layouts, sel)
-        elif name == "window":
+        elif name == "window" and self.group is not None:
             if sel is None:
                 return self.group.current_window
             else:
@@ -688,7 +813,7 @@ class Screen(CommandObject):
         elif name == "group":
             if sel is None:
                 return self.group
-            else:
+            elif self.group is not None:
                 return self.group if sel == self.group.name else None
         return None
 
@@ -709,11 +834,13 @@ class Screen(CommandObject):
             w = self.width
         if h is None:
             h = self.height
-        self._configure(self.qtile, self.index, x, y, w, h, self.group)
+        self._configure(self.qtile, self.index, x, y, w, h)
+        self._configure_gaps()
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.group.layout_all()
+        if self.group is not None:
+            self.group.layout_all()
 
     @expose_command()
     def info(self) -> dict[str, Any]:
@@ -732,6 +859,8 @@ class Screen(CommandObject):
         self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
     ) -> None:
         """Switch to the next group"""
+        if self.group is None:
+            return
         group = self.group.get_next_group(skip_empty, skip_managed)
         self.set_group(group, warp=warp)
 
@@ -740,6 +869,8 @@ class Screen(CommandObject):
         self, skip_empty: bool = False, skip_managed: bool = False, warp: bool = True
     ) -> None:
         """Switch to the previous group"""
+        if self.group is None:
+            return
         group = self.group.get_previous_group(skip_empty, skip_managed)
         self.set_group(group, warp=warp)
 
