@@ -111,6 +111,8 @@ class Server:
                             )
 
                         case IPCEventsSubscribeMessage():
+                            if not self.events_server.clients:
+                                self.events_server.start(self.qtile)
                             event_client = EventClient(stream, req.events)
                             self.events_server.clients.add(event_client)
                             rep = IPCReplyMessage.success("Subscribe successful.")
