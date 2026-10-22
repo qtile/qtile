@@ -12,13 +12,9 @@ import asyncio
 import sys
 from typing import TYPE_CHECKING, NoReturn
 
-from libqtile.ipc import (
-    AsyncClient,
-    IPCEventsNotifyMessage,
-    IPCMessage,
-    IPCStatus,
-    find_sockfile,
-)
+from libqtile.ipc import find_sockfile
+from libqtile.ipc.client import AsyncClient
+from libqtile.ipc.messages import IPCEventsNotifyMessage, IPCMessage, IPCStatus
 
 if TYPE_CHECKING:
     import argparse
@@ -61,7 +57,7 @@ async def qtile_events(args: argparse.Namespace) -> None:
             if msg.status != IPCStatus.SUCCESS:
                 error("Could not subscribe to events.")
 
-            client.start_listening(handle_message)
+            # client.start_listening(handle_message)
 
             # Keep the main function running in the background while
             # `_listen_loop` processes messages asynchronously.

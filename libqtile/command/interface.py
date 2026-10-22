@@ -9,18 +9,20 @@ import typing
 from abc import ABCMeta, abstractmethod
 from typing import Any, Literal, Union, get_args, get_origin
 
-from libqtile import hook, ipc
+from libqtile import hook
 from libqtile.command.base import CommandError, CommandException, CommandObject, SelectError
 from libqtile.command.graph import CommandGraphCall, CommandGraphNode, SelectorType
+from libqtile.ipc.client import Client
+from libqtile.ipc.messages import IPCCommandMessage, IPCReplyMessage, IPCStatus
 from libqtile.log_utils import logger
 from libqtile.utils import ColorsType, ColorType  # noqa: F401
 
 if typing.TYPE_CHECKING:
     from libqtile.command.graph import SelectorType
 
-SUCCESS = ipc.IPCStatus.SUCCESS
-ERROR = ipc.IPCStatus.ERROR
-EXCEPTION = ipc.IPCStatus.EXCEPTION
+SUCCESS = IPCStatus.SUCCESS
+ERROR = IPCStatus.ERROR
+EXCEPTION = IPCStatus.EXCEPTION
 
 
 # these two mask their aliases from elsewhere in the tree (i.e.
@@ -211,7 +213,7 @@ class QtileCommandInterface(CommandInterface):
 class IPCCommandInterface(CommandInterface):
     """Execute the resolved commands using the IPC connection to a running qtile instance"""
 
-    def __init__(self, ipc_client: ipc.Client):
+    def __init__(self, ipc_client: Client):
         """Build a command object which resolves commands through IPC calls
 
         Parameters
@@ -399,8 +401,8 @@ class IPCCommandServer:
 
     def call(
         self,
-        data: ipc.IPCCommandMessage,
-    ) -> ipc.IPCReplyMessage:
+        data: IPCCommandMessage,
+    ) -> IPCReplyMessage:
         """Receive and parse the given data"""
         selectors, name, args, kwargs, lifted = data
         try:
@@ -408,9 +410,9 @@ class IPCCommandServer:
             cmd = obj.command(name)
         except SelectError as err:
             sel_string = format_selectors(selectors)
-            return ipc.IPCReplyMessage.error(f"No object {err.name} in path '{sel_string}'")
+            return IPCReplyMessage.error(f"No object {err.name} in path '{sel_string}'")
         if not cmd:
-            return ipc.IPCReplyMessage.error("No such command")
+            return IPCReplyMessage.error("No such command")
 
         logger.debug("Command: %s(%s, %s)", name, args, kwargs)
 
@@ -422,11 +424,11 @@ class IPCCommandServer:
             args = (obj,) + args
 
         if self.qtile.locked and not getattr(cmd, "_allow_when_locked", False):
-            return ipc.IPCReplyMessage.error(f"{name} cannot be called when session is locked.")
+            return IPCReplyMessage.error(f"{name} cannot be called when session is locked.")
 
         try:
-            return ipc.IPCReplyMessage.success(cmd(*args, **kwargs))
+            return IPCReplyMessage.success(cmd(*args, **kwargs))
         except CommandError as err:
-            return ipc.IPCReplyMessage.error(err.args[0])
+            return IPCReplyMessage.error(err.args[0])
         except Exception as exc:
-            return ipc.IPCReplyMessage.exception(exc)
+            return IPCReplyMessage.exception(exc)

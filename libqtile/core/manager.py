@@ -52,6 +52,8 @@ from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
+from libqtile.ipc.messages import IPCCommandMessage
+from libqtile.ipc.server import Server as IPCServer
 from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 from libqtile.resources.sleep import inhibitor
@@ -250,7 +252,7 @@ class Qtile(CommandObject):
                 signals[signal.SIGCHLD] = utils.reap_zombies
             async with (
                 LoopContext(signals),
-                ipc.Server(
+                IPCServer(
                     self._prepare_socket_path(self.socket_path),
                     self.server.call,
                     self,
@@ -563,9 +565,7 @@ class Qtile(CommandObject):
             for cmd in key.commands:
                 if cmd.check(self):
                     status, val = self.server.call(
-                        ipc.IPCCommandMessage(
-                            cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False
-                        )
+                        IPCCommandMessage(cmd.selectors, cmd.name, cmd.args, cmd.kwargs, False)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s", cmd.name, val)
@@ -935,7 +935,7 @@ class Qtile(CommandObject):
                 for i in m.commands:
                     if i.check(self):
                         status, val = self.server.call(
-                            ipc.IPCCommandMessage(i.selectors, i.name, i.args, i.kwargs, False)
+                            IPCCommandMessage(i.selectors, i.name, i.args, i.kwargs, False)
                         )
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
@@ -948,7 +948,7 @@ class Qtile(CommandObject):
                 if m.start:
                     i = m.start
                     status, val = self.server.call(
-                        ipc.IPCCommandMessage(i.selectors, i.name, i.args, i.kwargs, False)
+                        IPCCommandMessage(i.selectors, i.name, i.args, i.kwargs, False)
                     )
                     if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("Mouse command error %s: %s", i.name, val)
@@ -988,7 +988,7 @@ class Qtile(CommandObject):
             for i in cmd:
                 if i.check(self):
                     status, val = self.server.call(
-                        ipc.IPCCommandMessage(
+                        IPCCommandMessage(
                             i.selectors, i.name, i.args + (rx + dx, ry + dy), i.kwargs, False
                         )
                     )
