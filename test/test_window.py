@@ -488,6 +488,49 @@ def test_follow_mouse_focus_across_screens(manager, follow_mouse_focus):
     assert manager.c.window.info()["name"] == assert_window
 
 
+@dualmonitor
+@follow_mouse_focus_config
+def test_follow_mouse_focus_on_static(manager, follow_mouse_focus):
+    manager.test_window("one")
+    manager.c.window.static(0, 50, 50, 50, 50)
+
+    manager.test_window("two")
+    manager.c.window.static(1, 50, 50, 50, 50)
+
+    assert manager.c.screen[0].group.info()["windows"] == []
+    assert manager.c.screen[1].group.info()["windows"] == []
+
+    # Last focused screen
+    assert_screen = manager.c.screen.info()["index"]
+
+    # Go to window two
+    manager.backend.warp_pointer(855, 55)
+    if follow_mouse_focus is True:
+        assert_screen = 1
+    assert manager.c.screen.info()["index"] == assert_screen
+    # Send fake Drag event
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_screen = 1
+    assert manager.c.screen.info()["index"] == assert_screen
+
+    # Go to window one
+    manager.backend.warp_pointer(55, 55)
+    if follow_mouse_focus is True:
+        assert_screen = 0
+    assert manager.c.screen.info()["index"] == assert_screen
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(1)
+    manager.backend.fake_button_release(1)
+    manager.backend.release_modifier("super")
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_screen = 0
+    assert manager.c.screen.info()["index"] == assert_screen
+
+
 @manager_config
 def test_window_stacking_order(manager):
     """Test basic window stacking controls."""

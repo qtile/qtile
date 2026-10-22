@@ -493,16 +493,20 @@ class Core(base.Core):
             if self.qtile.process_button_click(int(button), int(mask), x, y):
                 return True
 
-            if not self.qw_cursor.implicit_grab.live:
+            if isinstance(win, Window):
                 self._focus_by_click()
+                return True
 
-            if win is not None and isinstance(win, Internal):
+            if isinstance(win, Internal):
                 win.process_button_click(
                     int(self.qw_cursor.cursor.x - win.x),
                     int(self.qw_cursor.cursor.y - win.y),
                     int(button),
                 )
                 return True
+
+            if win is None:
+                self._focus_by_click()
 
             return False
         else:
