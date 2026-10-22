@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
-import json
 import math
 import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from libqtile import hook
+from libqtile.ipc import IPCError
 from libqtile.ipc.messages import IPCEventsNotifyMessage
 from libqtile.log_utils import logger
-from libqtile.utils import create_task
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -69,49 +69,6 @@ def load_serializers() -> list[tuple[type, Callable[[Any], Any]]]:
     ]
 
 
-def to_jsonable(obj: Any, _depth: int = 0) -> Any:
-    """
-    Convert a hook argument into something ``json.dumps`` accepts.
-
-    Known qtile objects become small dicts of stable fields. Unknown objects
-    fall back to ``repr`` so that a new hook argument type can never break the
-    feed. The result is valid JSON (and I-JSON): non-finite floats become
-    ``None`` and unpaired surrogates in strings are replaced.
-    """
-    global serializers
-
-    if obj is None or isinstance(obj, (bool, int)):
-        return obj
-    if isinstance(obj, float):
-        return obj if math.isfinite(obj) else None
-    if isinstance(obj, str):
-        return SURROGATES.sub("\ufffd", obj)
-    if _depth > 4:
-        return repr(obj)
-    if isinstance(obj, (list, tuple, set)):
-        return [to_jsonable(o, _depth + 1) for o in obj]
-    if isinstance(obj, dict):
-        return {
-            SURROGATES.sub("\ufffd", str(k)): to_jsonable(v, _depth + 1) for k, v in obj.items()
-        }
-
-    if serializers is None:
-        serializers = load_serializers()
-    for cls, fn in serializers:
-        if isinstance(obj, cls):
-            try:
-                return fn(obj)
-            except Exception:
-                logger.exception("Failed to serialize %r", obj)
-                return repr(obj)
-    return repr(obj)
-
-
-def encode_message(message: dict[str, Any]) -> bytes:
-    """Encode one protocol message as a line of strict JSON."""
-    return (json.dumps(message, allow_nan=False) + "\n").encode()
-
-
 @dataclass(eq=False)
 class EventClient:
     stream: Any
@@ -148,11 +105,53 @@ class EventServer:
     def __init__(self) -> None:
         self.clients: set[EventClient] = set()
         hook.add_observer(self.publish)
+        self.serializers: list[tuple[type, Callable[[Any], Any]]] = []
+        self.loop: asyncio.AbstractEventLoop | None = None
+
+    def start(self, qtile) -> None:
+        self.serializers = load_serializers()
+        self.loop = qtile._eventloop
 
     def stop(self) -> None:
         hook.remove_observer(self.publish)
         for client in list(self.clients):
             self.remove_client(client)
+
+    def to_jsonable(self, obj: Any, _depth: int = 0) -> Any:
+        """
+        Convert a hook argument into something ``json.dumps`` accepts.
+
+        Known qtile objects become small dicts of stable fields. Unknown objects
+        fall back to ``repr`` so that a new hook argument type can never break the
+        feed. The result is valid JSON (and I-JSON): non-finite floats become
+        ``None`` and unpaired surrogates in strings are replaced.
+        """
+        global serializers
+
+        if obj is None or isinstance(obj, (bool, int)):
+            return obj
+        if isinstance(obj, float):
+            return obj if math.isfinite(obj) else None
+        if isinstance(obj, str):
+            return SURROGATES.sub("\ufffd", obj)
+        if _depth > 4:
+            return repr(obj)
+        if isinstance(obj, (list, tuple, set)):
+            return [self.to_jsonable(o, _depth + 1) for o in obj]
+        if isinstance(obj, dict):
+            return {
+                SURROGATES.sub("\ufffd", str(k)): self.to_jsonable(v, _depth + 1)
+                for k, v in obj.items()
+            }
+
+        for cls, fn in self.serializers:
+            if isinstance(obj, cls):
+                try:
+                    return fn(obj)
+                except Exception:
+                    logger.exception("Failed to serialize %r", obj)
+                    return repr(obj)
+        return repr(obj)
 
     def publish(self, event: str, *args: Any, **kwargs: Any) -> None:
         """
@@ -160,17 +159,21 @@ class EventServer:
 
         Must be called on the event loop's thread, like ``hook.fire``.
         """
+        # This is really more for mypy and should not really be possible...
+        if self.loop is None:
+            raise IPCError("Events server publishing messages before setting event loop.")
+
         targets = [c for c in self.clients if c.wants(event)]
         if not targets:
             return
 
         message = IPCEventsNotifyMessage(
             event,
-            [to_jsonable(a) for a in args],
-            {k: to_jsonable(v) for k, v in kwargs.items()},
+            [self.to_jsonable(a) for a in args],
+            {k: self.to_jsonable(v) for k, v in kwargs.items()},
         )
         for client in targets:
-            create_task(self._safe_write(client, message))
+            asyncio.run_coroutine_threadsafe(self._safe_write(client, message), self.loop)
 
     async def _safe_write(self, client: EventClient, message: IPCEventsNotifyMessage) -> None:
         """Safely write to client and handle any dropouts without unhandled exceptions."""
