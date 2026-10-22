@@ -921,6 +921,10 @@ class Qtile(CommandObject):
                     if screen is not self.current_screen:
                         self.focus_screen(self.screens.index(screen), warp=False)
                 window.focus()
+            elif isinstance(window, base.Static):
+                screen = window.screen
+                if screen is not None and screen is not self.current_screen:
+                    self.focus_screen(self.screens.index(screen), warp=False)
 
     def process_button_click(self, button_code: int, modmask: int, x: int, y: int) -> bool:
         handled = False
@@ -939,11 +943,11 @@ class Qtile(CommandObject):
                         if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error("Mouse command error %s: %s", i.name, val)
                         handled = True
-            elif (
-                isinstance(m, Drag) and self.current_window and not self.current_window.fullscreen
-            ):
+            elif isinstance(m, Drag):
                 if self.config.follow_mouse_focus == "click_or_drag_only":
                     self.focus_hovered_window()
+                if not self.current_window or self.current_window.fullscreen:
+                    continue
                 if m.start:
                     i = m.start
                     status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs, False))
