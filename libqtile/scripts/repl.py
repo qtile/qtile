@@ -4,7 +4,9 @@ import re
 import sys
 from typing import TYPE_CHECKING
 
-from libqtile.ipc import AsyncClient, IPCStatus, find_sockfile
+from libqtile.ipc import find_sockfile
+from libqtile.ipc.client import AsyncClient
+from libqtile.ipc.messages import IPCStatus
 
 try:
     from prompt_toolkit import PromptSession

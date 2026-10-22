@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from libqtile import hook
+from libqtile.ipc.messages import IPCEventsNotifyMessage
 from libqtile.log_utils import logger
 from libqtile.utils import create_task
 
@@ -115,7 +116,7 @@ def encode_message(message: dict[str, Any]) -> bytes:
 class EventClient:
     stream: Any
     # None means "everything".
-    events: set[str] | None = None
+    events: list[str] | None = None
 
     def wants(self, event: str) -> bool:
         return not self.events or event in self.events
@@ -162,7 +163,6 @@ class EventServer:
         targets = [c for c in self.clients if c.wants(event)]
         if not targets:
             return
-        from libqtile.ipc import IPCEventsNotifyMessage
 
         message = IPCEventsNotifyMessage(
             event,
@@ -184,7 +184,6 @@ class EventServer:
             else:
                 await client.stream.write_message(message)
         except Exception:
-            raise
             # If writing fails, cleanly remove the client
             self.remove_client(client)
 
@@ -193,4 +192,4 @@ class EventServer:
         # abort(), not close(): close() flushes the write buffer first, which never
         # finishes for a stuck client, leaving the socket open and blocking stop().
         with contextlib.suppress(Exception):
-            client.writer.transport.abort()
+            client.stream.writer.transport.abort()

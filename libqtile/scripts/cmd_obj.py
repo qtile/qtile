@@ -14,7 +14,8 @@ from libqtile.command.base import CommandError, CommandException, SelectError
 from libqtile.command.client import CommandClient
 from libqtile.command.graph import CommandGraphRoot
 from libqtile.command.interface import IPCCommandInterface
-from libqtile.ipc import Client, find_sockfile
+from libqtile.ipc import find_sockfile
+from libqtile.ipc.client import Client
 
 
 class KeyValDictAdd(argparse.Action):

@@ -1,5 +1,6 @@
 from libqtile import ipc, sh
 from libqtile.command import interface
+from libqtile.ipc.client import Client
 
 
 def qshell(args) -> None:
@@ -7,7 +8,7 @@ def qshell(args) -> None:
         socket = ipc.find_sockfile()
     else:
         socket = args.socket
-    client = ipc.Client(socket)
+    client = Client(socket)
     cmd_object = interface.IPCCommandInterface(client)
     qsh = sh.QSh(cmd_object)
     if args.command is not None:
