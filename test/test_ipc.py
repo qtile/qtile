@@ -1,6 +1,6 @@
 import pytest
 
-from libqtile.ipc import _IPC, IPCCommandMessage, IPCMessage, IPCReplyMessage, IPCStatus
+from libqtile.ipc.messages import _IPC, IPCCommandMessage, IPCMessage, IPCReplyMessage, IPCStatus
 
 
 def test_ipc_identity():

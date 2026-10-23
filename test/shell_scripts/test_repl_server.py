@@ -1,4 +1,4 @@
-from libqtile.interactive.repl import get_completions
+from libqtile.ipc.repl import get_completions
 
 
 def test_get_completions_top_level():
