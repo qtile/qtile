@@ -4,7 +4,13 @@ from libqtile import bar, config, hook, layout, log_utils, resources, widget
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
 from test.conftest import BareConfig, dualmonitor
-from test.helpers import window_by_name
+from test.helpers import (
+    HEIGHT,
+    SECOND_HEIGHT,
+    SECOND_WIDTH,
+    WIDTH,
+    window_by_name,
+)
 from test.layouts.layout_utils import assert_focused, assert_unfocused
 from test.test_manager import ManagerConfig
 
@@ -760,3 +766,23 @@ def test_drag_to_move_window(manager):
     info = manager.c.window.info()
     assert (info["x"], info["y"]) == (250, 180)  # 100 + 150, 100 + 80
     assert (info["width"], info["height"]) == (200, 150)
+
+
+@dualmonitor
+def test_click_focus_screen(manager):
+    screen1 = (WIDTH // 2, HEIGHT // 2)
+    screen2 = (WIDTH + SECOND_WIDTH // 2, SECOND_HEIGHT // 2)
+    manager.backend.warp_pointer(*screen1)
+    assert manager.c.screen.info()["index"] == 0
+
+    # Warping alone shouldn't change the current screen
+    manager.backend.warp_pointer(*screen2)
+    assert manager.c.screen.info()["index"] == 0
+    # Clicking should
+    manager.backend.fake_click(*screen2)
+    assert manager.c.screen.info()["index"] == 1
+
+    manager.backend.warp_pointer(*screen1)
+    assert manager.c.screen.info()["index"] == 1
+    manager.backend.fake_click(*screen1)
+    assert manager.c.screen.info()["index"] == 0
