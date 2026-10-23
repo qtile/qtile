@@ -1,8 +1,12 @@
+import asyncio
 import codeop
 import re
-import socket
 import sys
-from time import sleep
+from typing import TYPE_CHECKING
+
+from libqtile.ipc import find_sockfile
+from libqtile.ipc.client import AsyncClient
+from libqtile.ipc.messages import IPCStatus
 
 try:
     from prompt_toolkit import PromptSession
@@ -15,101 +19,48 @@ try:
 except (ImportError, ModuleNotFoundError):
     HAS_PT = False
 
-from libqtile.interactive.repl import COMPLETION_REQUEST, REPL_PORT, TERMINATOR
-from libqtile.scripts.cmd_obj import cmd_obj
-
-HOST = "localhost"
-
-
-class Command:
-    """Wrapper to call commands via command interface."""
-
-    def __init__(self, command, obj_spec=["root"], *args, **kwargs):
-        self.function = command
-        self.socket = None
-        self.args = args
-        self.kwargs = kwargs
-        self.obj_spec = obj_spec
-        self.info = False
-
-    def __call__(self):
-        return cmd_obj(self)
-
-
-# Calls to start and stop the qtile REPL server
-# Sends commands via qtile cmd-obj
-start_server = Command("start_repl_server")
-stop_server = Command("stop_repl_server")
+if TYPE_CHECKING:
+    pass
 
 
 def is_code_complete(text: str) -> bool:
     """Method to verify that we have a valid code block."""
     try:
         code_obj = codeop.compile_command(text, symbol="exec")
-
-        # Incomplete (e.g. after 'def foo():')
         if code_obj is None:
             return False
-
-        # Only treat as complete if there's a double blank line at the end for compound blocks
         lines = text.rstrip("\n").splitlines()
         return len(lines) <= 1 or text.endswith("\n\n")
     except (SyntaxError, OverflowError, ValueError, TypeError):
         return True
 
 
-def read_full_response(sock, end_marker=f"{TERMINATOR}\n"):
-    """Function to read data from socket until termination marker."""
-    buffer = ""
-    while True:
-        data = sock.recv(4096).decode()
-
-        if not data:
-            # connection closed without end marker
-            break
-
-        buffer += data
-        if end_marker in buffer:
-            # Split off the marker and return only the response text
-            response, _, _ = buffer.partition(end_marker)
-            return response
-
-    # connection closed without end marker
-    return buffer
-
-
-def start_repl(_args):
+async def start_repl_async(_args):
     if not HAS_PT:
         sys.exit("You need to install prompt_toolkit to use the REPL client.")
 
-    # Start the repl server in qtile and find port number
-    start_server()
+    sock_path = find_sockfile()
 
-    # We need to wait until server is up an running before continuing
-    retry_count = 0
-    while retry_count < 5:
-        try:
-            sock = socket.create_connection((HOST, REPL_PORT))
-            break
-        except ConnectionRefusedError:
-            retry_count += 1
-            sleep(0.5)
+    async with AsyncClient(sock_path) as client:
+        reply = await client.repl_start()
+        if not reply.status == IPCStatus.SUCCESS:
+            sys.exit("Could not connect to REPL server.")
 
-    if retry_count == 5:
-        print("Unable to connect to REPL server. Exiting...")
-        stop_server()
-        return
+        session_id = reply.data["session_id"]
+        welcome_message = reply.data["output"]
 
-    try:
-        # Create the objects needed for the client
-        class SocketCompleter(Completer):
-            def __init__(self, sock):
-                self.sock = sock
+        class AsyncSocketCompleter(Completer):
+            def __init__(self, client, session_id):
+                self.client = client
+                self.session_id = session_id
 
-            def get_completions(self, document, _complete_event):
+            def get_completions(self, document, complete_event):
+                # Fallback required by Python's abstract base class check
+                return
+                yield
+
+            async def get_completions_async(self, document, _complete_event):
                 text_before_cursor = document.text_before_cursor
-
-                # Extract the current word or attribute expression (e.g., qtile.cur)
                 match = re.search(r"([\w\.]+)$", text_before_cursor)
                 if not match:
                     return
@@ -117,25 +68,18 @@ def start_repl(_args):
                 word = match.group(1)
                 start_position = -len(word)
 
-                # Send only the word to the REPL server
-                self.sock.sendall(f"{COMPLETION_REQUEST}{word}\n{TERMINATOR}\n".encode())
-
-                # Read completions from server and filter out empty strings
-                data = read_full_response(self.sock)
-                options = list(filter(None, data.strip().split(",")))
-
-                # No suggestions so return early
+                reply = await self.client.repl_request(self.session_id, {"completion": word})
+                matches = reply.data.get("matches", [])
+                options = list(filter(None, matches))
                 if not options:
                     return
 
                 for opt in options:
-                    # opt is the full completion (e.g. 'qtile.current_layout')
                     yield Completion(opt, start_position=start_position)
 
         kb = KeyBindings()
-        completer = SocketCompleter(sock)
+        completer = AsyncSocketCompleter(client, session_id)
 
-        # Create a session instance
         session = PromptSession(
             completer=completer,
             key_bindings=kb,
@@ -145,51 +89,45 @@ def start_repl(_args):
             history=InMemoryHistory(),
         )
 
-        # Create a handler for the Enter key so we can deal with multiline input
         @kb.add("enter")
-        def _(event):
+        async def _(event):
             buffer = event.app.current_buffer
             text = buffer.document.text
 
             if is_code_complete(text):
-                # Save input line to print after
-                full_block = f"{text}\n{TERMINATOR}\n"
+                reply = await client.repl_request(session_id, {"code": text})
+                response = reply.data["output"]
 
-                # Submit to server
-                sock.sendall(full_block.encode())
-
-                # Save our code to the history as `buffer.reset()`
-                # would otherwise prevent that from happening
                 session.history.append_string(text)
-
-                # Clear buffer before reading response
                 buffer.reset()
 
-                # Read and print server response
-                response = read_full_response(sock)
-
-                # Echo input and response manually
                 text = text.replace("\n", "\n... ")
                 print(f">>> {text}")
                 if response.strip():
                     print(response, end="\n", flush=True)
             else:
-                buffer.insert_text("\n")  # Insert a newline instead
+                buffer.insert_text("\n")
 
         with patch_stdout():
-            # Read the welcome message from the server.
-            print(read_full_response(sock), end="", flush=True)
+            print(welcome_message, end="", flush=True)
 
-            while True:
+            try:
+                # Inner try...finally ensures repl_stop is called before
+                # AsyncClient's __aexit__ tears down the stream.
                 try:
-                    session.prompt(">>> ")
-                except KeyboardInterrupt:
-                    print("\nExiting.")
-                    break
+                    while True:
+                        await session.prompt_async(">>> ")
+                finally:
+                    await client.repl_stop(session_id)
+            except (KeyboardInterrupt, EOFError):
+                print("\nExiting.")
 
-    finally:
-        sock.close()
-        stop_server()
+
+def start_repl(args):
+    try:
+        asyncio.run(start_repl_async(args))
+    except KeyboardInterrupt:
+        pass
 
 
 def add_subcommand(subparsers, parents):
