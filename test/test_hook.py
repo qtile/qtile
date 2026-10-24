@@ -551,16 +551,47 @@ def test_client_focus(manager_nospawn):
     assert_window(manager_nospawn, "Test Client")
 
 
+@pytest.mark.parametrize("win_type", ["Window", "Static"])
 @pytest.mark.usefixtures("hook_fixture")
-def test_client_mouse_enter(manager_nospawn):
+def test_client_mouse_enter(manager_nospawn, win_type):
     class ClientMouseEnterConfig(BareConfig):
+        layouts = [layout.floating.Floating()]
         test = CallWindow()
         hook.subscribe.client_mouse_enter(test)
 
     manager_nospawn.start(ClientMouseEnterConfig)
+    manager_nospawn.backend.fake_motion(0, 0)
     manager_nospawn.test_window("Test Client")
-    manager_nospawn.backend.fake_click(0, 0)
+    assert manager_nospawn.c.window.get_position() == (350, 250)
+    assert manager_nospawn.c.window.get_size() == (100, 100)
+    if win_type == "Static":
+        manager_nospawn.c.window.static()
+    manager_nospawn.backend.fake_motion(400, 300)
     assert_window(manager_nospawn, "Test Client")
+
+
+class FocusOnEnter(CallWindow):
+    def __call__(self, window):
+        super().__call__(window)  # records name and increments count
+        window.group.focus(window)
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_client_mouse_enter_without_recursion(manager_nospawn):
+    class MouseEnterLoopConfig(BareConfig):
+        layouts = [layout.floating.Floating()]
+        test = FocusOnEnter()
+        hook.subscribe.client_mouse_enter(test)
+
+    manager_nospawn.start(MouseEnterLoopConfig)
+    manager_nospawn.backend.fake_motion(0, 0)
+    manager_nospawn.test_window("Test Client")
+    assert manager_nospawn.c.window.get_position() == (350, 250)
+    assert manager_nospawn.c.window.get_size() == (100, 100)
+    manager_nospawn.backend.fake_motion(400, 300)
+
+    count = int(manager_nospawn.c.eval("self.config.test.count"))
+    assert count == 1
 
 
 @pytest.mark.usefixtures("hook_fixture")

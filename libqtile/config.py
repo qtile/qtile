@@ -402,8 +402,8 @@ class Screen(CommandObject):
     drawn, so you can set the background color for an image by setting
     background here.
 
-    The ``x11_drag_polling_rate`` parameter specifies the rate for drag events
-    in the X11 backend. By default this is set to None, indicating no limit.
+    The ``drag_polling_rate`` parameter specifies the rate for drag events.
+    By default this is set to None, indicating no limit.
     Because in the X11 backend we already handle motion notify events later,
     the performance should already be okay. However, to limit these events
     further you can use this variable and e.g. set it to your monitor refresh
@@ -424,7 +424,7 @@ class Screen(CommandObject):
         background: ColorType | None = None,
         wallpaper: str | None = None,
         wallpaper_mode: str | None = None,
-        x11_drag_polling_rate: int | None = None,
+        drag_polling_rate: int | None = None,
         x: int | None = None,
         y: int | None = None,
         width: int | None = None,
@@ -437,7 +437,7 @@ class Screen(CommandObject):
         self.background = background
         self.wallpaper = wallpaper
         self.wallpaper_mode = wallpaper_mode
-        self.x11_drag_polling_rate = x11_drag_polling_rate
+        self.drag_polling_rate = drag_polling_rate
         self.qtile: Qtile | None = None
         # x position of upper left corner can be > 0
         # if one screen is "right" of the other
@@ -538,7 +538,7 @@ class Screen(CommandObject):
         self.background = other.background
         self.wallpaper = other.wallpaper
         self.wallpaper_mode = other.wallpaper_mode
-        self.x11_drag_polling_rate = other.x11_drag_polling_rate
+        self.drag_polling_rate = other.drag_polling_rate
         self.output = other.output
 
     def paint(self, path: str, mode: str | None = None) -> None:

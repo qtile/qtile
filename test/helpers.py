@@ -407,6 +407,7 @@ class TestManager:
         new_title=None,
         urgent=False,
         export_sni=False,
+        print_clicks=False,
     ):
         """
         Create a simple window in X or Wayland. If `floating` is True then the wmclass
@@ -434,6 +435,8 @@ class TestManager:
             os.environ["GDK_BACKEND"] = "x11"
         if export_sni:
             args.append("--export-sni-interface")
+        if print_clicks:
+            args.append("--print-clicks")
         return self._spawn_window(*args)
 
     def test_notification(self, name="notification"):

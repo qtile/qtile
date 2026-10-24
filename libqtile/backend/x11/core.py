@@ -727,7 +727,7 @@ class Core(base.Core):
         # Limit the motion notify events from happening too frequently
         # As we already handle motion notify events "later", the default is None
         # So we also need to check if this has to be done in the first place
-        resize_fps = self.qtile.current_screen.x11_drag_polling_rate
+        resize_fps = self.qtile.current_screen.drag_polling_rate
         if resize_fps is not None and (event.time - self._last_motion_time) <= (
             1000 / resize_fps
         ):

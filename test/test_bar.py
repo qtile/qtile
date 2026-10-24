@@ -790,3 +790,32 @@ def test_dont_reserve_bar(no_reserve_manager, bar_x, bar_y, bar_w, bar_h):
     assert bar_y == int(bar.eval("self.y"))
     assert bar_w == bar_info["width"]
     assert bar_h == bar_info["height"]
+
+
+class ScrollWidget(libqtile.widget.TextBox):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.scrolls = 0
+
+    def button_press(self, x, y, button):
+        if button in (4, 5):
+            self.scrolls += 1
+
+
+def test_bar_widget_scroll(manager_nospawn):
+    class ScrollBarConfig(BareConfig):
+        screens = [
+            libqtile.config.Screen(
+                top=libqtile.bar.Bar(
+                    [ScrollWidget(name="scroll", text="scroll", width=100)],
+                    30,
+                ),
+            )
+        ]
+
+    manager_nospawn.start(ScrollBarConfig)
+
+    manager_nospawn.backend.fake_motion(10, 10)
+    manager_nospawn.backend.fake_scroll(1)
+    manager_nospawn.c.sync()
+    assert manager_nospawn.c.eval('self.widgets_map["scroll"].scrolls') == "1"

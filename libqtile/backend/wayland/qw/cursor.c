@@ -24,7 +24,8 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 }
 
 // Forward declaration: dispatch Internal-view enter/leave/motion to compositor.
-static void qw_cursor_dispatch_internal_pointer(struct qw_cursor *cursor, double sx, double sy);
+static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, double sx, double sy,
+                                                    uint32_t time);
 
 // Pointer focus helper function
 static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *surface, double sx,
@@ -34,44 +35,59 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
     if (surface == NULL) {
         wlr_seat_pointer_clear_focus(seat);
         // Reset cursor if we're not over a surface and we're not dragging
-        if (cursor->server->seat->drag == NULL) {
+        if (seat->drag == NULL) {
             wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
         }
     } else {
-        struct wlr_surface *prev_surface = seat->pointer_state.focused_surface;
-        if (surface != prev_surface) {
-            wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
-        }
+        // no-op if surface is already focused
+        wlr_seat_pointer_notify_enter(seat, surface, sx, sy);
     }
-    qw_cursor_dispatch_internal_pointer(cursor, sx, sy);
 }
 
-// Notify the compositor about pointer enter/leave/motion on Internal views.
-static void qw_cursor_dispatch_internal_pointer(struct qw_cursor *cursor, double sx, double sy) {
-    if (!cursor->server->pointer_internal_event_cb) {
+static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, double sx, double sy,
+                                                    uint32_t time) {
+    struct qw_server *server = cursor->server;
+    struct qw_view *view = cursor->view;
+
+    if (cursor->pointer_masked || server->pointer_event_cb == NULL) {
         return;
     }
 
-    int new_wid = -1;
-    if (cursor->view != NULL && cursor->view->view_type == QW_VIEW_INTERNAL) {
-        new_wid = cursor->view->wid;
-    }
+    int new_wid = view ? view->wid : -1;
+    bool new_internal = view && view->view_type == QW_VIEW_INTERNAL;
 
-    int prev_wid = cursor->prev_internal_wid;
-    if (new_wid != prev_wid) {
-        if (prev_wid != -1) {
-            cursor->server->pointer_internal_event_cb(prev_wid, 0, 0, QW_POINTER_INTERNAL_LEAVE,
-                                                      cursor->server->cb_data);
+    if (new_wid != cursor->prev_wid) {
+        // pointer moved over a different window
+        int old_wid = cursor->prev_wid;
+        bool old_internal = cursor->prev_was_internal;
+
+        cursor->prev_wid = new_wid;
+        cursor->prev_was_internal = new_internal;
+
+        // pointer moved from one client window to another.
+        bool client_to_client = old_wid != -1 && new_wid != -1 && !old_internal && !new_internal;
+
+        if (old_wid != -1 && !client_to_client) {
+            // pointer left a window.
+            // When moved from client to client, no need for LEAVE event
+            server->pointer_event_cb(old_wid, (int)sx, (int)sy, QW_POINTER_LEAVE, server->cb_data);
         }
         if (new_wid != -1) {
-            cursor->server->pointer_internal_event_cb(
-                new_wid, (int)sx, (int)sy, QW_POINTER_INTERNAL_ENTER, cursor->server->cb_data);
+            // pointer entered a new window
+            server->pointer_event_cb(new_wid, (int)sx, (int)sy, QW_POINTER_ENTER, server->cb_data);
         }
-        cursor->prev_internal_wid = new_wid;
-    } else if (new_wid != -1) {
-        cursor->server->pointer_internal_event_cb(
-            new_wid, (int)sx, (int)sy, QW_POINTER_INTERNAL_MOTION, cursor->server->cb_data);
+    } else if ((new_wid != -1 && new_internal) || cursor->pressed_button_count > 0) {
+        // pointer moved within an internal window or we're dragging
+        uint32_t rate = cursor->drag_polling_rate; // 0 = unlimited
+        if (rate == 0 || (time - cursor->last_motion_time) > 1000 / rate) {
+            cursor->last_motion_time = time;
+            server->pointer_event_cb(new_wid, (int)sx, (int)sy, QW_POINTER_MOTION, server->cb_data);
+        }
     }
+}
+
+void qw_cursor_mask_pointer_events(struct qw_cursor *cursor, bool masked) {
+    cursor->pointer_masked = masked;
 }
 
 // Update pointer focus without motion
@@ -112,7 +128,8 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
         }
 
         // Still notify the server of cursor position for UI updates
-        cursor->server->cursor_motion_cb(cursor->server->cb_data);
+        // TODO: Not sure what to do here, if this call is necessary?
+        // cursor->server->cursor_motion_cb(cursor->server->cb_data);
         return;
     }
 
@@ -122,11 +139,12 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
 
     struct wlr_surface *surface = NULL;
     double sx = 0.0, sy = 0.0;
-    cursor->view =
-        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
     // Only apply pointer constraints to real pointer input.
     if (cursor->active_constraint && device != NULL && device->type == WLR_INPUT_DEVICE_POINTER) {
+        // Get current surface (before move)
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+
         if (cursor->active_constraint->surface != surface) {
             return;
         }
@@ -143,10 +161,12 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
 
     wlr_cursor_move(cursor->cursor, device, dx, dy);
 
-    update_pointer_focus(cursor, surface, sx, sy);
+    // Get surface and set view after move
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
-    // Notify server callback with current cursor position
-    cursor->server->cursor_motion_cb(cursor->server->cb_data);
+    update_pointer_focus(cursor, surface, sx, sy);
+    qw_cursor_dispatch_pointer_notification(cursor, sx, sy, time);
 
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);
@@ -206,9 +226,13 @@ static void qw_cursor_handle_motion_absolute(struct wl_listener *listener, void 
 
 void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y, bool motion) {
     wlr_cursor_warp_closest(cursor->cursor, NULL, x, y);
-    qw_cursor_update_pointer_focus(cursor);
+    struct wlr_surface *surface = NULL;
+    double sx = 0.0, sy = 0.0;
+    cursor->view =
+        qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
+    update_pointer_focus(cursor, surface, sx, sy);
     if (motion) {
-        cursor->server->cursor_motion_cb(cursor->server->cb_data);
+        qw_cursor_dispatch_pointer_notification(cursor, sx, sy, 0);
     }
 }
 
@@ -259,7 +283,7 @@ static void qw_cursor_create_implicit_grab(struct qw_cursor *cursor, uint32_t ti
     cursor->implicit_grab.live = true;
 }
 
-static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool pressed) {
+static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool pressed, int wid) {
     if (cursor->server->lock_state != QW_SESSION_LOCK_UNLOCKED) {
         return false;
     }
@@ -268,14 +292,17 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
     struct wlr_keyboard *kb = wlr_seat_get_keyboard(cursor->server->seat);
     uint32_t modifiers = kb ? wlr_keyboard_get_modifiers(kb) : 0;
 
-    // TODO: Callback should only fire for bound modifier + button combos
-    if (cursor->view != NULL && !cursor->view->grabbed_click && modifiers == 0) {
+    // A button press, over a window that isn't grabbing button events, with no
+    // modifiers held, doesn't need to call back
+    // TODO: modifiers == 0 is a stand-in for no bound modifier + button combos
+    if (pressed && cursor->view != NULL && !cursor->view->grabbed_click && modifiers == 0) {
         return false;
     }
 
     // Call server's button callback with button info and modifiers
     return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
-                                            (int)cursor->cursor->y, cursor->server->cb_data) != 0;
+                                            (int)cursor->cursor->y, wid,
+                                            cursor->server->cb_data) != 0;
 }
 
 static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
@@ -290,20 +317,25 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
     uint32_t button = qw_util_get_button_idx(event->button);
     bool pressed = event->state == WL_POINTER_BUTTON_STATE_PRESSED;
     bool handled = false;
-    static int pressed_button_count = 0;
     // TODO: exclusive client
 
     if (button != 0) {
         if (pressed) {
-            pressed_button_count++;
+            // on first press capture window wid
+            if (cursor->pressed_button_count == 0) {
+                cursor->pressed_wid = cursor->view ? cursor->view->wid : -1;
+                // For drag_polling_rate set start time
+                cursor->last_motion_time = event->time_msec;
+            }
+            cursor->pressed_button_count++;
         } else {
-            pressed_button_count--;
+            cursor->pressed_button_count--;
         }
 
         if (cursor->implicit_grab.live) {
             wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                            event->state);
-            if (pressed_button_count == 0) {
+            if (cursor->pressed_button_count == 0) {
                 qw_cursor_release_implicit_grab(cursor, event->time_msec);
             }
             return;
@@ -311,12 +343,12 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
 
         // When the pointer is constrained, skip further processing
         if (!cursor->active_constraint || event->pointer->base.type != WLR_INPUT_DEVICE_POINTER) {
-            handled = qw_cursor_process_button(cursor, button, pressed);
+            handled = qw_cursor_process_button(cursor, button, pressed, cursor->pressed_wid);
 
             if (!handled) {
                 struct wlr_surface *surface = seat->pointer_state.focused_surface;
                 struct wlr_drag *drag = cursor->server->seat->drag;
-                if (pressed_button_count == 1 && surface != NULL && drag == NULL) {
+                if (cursor->pressed_button_count == 1 && surface != NULL && drag == NULL) {
                     qw_cursor_create_implicit_grab(cursor, event->time_msec);
                 }
             }
@@ -359,9 +391,11 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
     uint32_t button_mapped = qw_util_get_button_idx(button);
 
     if (!cursor->implicit_grab.live) {
+        int hovered_wid = cursor->view ? cursor->view->wid : 0;
+
         // If it's a physical wheel fire callback immediately if there is a discrete delta
         if (event->source == WL_POINTER_AXIS_SOURCE_WHEEL && event->delta_discrete != 0) {
-            handled = qw_cursor_process_button(cursor, button_mapped, true);
+            handled = qw_cursor_process_button(cursor, button_mapped, true, hovered_wid);
             // for anything else, we're using rate limiting
         } else if (event->source != WL_POINTER_AXIS_SOURCE_WHEEL) {
             // Touchpad or smooth scroll: integrate displacement
@@ -372,7 +406,7 @@ static void qw_cursor_handle_axis(struct wl_listener *listener, void *data) {
                 int steps = (int)(abs_displacement / DISPLACEMENT_PER_STEP);
                 displacement = fmod(displacement, DISPLACEMENT_PER_STEP);
                 for (int step = 0; step < steps; step++) {
-                    handled = qw_cursor_process_button(cursor, button_mapped, true);
+                    handled = qw_cursor_process_button(cursor, button_mapped, true, hovered_wid);
                 }
             }
         }
@@ -405,7 +439,10 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *server) {
     }
 
     cursor->server = server;
-    cursor->prev_internal_wid = -1;
+    cursor->prev_wid = -1;
+    cursor->last_motion_time = 0;
+    cursor->drag_polling_rate = 0;
+    cursor->pressed_button_count = 0;
     cursor->cursor = wlr_cursor_create();
     wlr_cursor_attach_output_layout(cursor->cursor, server->output_layout);
     cursor->mgr = wlr_xcursor_manager_create(NULL, 24);
@@ -727,4 +764,8 @@ static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, voi
     cursor->current_shape_name = name;
 
     wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+}
+
+void qw_cursor_drag_polling_rate(struct qw_cursor *cursor, int32_t rate) {
+    cursor->drag_polling_rate = rate;
 }

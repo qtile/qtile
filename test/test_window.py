@@ -2,8 +2,15 @@ import pytest
 
 from libqtile import bar, config, hook, layout, log_utils, resources, widget
 from libqtile.confreader import Config
+from libqtile.lazy import lazy
 from test.conftest import BareConfig, dualmonitor
-from test.helpers import window_by_name
+from test.helpers import (
+    HEIGHT,
+    SECOND_HEIGHT,
+    SECOND_WIDTH,
+    WIDTH,
+    window_by_name,
+)
 from test.layouts.layout_utils import assert_focused, assert_unfocused
 from test.test_manager import ManagerConfig
 
@@ -487,6 +494,49 @@ def test_follow_mouse_focus_across_screens(manager, follow_mouse_focus):
     assert manager.c.window.info()["name"] == assert_window
 
 
+@dualmonitor
+@follow_mouse_focus_config
+def test_follow_mouse_focus_on_static(manager, follow_mouse_focus):
+    manager.test_window("one")
+    manager.c.window.static(0, 50, 50, 50, 50)
+
+    manager.test_window("two")
+    manager.c.window.static(1, 50, 50, 50, 50)
+
+    assert manager.c.screen[0].group.info()["windows"] == []
+    assert manager.c.screen[1].group.info()["windows"] == []
+
+    # Last focused screen
+    assert_screen = manager.c.screen.info()["index"]
+
+    # Go to window two
+    manager.backend.warp_pointer(855, 55)
+    if follow_mouse_focus is True:
+        assert_screen = 1
+    assert manager.c.screen.info()["index"] == assert_screen
+    # Send fake Drag event
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_screen = 1
+    assert manager.c.screen.info()["index"] == assert_screen
+
+    # Go to window one
+    manager.backend.warp_pointer(55, 55)
+    if follow_mouse_focus is True:
+        assert_screen = 0
+    assert manager.c.screen.info()["index"] == assert_screen
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(1)
+    manager.backend.fake_button_release(1)
+    manager.backend.release_modifier("super")
+    if follow_mouse_focus == "click_or_drag_only":
+        assert_screen = 0
+    assert manager.c.screen.info()["index"] == assert_screen
+
+
 @manager_config
 def test_window_stacking_order(manager):
     """Test basic window stacking controls."""
@@ -678,3 +728,61 @@ def test_move_float_above_tiled(manager):
 
     window_by_name(manager.c, "two").toggle_floating()
     assert _clients() == ["one", "three", "two"]
+
+
+class DragToMoveConfig(BareConfig):
+    mouse = [
+        config.Drag(
+            ["mod4"],
+            "Button3",
+            lazy.window.set_position_floating(),
+            start=lazy.window.get_position(),
+        ),
+    ]
+
+
+@pytest.mark.parametrize("manager", [DragToMoveConfig], indirect=True)
+def test_drag_to_move_window(manager):
+    """Test that dragging a floating window with the mouse moves it."""
+
+    manager.test_window("one")
+    manager.c.window.enable_floating()
+    manager.c.window.set_position_floating(100, 100)
+    manager.c.window.set_size_floating(200, 150)
+
+    info = manager.c.window.info()
+    assert (info["x"], info["y"]) == (100, 100)
+
+    # Put the cursor over the window before pressing anything.
+    manager.backend.fake_motion(150, 150)
+
+    # Hold Super, press button3 and drag by (150, 80), release.
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_motion(300, 230)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+
+    info = manager.c.window.info()
+    assert (info["x"], info["y"]) == (250, 180)  # 100 + 150, 100 + 80
+    assert (info["width"], info["height"]) == (200, 150)
+
+
+@dualmonitor
+def test_click_focus_screen(manager):
+    screen1 = (WIDTH // 2, HEIGHT // 2)
+    screen2 = (WIDTH + SECOND_WIDTH // 2, SECOND_HEIGHT // 2)
+    manager.backend.warp_pointer(*screen1)
+    assert manager.c.screen.info()["index"] == 0
+
+    # Warping alone shouldn't change the current screen
+    manager.backend.warp_pointer(*screen2)
+    assert manager.c.screen.info()["index"] == 0
+    # Clicking should
+    manager.backend.fake_click(*screen2)
+    assert manager.c.screen.info()["index"] == 1
+
+    manager.backend.warp_pointer(*screen1)
+    assert manager.c.screen.info()["index"] == 1
+    manager.backend.fake_click(*screen1)
+    assert manager.c.screen.info()["index"] == 0
