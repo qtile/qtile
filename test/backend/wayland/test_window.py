@@ -4,7 +4,7 @@ import libqtile.layout
 from libqtile.backend.wayland._ffi import lib
 from test.backend.wayland.conftest import new_layer_client, new_xdg_client
 from test.conftest import BareConfig
-from test.helpers import window_by_name
+from test.helpers import Retry, window_by_name
 from test.layouts.test_common import AllLayoutsConfig
 
 try:
@@ -158,3 +158,26 @@ def test_window_opacity_commands(wmanager):
 
     # Should be firmly clamped at 1.0
     assert wmanager.c.window.info()["opacity"] == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "test_client",
+    [("../../scripts/window.py", ["--print-clicks"])],
+    indirect=True,
+)
+def test_window_receives_click(wmanager, test_client):
+    @Retry(ignore_exceptions=(AssertionError,))
+    def wait_for_window(empty=False):
+        assert (len(wmanager.c.windows()) > 0) is not empty
+
+    wait_for_window()
+
+    info = wmanager.c.window.info()
+    x = info["x"] + info["width"] // 2
+    y = info["y"] + info["height"] // 2
+
+    wmanager.backend.fake_motion(x, y)
+    wmanager.backend.fake_button_press(1)
+    wmanager.backend.fake_button_release(1)
+
+    test_client.assert_line("button 1")

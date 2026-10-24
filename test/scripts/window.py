@@ -169,6 +169,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--urgent", dest="urgent", action="store_true", help="Set urgency after delay"
     )
+    parser.add_argument(
+        "--print-clicks",
+        dest="print_clicks",
+        action="store_true",
+        help="Print 'button <n>' to stdout for each mouse press received",
+    )
 
     args = parser.parse_args()
 
@@ -263,6 +269,24 @@ if __name__ == "__main__":
                 body=[bus.unique_name],
             )
         )
+
+    if args.print_clicks:
+
+        def on_button_press(widget, event):
+            if event.type == Gdk.EventType.BUTTON_PRESS:
+                print(f"button {event.button}", flush=True)
+
+        win.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        win.connect("button-press-event", on_button_press)
+
+        def on_stdin(fd, condition):
+            line = sys.stdin.readline()
+            if line == "" or line.strip() == "quit":  # EOF or explicit quit
+                Gtk.main_quit()
+                return False  # remove the watch
+            return True
+
+        GLib.io_add_watch(sys.stdin.fileno(), GLib.IO_IN | GLib.IO_HUP, on_stdin)
 
     win.connect("destroy", Gtk.main_quit)
     win.connect("key-press-event", on_key_press)
