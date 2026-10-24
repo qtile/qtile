@@ -791,7 +791,7 @@ static void qw_xwayland_view_handle_set_hints(struct wl_listener *listener, void
 static void qw_xwayland_view_handle_request_skip_taskbar(struct wl_listener *listener, void *data) {
     UNUSED(data);
     struct qw_xwayland_view *xwayland_view =
-        wl_container_of(listener, xwayland_view, request_activate);
+        wl_container_of(listener, xwayland_view, request_skip_taskbar);
     xwayland_view->base.skip_taskbar = xwayland_view->xwayland_surface->skip_taskbar;
 }
 
