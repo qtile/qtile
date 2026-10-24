@@ -180,7 +180,7 @@ class ScriptError(Exception):
 
 
 class ClientHandler:
-    def __init__(self, cmd, manager):
+    def __init__(self, cmd, manager, args=None):
         if Path(cmd).is_absolute():
             cmd_path = Path(cmd)
         else:
@@ -190,6 +190,7 @@ class ClientHandler:
             assert False, f"{cmd_path.as_posix()} not found."
 
         self.cmd = cmd_path.as_posix()
+        self.args = args if args else []
 
         self.process = None
         self.manager = manager
@@ -212,7 +213,7 @@ class ClientHandler:
             return
 
         self.process = subprocess.Popen(
-            [self.cmd],
+            [self.cmd, *self.args],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -389,7 +390,9 @@ def test_client(wmanager, request):
     if script is None:
         raise ValueError("The test_client fixture must be parameterised.")
 
-    with ClientHandler(script, wmanager) as client:
+    script, args = (script, ()) if isinstance(script, str) else script
+
+    with ClientHandler(script, wmanager, args) as client:
         yield client
 
 
