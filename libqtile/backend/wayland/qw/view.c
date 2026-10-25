@@ -226,7 +226,7 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
                 float rect_color[4];
                 qw_util_premultiply_rgba(src->rect.color[j], view->opacity, rect_color);
                 struct wlr_scene_rect *rect = wlr_scene_rect_create(
-                    view->content_tree, sides[j].width, sides[j].height, rect_color);
+                    view->border_tree, sides[j].width, sides[j].height, rect_color);
                 if (!rect) {
                     wlr_log(WLR_ERROR, "Failed to create scene_rect for border");
                     continue;
@@ -240,7 +240,7 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
         } else if (src->type == QW_BORDER_BUFFER) {
             cairo_surface_t *surface = src->buffer.surface;
             struct wlr_scene_buffer **buffers =
-                create_scene_buffers_from_surface(view->content_tree, surface, sides, 4);
+                create_scene_buffers_from_surface(view->border_tree, surface, sides, 4);
 
             for (int j = 0; j < 4; j++) {
                 if (!buffers[j]) {
@@ -253,8 +253,6 @@ void qw_view_paint_borders(struct qw_view *view, const struct qw_border *borders
 
         coord += bw;
     }
-
-    wlr_scene_node_raise_to_top(tree_node);
 }
 
 // Foreign toplevel manager requests
