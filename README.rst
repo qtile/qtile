@@ -76,6 +76,14 @@ Please also consider submitting useful scripts etc. to the qtile-examples repo
     :alt: Coverage
     :target: https://coveralls.io/github/qtile/qtile
 
+AI Policy
+=========
+
+Please refer to our docs for details of our `AI policy`_.
+
+.. _`AI policy`: https://docs.qtile.org/en/latest/manual/contributing.html#ai-policy
+
+
 Acknowledgements
 ================
 
