@@ -159,6 +159,9 @@ class EventServer:
 
         Must be called on the event loop's thread, like ``hook.fire``.
         """
+        if not self.clients:
+            return
+
         # This is really more for mypy and should not really be possible...
         if self.loop is None:
             raise IPCError("Events server publishing messages before setting event loop.")
