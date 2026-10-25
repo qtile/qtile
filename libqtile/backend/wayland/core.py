@@ -501,7 +501,12 @@ class Core(base.Core):
                 )
                 return True
 
-            if isinstance(win, Window) or win is None:
+            if isinstance(win, Static):
+                # Focus screen when there are no mouse bindings
+                # TODO: Check for actual bindings instead of using mask as a proxy
+                if not mask:
+                    self._focus_by_click()
+            elif isinstance(win, Window) or win is None:
                 self._focus_by_click()
 
             return False
