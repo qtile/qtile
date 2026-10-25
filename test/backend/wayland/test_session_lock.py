@@ -221,3 +221,17 @@ def test_lock_surface_dualmonito(lock_manager, test_client):
 
     test_client.assert_ok("unlock")
     lock_manager.assert_buffer_count(0)
+
+
+@enable_ipc
+def test_new_keyboard_without_lock_surface(lock_manager, test_client, wmanager):
+    """A keyboard arriving before the lock client creates a surface must not crash."""
+    test_client.assert_ok("lock")
+    test_client.assert_ok("check_surface_count 0")
+    lock_manager.assert_locked()
+
+    # Starting the virtual keyboard emits new_input while the lock is active
+    # but its surface list is still empty.
+    wmanager.backend.keyboard.assert_ok("tap 0")
+
+    lock_manager.assert_locked()
