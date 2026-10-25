@@ -786,3 +786,34 @@ def test_click_focus_screen(manager):
     assert manager.c.screen.info()["index"] == 1
     manager.backend.fake_click(*screen1)
     assert manager.c.screen.info()["index"] == 0
+
+
+@pytest.mark.parametrize("win_type", ["Window", "Static"])
+@dualmonitor
+def test_window_click_to_focus(manager, win_type):
+    manager.test_window("one")
+    manager.c.window.set_position(50, 50)
+    if win_type == "Static":
+        manager.c.window.static()
+
+    manager.c.to_screen(1)
+    manager.test_window("two")
+    manager.c.window.set_position(50, 50)
+    if win_type == "Static":
+        manager.c.window.static()
+
+    if win_type == "Static":
+        assert manager.c.screen[0].group.info()["windows"] == []
+        assert manager.c.screen[1].group.info()["windows"] == []
+    else:
+        assert manager.c.screen[0].group.info()["windows"] == ["one"]
+        assert manager.c.screen[1].group.info()["windows"] == ["two"]
+
+    # Go to window one
+    manager.backend.warp_pointer(55, 55)
+    assert manager.c.screen.info()["index"] == 1
+
+    manager.backend.fake_button_press(1)
+    manager.backend.fake_button_release(1)
+
+    assert manager.c.screen.info()["index"] == 0
