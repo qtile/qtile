@@ -26,6 +26,10 @@ void qw_session_lock_focus_first_lock_surface(struct qw_server *server) {
     struct wlr_seat *seat = server->seat;
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(seat);
     struct wlr_session_lock_surface_v1 *surface;
+
+    if (wl_list_empty(&server->lock->lock->surfaces)) {
+        return;
+    }
     surface = wl_container_of(server->lock->lock->surfaces.next, surface, link);
 
     if (keyboard != NULL) {
