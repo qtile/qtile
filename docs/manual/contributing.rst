@@ -177,6 +177,44 @@ Deprecated interfaces that do not have a migration (i.e. whose deprecation was
 noted before the migration feature was introduced) are all fair game to be
 deleted, since the migration feature is more than two years old.
 
+.. _ai_policy:
+
+AI Policy
+=========
+
+Qtile is not an anti-AI project; we believe AI can be a powerful tool for writing, testing, and debugging software.
+As a volunteer-run, human-first project, **AI is Welcome Here**. 
+
+However, AI also makes it trivial to generate massive amounts of complex code with minimal effort.
+Because every issue and pull request is reviewed by actual humans spending their free time, unvetted AI submissions
+create a severe asymmetric burden on maintainers.
+
+We ask that any AI-generated code be indistinguishable from hand-written code. You should fully understand your submission,
+take responsibility for its quality, and adhere to our community expectations below.
+
+Our Expectations
+----------------
+
+* **Qtile is a human-first project:** Please remember that maintainers and contributors are real people giving their personal time.
+* **Use your own words:** When corresponding with maintainers and community members, please write in your own voice.
+  We would much rather talk to you than an LLM!
+* **Be the driver, not the passenger:** You must fully understand your submission. If asked why a change was made,
+  "because ChatGPT said so" isn't an acceptable answer!
+* **Give credit where it's due:** Major AI help? Mention it in the PR description. Regular autocomplete? No need to confess.
+* **Filter before submitting:** Use AI for tedious boilerplate, but please review and refine it first.
+  Spare our maintainers from overengineered "solutions"!
+* **Human-made media only:** Keep AI out of our icons and graphics; licensing permissions are not something we want to spend time on.
+
+New to Open Source?
+-------------------
+
+If you’re just getting started with open source, welcome! We strongly encourage building things with your own two hands first,
+or just using AI as a friendly assistant rather than a lead ghostwriter. 
+
+Open source is so much more than just shipping code; it’s about learning, sharing, and growing together.
+If you get stuck or want to understand *why* something works, we'd strongly encourage you to come and :doc:`chat with us</index>`;
+Our community is always here to help you figure it out.
+
 .. _wayland_contribution:
 
 Recommended Resources for Getting Started with Wayland Development
