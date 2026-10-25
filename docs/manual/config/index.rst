@@ -79,6 +79,10 @@ configuration variables that control specific aspects of Qtile's behavior:
       - ``True``
       - If things like steam games want to auto-minimize themselves when losing
         focus, should we respect this or not?
+    * - ``auto_group``
+      - ``True``
+      - If things like browsers want to start in their previous workspaces,
+        should we respect this or not?
     * - ``bring_front_click``
       - ``False``
       - When clicked, should the window be brought to the front or not. If this

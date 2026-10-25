@@ -1,5 +1,6 @@
 Qtile 0.37.1, released 2026-09-20:
     * features
+    - Add `auto_group` config variable
     * bugfixes
       - Revert the systemd-based desktop file and restore separate x11 and wayland files
       - Free the buffers handed over by pango_parse_markup() and
