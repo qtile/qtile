@@ -826,6 +826,11 @@ class MonadTall(_SimpleLayoutBase):
         """Focus on the closest window below the current window"""
         self.next()
 
+    @expose_command()
+    def focus_main(self):
+        """Focus on the window in the main pane"""
+        self.group.focus(self.focus_first())
+
 
 class MonadWide(MonadTall):
     """Emulate the behavior of XMonad's horizontal tiling scheme.

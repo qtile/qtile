@@ -1,3 +1,10 @@
+Qtile x.xx.x, released xxxx-xx-xx:
+    * features
+      - Add focus_main command to MonadTall, MonadWide and MonadThreeCol
+        layouts, focusing the window in the main pane without rearranging
+        windows
+    * bugfixes
+
 Qtile 0.37.1, released 2026-09-20:
     * features
     * bugfixes

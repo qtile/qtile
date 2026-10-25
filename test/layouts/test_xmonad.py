@@ -989,6 +989,46 @@ def test_wide_window_directional_focus(manager):
     assert_focused(manager, "two")
 
 
+@monadtall_config
+def test_tall_focus_main(manager):
+    manager.c.layout.focus_main()
+
+    manager.test_window("one")
+
+    manager.c.layout.focus_main()
+    assert_focused(manager, "one")
+
+    manager.test_window("two")
+    manager.test_window("three")
+
+    assert_focused(manager, "three")
+    manager.c.layout.focus_main()
+    # Structure doesn't change, only focus
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three"]
+    assert_focused(manager, "one")
+
+
+@monadwide_config
+def test_wide_focus_main(manager):
+    manager.c.layout.focus_main()
+
+    manager.test_window("one")
+
+    manager.c.layout.focus_main()
+    assert_focused(manager, "one")
+
+    manager.test_window("two")
+    manager.test_window("three")
+
+    assert_focused(manager, "three")
+    manager.c.layout.focus_main()
+    # Structure doesn't change, only focus
+    assert manager.c.layout.info()["main"] == "one"
+    assert manager.c.layout.info()["secondary"] == ["two", "three"]
+    assert_focused(manager, "one")
+
+
 # MonadThreeCol
 class MonadThreeColConfig(Config):
     auto_fullscreen = True
