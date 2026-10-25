@@ -78,21 +78,22 @@ class Server:
                     logger.debug("Client disconnected")
                     break
 
-                # Don't handle requests when session is locked
-                # Note: this check is done by `IPCCommandServer` as well
-                if self.qtile.locked:
-                    rep = IPCReplyMessage.error({"error": "Session locked."})
                 else:
+                    # Interactivity should be disable when the session is locked.
+                    check_locked = False
                     match req:
                         case IPCCommandMessage():
                             # The handler shouldn't throw, but return an
                             # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
+                            # No need to check the locked status as the IPCCommandServer does that for us
                             rep = self.handler(req)
 
                         case IPCReplStartMessage():
+                            check_locked = True
                             rep = IPCReplyMessage.success(self.repl.new_client(self.qtile))
 
                         case IPCReplStopMessage():
+                            check_locked = True
                             disconnected = self.repl.remove_client(req.session_id)
                             if disconnected:
                                 rep = IPCReplyMessage.success("Client disconnected.")
@@ -106,6 +107,7 @@ class Server:
                         # as the repl isn't really "running" at all, and getting
                         # rid of the `REPL_START` message type
                         case IPCReplRequestMessage():
+                            check_locked = True
                             rep = IPCReplyMessage.success(
                                 await self.repl.handle(req.session_id, req.data)
                             )
@@ -128,7 +130,13 @@ class Server:
                         case _:
                             raise IPCError(f"Invalid request received: {req.message_type}")
 
+                    if check_locked and self.qtile.locked:
+                        rep = IPCReplyMessage.error(
+                            "IPC interactivity is disabled when the session is locked."
+                        )
+
                 logger.debug("Sending result")
+
                 await stream.write_message(rep)
         # Consider trying to send the client an
         # `IPCReplyMessage` with `IPCStatus.EXCEPTION`
