@@ -413,4 +413,7 @@ void qw_server_add_dummy_input_devices(struct qw_server *server);
 
 void qw_server_test_destroy_output(struct qw_server *server, int index);
 
+void qw_server_set_output_usable_area(struct qw_server *server, int x, int y, int dx, int dy,
+                                      int dwidth, int dheight);
+
 #endif /* SERVER_H */

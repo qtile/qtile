@@ -442,14 +442,22 @@ class Core(base.Core):
         return output_dims[0]
 
     def handle_screen_reserve_space(self, output: ffi.CData) -> None:
+        if not hasattr(self, "qtile") or self.qtile is None:
+            return
         screen = self.get_screen_for_output(output)
         # TODO: is full_area correct here?
         # the old backend used ow and oh
         new_reserved_space = (
-            output.area.x - output.x,  # left
-            output.x + output.full_area.width - output.area.x - output.area.width,  # right
-            output.area.y - output.y,  # top
-            output.y + output.full_area.height - output.area.y - output.area.height,  # bottom
+            output.layer_area.x - output.x,  # left
+            output.x
+            + output.full_area.width
+            - output.layer_area.x
+            - output.layer_area.width,  # right
+            output.layer_area.y - output.y,  # top
+            output.y
+            + output.full_area.height
+            - output.layer_area.y
+            - output.layer_area.height,  # bottom
         )
 
         old_reserved = self._output_reserved_space.get(screen, (0, 0, 0, 0))
@@ -458,6 +466,19 @@ class Core(base.Core):
         if any(delta):
             self.qtile.reserve_space(delta, screen)
             self._output_reserved_space[screen] = new_reserved_space
+
+    def update_output_areas(self) -> None:
+        assert self.qtile is not None
+        for screen in self.qtile.screens:
+            lib.qw_server_set_output_usable_area(
+                self.qw,
+                screen.x,
+                screen.y,
+                screen.dx,
+                screen.dy,
+                screen.dwidth,
+                screen.dheight,
+            )
 
     def handle_cursor_motion(self) -> None:
         assert self.qtile is not None
