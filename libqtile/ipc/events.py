@@ -22,11 +22,6 @@ PROTOCOL_VERSION = 1
 # allowed to grow qtile's memory use or stall the event loop.
 MAX_WRITE_BUFFER = 256 * 1024
 
-# Longest line we accept from a client.
-MAX_LINE = 64 * 1024
-
-WILDCARD = "*"
-
 # Unpaired surrogates are not valid Unicode and so are not allowed in I-JSON strings.
 SURROGATES = re.compile("[\ud800-\udfff]")
 
