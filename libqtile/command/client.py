@@ -21,7 +21,8 @@ from libqtile.command.graph import (
     SelectorType,
 )
 from libqtile.command.interface import CommandInterface, IPCCommandInterface
-from libqtile.ipc import Client, find_sockfile
+from libqtile.ipc import find_sockfile
+from libqtile.ipc.client import Client
 
 
 class CommandClient:

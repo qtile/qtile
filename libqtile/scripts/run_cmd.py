@@ -8,6 +8,7 @@ import subprocess
 
 from libqtile import ipc
 from libqtile.command import graph
+from libqtile.ipc.client import Client
 
 
 def run_cmd(opts) -> None:
@@ -15,7 +16,7 @@ def run_cmd(opts) -> None:
         socket = ipc.find_sockfile()
     else:
         socket = opts.socket
-    client = ipc.Client(socket)
+    client = Client(socket)
     root = graph.CommandGraphRoot()
 
     cmd = [opts.cmd]

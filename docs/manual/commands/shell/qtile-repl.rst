@@ -9,20 +9,25 @@ library to work.
 
 The client has support for code completion, multiline input and input history.
 
-Running ``qtile repl`` will start the server with access to the ``qtile`` instance. However, users can
-add extra items to the REPL's environment by starting the REPL server from their config before
-launching the client e.g.:
+Example:
 
-.. code-block:: python
+.. code::
 
-    keys = [
-        ...,
-        Key([mod], "z", lazy.start_repl_server(locals_dict=globals())),
-        ...
-    ]
-
-This will add all variables from a user's config to the REPL environment, allowing users to
-trigger their own functions etc.
-
-The REPL server runs on port 41414. This is hardcoded for now but we expect to make changes to
-qtile's wire format in the future.
+    > qtile repl
+    Connected to Qtile REPL
+    Press Ctrl+C to exit.
+    >>> qtile.current_group
+    <group.Group ('2')>
+    >>> qtile.groups_map["3"].toscreen()
+    >>> qtile.current_window.name
+    'Alacritty'
+    >>> def switch_group(name):
+    ...   if name not in qtile.groups_map:
+    ...       print(f"Unknown group: {name}")
+    ...   else:
+    ...       qtile.groups_map[name].toscreen()
+    ...
+    ...
+    >>> switch_group("q")
+    Unknown group: q
+    >>> switch_group("1")
