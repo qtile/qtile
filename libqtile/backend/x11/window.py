@@ -1959,9 +1959,11 @@ class Window(_Window, base.Window):
                 raise CommandError(f"No such group: {group_name}")
 
         if self.group is group:
-            if toggle and self.group.screen.previous_group:
+            if toggle and self.group.screen and self.group.screen.previous_group:
                 group = self.group.screen.previous_group
             else:
+                if switch_group:
+                    group.toscreen(toggle=toggle)
                 return
 
         self.hide()

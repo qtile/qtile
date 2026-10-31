@@ -550,7 +550,7 @@ class Core(base.Core):
 
     def handle_focus_current_window(self) -> bool:
         group = self.qtile.current_screen.group
-        if group.current_window:
+        if group is not None and group.current_window:
             group.focus(group.current_window, warp=self.qtile.config.cursor_warp)
             return True
         else:
@@ -1045,7 +1045,7 @@ class Core(base.Core):
         group = self.qtile.groups_map.get(groupname)
         if group is None:
             return
-        group.toscreen()
+        self.qtile.current_screen.set_group(group)
 
     def handle_workspace_manager_group_remove(self, groupname: str) -> None:
         self.qtile.delete_group(groupname)

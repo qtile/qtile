@@ -104,6 +104,8 @@ class Qtile(CommandObject):
         self.chord_stack: list[KeyChord] = []
 
         self.screens: list[Screen] = []
+        self._group_change_phase: Literal["idle", "policy", "apply"] = "idle"
+        self._group_reconciliation_suspended = True
 
         libqtile.init(self)
         libqtile.event_loop = asyncio.new_event_loop()
@@ -125,6 +127,7 @@ class Qtile(CommandObject):
         self.locked = False
 
     def load_config(self, initial: bool = False) -> None:
+        self._group_reconciliation_suspended = True
         try:
             self.config.load()
             self.config.validate()
@@ -150,7 +153,7 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
-        self._process_screens(reloading=not initial)
+        pending_bars = self._setup_screens(reloading=not initial)
 
         # Map and Grab keys
         for key in self.config.keys:
@@ -172,6 +175,15 @@ class Qtile(CommandObject):
             else:
                 self._state.apply(self)
 
+        # Restored groups and screen assignments must be complete before a
+        # stateful policy seeds its preferences from the first snapshot.
+        self._group_reconciliation_suspended = False
+        self._reconcile_groups()
+        self._configure_screen_bars(pending_bars)
+        for group in self.groups:
+            if group.screen is not None and any(group.screen is s for s in self.screens):
+                group.layout_all()
+
         self.core.on_config_load(initial)
 
         if self.config.reconfigure_screens:
@@ -188,8 +200,9 @@ class Qtile(CommandObject):
 
         if self._state:
             for screen in self.screens:
-                screen.group.layout.show(screen.get_rect())
-                screen.group.layout_all()
+                if screen.group is not None:
+                    screen.group.layout.show(screen.get_rect())
+                    screen.group.layout_all()
         self._state = None
         self.update_desktops()
         hook.subscribe.setgroup(self.update_desktops)
@@ -386,18 +399,40 @@ class Qtile(CommandObject):
         logger.warning("Too few groups in config. Added group: %s", name)
         return self.groups_map[name]
 
-    def get_available_group(self, screen_idx: int) -> _Group | None:
-        for group in self.groups:
-            # Groups belonging to a screen or a scratchpad are not 'available'
-            # to be assigned to a screen
-            if group.screen or isinstance(group, ScratchPad):
-                continue
+    def _ensure_screen_groups(self) -> None:
+        """Ensure unassigned screens have groups compatible with their affinity."""
+        available = [g for g in self.groups if not isinstance(g, ScratchPad)]
+        index = len(available)
+        unassigned = []
+        for screen in self.screens:
+            if screen.group in available:
+                available.remove(screen.group)
+            else:
+                unassigned.append(screen)
 
-            # Only return groups that can be tied to this screen
-            # And thus do not have a "screen affinity" explicitly set for another screen
-            if group.screen_affinity is None or group.screen_affinity == screen_idx:
-                return group
-        return None
+        for screen in unassigned:
+            group = next(
+                (g for g in available if g.screen_affinity in (None, screen.index)), None
+            )
+            if group is not None:
+                available.remove(group)
+                continue
+            index += 1
+            while f"autogen_{index}" in self.groups_map:
+                index += 1
+            self.add_autogen_group(index - 1)
+
+    def _reconcile_groups(self) -> None:
+        if self._group_reconciliation_suspended or not self.screens:
+            return
+        # add_group() also reconciles; finish the inventory before invoking the
+        # policy rather than recursing during autogeneration.
+        self._group_reconciliation_suspended = True
+        try:
+            self._ensure_screen_groups()
+        finally:
+            self._group_reconciliation_suspended = False
+        self.current_screen._set_groups(None, save_prev=False)
 
     def get_output_info(self) -> list[Output]:
         if self.config.fake_screens is not None:
@@ -445,11 +480,19 @@ class Qtile(CommandObject):
 
         return self.config.screens
 
-    def _process_screens(self, reloading: bool = False) -> None:
+    def _setup_screens(self, reloading: bool = False) -> list[tuple[Screen, bool]]:
+        """Create and register the Screen objects for the current outputs.
+
+        Returns the (screen, reconfigure_gaps) pairs that _configure_screen_bars
+        consumes once every screen has a group assigned. Group assignment itself
+        is left to _reconcile_groups(), so the screen group policy decides which
+        group each monitor displays.
+        """
         current_groups = [s.group for s in self.screens]
         output_info = self.get_output_info()
         config_screens = self.get_screens_from_config(output_info)
         new_screens: list[Screen] = []
+        pending_bars: list[tuple[Screen, bool]] = []
 
         for i, info in enumerate(output_info):
             if i < len(config_screens):
@@ -476,15 +519,10 @@ class Qtile(CommandObject):
                 self.current_screen = scr
                 reloading = False
 
-            grp = None
-            if i < len(current_groups):
-                grp = current_groups[i]
-            else:
-                # We need to assign a new group
-                # Get an available group or create a new one
-                grp = self.get_available_group(i)
-                if grp is None:
-                    grp = self.add_autogen_group(i)
+            # Seed new screens with the group their predecessor displayed so the
+            # screen group policy sees the previous assignment in its snapshot.
+            if scr.group is None and i < len(current_groups):
+                scr.group = current_groups[i]
 
             # If the screen has changed position and/or size, or is a new screen then make sure that any gaps/bars
             # are reconfigured
@@ -493,15 +531,6 @@ class Qtile(CommandObject):
                 != (scr.x, scr.y, scr.width, scr.height)
             ) or (i + 1 > len(self.screens))
 
-            if not hasattr(scr, "group"):
-                # Ensure that this screen actually *has* a group, as it won't get
-                # assigned one during `__init__` because they are created in the config,
-                # where the groups also are. This lets us type `Screen.group` as
-                # `_Group` rather than `_Group | None` which would need lots of other
-                # changes to check for `None`s, and conceptually all screens should have
-                # a group anyway.
-                scr.group = grp
-
             scr._configure(
                 self,
                 i,
@@ -509,20 +538,43 @@ class Qtile(CommandObject):
                 info.rect.y,
                 info.rect.width,
                 info.rect.height,
-                grp,
-                reconfigure_gaps=reconfigure_gaps,
             )
             new_screens.append(scr)
+            pending_bars.append((scr, reconfigure_gaps))
 
         # There needs to be at least one screen.
         if len(new_screens) == 0:
-            new_screens.append(Screen())
+            if self.screens:
+                scr = self.current_screen
+                scr.index = 0
+            else:
+                scr = Screen()
+                self.current_screen = scr
+                scr._configure(self, 0, 0, 0, 1, 1)
+            new_screens.append(scr)
+            pending_bars.append((scr, True))
 
         for screen in self.screens:
             if screen not in new_screens:
                 screen.finalize_gaps()
 
         self.screens = new_screens
+        if not any(self.current_screen is screen for screen in self.screens):
+            self.current_screen = self.screens[0]
+        return pending_bars
+
+    def _configure_screen_bars(self, pending_bars: list[tuple[Screen, bool]]) -> None:
+        """Configure gaps and bars once every screen has a group assigned."""
+        for scr, reconfigure_gaps in pending_bars:
+            scr._configure_gaps(reconfigure=reconfigure_gaps)
+
+    def _process_screens(self, reloading: bool = False) -> None:
+        pending_bars = self._setup_screens(reloading=reloading)
+        self._reconcile_groups()
+        self._configure_screen_bars(pending_bars)
+        for group in self.groups:
+            if group.screen is not None and any(group.screen is s for s in self.screens):
+                group.layout_all()
 
     @expose_command()
     def reconfigure_screens(self, *_: list[Any], **__: dict[Any, Any]) -> None:
@@ -697,6 +749,7 @@ class Qtile(CommandObject):
             hook.fire("addgroup", name)
             hook.fire("changegroup")
             self.update_desktops()
+            self._reconcile_groups()
 
             return True
         return False
@@ -706,23 +759,37 @@ class Qtile(CommandObject):
         if len(self.groups) == len(self.screens):
             raise ValueError("Can't delete all groups.")
 
+        if (
+            name in self.groups_map
+            and not isinstance(self.groups_map[name], ScratchPad)
+            and len([g for g in self.groups if not isinstance(g, ScratchPad)])
+            <= len(self.screens)
+        ):
+            raise ValueError("Need at least one non-scratchpad group per screen.")
+
         if name in self.groups_map.keys():
             group = self.groups_map[name]
 
-            # Find a group that's not currently on a screen to bring to the front.
+            # Find a group that's not currently on a screen to receive the windows.
             target = group.get_previous_group(skip_managed=True)
 
             # move windows to other group
             for i in list(group.windows):
                 i.togroup(target.name)
 
-            # if group to be deleted is currently active
-            if self.current_group.name == name:
-                # switch to target group
-                self.current_screen.set_group(target, save_prev=False)
+            # Detach a displayed group before removing it from the inventory;
+            # reconciliation lets the screen group policy pick a replacement.
+            if group.screen is not None:
+                group.screen.group = None
+                group.hide()
 
             self.groups.remove(group)
             del self.groups_map[name]
+
+            for screen in self.screens:
+                if screen.previous_group is group:
+                    screen.previous_group = None
+            self._reconcile_groups()
 
             hook.fire("delgroup", name)
             hook.fire("changegroup")
@@ -765,11 +832,16 @@ class Qtile(CommandObject):
 
     @property
     def current_group(self) -> _Group:
-        return self.current_screen.group
+        # Screens only lack a group transiently during setup; callers running
+        # outside of that window can rely on a group being present.
+        return self.current_screen.group  # type: ignore[return-value]
 
     @property
     def current_window(self) -> base.Window | None:
-        return self.current_screen.group.current_window
+        group = self.current_screen.group
+        if group is None:
+            return None
+        return group.current_window
 
     def reserve_space(
         self,
@@ -1004,8 +1076,10 @@ class Qtile(CommandObject):
         if old != self.current_screen:
             hook.fire("current_screen_change")
             hook.fire("setgroup")
-            old.group.layout_all()
-            self.current_group.focus(self.current_window, warp)
+            if old.group is not None:
+                old.group.layout_all()
+            if self.current_group is not None:
+                self.current_group.focus(self.current_window, warp)
             if self.current_window is None and warp:
                 self.warp_to_screen()
 
@@ -1655,8 +1729,8 @@ class Qtile(CommandObject):
                 nxt.group.toscreen()
                 nxt.group.focus(nxt)
             else:
-                self.current_screen.group.add(nxt)
-                self.current_screen.group.focus(nxt)
+                self.current_group.add(nxt)
+                self.current_group.focus(nxt)
         except IndexError:
             pass  # no window had urgent set
 

@@ -677,7 +677,7 @@ class Core(base.Core):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.qtile.groups[index].toscreen()
+                self.qtile.current_screen.set_group(self.qtile.groups[index])
             except IndexError:
                 logger.debug("Invalid desktop index: %s", index)
 
