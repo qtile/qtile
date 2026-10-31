@@ -15,9 +15,9 @@ RUN dnf install -y \
     pango \
     procps \
     pulseaudio-libs \
-    python3.12 python3.12-devel \
     python3.13 python3.13-devel \
     python3.14 python3.14-devel \
+    python3.15 python3.15-devel \
     wayland-devel \
     wayland-protocols-devel \
     wlroots \
