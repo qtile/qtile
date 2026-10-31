@@ -11,7 +11,7 @@ build-backend = "builder"
 [project]
 name = "qtile"
 description = "A pure-Python tiling window manager."
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dynamic = ["version", "readme"]
 dependencies = [
     "cairocffi >= 1.7.0",
@@ -25,8 +25,9 @@ classifiers = [
     "Operating System :: POSIX :: BSD :: FreeBSD",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Desktop Environment :: Window Managers",
