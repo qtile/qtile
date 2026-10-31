@@ -219,6 +219,11 @@ static void static_view_handle_override_redirect(struct wl_listener *listener, v
 
     qw_server_xwayland_view_new(server, xwayland_surface);
     struct qw_xwayland_view *xwayland_view = xwayland_surface->data;
+    if (xwayland_view == NULL) {
+        wlr_log(WLR_ERROR, "failed to convert override-redirect view");
+        return;
+    }
+
     if (associated) {
         qw_xwayland_view_handle_associate(&xwayland_view->associate, NULL);
     }
@@ -844,6 +849,11 @@ static void qw_xwayland_view_handle_request_override_redirect(struct wl_listener
 
     qw_server_xwayland_static_view_new(server, xwayland_surface);
     struct qw_xwayland_view *static_view = xwayland_surface->data;
+    if (static_view == NULL) {
+        wlr_log(WLR_ERROR, "failed to convert managed view to override-redirect");
+        return;
+    }
+
     if (associated) {
         static_view_handle_associate(&static_view->associate, NULL);
     }
@@ -894,7 +904,7 @@ static void qw_xwayland_view_update_maximized(void *self, bool maximized) {
 void qw_server_xwayland_view_new(struct qw_server *server,
                                  struct wlr_xwayland_surface *xwayland_surface) {
     struct qw_xwayland_view *xwayland_view = calloc(1, sizeof(*xwayland_view));
-    if (!xwayland_view) {
+    if (xwayland_view == NULL) {
         wlr_log(WLR_ERROR, "failed to create qw_xwayland_view struct");
         return;
     }
