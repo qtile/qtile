@@ -22,12 +22,12 @@ class _BspNode:
         self.w: int = 16
         self.h: int = 9
 
-    def __iter__(self) -> Generator[_BspNode, None, None]:
+    def __iter__(self) -> Generator[_BspNode]:
         yield self
         for child in self.children:
             yield from child
 
-    def clients(self) -> Generator[Window, None, None]:
+    def clients(self) -> Generator[Window]:
         if self.client:
             yield self.client
         else:
