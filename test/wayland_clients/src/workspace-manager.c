@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wayland-client-protocol.h>
 
 #include "client-base.h"
 #include "ext-workspace-v1-client-protocol.h"
@@ -10,6 +11,8 @@ struct test_state {
     struct ext_workspace_manager_v1 *manager;
     struct wl_list groups;     // group_node::link
     struct wl_list workspaces; // workspace_node::global_link
+    struct wl_list outputs;    // output_node::link
+    bool done;
 };
 
 struct group_node {
@@ -33,6 +36,11 @@ struct workspace_node {
     struct wl_list global_link;
     struct wl_list group_link;
     uint32_t capabilities;
+};
+
+struct output_node {
+    struct wl_output *output;
+    struct wl_list link;
 };
 
 enum { WORKSPACE_ACTION_ACTIVATE, WORKSPACE_ACTION_REMOVE, WORKSPACE_ACTION_CREATE };
@@ -265,7 +273,10 @@ static void manager_handle_workspace(void *data, struct ext_workspace_manager_v1
     ext_workspace_handle_v1_add_listener(ws_handle, &workspace_listener, ws);
 }
 
-static void manager_handle_done(void *data, struct ext_workspace_manager_v1 *mgr) {}
+static void manager_handle_done(void *data, struct ext_workspace_manager_v1 *mgr) {
+    struct test_state *state = data;
+    state->done = true;
+}
 
 static void manager_handle_finished(void *data, struct ext_workspace_manager_v1 *mgr) {}
 
@@ -285,7 +296,13 @@ static void registry_handler(struct client_state *base, struct wl_registry *regi
         ext_workspace_manager_v1_add_listener(state->manager, &manager_listener, state);
     } else if (strcmp(interface, wl_output_interface.name) == 0) {
         // We need to bind to the output interface to get output enter/leave events
-        wl_registry_bind(registry, name, &wl_output_interface, 1);
+        struct output_node *node = calloc(1, sizeof(*node));
+        if (node == NULL) {
+            test_error("Failed to bind output");
+            return;
+        }
+        node->output = wl_registry_bind(registry, name, &wl_output_interface, 1);
+        wl_list_insert(&state->outputs, &node->link);
     }
 }
 
@@ -386,6 +403,13 @@ static bool dispatch_command(struct client_state *base, const char *cmd, const c
         return false;
     }
 
+    // Wait for initial workspace changes to be sent
+    while (!state->done) {
+        if (wl_display_dispatch(state->base.display) < 0) {
+            break;
+        }
+    }
+
     if (strcmp(cmd, "list") == 0) {
         cmd_list(state);
     } else if (strcmp(cmd, "activate") == 0) {
@@ -411,6 +435,7 @@ void setup(struct client_state *base) {
 
     wl_list_init(&state->groups);
     wl_list_init(&state->workspaces);
+    wl_list_init(&state->outputs);
 }
 
 void cleanup(struct client_state *base) {
@@ -447,6 +472,13 @@ void cleanup(struct client_state *base) {
         }
 
         free(group);
+    }
+
+    struct output_node *on, *tmp_out;
+    wl_list_for_each_safe(on, tmp_out, &state->outputs, link) {
+        wl_list_remove(&on->link);
+        wl_output_destroy(on->output);
+        free(on);
     }
 
     if (state->manager != NULL) {
