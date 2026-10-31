@@ -243,7 +243,10 @@ static void qw_server_handle_output_layout_change(struct wl_listener *listener, 
         config_head = wlr_output_configuration_head_v1_create(config, o->wlr_output);
 
         wlr_output_layout_get_box(server->output_layout, o->wlr_output, &o->full_area);
-        o->area = o->full_area;
+        o->layer_area = o->full_area;
+        if (o->area.width == 0 && o->area.height == 0) {
+            o->area = o->full_area;
+        }
 
         wlr_scene_output_set_position(o->scene, o->x, o->y);
         wlr_log(WLR_INFO, "Updating: %d,%d (%dx%d)", o->full_area.x, o->full_area.y,
@@ -1042,7 +1045,7 @@ bool qw_server_init(struct qw_server *server) {
     server->new_input.notify = qw_server_handle_new_input;
     wl_signal_add(&server->backend->events.new_input, &server->new_input);
 
-    server->xdg_shell = wlr_xdg_shell_create(server->display, 3);
+    server->xdg_shell = wlr_xdg_shell_create(server->display, 7);
     if (server->xdg_shell == NULL) {
         wlr_log(WLR_ERROR, "failed to create xdg shell");
         return false;
@@ -1552,4 +1555,21 @@ void qw_server_test_destroy_output(struct qw_server *server, int index) {
         i++;
     }
     wlr_log(WLR_ERROR, "qw_server_test_destroy_output: no output at index %d", index);
+}
+
+// Python backend is source of truth for available screen area so backend needs to
+// call this function whenever the usable area of a screen changes.
+void qw_server_set_output_usable_area(struct qw_server *server, int x, int y, int dx, int dy,
+                                      int dwidth, int dheight) {
+    struct qw_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (output->x == x && output->y == y) {
+            output->area.x = dx;
+            output->area.y = dy;
+            output->area.width = dwidth;
+            output->area.height = dheight;
+            wlr_log(WLR_ERROR, "Area: %d x %d", dwidth, dheight);
+            break;
+        }
+    }
 }

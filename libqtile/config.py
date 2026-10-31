@@ -714,6 +714,7 @@ class Screen(CommandObject):
             if bar:
                 bar.draw()
         self.group.layout_all()
+        self.qtile.core.update_output_areas()
 
     @expose_command()
     def info(self) -> dict[str, Any]:
