@@ -32,7 +32,7 @@ try:
 except PackageNotFoundError:
     VERSION = "dev"
 
-dbus_bus_connections = set()
+dbus_bus_connections: set[MessageBus] = set()
 
 # Create a list to collect references to tasks so they're not garbage collected
 # before they've run
