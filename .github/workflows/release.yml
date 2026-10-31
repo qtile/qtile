@@ -205,7 +205,7 @@ jobs:
     container: quay.io/pypa/manylinux_2_34_x86_64
     strategy:
       matrix:
-        python-version: ["cp3.12", "cp3.13"]
+        python-version: ["cp3.13", "cp3.14", "cp3.15"]
     steps:
       - name: Install dependencies
         run: |
