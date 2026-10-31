@@ -1669,6 +1669,17 @@ class Static(_Window, base.Static):
         if name == "_NET_WM_STRUT_PARTIAL":
             self.update_strut()
 
+    def handle_EnterNotify(self, e):  # noqa: N802
+        self.qtile.hovered_window = self
+        hook.fire("client_mouse_enter", self)
+        if (
+            self.qtile.config.follow_mouse_focus is True
+            and self.screen
+            and self.qtile.current_screen != self.screen
+        ):
+            self.qtile.focus_screen(self.screen.index, False)
+        return True
+
 
 class Window(_Window, base.Window):
     _window_mask = (
@@ -2003,11 +2014,7 @@ class Window(_Window, base.Window):
     def handle_EnterNotify(self, e):  # noqa: N802
         self.qtile.hovered_window = self
         hook.fire("client_mouse_enter", self)
-        if self.qtile.config.follow_mouse_focus is True:
-            if self.group.current_window != self:
-                self.group.focus(self, False)
-            if self.group.screen and self.qtile.current_screen != self.group.screen:
-                self.qtile.focus_screen(self.group.screen.index, False)
+        self._focus_on_pointer_enter()
         return True
 
     def handle_ButtonPress(self, e):  # noqa: N802

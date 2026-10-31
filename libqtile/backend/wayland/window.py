@@ -286,6 +286,15 @@ class Base(base._Window):
 
         hook.fire("client_focus", self)
 
+    def handle_pointer_notify_enter(self, sx: int, sy: int) -> None:
+        pass
+
+    def handle_pointer_notify_leave(self, sx: int, sy: int) -> None:
+        pass
+
+    def handle_pointer_notify_motion(self, sx: int, sy: int) -> bool:
+        return False
+
 
 class Internal(Base, base.Internal):
     def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
@@ -321,6 +330,17 @@ class Internal(Base, base.Internal):
         lib.qw_internal_view_set_buffer_with_damage(
             self._internal_ptr, offsetx, offsety, width, height
         )
+
+    def handle_pointer_notify_enter(self, x, y) -> None:
+        self.qtile.hovered_window = self
+        self.process_pointer_enter(x, y)
+
+    def handle_pointer_notify_leave(self, x, y) -> None:
+        self.process_pointer_leave(x, y)
+
+    def handle_pointer_notify_motion(self, x, y) -> bool:
+        self.process_pointer_motion(x, y)
+        return True
 
     @expose_command()
     def kill(self) -> None:
@@ -469,6 +489,11 @@ class Window(Base, base.Window):
     def is_visible(self) -> bool:
         return lib.qw_view_is_visible(self._ptr)
 
+    def handle_pointer_notify_enter(self, x, y) -> None:
+        self.qtile.hovered_window = self
+        hook.fire("client_mouse_enter", self)
+        self._focus_on_pointer_enter()
+
     @expose_command()
     def static(
         self,
@@ -480,6 +505,10 @@ class Window(Base, base.Window):
     ) -> None:
         # The concrete Window class must fire the client_managed hook after it's
         # completed any custom logic.
+        if screen is None:
+            screen_obj = self.qtile.current_screen
+        else:
+            screen_obj = self.qtile.screens[screen]
         self.defunct = True
         if self.group:
             self.group.remove(self)
@@ -493,8 +522,12 @@ class Window(Base, base.Window):
 
         if x is None:
             x = self.x + self.borderwidth
+        else:
+            x += screen_obj.x
         if y is None:
             y = self.y + self.borderwidth
+        else:
+            y += screen_obj.y
         if width is None:
             width = self.width
         if height is None:
@@ -507,8 +540,7 @@ class Window(Base, base.Window):
 
         # TODO: pass over ftm
 
-        if screen is not None:
-            win.screen = self.qtile.screens[screen]
+        win.screen = screen_obj
         win.unhide()
         win.place(x, y, width, height, 0, None)
         self.qtile.windows_map[self.wid] = win
@@ -967,3 +999,13 @@ class Static(Base, base.Static):
             ffi.string(self._ptr.shell).decode() if self._ptr.shell != ffi.NULL else ""
         )
         return info
+
+    def handle_pointer_notify_enter(self, x, y) -> None:
+        self.qtile.hovered_window = self
+        hook.fire("client_mouse_enter", self)
+        if (
+            self.qtile.config.follow_mouse_focus is True
+            and self.screen
+            and self.qtile.current_screen != self.screen
+        ):
+            self.qtile.focus_screen(self.screen.index, False)
