@@ -196,7 +196,7 @@ static void cmd_inhibit(struct test_state *state) {
 
 static void cmd_uninhibit(struct test_state *state) {
     zwp_keyboard_shortcuts_inhibitor_v1_destroy(state->inhibitor);
-    state->inhibitor == NULL;
+    state->inhibitor = NULL;
     state->inhibitor_active = false;
     do_roundtrip(&state->base);
     test_ok();
