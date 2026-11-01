@@ -39,13 +39,21 @@ class CheckUpdates(base.BackgroundPoll):
     .. note::
 
         It is common for package managers to return a non-zero code when there are no
-        updates. As a result, the widget will treat *any* error as if there are no updates.
+        updates. As a result, the widget will treat *any* error as if there are no updates,
+        unless ``error_string`` is set for a ``custom_command`` (see below).
         If you are using a custom commmand/script, you should therefore ensure that it
         returns zero when it completes if you wish to see the output of your command.
 
         In addition, as no errors are recorded to the log, if the widget is showing no
         updates and you believe that to be incorrect, you should run the appropriate
         command in a terminal to view any error messages.
+
+        To tell a failed check (e.g. no network) apart from "no updates" when using
+        ``custom_command``, set ``error_string``: it is shown whenever the command exits
+        non-zero. As only the exit status of the last command in the shell command line
+        is used, map any "no updates" status to zero yourself, e.g.
+        ``custom_command="checkupdates || test $? -eq 2"`` (``checkupdates`` exits 2 when
+        there are no updates and 1 when it fails).
 
     """
 
@@ -76,6 +84,12 @@ class CheckUpdates(base.BackgroundPoll):
         ("colour_have_updates", "ffffff", "Colour when there are updates."),
         ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)"),
         ("no_update_string", "", "String to display if no updates available"),
+        (
+            "error_string",
+            None,
+            "String to display if ``custom_command`` exits non-zero. ``None`` treats "
+            "this as no updates.",
+        ),
     ]
 
     def __init__(self, **config):
@@ -111,6 +125,9 @@ class CheckUpdates(base.BackgroundPoll):
         try:
             updates = self.call_process(self.cmd, shell=True)
         except CalledProcessError:
+            if self.custom_command and self.error_string is not None:
+                self.layout.colour = self.colour_no_updates
+                return self.error_string
             updates = ""
         num_updates = self.custom_command_modify(len(updates.splitlines()))
 
