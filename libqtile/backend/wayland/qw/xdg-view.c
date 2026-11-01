@@ -86,6 +86,12 @@ static void qw_xdg_view_do_focus(struct qw_xdg_view *xdg_view, struct wlr_surfac
 static void qw_xdg_view_hide(void *self) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, false);
+
+    if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+        XDG_TOPLEVEL_STATE_SUSPENDED_SINCE_VERSION) {
+        wlr_xdg_toplevel_set_suspended(xdg_view->xdg_toplevel, true);
+    }
+
     qw_xdg_view_activate(xdg_view, false);
 
     // Clear keyboard focus if this view was focused
@@ -146,9 +152,28 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
     UNUSED(data);
 
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, commit);
+    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
 
     // On initial commit, set size and decoration mode
-    if (xdg_view->xdg_toplevel->base->initial_commit) {
+    if (surface->initial_commit) {
+        if (!surface->initialized) {
+            return;
+        }
+
+        // If the protocol version supports WM capabilities, set maximize/fullscreen/minimize
+        if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+            XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION) {
+
+            // clang-format off
+            wlr_xdg_toplevel_set_wm_capabilities(
+                xdg_view->xdg_toplevel,
+                XDG_TOPLEVEL_WM_CAPABILITIES_MAXIMIZE |
+                XDG_TOPLEVEL_WM_CAPABILITIES_FULLSCREEN |
+                XDG_TOPLEVEL_WM_CAPABILITIES_MINIMIZE
+            );
+            // clang-format on
+        }
+
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, 0, 0);
         if (xdg_view->decoration != NULL) {
             wlr_xdg_toplevel_decoration_v1_set_mode(
@@ -157,7 +182,6 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         return;
     }
 
-    struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
     if (!surface->surface->mapped) {
         return;
     }
@@ -222,8 +246,14 @@ void dump_surface_outputs(void *self) {
 // Place the xdg_view at given position and size with border and stacking info
 static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
                               const struct qw_border *borders, int border_count, int above) {
+
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     struct wlr_xdg_surface *surface = xdg_view->xdg_toplevel->base;
+
+    if (surface == NULL || !surface->initialized) {
+        return;
+    }
+
     struct wlr_xdg_toplevel_state state = xdg_view->xdg_toplevel->current;
 
     // Check if placement or geometry changed
@@ -247,16 +277,63 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
     // Set position of the content scene node
     wlr_scene_node_set_position(&xdg_view->base.content_tree->node, x, y);
 
+    struct qw_output *output = qw_view_get_primary_output(&xdg_view->base);
+    bool is_fullscreen = xdg_view->base.state == FULLSCREEN;
+
+    if ((wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+         XDG_TOPLEVEL_CONFIGURE_BOUNDS_SINCE_VERSION) &&
+        output != NULL) {
+        // Fullscreen uses full monitor resolution; tiled/floating uses usable area (excluding
+        // panels)
+        int bound_width = is_fullscreen ? output->full_area.width : output->area.width;
+        int bound_height = is_fullscreen ? output->full_area.height : output->area.height;
+
+        wlr_xdg_toplevel_set_bounds(xdg_view->xdg_toplevel, bound_width, bound_height);
+    }
+
     if (needs_repos) {
         // Resize the toplevel surface and apply clipping if needed
         wlr_xdg_toplevel_set_size(xdg_view->xdg_toplevel, width, height);
         qw_xdg_view_clip(xdg_view);
 
-        qw_view_update_ftl_outputs(&xdg_view->base, xdg_view->xdg_toplevel->base->surface);
+        qw_view_update_ftl_outputs(&xdg_view->base, surface->surface);
     }
 
     // Paint borders around the view with given border colors and width
     qw_view_paint_borders((struct qw_view *)xdg_view, borders, border_count);
+
+    if (output != NULL) {
+        struct wlr_box bounds = is_fullscreen ? output->full_area : output->area;
+
+        if (xdg_view->base.state != FLOATING && !is_fullscreen) {
+
+            if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+                XDG_TOPLEVEL_STATE_TILED_LEFT_SINCE_VERSION) {
+                uint32_t tiles = XDG_TOPLEVEL_STATE_TILED_BOTTOM | XDG_TOPLEVEL_STATE_TILED_TOP |
+                                 XDG_TOPLEVEL_STATE_TILED_LEFT | XDG_TOPLEVEL_STATE_TILED_RIGHT;
+                wlr_xdg_toplevel_set_tiled(xdg_view->xdg_toplevel, tiles);
+            }
+
+            if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+                XDG_TOPLEVEL_STATE_CONSTRAINED_LEFT_SINCE_VERSION) {
+                uint32_t constraints = 0;
+
+                if (x <= bounds.x) {
+                    constraints |= XDG_TOPLEVEL_STATE_CONSTRAINED_LEFT;
+                }
+                if (x + width >= bounds.x + bounds.width) {
+                    constraints |= XDG_TOPLEVEL_STATE_CONSTRAINED_RIGHT;
+                }
+                if (y <= bounds.y) {
+                    constraints |= XDG_TOPLEVEL_STATE_CONSTRAINED_TOP;
+                }
+                if (y + height >= bounds.y + bounds.height) {
+                    constraints |= XDG_TOPLEVEL_STATE_CONSTRAINED_BOTTOM;
+                }
+                wlr_xdg_toplevel_set_constrained(xdg_view->xdg_toplevel, constraints);
+            }
+        }
+    }
 
     // Raise view if requested
     if (above != 0) {
@@ -278,6 +355,11 @@ static void qw_xdg_view_unhide(void *self) {
     struct qw_xdg_view *xdg_view = (struct qw_xdg_view *)self;
     if (!xdg_view->base.content_tree->node.enabled) {
         wlr_scene_node_set_enabled(&xdg_view->base.content_tree->node, true);
+    }
+
+    if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
+        XDG_TOPLEVEL_STATE_SUSPENDED_SINCE_VERSION) {
+        wlr_xdg_toplevel_set_suspended(xdg_view->xdg_toplevel, false);
     }
 }
 
@@ -683,20 +765,6 @@ void qw_server_xdg_view_new(struct qw_server *server, struct wlr_xdg_toplevel *x
     // Create a scene tree node for this view inside the main layout tree
     xdg_view->base.content_tree = wlr_scene_tree_create(server->scene_windows_layers[LAYER_LAYOUT]);
     xdg_view->base.content_tree->node.data = xdg_view;
-
-    // If the protocol version supports WM capabilities, set maximize/fullscreen/minimize
-    if (wl_resource_get_version(xdg_view->xdg_toplevel->resource) >=
-        XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION) {
-
-        // clang-format off
-        wlr_xdg_toplevel_set_wm_capabilities(
-            xdg_toplevel,
-            XDG_TOPLEVEL_WM_CAPABILITIES_MAXIMIZE |
-            XDG_TOPLEVEL_WM_CAPABILITIES_FULLSCREEN |
-            XDG_TOPLEVEL_WM_CAPABILITIES_MINIMIZE
-        );
-        // clang-format on
-    }
 
     // Create scene node for the toplevel surface under the content tree
     xdg_view->scene_tree =

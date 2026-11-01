@@ -194,6 +194,9 @@ class Qtile(CommandObject):
         self.update_desktops()
         hook.subscribe.setgroup(self.update_desktops)
 
+        # Set usable screen area in core
+        self.core.update_output_areas()
+
         # Start the sleep inhibitor process to listen to sleep signals
         # NB: the inhibitor will only connect to the dbus service if the
         # user has used the "suspend" or "resume" hooks in their config.
@@ -541,6 +544,8 @@ class Qtile(CommandObject):
                     group.layout_all()
                 else:
                     group.hide()
+
+        self.core.update_output_areas()
 
         hook.fire("screens_reconfigured")
 

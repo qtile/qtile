@@ -134,6 +134,9 @@ class Core(CommandObject, metaclass=ABCMeta):
         self.screen_change_timer = None
         hook.fire("screen_change", event)
 
+    def update_output_areas(self) -> None:
+        """Send details of screen areas to the core."""
+
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulate a keypress with given modifiers"""
 

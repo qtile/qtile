@@ -93,6 +93,7 @@ void qw_output_arrange_layer(struct qw_output *output, struct wl_list *list,
     }
 }
 
+// Arrange layer surfaces (bars, notifications, etc.) on the output
 void qw_output_arrange_layers(struct qw_output *output) {
     int i;
     struct wlr_box usable_area = output->full_area;
@@ -104,8 +105,9 @@ void qw_output_arrange_layers(struct qw_output *output) {
         qw_output_arrange_layer(output, &output->layers[i], &usable_area, 1);
     }
 
-    if (!wlr_box_equal(&usable_area, &output->area)) {
-        output->area = usable_area;
+    // Track layer-shell space adjustments separately in layer_area
+    if (!wlr_box_equal(&usable_area, &output->layer_area)) {
+        output->layer_area = usable_area;
         output->server->on_screen_reserve_space_cb(output, output->server->cb_data);
     }
 
