@@ -196,6 +196,8 @@ typedef void (*node_info_cb_t)(uintptr_t node_ptr, uintptr_t parent_ptr,
 
 typedef void (*view_activation_cb_t)(struct qw_view *view, void *userdata);
 
+#define QW_IGNORED_MODIFIERS (WLR_MODIFIER_CAPS | WLR_MODIFIER_MOD2)
+
 // Main server struct containing Wayland and wlroots state and user callbacks
 struct qw_server {
     // Public API
@@ -284,6 +286,7 @@ struct qw_server {
     struct wl_listener new_shortcut_inhibitor;
     struct wlr_xdg_system_bell_v1 *system_bell;
     struct wl_listener system_bell_ring;
+    struct wl_list grabbed_keys;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
@@ -332,6 +335,13 @@ struct qw_keyboard_shortcut_inhibitor {
     struct wlr_keyboard_shortcuts_inhibitor_v1 *wlr_inhibitor;
     struct wl_listener destroy;
     struct wl_list link; // Link for server->inhibitors list
+};
+
+struct qw_grabbed_key {
+    // Private data
+    xkb_keysym_t keysym;
+    uint32_t modifiers;
+    struct wl_list link;
 };
 
 // Utility functions exposed by the server API
@@ -403,5 +413,10 @@ struct qw_view *qw_server_active_view(struct qw_server *server);
 void qw_server_add_dummy_input_devices(struct qw_server *server);
 
 void qw_server_test_destroy_output(struct qw_server *server, int index);
+
+bool qw_server_key_grabbed(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers);
+void qw_server_grab_key(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers);
+void qw_server_ungrab_key(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers);
+void qw_server_ungrab_all(struct qw_server *server);
 
 #endif /* SERVER_H */

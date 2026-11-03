@@ -78,7 +78,7 @@ static int qw_keyboard_do_repeat(void *data) {
     }
 
     // Repeat handled key: send callback
-    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard) & ~QW_IGNORED_MODIFIERS;
     server->keyboard_key_cb(keyboard->repeat_keysym, modifiers, server->cb_data);
 
     // Schedule next repeat according to repeat rate
@@ -118,7 +118,8 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
 
     bool handled = false;
     // Get current keyboard modifiers (shift, ctrl, alt, etc.)
-    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard);
+    // Ignore caps and num locks
+    uint32_t modifiers = wlr_keyboard_get_modifiers(keyboard->wlr_keyboard) & ~QW_IGNORED_MODIFIERS;
 
     // Check if keyboard is inhibited
     bool inhibited = qw_is_keyboard_inhibited(server, seat->keyboard_state.focused_surface);
@@ -132,9 +133,13 @@ static void qw_keyboard_handle_key(struct wl_listener *listener, void *data) {
         if (server->exclusive_layer == NULL && !inhibited) {
             // Call user callback for each symbol to check if handled
             for (int i = 0; i < nsyms; ++i) {
-                // TODO: for efficiency maybe let c take control of the key list?
-                // If callback returns 1, event is handled; no further processing needed
+                // Only call back if key is grabbed or an internal window may have focus
+                if (!qw_server_key_grabbed(server, syms[i], modifiers) &&
+                    seat->keyboard_state.focused_surface != NULL) {
+                    continue;
+                }
                 if (server->keyboard_key_cb(syms[i], modifiers, server->cb_data) == 1) {
+                    // If callback returns 1, event is handled; no further processing needed
                     handled = true;
                     keyboard->repeat_keysym = syms[i];
                     break;
