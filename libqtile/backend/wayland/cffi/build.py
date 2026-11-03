@@ -401,6 +401,10 @@ struct wlr_output {
 	...;
 };
 
+#define XKB_KEY_NoSymbol ...
+#define XKB_KEYCODE_INVALID ...
+#define QW_IGNORED_MODIFIERS ...
+
 // main callbacks
 typedef uint32_t xkb_keysym_t;
 typedef uint32_t xkb_keycode_t;

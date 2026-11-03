@@ -147,12 +147,11 @@ bool qw_server_start(struct qw_server *server) {
     return true;
 }
 
-// Stub function – maybe used for keymap introspection in the future
 xkb_keysym_t qw_server_get_sym_from_code(struct qw_server *server, int code) {
     struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(server->seat);
 
     if (keyboard == NULL || keyboard->xkb_state == NULL) {
-        return 0;
+        return XKB_KEY_NoSymbol;
     }
 
     return xkb_state_key_get_one_sym(keyboard->xkb_state, code);
@@ -1145,6 +1144,8 @@ bool qw_server_init(struct qw_server *server) {
     server->system_bell_ring.notify = qw_server_handle_system_bell_ring;
     wl_signal_add(&server->system_bell->events.ring, &server->system_bell_ring);
 
+    wl_list_init(&server->grabbed_keys);
+
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
     if (server->xwayland == NULL) {
@@ -1552,4 +1553,49 @@ void qw_server_test_destroy_output(struct qw_server *server, int index) {
         i++;
     }
     wlr_log(WLR_ERROR, "qw_server_test_destroy_output: no output at index %d", index);
+}
+
+bool qw_server_key_grabbed(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers) {
+    struct qw_grabbed_key *key;
+    wl_list_for_each(key, &server->grabbed_keys, link) {
+        if (key->keysym == keysym && key->modifiers == modifiers) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void qw_server_grab_key(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers) {
+    if (qw_server_key_grabbed(server, keysym, modifiers)) {
+        return;
+    }
+
+    struct qw_grabbed_key *key;
+    key = calloc(1, sizeof(*key));
+    if (key == NULL) {
+        wlr_log(WLR_ERROR, "Could not create grabbed_key");
+        return;
+    }
+    key->keysym = keysym;
+    key->modifiers = modifiers;
+    wl_list_insert(&server->grabbed_keys, &key->link);
+}
+
+void qw_server_ungrab_key(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers) {
+    struct qw_grabbed_key *key;
+    wl_list_for_each(key, &server->grabbed_keys, link) {
+        if (key->keysym == keysym && key->modifiers == modifiers) {
+            wl_list_remove(&key->link);
+            free(key);
+            return;
+        }
+    }
+}
+
+void qw_server_ungrab_all(struct qw_server *server) {
+    struct qw_grabbed_key *key, *tmp;
+    wl_list_for_each_safe(key, tmp, &server->grabbed_keys, link) {
+        wl_list_remove(&key->link);
+        free(key);
+    }
 }

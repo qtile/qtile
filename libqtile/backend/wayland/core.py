@@ -48,7 +48,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
-from libqtile import config, hook
+from libqtile import config, hook, utils
 from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
@@ -59,7 +59,7 @@ from libqtile.config import Output, Screen, ScreenRect
 from libqtile.group import _Group
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.utils import ColorType, QtileError, reap_zombies, rgb
+from libqtile.utils import ColorType, reap_zombies, rgb
 
 try:
     from libqtile.backend.wayland._ffi import ffi, lib
@@ -81,7 +81,7 @@ def translate_masks(modifiers: list[str]) -> int:
     for i in modifiers:
         code = int(lib.qw_util_get_modifier_code(i.lower().encode()))
         if code == -1:
-            raise QtileError(f"unknown modifier: {i}")
+            raise utils.QtileError(f"unknown modifier: {i}")
         masks.append(code)
     if masks:
         return functools.reduce(operator.or_, masks)
@@ -280,7 +280,6 @@ class Core(base.Core):
             os.environ.pop("DISPLAY", None)
         self._output_reserved_space: dict[Screen, tuple[int, int, int, int]] = {}
         self.current_window = None
-        self.grabbed_keys: list[tuple[int, int]] = []
         self._userdata = ffi.new_handle(self)
         self.qw.cb_data = self._userdata
         self.qw.keyboard_key_cb = lib.keyboard_key_cb
@@ -566,17 +565,14 @@ class Core(base.Core):
         self.check_screen_fullscreen_background()
 
     def handle_keyboard_key(self, keysym: int, mask: int) -> bool:
-        if (keysym, mask) in self.grabbed_keys:
-            assert self.qtile is not None
-            _, swallowed = self.qtile.process_key_event(keysym, mask)
-            if swallowed:
-                return True
+        assert self.qtile is not None
+        _, handled = self.qtile.process_key_event(keysym, mask)
 
-        if self.focused_internal:
+        if not handled and self.focused_internal:
             self.focused_internal.process_key_press(keysym)
-            return True
+            handled = True
 
-        return False
+        return handled
 
     def handle_focus_current_window(self) -> bool:
         group = self.qtile.current_screen.group
@@ -700,43 +696,36 @@ class Core(base.Core):
 
         return outputs
 
-    def _get_sym_from_code(self, keycode: int) -> int:
-        sym = lib.qw_server_get_sym_from_code(self.qw, keycode)
-        if not sym:
-            raise QtileError("Unable to grab keycode. No active keyboard found.")
-        return sym
+    def lookup_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
+        """Find the keysym and the modifier mask for the given key"""
+        if isinstance(key.key, str):
+            keysym = lib.qwu_keysym_from_name(key.key.encode())
+            if keysym == lib.XKB_KEY_NoSymbol:
+                raise utils.QtileError(f"Unknown keysym: {key.key}")
 
-    def get_code_from_sym(self, keysym: int) -> int:
-        code = lib.qw_server_get_code_from_sym(self.qw, keysym)
-        if code == 0xFFFFFFFF:  # XKB_KEYCODE_INVALID
-            raise QtileError(
-                "Unable to grab keysym (No active keyboard or keysym isn't in layout)"
-            )
-        return code
+        else:
+            keysym = lib.qw_server_get_sym_from_code(self.qw, key.key)
+            if keysym == lib.XKB_KEY_NoSymbol:
+                raise utils.QtileError(f"Unknown keycode: {key.key}")
+
+        modmask = translate_masks(key.modifiers) & ~lib.QW_IGNORED_MODIFIERS
+        return keysym, modmask
 
     def get_button_code(self, button: int) -> int:
         return lib.qw_util_get_button_code(button)
 
     def grab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        if isinstance(key.key, str):
-            keysym = lib.qwu_keysym_from_name(key.key.encode())
-        else:
-            keysym = self._get_sym_from_code(key.key)
-        mask_key = translate_masks(key.modifiers)
-        self.grabbed_keys.append((keysym, mask_key))
-        return keysym, mask_key
+        keysym, modmask = self.lookup_key(key)
+        lib.qw_server_grab_key(self.qw, keysym, modmask)
+        return keysym, modmask
 
     def ungrab_key(self, key: config.Key | config.KeyChord) -> tuple[int, int]:
-        if isinstance(key.key, str):
-            keysym = lib.qwu_keysym_from_name(key.key.encode())
-        else:
-            keysym = self._get_sym_from_code(key.key)
-        mask_key = translate_masks(key.modifiers)
-        self.grabbed_keys.remove((keysym, mask_key))
-        return keysym, mask_key
+        keysym, modmask = self.lookup_key(key)
+        lib.qw_server_ungrab_key(self.qw, keysym, modmask)
+        return keysym, modmask
 
     def ungrab_keys(self) -> None:
-        self.grabbed_keys.clear()
+        lib.qw_server_ungrab_all(self.qw)
 
     def grab_button(self, mouse: config.Mouse) -> int:
         return translate_masks(mouse.modifiers)
@@ -806,18 +795,9 @@ class Core(base.Core):
     def simulate_keypress(self, modifiers: list[str], key: str) -> None:
         """Simulates a keypress on the focused window."""
         keysym = lib.qwu_keysym_from_name(key.encode())
-        mods = translate_masks(modifiers)
+        mods = translate_masks(modifiers) & ~lib.QW_IGNORED_MODIFIERS
 
-        if (keysym, mods) in self.grabbed_keys:
-            assert self.qtile is not None
-            self.qtile.process_key_event(keysym, mods)
-            return
-
-        # Not sure if this is required. process_key_press() appears to be unimplemented in
-        # the original wayland backend
-        #
-        # if self.focused_internal:
-        #     self.focused_internal.process_key_press(keysym)
+        self.handle_keyboard_key(keysym, mods)
 
     def set_locked(self, locked: bool) -> None:
         if locked != self._locked:
