@@ -102,6 +102,11 @@ def dbus(monkeypatch):
             except ValueError:
                 pass
 
+    # dbus-launch can fail (e.g. in the Nix build sandbox, which has no
+    # /var/lib/dbus/machine-id) so we need to skip
+    if pid is None:
+        pytest.skip(f"dbus-launch failed: {result.stderr.decode().strip()}")
+
     # Environment is set and dbus server should be running
     yield
 
