@@ -21,9 +21,11 @@ import traceback
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
-from libqtile import command, config, ipc, layout, pangocffi
+from libqtile import command, config, layout, pangocffi
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
+from libqtile.ipc import IPCError
+from libqtile.ipc.client import Client
 from libqtile.lazy import lazy
 from libqtile.log_utils import init_log, logger
 from libqtile.resources import default_config
@@ -124,12 +126,12 @@ class Backend(metaclass=ABCMeta):
         """Get a list of all windows in ascending order of Z position"""
 
 
-@Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
+@Retry(ignore_exceptions=(IPCError,), return_on_fail=True)
 def can_connect_qtile(socket_path, *, ok=None):
     if ok is not None and not ok():
         raise AssertionError()
 
-    ipc_client = ipc.Client(socket_path)
+    ipc_client = Client(socket_path)
     ipc_command = command.interface.IPCCommandInterface(ipc_client)
     client = command.client.InteractiveCommandClient(ipc_command)
     val = client.status()
@@ -276,7 +278,7 @@ class TestManager:
         # First, wait for socket to appear
         try:
             if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
-                ipc_client = ipc.Client(self.sockfile)
+                ipc_client = Client(self.sockfile)
                 ipc_command = command.interface.IPCCommandInterface(ipc_client)
                 self.c = command.client.InteractiveCommandClient(ipc_command)
                 self.backend.configure(self)

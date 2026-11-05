@@ -14,6 +14,7 @@ repository are also documented below.
     qtile migrate <qtile-migrate>
     qtile cmd-obj <qtile-cmd>
     qtile repl <qtile-repl>
+    qtile events <qtile-events>
     qtile run-cmd <qtile-run>
     qtile top <qtile-top>
     dqtile-cmd
