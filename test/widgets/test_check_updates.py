@@ -1,3 +1,5 @@
+from subprocess import CalledProcessError
+
 import libqtile.config
 from libqtile.widget.check_updates import CheckUpdates, Popen  # noqa: F401
 from test.widgets.conftest import FakeBar
@@ -178,3 +180,48 @@ def test_line_truncations(fake_qtile, monkeypatch, fake_window):
 
     # Should have 4 updates
     assert text == "Updates: 4"
+
+
+def test_update_process_error_with_error_string(fake_qtile, fake_window):
+    """test output where custom command gives error and error_string is set"""
+    cu9 = CheckUpdates(
+        distro=good_distro,
+        custom_command=cmd_error,
+        no_update_string=nus,
+        error_string="ERROR",
+        colour_no_updates="#654321",
+    )
+    fakebar = FakeBar([cu9], window=fake_window)
+    cu9._configure(fake_qtile, fakebar)
+    text = cu9.poll()
+    assert text == "ERROR"
+    assert cu9.layout.colour == cu9.colour_no_updates
+
+
+def test_error_string_with_no_update_status_mapped_to_zero(fake_qtile, fake_window):
+    """test custom command mapping its "no updates" status (2) to zero"""
+    # As in the docstring: checkupdates exits 2 for no updates and 1 on failure
+    cu10 = CheckUpdates(
+        custom_command="(exit 2) || test $? -eq 2", no_update_string=nus, error_string="ERROR"
+    )
+    cu11 = CheckUpdates(
+        custom_command="(exit 1) || test $? -eq 2", no_update_string=nus, error_string="ERROR"
+    )
+    fakebar = FakeBar([cu10, cu11], window=fake_window)
+    cu10._configure(fake_qtile, fakebar)
+    cu11._configure(fake_qtile, fakebar)
+    assert cu10.poll() == nus
+    assert cu11.poll() == "ERROR"
+
+
+def test_distro_error_ignores_error_string(fake_qtile, monkeypatch, fake_window):
+    """test built-in distro command errors are still treated as no updates"""
+
+    def mock_process(*args, **kwargs):
+        raise CalledProcessError(1, "pacman -Qu")
+
+    cu12 = CheckUpdates(distro=good_distro, no_update_string=nus, error_string="ERROR")
+    monkeypatch.setattr(cu12, "call_process", mock_process)
+    fakebar = FakeBar([cu12], window=fake_window)
+    cu12._configure(fake_qtile, fakebar)
+    assert cu12.poll() == nus
