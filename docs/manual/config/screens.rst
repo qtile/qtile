@@ -223,6 +223,115 @@ into::
     ``generate_screens`` is defined it takes precedence and the ``screens``
     variable is ignored.
 
+Screen group policies
+=====================
+
+``screen_group_policy`` is a callable that returns the group assignment for all
+connected monitors. The default, ``swap_screen_groups``, replaces the requesting
+monitor's group, swapping groups if the selected group is already displayed.
+For unassigned monitors, it respects ``Group.screen_affinity``; Qtile creates a
+group if no compatible unused group is available. Affinities do not restrict
+explicit selections or custom policies.
+
+Group preferences
+~~~~~~~~~~~~~~~~~
+
+``ScreenGroupPreferences`` remembers each monitor's preferred groups and lets
+the monitor with the most recent group selection choose first::
+
+    from libqtile.screen_group_policy import ScreenGroupPreferences
+
+    screen_group_policy = ScreenGroupPreferences()
+
+Selecting a group promotes the monitor and group to the front of their respective
+orders. Each monitor receives its highest-ranked available group. Selecting the
+current group also updates priority; moving focus between monitors does not.
+Monitors initially follow screen order and favor their displayed group, followed
+by the remaining groups in configuration order.
+
+For example, if A prefers ``1, 2, 3``, selecting ``1`` on B moves A to ``2``.
+Selecting ``3`` on B lets A return to ``1``.
+
+To specify initial preferences, pass group lists keyed by monitor ID::
+
+    screen_group_policy = ScreenGroupPreferences({
+        "port:eDP-1": ["1", "2", "3"],
+        "serial:Dell:U2723QE:ABC123": ["3", "2", "1"],
+    })
+
+Unlisted groups follow in configuration order; deleted groups are skipped.
+Preferences and priority survive monitor disconnection for the lifetime of the
+policy instance. Reloading the configuration or restarting Qtile creates fresh
+state unless the configuration preserves that instance.
+
+Custom policies
+~~~~~~~~~~~~~~~
+
+Define a function or callable object with this signature::
+
+    from libqtile.screen_group_policy import (
+        ScreenGroupContext, ScreenGroupRequest, swap_screen_groups,
+    )
+
+    def screen_group_policy(
+        context: ScreenGroupContext, request: ScreenGroupRequest | None
+    ) -> dict[str, str]:
+        return swap_screen_groups(context, request)
+
+``context`` is an immutable snapshot containing:
+
+* ``monitors``: a tuple of ``ScreenGroupMonitor`` objects in screen order, with
+  fields ``id``, ``index``, ``port``, ``make``, ``model``, ``serial`` and ``group``.
+  ``group`` is the currently displayed group name, or ``None`` if the monitor
+  has no group attached, for example before the initial assignment at startup
+  or after its group was deleted.
+* ``groups``: eligible group names in configuration order, excluding scratchpads.
+* ``group_affinities``: a tuple of ``(group_name, screen_index)`` pairs for groups
+  with a configured ``screen_affinity``. Groups without an affinity are omitted.
+
+``Screen.set_group`` passes an immutable
+``ScreenGroupRequest(monitor_id, group_name)``. Startup, screen reconfiguration,
+and group additions or removals pass ``request=None``.
+
+Assignments can also change without the policy issuing them. On startup, session
+restore may install a saved screen-to-group mapping directly, and on startup or
+reconfiguration a screen may inherit the group of its predecessor so the policy
+sees the previous assignment in its snapshot. Such changes never arrive as
+requests; the ``request=None`` snapshot is the authoritative picture of the
+current state, not a replay of earlier policy decisions.
+
+Do not assume the first context starts empty. After a restart or a config
+reload, Qtile restores the session's screen-to-group mapping *before* the first
+policy call, so the initial ``request=None`` context can show monitors with
+groups already assigned. These restored assignments are pre-existing state, not
+selections: they never arrive as requests. Policies that keep private state
+(such as remembered preferences) should treat ``request=None`` as a resync
+against the snapshot, seeding from the displayed groups, rather than expecting
+to observe every assignment as a request.
+
+Return a dictionary assigning every monitor ID to a distinct eligible group name.
+Policies must handle monitors whose ``group`` is ``None``; the built-in policies
+assign such monitors an unused group. Callbacks may retain private state but must
+not modify Qtile objects. Exceptions and invalid results are logged and fall back
+to ``swap_screen_groups``.
+
+For a group selection that changes assignments, Qtile applies the complete
+mapping, layouts and focus before emitting one ``setgroup``, ``focus_change`` and
+``layout_change`` notification each. ``layout_change`` identifies the requesting
+screen's final group. Selections made by hooks wait until these notifications
+finish.
+
+Monitor identity
+~~~~~~~~~~~~~~~~
+
+``get_monitor_ids(qtile.screens)`` from ``libqtile.screen_group_policy`` returns
+the IDs used by policies and initial preferences. IDs use
+``serial:<make>:<model>:<serial>`` when available, then ``port:<connector>``, or
+``screen:<index>`` as a fallback. Metadata components are percent-escaped.
+Duplicate IDs gain ``|port:<connector>`` and, if needed, ``|screen:<index>`` suffixes.
+Unique serial IDs survive connector and screen-order changes. Connector and index
+IDs follow the connector or screen position rather than the physical monitor.
+
 Fake Screens
 ============
 

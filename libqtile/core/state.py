@@ -35,7 +35,8 @@ class QtileState:
                 self.groups.append((group.name, group.layout.name, group.label))
 
         for index, screen in enumerate(qtile.screens):
-            self.screens[index] = screen.group.name
+            if screen.group is not None:
+                self.screens[index] = screen.group.name
             if screen == qtile.current_screen:
                 self.current_screen = index
 
@@ -54,7 +55,9 @@ class QtileState:
         for screen, group in self.screens.items():
             try:
                 group = qtile.groups_map[group]
-                qtile.screens[screen].set_group(group)
+                # Restored assignments are not policy requests; reconciliation
+                # afterwards presents them to the policy as its snapshot.
+                qtile.screens[screen]._set_group_direct(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing
 
