@@ -1,10 +1,17 @@
+import asyncio
+
 import pytest
+from dbus_fast import PropertyAccess
+from dbus_fast.aio import MessageBus
+from dbus_fast.introspection import Node
+from dbus_fast.service import ServiceInterface, dbus_property
 
 import libqtile.bar
 import libqtile.config
 import libqtile.confreader
 import libqtile.layout
 import libqtile.widget
+from libqtile.widget.helpers.status_notifier.statusnotifier import StatusNotifierItem
 from test.helpers import Retry  # noqa: I001
 
 
@@ -162,3 +169,44 @@ def test_statusnotifier_left_click_vertical_bar(manager_nospawn, sni_config):
 
     manager_nospawn.kill_window(win)
     assert not windows()
+
+
+class PixmapOnlyItem(ServiceInterface):
+    """StatusNotifierItem providing just an icon pixmap, as Electron apps do."""
+
+    def __init__(self):
+        super().__init__("org.kde.StatusNotifierItem")
+
+    @dbus_property(PropertyAccess.READ)
+    def IconPixmap(self) -> "a(iiay)":  # type: ignore  # noqa: F722, F821, N802
+        return [[1, 1, bytes(4)]]
+
+
+class NoIntrospectionBus(MessageBus):
+    """Bus whose introspection finds no interfaces, as with Electron apps."""
+
+    async def introspect(self, bus_name, path, *args, **kwargs):
+        return Node(path)
+
+
+@pytest.mark.usefixtures("dbus")
+def test_statusnotifier_item_without_introspection():
+    """
+    Items registered on a custom path that don't support introspection
+    (e.g. Electron apps) should be read from that path.
+    """
+
+    async def run():
+        path = "/org/chromium/StatusNotifierItem/1"
+        app_bus = await MessageBus().connect()
+        app_bus.export(path, PixmapOnlyItem())
+        host_bus = await NoIntrospectionBus().connect()
+        item = StatusNotifierItem(host_bus, app_bus.unique_name, path)
+        try:
+            assert await item.start()
+            assert item._pixmaps.get("Icon")
+        finally:
+            host_bus.disconnect()
+            app_bus.disconnect()
+
+    asyncio.run(run())

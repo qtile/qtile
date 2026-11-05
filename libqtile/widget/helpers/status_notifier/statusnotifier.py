@@ -175,7 +175,7 @@ class StatusNotifierItem:  # noqa: E303
             )
             try:
                 obj = self.bus.get_proxy_object(
-                    self.service, STATUSNOTIFIER_PATH, STATUS_NOTIFIER_ITEM_SPEC
+                    self.service, self.path, STATUS_NOTIFIER_ITEM_SPEC
                 )
                 self.item = obj.get_interface("org.kde.StatusNotifierItem")
             except InterfaceNotFoundError:
