@@ -42,6 +42,11 @@ let
 
       patches = [ ];
 
+      disabledTests = qtile-prev.disabledTests ++ [
+        # dbus-launch fails in the build sandbox (no /var/lib/dbus/machine-id)
+        "test_statusnotifier_item_without_introspection"
+      ];
+
       postInstall = ''
         install -Dm644 resources/qtile.desktop $out/share/xsessions/qtile.desktop
         install -Dm644 resources/qtile-wayland.desktop $out/share/wayland-sessions/qtile.desktop
