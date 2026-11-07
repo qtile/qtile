@@ -768,6 +768,36 @@ def test_drag_to_move_window(manager):
     assert (info["width"], info["height"]) == (200, 150)
 
 
+@pytest.mark.parametrize("manager", [DragToMoveConfig], indirect=True)
+def test_drag_release_modifier_before_button(manager):
+    """Releasing the modifier before the button must end the drag"""
+
+    manager.test_window("one")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    # Click window one to ungrab click
+    manager.backend.fake_motion(55, 55)
+    manager.backend.fake_button_press(1)
+    manager.backend.fake_button_release(1)
+    assert manager.c.window.info()["name"] == "one"
+
+    # Start dragging
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_motion(65, 65)
+
+    # Check the drag started
+    assert manager.c.eval("self._drag is None") == "False"
+
+    # Release Super before releasing the button
+    manager.backend.release_modifier("super")
+    manager.backend.fake_button_release(3)
+
+    # The drag must have ended
+    assert manager.c.eval("self._drag is None") == "True"
+
+
 @dualmonitor
 def test_click_focus_screen(manager):
     screen1 = (WIDTH // 2, HEIGHT // 2)

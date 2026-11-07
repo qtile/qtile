@@ -677,6 +677,13 @@ class Core(base.Core):
     def ungrab_buttons(self) -> None:
         lib.qw_server_ungrab_buttons(self.qw)
 
+    def grab_pointer(self) -> None:
+        """Consume new button presses until the drag ends."""
+        lib.qw_cursor_grab_pointer(self.qw_cursor, True)
+
+    def ungrab_pointer(self) -> None:
+        lib.qw_cursor_grab_pointer(self.qw_cursor, False)
+
     def warp_pointer(self, x: int, y: int, motion: bool = False) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
         lib.qw_cursor_warp_cursor(self.qw_cursor, x, y, motion)

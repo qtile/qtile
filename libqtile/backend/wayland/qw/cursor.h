@@ -49,6 +49,8 @@ struct qw_cursor {
     uint32_t last_motion_time;
     int pressed_button_count;
     int pressed_wid;
+    bool pressed_delivered[9];
+    bool pointer_grabbed;
 };
 
 struct qw_pointer_constraint {
@@ -88,5 +90,7 @@ void qw_cursor_fake_click(struct qw_cursor *cursor, int button);
 void qw_cursor_mask_pointer_events(struct qw_cursor *cursor, bool masked);
 
 void qw_cursor_drag_polling_rate(struct qw_cursor *cursor, int32_t rate);
+
+void qw_cursor_grab_pointer(struct qw_cursor *cursor, bool grabbed);
 
 #endif /* CURSOR_H */

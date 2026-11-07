@@ -80,7 +80,7 @@ static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, do
             // pointer entered a new window
             server->pointer_event_cb(new_wid, (int)sx, (int)sy, QW_POINTER_ENTER, server->cb_data);
         }
-    } else if ((new_wid != -1 && new_internal) || cursor->pressed_button_count > 0) {
+    } else if ((new_wid != -1 && new_internal) || cursor->pointer_grabbed) {
         // pointer moved within an internal window or we're dragging
         uint32_t rate = cursor->drag_polling_rate; // 0 = unlimited
         if (rate == 0 || (time - cursor->last_motion_time) > 1000 / rate) {
@@ -297,7 +297,22 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
     bool over_screen = cursor->view == NULL;
     bool over_view_grabbing_click = !over_screen && cursor->view->grabbed_click;
 
-    if (button_grabbed || over_screen || over_view_grabbing_click) {
+    bool do_call_back = button_grabbed || over_screen || over_view_grabbing_click;
+
+    // Record button presses that have been delivered by callback, to ensure
+    // every press delivered has a matching release delivered
+    if (pressed) {
+        if (do_call_back) {
+            cursor->pressed_delivered[button - 1] = true;
+        } else {
+            cursor->pressed_delivered[button - 1] = false;
+        }
+    } else if (cursor->pressed_delivered[button - 1]) {
+        cursor->pressed_delivered[button - 1] = false;
+        do_call_back = true;
+    }
+
+    if (do_call_back) {
         return cursor->server->cursor_button_cb(button, modifiers, pressed, button_grabbed,
                                                 (int)cursor->cursor->x, (int)cursor->cursor->y, wid,
                                                 cursor->server->cb_data) != 0;
@@ -333,10 +348,21 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
             cursor->pressed_button_count--;
         }
 
+        // Swallow presses when a drag has grabbed the pointer
+        if (cursor->pointer_grabbed) {
+            if (pressed) {
+                return;
+            }
+            // Only releasing the button that initiated the drag should end it
+            if (!cursor->pressed_delivered[button - 1]) {
+                return;
+            }
+        }
+
         if (cursor->implicit_grab.live) {
             wlr_seat_pointer_notify_button(cursor->server->seat, event->time_msec, event->button,
                                            event->state);
-            if (cursor->pressed_button_count == 0) {
+            if (seat->pointer_state.button_count == 0) {
                 qw_cursor_release_implicit_grab(cursor, event->time_msec);
             }
             return;
@@ -349,7 +375,8 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
             if (!handled) {
                 struct wlr_surface *surface = seat->pointer_state.focused_surface;
                 struct wlr_drag *drag = cursor->server->seat->drag;
-                if (cursor->pressed_button_count == 1 && surface != NULL && drag == NULL) {
+                if (pressed && cursor->pressed_button_count == 1 && surface != NULL &&
+                    drag == NULL) {
                     qw_cursor_create_implicit_grab(cursor, event->time_msec);
                 }
             }
@@ -769,4 +796,8 @@ static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, voi
 
 void qw_cursor_drag_polling_rate(struct qw_cursor *cursor, int32_t rate) {
     cursor->drag_polling_rate = rate;
+}
+
+void qw_cursor_grab_pointer(struct qw_cursor *cursor, bool grabbed) {
+    cursor->pointer_grabbed = grabbed;
 }
