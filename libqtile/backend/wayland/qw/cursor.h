@@ -49,6 +49,7 @@ struct qw_cursor {
     uint32_t last_motion_time;
     int pressed_button_count;
     int pressed_wid;
+    bool pressed_delivered[9];
 };
 
 struct qw_pointer_constraint {

@@ -297,7 +297,22 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
     bool over_screen = cursor->view == NULL;
     bool over_view_grabbing_click = !over_screen && cursor->view->grabbed_click;
 
-    if (button_grabbed || over_screen || over_view_grabbing_click) {
+    bool do_call_back = button_grabbed || over_screen || over_view_grabbing_click;
+
+    // Record button presses that have been delivered by callback, to ensure
+    // every press delivered has a matching release delivered
+    if (pressed) {
+        if (do_call_back) {
+            cursor->pressed_delivered[button - 1] = true;
+        } else {
+            cursor->pressed_delivered[button - 1] = false;
+        }
+    } else if (cursor->pressed_delivered[button - 1]) {
+        cursor->pressed_delivered[button - 1] = false;
+        do_call_back = true;
+    }
+
+    if (do_call_back) {
         return cursor->server->cursor_button_cb(button, modifiers, pressed, button_grabbed,
                                                 (int)cursor->cursor->x, (int)cursor->cursor->y, wid,
                                                 cursor->server->cb_data) != 0;
