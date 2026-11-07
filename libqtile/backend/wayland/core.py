@@ -53,7 +53,7 @@ from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
-from libqtile.backend.wayland.window import Base, Internal, Static, Window
+from libqtile.backend.wayland.window import Base, Internal, Window
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import Output, Screen, ScreenRect
 from libqtile.group import _Group
@@ -123,10 +123,17 @@ def unmanage_view_cb(view: ffi.CData, userdata: ffi.CData) -> None:
 
 @ffi.def_extern()
 def cursor_button_cb(
-    button: int, mask: int, pressed: bool, x: int, y: int, wid: int, userdata: ffi.CData
+    button: int,
+    mask: int,
+    pressed: bool,
+    grabbed: bool,
+    x: int,
+    y: int,
+    wid: int,
+    userdata: ffi.CData,
 ) -> int:
     core = ffi.from_handle(userdata)
-    if core.handle_cursor_button(button, mask, pressed, x, y, wid):
+    if core.handle_cursor_button(button, mask, pressed, grabbed, x, y, wid):
         return 1
     return 0
 
@@ -482,50 +489,31 @@ class Core(base.Core):
         logger.debug(f"drag_polling_rate updated: {rate}")
 
     def handle_cursor_button(
-        self, button: int, mask: int, pressed: bool, x: int, y: int, wid: int
+        self, button: int, mask: int, pressed: bool, grabbed: bool, x: int, y: int, wid: int
     ) -> bool:
-        # TODO: Consider refactor to bring closer to x11 backend.
-        # focus_by_click could be a common method?
         win = self.qtile.windows_map.get(wid)
 
         if pressed:
-            if self.qtile.process_button_click(int(button), int(mask), x, y):
+            if win is None or not isinstance(win, Base):
+                self.focus_by_click(x, y)
+                return self.qtile.process_button_click(int(button), int(mask), x, y)
+
+            if grabbed:
+                self.qtile.process_button_click(int(button), int(mask), x, y)
                 return True
 
-            if isinstance(win, Internal):
-                win.process_button_click(
-                    int(self.qw_cursor.cursor.x - win.x),
-                    int(self.qw_cursor.cursor.y - win.y),
-                    int(button),
-                )
-                return True
-
-            if isinstance(win, Static):
-                # Focus screen when there are no mouse bindings
-                # TODO: Check for actual bindings instead of using mask as a proxy
-                if not mask:
-                    self._focus_by_click()
-            elif isinstance(win, Window) or win is None:
-                self._focus_by_click()
-
-            return False
+            return win.handle_button_press(button, mask, x, y)
         else:
             if self.qtile.process_button_release(button, mask):
                 return True
 
-            if wid != -1 and win is None:
-                # pressed window no longer exists
-                return True
+            if win is None or not isinstance(win, Base):
+                if wid != -1:
+                    # pressed window no longer exists
+                    return True
+                return False
 
-            if win is not None and isinstance(win, Internal):
-                win.process_button_release(
-                    int(self.qw_cursor.cursor.x - win.x),
-                    int(self.qw_cursor.cursor.y - win.y),
-                    int(button),
-                )
-                return True
-
-            return False
+            return win.handle_button_release(button, mask, x, y)
 
     @expose_command
     def get_cursor_shape_v1(self) -> str:
@@ -610,42 +598,6 @@ class Core(base.Core):
             assert isinstance(win, Window)
             win._grab_click()
 
-    def _focus_by_click(self) -> ffi.CData:
-        assert self.qtile is not None
-        view = self.qw_cursor.view
-
-        if view != ffi.NULL:
-            win = self.qtile.windows_map.get(view.wid)
-            if win is None:
-                return
-
-            hook.fire("client_focus_by_click", win)
-
-            if self.qtile.config.bring_front_click is True:
-                win.bring_to_front()
-            elif self.qtile.config.bring_front_click == "floating_only":
-                if isinstance(win, base.Window) and win.floating:
-                    win.bring_to_front()
-
-            if isinstance(win, Static):
-                if win.screen is not self.qtile.current_screen:
-                    self.qtile.focus_screen(win.screen.index, warp=False)
-                win.focus(False)
-            elif isinstance(win, Window):
-                if win.group and win.group.screen is not self.qtile.current_screen:
-                    self.qtile.focus_screen(win.group.screen.index, warp=False)
-                self.qtile.current_group.focus(win, False)
-                win._ungrab_click()
-        else:
-            screen = self.qtile.find_screen(
-                int(self.qw_cursor.cursor.x), int(self.qw_cursor.cursor.y)
-            )
-            if screen:
-                self._grab_click_on_current_window()
-                self.qtile.focus_screen(screen.index, warp=False)
-
-        return view
-
     def handle_view_activation(self, view: ffi.CData) -> None:
         """Handle view urgency notification"""
         assert self.qtile is not None
@@ -728,7 +680,12 @@ class Core(base.Core):
         lib.qw_server_ungrab_all(self.qw)
 
     def grab_button(self, mouse: config.Mouse) -> int:
-        return translate_masks(mouse.modifiers)
+        modmask = translate_masks(mouse.modifiers) & ~lib.QW_IGNORED_MODIFIERS
+        lib.qw_server_grab_button(self.qw, mouse.button_code, modmask)
+        return modmask
+
+    def ungrab_buttons(self) -> None:
+        lib.qw_server_ungrab_buttons(self.qw)
 
     def warp_pointer(self, x: int, y: int, motion: bool = False) -> None:
         """Warp the pointer to the coordinates in relative to the output layout"""
