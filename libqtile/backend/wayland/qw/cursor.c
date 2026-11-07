@@ -291,19 +291,19 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
 
     // Get current keyboard modifiers (shift, ctrl, etc)
     struct wlr_keyboard *kb = wlr_seat_get_keyboard(cursor->server->seat);
-    uint32_t modifiers = kb ? wlr_keyboard_get_modifiers(kb) : 0;
+    uint32_t modifiers = kb ? wlr_keyboard_get_modifiers(kb) & ~QW_IGNORED_MODIFIERS : 0;
 
-    // A button press, over a window that isn't grabbing button events, with no
-    // modifiers held, doesn't need to call back
-    // TODO: modifiers == 0 is a stand-in for no bound modifier + button combos
-    if (pressed && cursor->view != NULL && !cursor->view->grabbed_click && modifiers == 0) {
-        return false;
+    bool button_grabbed = qw_server_button_grabbed(cursor->server, button, modifiers);
+    bool over_screen = cursor->view == NULL;
+    bool over_view_grabbing_click = !over_screen && cursor->view->grabbed_click;
+
+    if (button_grabbed || over_screen || over_view_grabbing_click) {
+        return cursor->server->cursor_button_cb(button, modifiers, pressed, button_grabbed,
+                                                (int)cursor->cursor->x, (int)cursor->cursor->y, wid,
+                                                cursor->server->cb_data) != 0;
     }
 
-    // Call server's button callback with button info and modifiers
-    return cursor->server->cursor_button_cb(button, modifiers, pressed, (int)cursor->cursor->x,
-                                            (int)cursor->cursor->y, wid,
-                                            cursor->server->cb_data) != 0;
+    return false;
 }
 
 static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {

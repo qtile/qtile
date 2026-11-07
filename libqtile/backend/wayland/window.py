@@ -295,6 +295,14 @@ class Base(base._Window):
     def handle_pointer_notify_motion(self, sx: int, sy: int) -> bool:
         return False
 
+    def handle_button_press(self, button: int, mask: int, x: int, y: int) -> bool:
+        # Focus window, then let the client see the click
+        self.core.focus_by_click(x, y, window=self)
+        return False
+
+    def handle_button_release(self, button: int, mask: int, x: int, y: int) -> bool:
+        return False
+
 
 class Internal(Base, base.Internal):
     def __init__(self, qtile: Qtile, ptr: ffi.CData, wid: int):
@@ -340,6 +348,22 @@ class Internal(Base, base.Internal):
 
     def handle_pointer_notify_motion(self, x, y) -> bool:
         self.process_pointer_motion(x, y)
+        return True
+
+    def handle_button_press(self, button: int, mask: int, x: int, y: int) -> bool:
+        self.process_button_click(
+            int(self.core.qw_cursor.cursor.x - self.x),
+            int(self.core.qw_cursor.cursor.y - self.y),
+            int(button),
+        )
+        return True
+
+    def handle_button_release(self, button: int, mask: int, x: int, y: int) -> bool:
+        self.process_button_release(
+            int(self.core.qw_cursor.cursor.x - self.x),
+            int(self.core.qw_cursor.cursor.y - self.y),
+            int(button),
+        )
         return True
 
     @expose_command()

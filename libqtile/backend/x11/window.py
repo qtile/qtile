@@ -2017,7 +2017,7 @@ class Window(_Window, base.Window):
         return True
 
     def handle_ButtonPress(self, e):  # noqa: N802
-        self.qtile.core.focus_by_click(e, window=self)
+        self.qtile.core.focus_by_click(e.root_x, e.root_y, window=self)
         self.qtile.core.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
 
     def handle_ConfigureRequest(self, e):  # noqa: N802

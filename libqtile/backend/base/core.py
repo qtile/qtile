@@ -105,6 +105,44 @@ class Core(CommandObject, metaclass=ABCMeta):
         """Create an internal window controlled by Qtile."""
         raise NotImplementedError  # Only error when called, not when instantiating class
 
+    def focus_by_click(self, x, y, window=None):
+        """Bring a window to the front
+
+        Parameters
+        ==========
+        x, y: int
+            Click coordinates
+        """
+        qtile = self.qtile
+        assert qtile is not None
+
+        if window:
+            hook.fire("client_focus_by_click", window)
+
+            if qtile.config.bring_front_click and (
+                qtile.config.bring_front_click != "floating_only"
+                or getattr(window, "floating", False)
+            ):
+                window.bring_to_front()
+
+            try:
+                if window.group.screen is not qtile.current_screen:
+                    qtile.focus_screen(window.group.screen.index, warp=False)
+                qtile.current_group.focus(window, warp=False)
+                window._ungrab_click()
+            except AttributeError:
+                # probably clicked an internal window
+                screen = qtile.find_screen(x, y)
+                if screen:
+                    qtile.focus_screen(screen.index, warp=False)
+
+        else:
+            # clicked on root window
+            screen = qtile.find_screen(x, y)
+            if screen:
+                self._grab_click_on_current_window()
+                qtile.focus_screen(screen.index, warp=False)
+
     def flush(self) -> None:
         """If needed, flush the backend's event queue."""
 
