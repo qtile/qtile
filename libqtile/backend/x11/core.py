@@ -697,7 +697,7 @@ class Core(base.Core):
         state = event.state & self._valid_mask
 
         if not event.child:  # The client's handle_ButtonPress will focus it
-            self.focus_by_click(event)
+            self.focus_by_click(event.root_x, event.root_y)
 
         self.qtile.process_button_click(button_code, state, event.event_x, event.event_y)
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
@@ -870,44 +870,6 @@ class Core(base.Core):
             # In X11 backend, current_window is always an x11 _Window
             assert isinstance(win, window._Window)
             win._grab_click()
-
-    def focus_by_click(self, e, window=None):
-        """Bring a window to the front
-
-        Parameters
-        ==========
-        e: xcb event
-            Click event used to determine window to focus
-        """
-        qtile = self.qtile
-        assert qtile is not None
-
-        if window:
-            hook.fire("client_focus_by_click", window)
-
-            if qtile.config.bring_front_click and (
-                qtile.config.bring_front_click != "floating_only"
-                or getattr(window, "floating", False)
-            ):
-                window.bring_to_front()
-
-            try:
-                if window.group.screen is not qtile.current_screen:
-                    qtile.focus_screen(window.group.screen.index, warp=False)
-                qtile.current_group.focus(window, warp=False)
-                window._ungrab_click()
-            except AttributeError:
-                # probably clicked an internal window
-                screen = qtile.find_screen(e.root_x, e.root_y)
-                if screen:
-                    qtile.focus_screen(screen.index, warp=False)
-
-        else:
-            # clicked on root window
-            screen = qtile.find_screen(e.root_x, e.root_y)
-            if screen:
-                self._grab_click_on_current_window()
-                qtile.focus_screen(screen.index, warp=False)
 
     def flush(self):
         self.conn.flush()

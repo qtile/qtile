@@ -93,9 +93,10 @@ struct qw_view;
 typedef void (*unmanage_view_cb_t)(struct qw_view *view, void *userdata);
 typedef void (*manage_view_cb_t)(struct qw_view *view, void *userdata);
 
-// Cursor button event callback: button, modifiers, pressed state, position, user data
-typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, int x, int y, int wid,
-                                  void *userdata);
+// Cursor button event callback: button, modifiers, pressed state, grabbed state, position, user
+// data
+typedef int (*cursor_button_cb_t)(int button, uint32_t mask, bool pressed, bool grabbed, int x,
+                                  int y, int wid, void *userdata);
 
 // Pointer enter/leave/motion event on an Internal view (e.g. a bar).
 enum qw_pointer_event_type { QW_POINTER_ENTER = 0, QW_POINTER_LEAVE = 1, QW_POINTER_MOTION = 2 };
@@ -287,6 +288,7 @@ struct qw_server {
     struct wlr_xdg_system_bell_v1 *system_bell;
     struct wl_listener system_bell_ring;
     struct wl_list grabbed_keys;
+    struct wl_list grabbed_buttons;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
@@ -340,6 +342,13 @@ struct qw_keyboard_shortcut_inhibitor {
 struct qw_grabbed_key {
     // Private data
     xkb_keysym_t keysym;
+    uint32_t modifiers;
+    struct wl_list link;
+};
+
+struct qw_grabbed_button {
+    // Private data
+    uint32_t button;
     uint32_t modifiers;
     struct wl_list link;
 };
@@ -418,5 +427,9 @@ bool qw_server_key_grabbed(struct qw_server *server, xkb_keysym_t keysym, uint32
 void qw_server_grab_key(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers);
 void qw_server_ungrab_key(struct qw_server *server, xkb_keysym_t keysym, uint32_t modifiers);
 void qw_server_ungrab_all(struct qw_server *server);
+
+bool qw_server_button_grabbed(struct qw_server *server, uint32_t button, uint32_t modifiers);
+void qw_server_grab_button(struct qw_server *server, uint32_t button, uint32_t modifiers);
+void qw_server_ungrab_buttons(struct qw_server *server);
 
 #endif /* SERVER_H */

@@ -1145,6 +1145,7 @@ bool qw_server_init(struct qw_server *server) {
     wl_signal_add(&server->system_bell->events.ring, &server->system_bell_ring);
 
     wl_list_init(&server->grabbed_keys);
+    wl_list_init(&server->grabbed_buttons);
 
 #if WLR_HAS_XWAYLAND
     server->xwayland = wlr_xwayland_create(server->display, server->compositor, true);
@@ -1597,5 +1598,39 @@ void qw_server_ungrab_all(struct qw_server *server) {
     wl_list_for_each_safe(key, tmp, &server->grabbed_keys, link) {
         wl_list_remove(&key->link);
         free(key);
+    }
+}
+
+bool qw_server_button_grabbed(struct qw_server *server, uint32_t button, uint32_t modifiers) {
+    struct qw_grabbed_button *grabbed_button;
+    wl_list_for_each(grabbed_button, &server->grabbed_buttons, link) {
+        if (grabbed_button->button == button && grabbed_button->modifiers == modifiers) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void qw_server_grab_button(struct qw_server *server, uint32_t button, uint32_t modifiers) {
+    if (qw_server_button_grabbed(server, button, modifiers)) {
+        return;
+    }
+
+    struct qw_grabbed_button *grabbed_button;
+    grabbed_button = calloc(1, sizeof(*grabbed_button));
+    if (grabbed_button == NULL) {
+        wlr_log(WLR_ERROR, "Could not create grabbed_button");
+        return;
+    }
+    grabbed_button->button = button;
+    grabbed_button->modifiers = modifiers;
+    wl_list_insert(&server->grabbed_buttons, &grabbed_button->link);
+}
+
+void qw_server_ungrab_buttons(struct qw_server *server) {
+    struct qw_grabbed_button *grabbed_button, *tmp;
+    wl_list_for_each_safe(grabbed_button, tmp, &server->grabbed_buttons, link) {
+        wl_list_remove(&grabbed_button->link);
+        free(grabbed_button);
     }
 }
