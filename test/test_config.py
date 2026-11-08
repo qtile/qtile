@@ -1,3 +1,4 @@
+import runpy
 from pathlib import Path
 
 import pytest
@@ -46,6 +47,41 @@ def test_falls_back():
     # default is; don't assert anything at all about the default in case
     # someone changes it down the road.
     assert hasattr(f, "follow_mouse_focus")
+
+
+def test_reload_config_with_local_submodule(tmp_path):
+    config_file = tmp_path / "config.py"
+    helper_file = tmp_path / "helper.py"
+    child_file = tmp_path / "child.py"
+    entrypoint = tmp_path / "entrypoint.py"
+    config_file.write_text("from helper import get_value\nwmname = get_value()\n")
+    helper_file.write_text("import child\ndef get_value():\n    return child.VALUE\n")
+    child_file.write_text("VALUE = 'before'\n")
+    entrypoint.write_text(
+        f"""
+import importlib
+import os
+import sys
+import time
+
+sys.path.insert(0, {str(tmp_path)!r})
+from libqtile import confreader
+
+config = confreader.Config({str(config_file)!r})
+config.load()
+assert config.wmname == "before"
+
+with open({str(child_file)!r}, "w") as child:
+    child.write("VALUE = 'after'\\n")
+now = time.time() + 2
+os.utime({str(child_file)!r}, (now, now))
+importlib.invalidate_caches()
+config.load()
+assert config.wmname == "after"
+"""
+    )
+
+    runpy.run_path(str(entrypoint), run_name="__main__")
 
 
 def cmd(x):
