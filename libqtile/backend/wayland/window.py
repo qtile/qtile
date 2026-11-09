@@ -1002,7 +1002,6 @@ class Static(Base, base.Static):
 
     def handle_pointer_notify_enter(self, x, y) -> None:
         self.qtile.hovered_window = self
-        hook.fire("client_mouse_enter", self)
         if (
             self.qtile.config.follow_mouse_focus is True
             and self.screen

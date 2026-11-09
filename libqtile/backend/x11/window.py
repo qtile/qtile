@@ -1671,7 +1671,6 @@ class Static(_Window, base.Static):
 
     def handle_EnterNotify(self, e):  # noqa: N802
         self.qtile.hovered_window = self
-        hook.fire("client_mouse_enter", self)
         if (
             self.qtile.config.follow_mouse_focus is True
             and self.screen

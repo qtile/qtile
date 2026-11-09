@@ -554,6 +554,8 @@ def test_client_focus(manager_nospawn):
 @pytest.mark.parametrize("win_type", ["Window", "Static"])
 @pytest.mark.usefixtures("hook_fixture")
 def test_client_mouse_enter(manager_nospawn, win_type):
+    """Pointer entering Window (not Static) fires hook"""
+
     class ClientMouseEnterConfig(BareConfig):
         layouts = [layout.floating.Floating()]
         test = CallWindow()
@@ -567,7 +569,10 @@ def test_client_mouse_enter(manager_nospawn, win_type):
     if win_type == "Static":
         manager_nospawn.c.window.static()
     manager_nospawn.backend.fake_motion(400, 300)
-    assert_window(manager_nospawn, "Test Client")
+    if win_type == "Static":
+        assert_window(manager_nospawn, "")
+    else:
+        assert_window(manager_nospawn, "Test Client")
 
 
 class FocusOnEnter(CallWindow):
