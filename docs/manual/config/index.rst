@@ -168,6 +168,13 @@ configuration variables that control specific aspects of Qtile's behavior:
         we're a working one by default. We choose LG3D to maximize irony:
         it is a 3D non-reparenting WM written in java that happens to be
         on java's whitelist.
+    * - ``x11_sync_selections``
+      - ``False``
+      - If true, the ``PRIMARY`` and ``CLIPBOARD`` selections are kept in
+        sync, similar to ``autocutsel``: selecting text also copies it to the
+        clipboard, and copying to the clipboard also sets the primary
+        selection. When qtile starts, the clipboard is copied to the primary
+        selection.
 
 Testing your configuration
 ==========================
