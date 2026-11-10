@@ -12,6 +12,8 @@ Qtile x.xx.x, released xxxx-xx-xx:
       - wayland: improve performance by moving some pointer, button and key
         processing to the backend and minimising python callbacks
       - wayland: support drag_polling_rate
+      - x11: add x11_sync_selections config option to keep the x11's two
+        copy/paste buffers (PRIMARY and CLIPBOARD) in sync
     * bugfixes
       - StatusNotifier: show icons from items that register a custom object
         path and don't support introspection (e.g. Slack and other Electron apps)
