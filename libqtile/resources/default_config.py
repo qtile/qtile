@@ -206,6 +206,9 @@ screen_change_debounce_timeout = 1
 # focus, should we respect this or not?
 auto_minimize = True
 
+# Keep the PRIMARY and CLIPBOARD selections in sync, like autocutsel (X11 only).
+x11_sync_selections = False
+
 # When using the Wayland backend, this can be used to configure input devices.
 wl_input_rules = None
 
