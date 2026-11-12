@@ -19,6 +19,7 @@
 
       flake-attributes = forAllSystems (pkgs: rec {
         build-config = import ./nix/build-config.nix pkgs;
+        wrapped-pre-commit = import ./nix/pre-commit.nix pkgs;
 
         common-python-deps = with pkgs.python3Packages; [
           python-dateutil
@@ -55,6 +56,14 @@
           '';
         };
 
+        # Shell script that is executed when entering the development shell.
+        # Automatically installs pre-commit hooks.
+        dev-shell-hooks = builtins.concatStringsSep "\n" (
+          builtins.attrValues {
+            pre-commit = "${wrapped-pre-commit}/bin/pre-commit install";
+          }
+        );
+
         common-system-deps = with pkgs; [
           # Gdk namespaces
           wrapGAppsHook3
@@ -73,7 +82,9 @@
           gtk-layer-shell
           imagemagick
 
-          pre-commit
+          # Wrapped pre-commit that sources a special configuration file that
+          # links to nix executables. Hooks are also automatically installed.
+          wrapped-pre-commit
         ];
 
         shell-env = {
@@ -113,6 +124,8 @@
 
           inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.qtile ];
           packages = flake-attributes.${pkgs.stdenv.hostPlatform.system}.pkgs-wrapped;
+
+          shellHook = flake-attributes.${pkgs.stdenv.hostPlatform.system}.dev-shell-hooks;
         };
       });
     };
