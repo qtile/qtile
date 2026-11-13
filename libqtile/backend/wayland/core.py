@@ -329,7 +329,6 @@ class Core(base.Core):
 
     def new_wid(self) -> int:
         """Get a new unique window ID"""
-        assert self.qtile is not None
         return max(self.qtile.windows_map.keys(), default=0) + 1
 
     # Callback to fetch qtile config parameters from wayc
@@ -349,8 +348,6 @@ class Core(base.Core):
         return config
 
     def on_config_load(self, initial: bool) -> None:
-        assert self.qtile is not None
-
         # Apply input device configuration
         if self.qtile.config.wl_input_rules:
             inputs.configure_input_devices(self.qw, self.qtile.config.wl_input_rules)
@@ -412,8 +409,6 @@ class Core(base.Core):
         self.fire_screen_change(None)
 
     def get_screen_for_output(self, output: ffi.CData) -> Screen:
-        assert self.qtile is not None
-
         for screen in self.qtile.screens:
             # Outputs alias if they have the same (x, y) and share the same Screen, so
             # we don't need to check the if the width and height match the Screen's.
@@ -423,8 +418,6 @@ class Core(base.Core):
         return self.qtile.current_screen
 
     def handle_get_current_output_dims(self) -> ffi.CData:
-        assert self.qtile is not None
-
         output_dims = ffi.new("struct wlr_box *")
         output_dims.x = self.qtile.current_screen.x
         output_dims.y = self.qtile.current_screen.y
@@ -560,12 +553,10 @@ class Core(base.Core):
             self.check_screen_fullscreen_background(win.group.screen)
 
     def handle_unmanage_view(self, view: ffi.CData) -> None:
-        assert self.qtile is not None
         self.qtile.unmanage(view.wid)
         self.check_screen_fullscreen_background()
 
     def handle_keyboard_key(self, keysym: int, mask: int) -> bool:
-        assert self.qtile is not None
         _, handled = self.qtile.process_key_event(keysym, mask)
 
         if not handled and self.focused_internal:
@@ -611,7 +602,6 @@ class Core(base.Core):
             win._grab_click()
 
     def _focus_by_click(self) -> ffi.CData:
-        assert self.qtile is not None
         view = self.qw_cursor.view
 
         if view != ffi.NULL:
@@ -648,7 +638,6 @@ class Core(base.Core):
 
     def handle_view_activation(self, view: ffi.CData) -> None:
         """Handle view urgency notification"""
-        assert self.qtile is not None
         wid = view.wid
         win = self.qtile.lookup_client(wid)
         if win is not None:
@@ -774,8 +763,6 @@ class Core(base.Core):
 
     def graceful_shutdown(self) -> None:
         """Try to close windows gracefully before exiting"""
-        assert self.qtile is not None
-
         # Copy in case the dictionary changes during the loop
         for win in self.qtile.windows_map.copy().values():
             win.kill()
