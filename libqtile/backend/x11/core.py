@@ -221,8 +221,6 @@ class Core(base.Core):
 
     def on_config_load(self, initial) -> None:
         """Assign windows to groups"""
-        assert self.qtile is not None
-
         self.wmname = getattr(self.qtile.config, "wmname", "qtile")
 
         # Ensure that properties are initialised at startup
@@ -318,8 +316,6 @@ class Core(base.Core):
 
     def _xpoll(self) -> None:
         """Poll the connection and dispatch incoming events"""
-        assert self.qtile is not None
-
         while True:
             try:
                 event = self.conn.conn.poll_for_event()
@@ -391,8 +387,6 @@ class Core(base.Core):
         of the handlers returns False or None, or the end of the chain is
         reached.
         """
-        assert self.qtile is not None
-
         handler = EVENT_TO_HANDLER.get(event.__class__)
 
         # If handler is None, this event has no handler and should be ignored
@@ -468,7 +462,6 @@ class Core(base.Core):
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
-        assert self.qtile
         # Regular top-level managed windows, i.e. excluding Static, Internal and Systray Icons
         wids = [wid for wid, c in self.qtile.windows_map.items() if isinstance(c, window.Window)]
         self._root.set_property("_NET_CLIENT_LIST", wids)
@@ -622,8 +615,6 @@ class Core(base.Core):
         height: int,
         depth: int = 32,
     ) -> base.Internal:
-        assert self.qtile is not None
-
         # Try to use a 32-bit depth to allow for transparent colors in
         # backgrounds. If the Screen doesn't support 32-bit visuals, the code
         # in create_window() -> _get_depth_and_visual() will fall back to an
@@ -666,7 +657,6 @@ class Core(base.Core):
             hook.fire("selection_change", name, self._selection[name])
 
     def handle_ClientMessage(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
 
         atoms = self.conn.atoms
 
@@ -682,7 +672,6 @@ class Core(base.Core):
                 logger.debug("Invalid desktop index: %s", index)
 
     def handle_KeyPress(self, event, *, simulated=False) -> None:  # noqa: N802
-        assert self.qtile is not None
         keysym = self.conn.code_to_syms[event.detail][0]
         key, handled = self.qtile.process_key_event(keysym, event.state & self._valid_mask)
 
@@ -703,7 +692,6 @@ class Core(base.Core):
             self.grab_key(key)
 
     def handle_ButtonPress(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
 
         button_code = event.detail
         state = event.state & self._valid_mask
@@ -715,14 +703,12 @@ class Core(base.Core):
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
 
     def handle_ButtonRelease(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
 
         button_code = event.detail
         state = event.state & self._valid_mask
         self.qtile.process_button_release(button_code, state)
 
     def handle_MotionNotify(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
 
         # Limit the motion notify events from happening too frequently
         # As we already handle motion notify events "later", the default is None
@@ -753,14 +739,12 @@ class Core(base.Core):
         w.configure(**args)
 
     def handle_MappingNotify(self, event):  # noqa: N802
-        assert self.qtile is not None
 
         self.conn.refresh_keymap()
         if event.request == xcffib.xproto.Mapping.Keyboard:
             self.qtile.grab_keys()
 
     def handle_MapRequest(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
 
         xwin = window.XWindow(self.conn, event.window)
         try:
@@ -798,7 +782,6 @@ class Core(base.Core):
             win.change_layer()
 
     def handle_DestroyNotify(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
 
         self.qtile.unmanage(event.window)
         self.update_client_lists()
@@ -806,7 +789,6 @@ class Core(base.Core):
             self.conn.fixup_focus()
 
     def handle_UnmapNotify(self, event) -> None:  # noqa: N802
-        assert self.qtile is not None
 
         win = self.qtile.lookup_client(event.window)
 
