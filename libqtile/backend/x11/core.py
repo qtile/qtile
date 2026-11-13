@@ -37,6 +37,7 @@ EVENT_TO_HANDLER = {
     xcffib.xproto.PropertyNotifyEvent: "handle_PropertyNotify",
     xcffib.randr.ScreenChangeNotifyEvent: "handle_ScreenChangeNotify",
     xcffib.xproto.SelectionNotifyEvent: "handle_SelectionNotify",
+    xcffib.xproto.SelectionRequestEvent: "handle_SelectionRequest",
     xcffib.xproto.UnmapNotifyEvent: "handle_UnmapNotify",
 }
 
@@ -51,7 +52,10 @@ _IGNORED_EVENTS = {
     xcffib.xproto.MapNotifyEvent,
     xcffib.xproto.NoExposureEvent,
     xcffib.xproto.ReparentNotifyEvent,
+    xcffib.xproto.SelectionClearEvent,
 }
+
+SELECTION_TEXT_TARGETS = ("UTF8_STRING", "STRING", "TEXT")
 
 
 def get_keys() -> list[str]:
@@ -141,12 +145,8 @@ class Core(base.Core):
         self._selection["PRIMARY"]["owner"] = reply.owner
 
         clipboard_atom = self.conn.atoms["CLIPBOARD"]
-        reply = self.conn.conn.core.GetSelectionOwner(primary_atom).reply()
+        reply = self.conn.conn.core.GetSelectionOwner(clipboard_atom).reply()
         self._selection["CLIPBOARD"]["owner"] = reply.owner
-
-        # ask for selection on start-up
-        self.convert_selection(primary_atom)
-        self.convert_selection(clipboard_atom)
 
         # setup the default cursor
         self._root.set_cursor("left_ptr")
@@ -225,6 +225,9 @@ class Core(base.Core):
 
         self.wmname = getattr(self.qtile.config, "wmname", "qtile")
 
+        if initial:
+            self.fetch_initial_selections()
+
         # Ensure that properties are initialised at startup
         self.update_client_lists()
 
@@ -296,6 +299,17 @@ class Core(base.Core):
     def clear_focus(self):
         """Clear _NET_ACTIVE_WINDOW so that there is no focused window"""
         self._root.set_property("_NET_ACTIVE_WINDOW", 0)
+
+    def fetch_initial_selections(self) -> None:
+        if not self.qtile.config.x11_sync_selections:
+            self.convert_selection(self.conn.atoms["PRIMARY"])
+            self.convert_selection(self.conn.atoms["CLIPBOARD"])
+            return
+
+        if self._selection["CLIPBOARD"]["owner"]:
+            self.convert_selection(self.conn.atoms["CLIPBOARD"])
+        elif self._selection["PRIMARY"]["owner"]:
+            self.convert_selection(self.conn.atoms["PRIMARY"])
 
     def convert_selection(self, selection_atom, _type="UTF8_STRING") -> None:
         type_atom = self.conn.atoms[_type]
@@ -644,18 +658,22 @@ class Core(base.Core):
             return
 
         name = self.conn.atoms.get_name(event.selection)
+        if name not in self._selection:
+            return
         self._selection[name]["owner"] = event.owner
-        self._selection[name]["selection"] = ""
 
-        self.convert_selection(event.selection)
+        if event.owner != self._selection_window.wid:
+            self._selection[name]["selection"] = ""
+            self.convert_selection(event.selection)
 
         hook.fire("selection_notify", name, self._selection[name])
 
     def handle_PropertyNotify(self, event) -> None:  # noqa: N802
+        if event.window != self._selection_window.wid:
+            return
         name = self.conn.atoms.get_name(event.atom)
         # it's the selection property
         if name in ("PRIMARY", "CLIPBOARD"):
-            assert event.window == self._selection_window.wid
             prop = self._selection_window.get_property(event.atom, "UTF8_STRING")
 
             # If the selection property is None, it is unset, which means the
@@ -664,6 +682,77 @@ class Core(base.Core):
 
             self._selection[name]["selection"] = value
             hook.fire("selection_change", name, self._selection[name])
+
+            if value:
+                self.sync_selection(name)
+
+    def sync_selection(self, source: str) -> None:
+        """Copy the contents of the `source` selection to the other one by
+        taking ownership of it, like autocutsel does."""
+        if not self.qtile.config.x11_sync_selections:
+            return
+        target = "CLIPBOARD" if source == "PRIMARY" else "PRIMARY"
+        self._selection[target]["selection"] = self._selection[source]["selection"]
+        self._selection[target]["owner"] = self._selection_window.wid
+        self.conn.conn.core.SetSelectionOwner(
+            self._selection_window.wid, self.conn.atoms[target], xcffib.CurrentTime
+        )
+        hook.fire("selection_change", target, self._selection[target])
+
+    def handle_SelectionRequest(self, event) -> None:  # noqa: N802
+        if event.owner != self._selection_window.wid:
+            return
+
+        atoms = self.conn.atoms
+        # obsolete clients may not specify a property; ICCCM says use the target
+        prop = event.property or event.target
+        name = atoms.get_name(event.selection)
+        target = atoms.get_name(event.target)
+
+        selection = self._selection.get(name)
+        if selection is None or selection["owner"] != self._selection_window.wid:
+            prop = xcffib.xproto.Atom._None
+        elif target == "TARGETS":
+            supported = [atoms[t] for t in ("TARGETS", *SELECTION_TEXT_TARGETS)]
+            self.conn.conn.core.ChangeProperty(
+                xcffib.xproto.PropMode.Replace,
+                event.requestor,
+                prop,
+                xcffib.xproto.Atom.ATOM,
+                32,
+                len(supported),
+                supported,
+            )
+        elif target in SELECTION_TEXT_TARGETS:
+            text = selection["selection"] or ""
+            if target == "STRING":
+                data = text.encode("latin-1", errors="replace")
+                type_atom = xcffib.xproto.Atom.STRING
+            else:
+                data = text.encode("utf-8")
+                type_atom = atoms["UTF8_STRING"]
+            # We don't implement INCR transfers, so refuse anything that won't
+            # fit in a single request.
+            max_len = self.conn.conn.get_maximum_request_length() * 4 - 64
+            if len(data) > max_len:
+                prop = xcffib.xproto.Atom._None
+            else:
+                self.conn.conn.core.ChangeProperty(
+                    xcffib.xproto.PropMode.Replace,
+                    event.requestor,
+                    prop,
+                    type_atom,
+                    8,
+                    len(data),
+                    data,
+                )
+        else:
+            prop = xcffib.xproto.Atom._None
+
+        notify = xcffib.xproto.SelectionNotifyEvent.synthetic(
+            event.time, event.requestor, event.selection, event.target, prop
+        )
+        self.conn.conn.core.SendEvent(False, event.requestor, EventMask.NoEvent, notify.pack())
 
     def handle_ClientMessage(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
