@@ -50,6 +50,7 @@ from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import LoopContext
 from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
+from libqtile.events import EventServer
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.interactive.repl import repl_server
@@ -250,12 +251,14 @@ class Qtile(CommandObject):
                 # the XWayland X server has initialized (as a workaround). the
                 # x11 backend can just do it here.
                 signals[signal.SIGCHLD] = utils.reap_zombies
+            self.socket_path = self._prepare_socket_path(self.socket_path)
             async with (
                 LoopContext(signals),
                 ipc.Server(
-                    self._prepare_socket_path(self.socket_path),
+                    self.socket_path,
                     self.server.call,
                 ),
+                EventServer(f"{self.socket_path}.events"),
             ):
                 await self._stopped_event.wait()
                 if lifecycle.behavior != lifecycle.behavior.RESTART:

@@ -55,6 +55,7 @@ questions, you can find support in the following places:
     manual/commands/index
     manual/commands/interfaces
     manual/commands/api/index
+    manual/commands/events/index
 
 .. toctree::
     :maxdepth: 1
