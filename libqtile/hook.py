@@ -675,6 +675,31 @@ hooks: list[Hook] = [
         """,
     ),
     Hook(
+        "root_window_click",
+        """
+        Called when a mouse button is pressed on the root window, aka the wallaper.
+
+        **Arguments**
+
+            * ``x``: the x position of the cursor in the global layout
+            * ``y``: the y position of the cursor in the global layout
+            * ``button``: the button number (1 = left, 2 = middle, 3 = right)
+
+        Example:
+
+        .. code:: python
+
+            from libqtile import hook
+            from libqtile.utils import send_notification
+
+            @hook.subscribe.root_window_click
+            def root_window_click(x, y, button):
+                send_notification("qtile", f"Root window clicked at {x}, {y} with button {button}.")
+
+        """,
+    ),  
+    
+    Hook(
         "client_name_updated",
         """
         Called when the client name changes

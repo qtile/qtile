@@ -698,6 +698,7 @@ class Core(base.Core):
 
         if not event.child:  # The client's handle_ButtonPress will focus it
             self.focus_by_click(event.root_x, event.root_y)
+            hook.fire("root_window_click", event.root_x, event.root_y, button_code)
 
         self.qtile.process_button_click(button_code, state, event.event_x, event.event_y)
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, event.time)
