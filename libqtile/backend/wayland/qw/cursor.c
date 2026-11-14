@@ -371,6 +371,10 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
         // When the pointer is constrained, skip further processing
         if (!cursor->active_constraint || event->pointer->base.type != WLR_INPUT_DEVICE_POINTER) {
             handled = qw_cursor_process_button(cursor, button, pressed, cursor->pressed_wid);
+            // TODO: Why is the following necessary? Is there a cleaner solution?
+            if (!pressed && seat->drag != NULL) {
+                handled = false; // don't swallow the release that ends a DnD
+            }
 
             if (!handled) {
                 struct wlr_surface *surface = seat->pointer_state.focused_surface;
