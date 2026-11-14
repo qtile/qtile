@@ -19,6 +19,7 @@
 
       flake-attributes = forAllSystems (pkgs: rec {
         build-config = import ./nix/build-config.nix pkgs;
+        pre-commit-config = (import ./nix/pre-commit.nix pkgs).pre-commit-config;
 
         common-python-deps = with pkgs.python3Packages; [
           python-dateutil
@@ -52,6 +53,9 @@
             fi
 
             sphinx-build -M html $PROJECT_ROOT/docs $PROJECT_ROOT/_build
+          '';
+          pre-commit = pkgs.writeShellScriptBin "qtile-run-pre-commit" ''
+            exec ${pkgs.pre-commit}/bin/pre-commit run -c ${pre-commit-config} "$@"
           '';
         };
 
