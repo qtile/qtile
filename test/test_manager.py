@@ -1044,13 +1044,13 @@ class TScreen(libqtile.config.Screen):
 
 def test_dx():
     s = TScreen(left=libqtile.bar.Gap(10))
-    s._configure(None, 0, 0, 0, 100, 100, None)
+    s._configure(None, 0, 0, 0, 100, 100)
     assert s.dx == 10
 
 
 def test_dwidth():
     s = TScreen(left=libqtile.bar.Gap(10))
-    s._configure(None, 0, 0, 0, 100, 100, None)
+    s._configure(None, 0, 0, 0, 100, 100)
     assert s.dwidth == 90
     s.right = libqtile.bar.Gap(10)
     assert s.dwidth == 80
@@ -1058,13 +1058,13 @@ def test_dwidth():
 
 def test_dy():
     s = TScreen(top=libqtile.bar.Gap(10))
-    s._configure(None, 0, 0, 0, 100, 100, None)
+    s._configure(None, 0, 0, 0, 100, 100)
     assert s.dy == 10
 
 
 def test_dheight():
     s = TScreen(top=libqtile.bar.Gap(10))
-    s._configure(None, 0, 0, 0, 100, 100, None)
+    s._configure(None, 0, 0, 0, 100, 100)
     assert s.dheight == 90
     s.bottom = libqtile.bar.Gap(10)
     assert s.dheight == 80
