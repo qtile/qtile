@@ -675,6 +675,19 @@ hooks: list[Hook] = [
         """,
     ),
     Hook(
+        "root_window_click",
+        """
+        called when a mouse button is pressed on the root window (aka clicking on the wallpaper)
+
+        **Arguments**
+
+            * ``x``: the x position of the cursor in the global layout
+            * ``y``: the y position of the cursor in the global layout
+            * ``button``: the button number (1 = left, 2 = middle, 3 = right)
+        """,
+    ),    
+    
+    Hook(
         "client_name_updated",
         """
         Called when the client name changes

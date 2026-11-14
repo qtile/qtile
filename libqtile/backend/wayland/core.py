@@ -489,6 +489,8 @@ class Core(base.Core):
         if pressed:
             if win is None or not isinstance(win, Base):
                 self.focus_by_click(x, y)
+                if wid == -1:
+                    hook.fire("root_window_click", x, y, button)
                 return self.qtile.process_button_click(button, mask, x, y)
 
             if grabbed:
