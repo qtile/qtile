@@ -796,6 +796,47 @@ def test_current_screen_change(manager_nospawn):
     assert_inc_calls(3)
 
 
+class CallClick:
+    def __init__(self):
+        self.count = 0
+        self.last = ""
+
+    def __call__(self, x, y, button):
+        self.count += 1
+        self.last = f"{x},{y},{button}"
+
+
+@pytest.mark.parametrize("button", [1, 2, 3])
+@pytest.mark.usefixtures("hook_fixture")
+def test_root_window_click_basic_functionality(button):
+    """Hook can be subscribed to and receives x, y, button."""
+    test = CallClick()
+    hook.subscribe.root_window_click(test)
+    hook.fire("root_window_click", 100, 100, button)
+    assert test.count == 1
+    assert test.last == f"100,100,{button}"
+
+
+@pytest.mark.usefixtures("hook_fixture")
+def test_root_window_click(manager_nospawn):
+    class RootWindowClickConfig(BareConfig):
+        layouts = [layout.floating.Floating()]
+        test = CallClick()
+        hook.subscribe.root_window_click(test)
+
+    manager_nospawn.start(RootWindowClickConfig)
+
+    # No windows open
+    manager_nospawn.backend.fake_click(100, 100)
+    assert manager_nospawn.c.eval("self.config.test.count") == "1"
+    assert manager_nospawn.c.eval("self.config.test.last") == "100,100,1"
+
+    # A click inside a window should not fire it
+    manager_nospawn.test_window("Test Client")
+    manager_nospawn.backend.fake_click(400, 300)
+    assert manager_nospawn.c.eval("self.config.test.count") == "1"
+
+
 @pytest.mark.usefixtures("hook_fixture")
 def test_transient_hooks_syncronous():
     def t_hook():

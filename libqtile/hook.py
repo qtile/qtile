@@ -677,7 +677,7 @@ hooks: list[Hook] = [
     Hook(
         "root_window_click",
         """
-        Called when a mouse button is pressed on the root window, aka the wallaper.
+        Called when a mouse button is pressed on the root window, aka the wallpaper.
 
         **Arguments**
 
@@ -697,8 +697,7 @@ hooks: list[Hook] = [
                 send_notification("qtile", f"Root window clicked at {x}, {y} with button {button}.")
 
         """,
-    ),  
-    
+    ),
     Hook(
         "client_name_updated",
         """
