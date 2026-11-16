@@ -211,6 +211,15 @@ TEST_CLIENTS: list[TestClient] = [
         includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
     ),
     TestClient(
+        name="drag-and-drop",
+        sources=[
+            TEST_CLIENT_SRC_PATH / "drag-and-drop.c",
+            CLIENT_BASE,
+            QW_PROTO_OUT_PATH / "xdg-shell-protocol.c",
+        ],
+        includes=[QW_PROTO_OUT_PATH, TEST_CLIENT_SRC_PATH],
+    ),
+    TestClient(
         name="layer-shell",
         sources=[
             TEST_CLIENT_SRC_PATH / "layer-shell.c",

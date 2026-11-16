@@ -289,6 +289,13 @@ static bool qw_cursor_process_button(struct qw_cursor *cursor, int button, bool 
         return false;
     }
 
+    // A release during a client side drag and drop should not be handled by
+    // qtile, but passed to the seat
+    if (!pressed && cursor->server->seat->drag != NULL) {
+        cursor->pressed_delivered[button - 1] = false;
+        return false;
+    }
+
     // Get current keyboard modifiers (shift, ctrl, etc)
     struct wlr_keyboard *kb = wlr_seat_get_keyboard(cursor->server->seat);
     uint32_t modifiers = kb ? wlr_keyboard_get_modifiers(kb) & ~QW_IGNORED_MODIFIERS : 0;
@@ -371,10 +378,6 @@ static void qw_cursor_handle_button(struct wl_listener *listener, void *data) {
         // When the pointer is constrained, skip further processing
         if (!cursor->active_constraint || event->pointer->base.type != WLR_INPUT_DEVICE_POINTER) {
             handled = qw_cursor_process_button(cursor, button, pressed, cursor->pressed_wid);
-            // TODO: Why is the following necessary? Is there a cleaner solution?
-            if (!pressed && seat->drag != NULL) {
-                handled = false; // don't swallow the release that ends a DnD
-            }
 
             if (!handled) {
                 struct wlr_surface *surface = seat->pointer_state.focused_surface;
