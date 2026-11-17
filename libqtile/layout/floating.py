@@ -162,7 +162,7 @@ class Floating(Layout):
             return False
         if client.y < screen_rect.y:  # top
             return False
-        if screen_rect.y + screen_rect.width < client.y + client.height:  # bottom
+        if screen_rect.y + screen_rect.height < client.y + client.height:  # bottom
             return False
         return True
 
