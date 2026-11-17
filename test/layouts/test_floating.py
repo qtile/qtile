@@ -2,6 +2,7 @@ import pytest
 
 import libqtile.config
 from libqtile import layout
+from libqtile.config import ScreenRect
 from libqtile.confreader import Config
 from test.layouts.layout_utils import assert_focused
 
@@ -23,6 +24,42 @@ class FloatingConfig(Config):
 
 
 floating_config = pytest.mark.parametrize("manager", [FloatingConfig], indirect=True)
+
+
+class _FakeWindowGeometry:
+    """Just enough of a window for Floating.on_screen()."""
+
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+
+@pytest.mark.parametrize(
+    "x, y",
+    [
+        (2559, 1200),  # left
+        (2561, 1200),  # right
+        (2560, 1199),  # top
+        (2560, 1201),  # bottom
+    ],
+)
+def test_on_screen_off_screen(x, y):
+    floating = layout.Floating()
+    # Landscape screen (width > height) with a non-zero origin so that checks
+    # using the wrong dimension or ignoring the origin are caught
+    screen = ScreenRect(2560, 1200, 2048, 1152)
+    window = _FakeWindowGeometry(x, y, screen.width, screen.height)
+    assert not floating.on_screen(window, screen)
+
+
+def test_on_screen_aligned():
+    floating = layout.Floating()
+    screen = ScreenRect(2560, 1200, 2048, 1152)
+    # A window the size of the screen is on screen only when exactly aligned
+    window = _FakeWindowGeometry(screen.x, screen.y, screen.width, screen.height)
+    assert floating.on_screen(window, screen)
 
 
 @floating_config
