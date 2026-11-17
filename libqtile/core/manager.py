@@ -845,6 +845,8 @@ class Qtile(CommandObject):
             del self.windows_map[wid]
             if isinstance(c, base.Window):
                 self.core.idle_inhibitor_manager.remove_window_inhibitor(c)
+            if self.hovered_window is c:
+                self.hovered_window = None
 
     def find_screen(self, x: int, y: int) -> Screen | None:
         """Find a screen based on the x and y offset"""

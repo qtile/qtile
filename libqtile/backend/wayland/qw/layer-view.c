@@ -50,7 +50,7 @@ static void qw_layer_view_handle_unmap(struct wl_listener *listener, void *data)
         }
 
         // View under the cursor may have changed
-        qw_cursor_update_pointer_focus(layer_view->server->cursor);
+        qw_cursor_update_pointer_focus(layer_view->server->cursor, false);
     }
 }
 
@@ -139,7 +139,7 @@ static void qw_layer_popup_handle_destroy(struct wl_listener *listener, void *da
     wl_list_remove(&popup->new_popup.link);
     wl_list_remove(&popup->destroy.link);
     wl_list_remove(&popup->surface_commit.link);
-    qw_cursor_update_pointer_focus(popup->toplevel->server->cursor);
+    qw_cursor_update_pointer_focus(popup->toplevel->server->cursor, false);
     free(popup);
 }
 
