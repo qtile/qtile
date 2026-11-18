@@ -450,7 +450,7 @@ For example, the Mpris2 widget uses the following code:
                         dbus_interface="org.freedesktop.DBus.Properties")
 
 ``dbus-fast`` can also be used to query properties, call methods etc. on dbus
-interfaces. Refer to the `dbus-fast documentation <https://python-dbus-fast.readthedocs.io/en/latest/>`_
+interfaces. Refer to the `dbus-fast documentation <https://dbus-fast.readthedocs.io/en/latest/>`_
 for more information on how to use the module.
 
 .. _mouse-events:
