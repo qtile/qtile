@@ -105,12 +105,19 @@
           common-system-deps
           (builtins.attrValues scripts)
         ];
+
+        checks = {
+          nixosTestSession = pkgs.nixosTests.qtile.extendNixOS {
+            module.services.xserver.windowManager.qtile.package =
+              self.packages.${pkgs.stdenv.hostPlatform.system}.qtile;
+          };
+        };
       });
     in
     {
       formatter = forAllSystems (pkgs: pkgs.nixfmt-tree);
 
-      checks = forAllSystems (pkgs: pkgs.python3Packages.qtile.passthru.tests);
+      checks = forAllSystems (pkgs: flake-attributes.${pkgs.stdenv.hostPlatform.system}.checks);
 
       packages = forAllSystems (pkgs: {
         default = self.packages.${pkgs.stdenv.hostPlatform.system}.qtile;
