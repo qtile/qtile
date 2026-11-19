@@ -25,7 +25,7 @@ let
   qtile-override-func =
     qtile-prev:
     {
-      name = "${qtile-prev.pname}-${qtile-prev.version}";
+      name = "${qtile-prev.pname}-${local-version}";
 
       version = local-version;
 
