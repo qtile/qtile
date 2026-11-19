@@ -9,7 +9,7 @@ import xcffib.xproto
 from xcffib.wrappers import GContextID, PixmapID
 from xcffib.xproto import EventMask, SetMode
 
-from libqtile import bar, hook, utils
+from libqtile import hook, utils
 from libqtile.backend import base
 from libqtile.backend.base import FloatStates
 from libqtile.backend.x11 import xcbq
@@ -1006,16 +1006,18 @@ class _Window:
         if self.wid not in stack or len(stack) < 2:
             return
 
-        # Get all windows for the group and add Static windows to ensure these are included
-        # in the stacking
+        # Get all windows for the group and add Static windows and the screen's bars to
+        # ensure these are included in the stacking
         group_windows = group.windows.copy()
         statics = [win for win in self.qtile.windows_map.values() if isinstance(win, Static)]
         group_windows.extend(statics)
 
         if group.screen is not None:
-            group_bars = [gap for gap in group.screen.gaps if isinstance(gap, bar.Bar)]
-        else:
-            group_bars = []
+            group_windows.extend(
+                gap.window
+                for gap in group.screen.gaps
+                if getattr(gap, "window", None) is not None
+            )
 
         # Get list of windows that are in the stack and managed by qtile
         # List of tuples (XWindow object, transient_for, layering_information)
@@ -1142,19 +1144,6 @@ class _Window:
         # window
         if sibling == self.wid:
             index = stack.index(self.wid)
-
-            # We need to make sure the bars are included so add them now
-            if group_bars:
-                for group_bar in group_bars:
-                    bar_layer = group_bar.window.get_layering_information()
-                    if bar_layer > layering:
-                        lower.append(group_bar.window.wid)
-                    elif bar_layer < layering:
-                        higher.append(group_bar.window.wid)
-
-                # Sort the list to match the server's stacking order
-                lower.sort(key=lambda wid: stack.index(wid))
-                higher.sort(key=lambda wid: stack.index(wid))
 
             for wid in [w for w in lower if stack.index(w) > index]:
                 self.qtile.windows_map[wid].window.configure(

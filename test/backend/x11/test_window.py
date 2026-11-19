@@ -18,6 +18,7 @@ from test.helpers import (
     SECOND_WIDTH,
     WIDTH,
     BareConfig,
+    Retry,
     assert_window_died,
     window_by_name,
 )
@@ -145,6 +146,42 @@ def test_urgent_hook_fire(xmanager_nospawn):
     xmanager_nospawn.terminate()
 
     assert xmanager_nospawn.hook_fired.value == 3
+
+
+@manager_config
+def test_fullscreen_above_bar(xmanager):
+    """Test a focused fullscreen window is raised above a bar that is above it."""
+
+    xmanager.test_window("one")
+    xmanager.test_window("two", floating=True)
+    window_by_name(xmanager.c, "two").enable_fullscreen()
+
+    # Simulate the bar being created after the windows (e.g. qtile restarted), which
+    # leaves it at the top of the stack.
+    xmanager.c.eval("self.screens[0].bottom.window.window.configure(stackmode=0)")
+    bar_wid = xmanager.c.bar["bottom"].info()["window"]
+    wid = window_by_name(xmanager.c, "two").info()["id"]
+
+    # Focusing away drops "two" out of the fullscreen layer, focusing it again
+    # should put it back on top, above the bar.
+    @Retry(ignore_exceptions=(AssertionError,))
+    def assert_active(name):
+        active = xmanager.c.eval(
+            "self.core._root.get_property('_NET_ACTIVE_WINDOW', 'WINDOW', unpack=int)[0]"
+        )
+        assert int(active) == window_by_name(xmanager.c, name).info()["id"]
+
+    window_by_name(xmanager.c, "one").focus()
+    assert_active("one")
+    window_by_name(xmanager.c, "two").focus()
+    assert_active("two")
+
+    @Retry(ignore_exceptions=(AssertionError,))
+    def assert_above_bar():
+        stack = xmanager.backend.get_all_windows()
+        assert stack.index(wid) > stack.index(bar_wid)
+
+    assert_above_bar()
 
 
 @manager_config
