@@ -12,7 +12,8 @@ from libqtile.command.base import CommandError, CommandException, CommandObject,
 from libqtile.command.client import CommandClient
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.confreader import Config
-from libqtile.ipc import Client, IPCError
+from libqtile.ipc import IPCError
+from libqtile.ipc.client import Client
 from libqtile.lazy import lazy
 from test.conftest import dualmonitor
 from test.helpers import Retry

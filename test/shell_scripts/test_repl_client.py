@@ -1,22 +1,6 @@
 import pytest
 
-from libqtile.scripts.repl import TERMINATOR, is_code_complete, read_full_response
-
-
-class MockSocket:
-    def recv(self, *args, **kwargs):
-        return (f"Qtile test\nREPL client\n{TERMINATOR}\n").encode()
-
-
-def test_read_full_response_basic():
-    # Create a mock socket with recv method
-    sock = MockSocket()
-
-    response = read_full_response(sock)
-    assert "Qtile test" in response
-    assert "REPL client" in response
-    # The terminator should be stripped off
-    assert TERMINATOR not in response
+from libqtile.scripts.repl import is_code_complete
 
 
 @pytest.mark.parametrize(
