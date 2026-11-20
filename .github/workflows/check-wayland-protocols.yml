@@ -1,0 +1,47 @@
+name: wayland-protocols
+
+# Fails if docs/manual/wayland_protocols.rst doesn't match what the compositor
+# actually advertises. To fix: run `make wayland-protocols` and commit the page.
+
+on:
+    push:
+        paths:
+            - 'libqtile/backend/wayland/**'
+            - 'scripts/gen-wayland-protocols'
+            - 'docs/manual/wayland_protocols.rst'
+            - 'Dockerfile'  # a wlroots bump can change advertised versions
+            - 'Makefile'
+            - '.github/workflows/wayland-protocols.yml'
+    pull_request:
+        paths:
+            - 'libqtile/backend/wayland/**'
+            - 'scripts/gen-wayland-protocols'
+            - 'docs/manual/wayland_protocols.rst'
+            - 'Dockerfile'
+            - 'Makefile'
+            - '.github/workflows/wayland-protocols.yml'
+
+jobs:
+    check:
+        runs-on: ubuntu-24.04
+        name: Wayland protocols docs are up to date
+        steps:
+            - uses: actions/checkout@v6
+            - name: Build Docker image
+              run: |
+                docker build -t qtile-ci .
+            - name: Add wlprobe to image
+              run: |
+                docker build -t qtile-ci - <<'EOF'
+                FROM qtile-ci
+                RUN dnf install -y cargo \
+                    && cargo install wlprobe --version 0.1.0 --locked --root /usr/local \
+                    && rm -rf /root/.cargo \
+                    && dnf clean all
+                EOF
+            - name: Check docs/manual/wayland_protocols.rst
+              run: |
+                make ci-check-wayland-protocols
+              env:
+                QTILE_CI_PYTHON: '3.14'
+                GITHUB_ACTIONS: true

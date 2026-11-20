@@ -79,6 +79,35 @@ Check the result by opening ``docs/_build/html/index.html`` in your browser.
    The screenshots can take a while to build, so you can export
    ``QTILE_NO_BUILD_SCREENSHOTS`` to disable building them.
 
+.. _updating_wayland_protocols:
+
+Updating supported Wayland protocols
+====================================
+
+The :ref:`list of supported Wayland protocols <wayland_protocols>` is generated
+from the compositor itself, so it needs regenerating whenever the set of
+protocols changes. If you add or remove a protocol, or change the version that
+a protocol is created with, in ``libqtile/backend/wayland/qw/``, run:
+
+.. code-block:: bash
+
+   cargo install wlprobe   # only needed once
+   make wayland-protocols
+
+and commit the updated ``docs/manual/wayland_protocols.rst`` together with your
+change. The same applies when a wlroots update makes the compositor advertise a
+newer version of a protocol.
+
+``make wayland-protocols`` builds the Wayland backend, starts a headless qtile
+session, reads the globals it advertises with `wlprobe
+<https://github.com/PolyMeilex/wlprobe>`_ and writes the page. Do not edit the
+page by hand.
+
+If the script exits with an error saying that interfaces are missing from
+``INTERFACE_TO_PROTOCOL``, the compositor advertises a protocol the script does
+not know the name of yet. Add the interface to that table in
+``scripts/gen-wayland-protocols`` and run the command again.
+
 Development and testing
 =======================
 
