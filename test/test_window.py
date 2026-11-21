@@ -9,6 +9,7 @@ from test.helpers import (
     SECOND_HEIGHT,
     SECOND_WIDTH,
     WIDTH,
+    assert_window_died,
     window_by_name,
 )
 from test.layouts.layout_utils import assert_focused, assert_unfocused
@@ -847,3 +848,195 @@ def test_window_click_to_focus(manager, win_type):
     manager.backend.fake_button_release(1)
 
     assert manager.c.screen.info()["index"] == 0
+
+
+class HoveredWindowConfig(DragToMoveConfig):
+    follow_mouse_focus = "click_or_drag_only"
+
+
+@pytest.mark.parametrize("manager", [HoveredWindowConfig], indirect=True)
+def test_clear_hovered_window_after_destroy(manager):
+    """
+    Clicking or dragging on an empty screen immediately after a window has been
+    destroyed should clear hovered_window
+    """
+
+    manager.test_window("one")
+    one_id = manager.c.window.info()["id"]
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.backend.fake_motion(55, 55)
+    print(one_id, manager.c.eval("self.hovered_window.wid"))
+    assert manager.c.eval("self.hovered_window") != "None"
+
+    win_info = manager.c.window.info()
+    manager.c.window.kill()
+    assert_window_died(manager.c, win_info)
+
+    # Hovered window should be cleared when window is killed
+    assert manager.c.eval("self.hovered_window") == "None"
+
+
+@pytest.mark.parametrize("manager", [HoveredWindowConfig], indirect=True)
+def test_hovered_window_underneath_after_destroy(manager):
+    """
+    With one window on top of above another, when the top window is killed,
+    hovered_window should be updated to the underlying window
+    """
+
+    manager.test_window("one")
+    one_id = manager.c.window.info()["id"]
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.test_window("two")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(50, 50)
+
+    manager.backend.fake_motion(55, 55)
+    assert manager.c.eval("self.hovered_window") != "None"
+
+    win_info = manager.c.window.info()
+    manager.c.window.kill()
+    assert_window_died(manager.c, win_info)
+
+    # Hovered window should be cleared when window is killed
+    assert manager.c.eval(f"self.hovered_window.wid == {one_id}")
+
+
+class HoveredDragStackingConfig(HoveredWindowConfig):
+    floats_kept_above = False
+
+
+def _zorder(manager):
+    """Client names in ascending z-order."""
+    stack = manager.backend.get_all_windows()
+    wins = [(w["name"], stack.index(w["id"])) for w in manager.c.windows()]
+    wins.sort(key=lambda x: x[1])
+    return [name for name, _ in wins]
+
+
+@pytest.mark.parametrize("manager", [HoveredDragStackingConfig], indirect=True)
+def test_drag_moves_window_under_pointer_not_float_behind_it(manager):
+    """
+    A floating window sits behind a tiled window. Raising the tiled window
+    over the (stationary) pointer must mean a mod-drag moves the tiled
+    window, not the float underneath it.
+    """
+    # Create the tiled window first, then the window we'll float.
+    manager.test_window("two")
+    manager.test_window("one")
+
+    one = window_by_name(manager.c, "one")
+    two = window_by_name(manager.c, "two")
+
+    # "one" becomes a float over the top-left, but "two" stays tiled. With
+    # floats_kept_above=False both live in the layout layer, so this is legal.
+    one.set_position_floating(50, 50)
+    one.set_size_floating(200, 150)
+
+    # Pointer is over both windows; "one" is currently topmost.
+    manager.backend.fake_motion(55, 55)
+    assert manager.c.eval("self.hovered_window.name") == "one"
+
+    # Raise the tiled window over the pointer without moving the pointer.
+    two.move_to_top()
+    assert _zorder(manager) == ["one", "two"]  # float now behind the tile
+
+    # A layout pass while the pointer is stationary is enough to make the
+    # pointer's current view the tiled window; hovered_window must follow it.
+    manager.c.eval("self.current_group.layout_all()")
+
+    two_pos = (two.info()["x"], two.info()["y"])
+
+    # Mod-drag at the pointer.
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_motion(155, 155)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+
+    # The float behind the pointer must not have moved...
+    assert (one.info()["x"], one.info()["y"]) == (50, 50)
+
+    # ...the tiled window under the pointer must have been floated and moved.
+    assert two.info()["floating"] is True
+    assert (two.info()["x"], two.info()["y"]) == (two_pos[0] + 100, two_pos[1] + 100)
+
+
+@pytest.mark.parametrize("manager", [HoveredDragStackingConfig], indirect=True)
+def test_drag_after_masked_layout_targets_pointer_window(manager):
+    """
+    A window appearing under a stationary pointer runs layout_all() inside
+    core.masked(). The following pointer motion (still inside the new window)
+    must leave hovered_window pointing at the window under the pointer.
+    """
+    manager.test_window("two")
+    manager.test_window("one")
+
+    one = window_by_name(manager.c, "one")
+    one.set_position_floating(50, 50)
+    one.set_size_floating(200, 150)
+
+    manager.backend.fake_motion(55, 55)
+    assert manager.c.eval("self.hovered_window.name") == "one"
+
+    # New tiled window appears underneath the stationary pointer; managing it
+    # runs group.layout_all() inside core.masked().
+    manager.test_window("three")
+
+    # Move slightly, but stay inside "three" so there is no window crossing.
+    manager.backend.fake_motion(56, 56)
+
+    # This is where the masked() desync shows up: hovered_window stays "one".
+    assert manager.c.eval("self.hovered_window.name") == "three"
+
+    three = window_by_name(manager.c, "three")
+    three_pos = (three.info()["x"], three.info()["y"])
+
+    manager.backend.hold_modifier("super")
+    manager.backend.fake_button_press(3)
+    manager.backend.fake_motion(156, 156)
+    manager.backend.fake_button_release(3)
+    manager.backend.release_modifier("super")
+
+    # The float must not have moved; the window under the pointer must have.
+    assert (one.info()["x"], one.info()["y"]) == (50, 50)
+    assert three.info()["floating"] is True
+    assert (three.info()["x"], three.info()["y"]) == (three_pos[0] + 100, three_pos[1] + 100)
+
+
+@pytest.mark.parametrize("manager", [FollowMouseFocus], indirect=True)
+def test_follow_mouse_focus_to_window_below_after_close(manager):
+    """
+    Closing the window under the pointer with follow_mouse_focus=True must
+    focus the window that becomes visible underneath, not the layout's
+    fallback focus (here: "elsewhere").
+    """
+    # Three floating windows. "elsewhere" is the layout's next-focus after
+    # "above", but it is not under the pointer.
+    manager.test_window("below")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(100, 100)
+
+    manager.test_window("above")
+    manager.c.window.set_position_floating(50, 50)
+    manager.c.window.set_size_floating(100, 100)
+
+    manager.test_window("elsewhere")
+    manager.c.window.set_position_floating(300, 300)
+    manager.c.window.set_size_floating(100, 100)
+
+    # follow_mouse_focus=True focuses the top window under the pointer.
+    manager.backend.fake_motion(55, 55)
+    assert manager.c.window.info()["name"] == "above"
+    assert manager.c.eval("self.hovered_window.name") == "above"
+
+    above_info = manager.c.window.info()
+    manager.c.window.kill()
+    assert_window_died(manager.c, above_info)
+
+    # The window now under the pointer must take focus, not "elsewhere".
+    assert manager.c.window.info()["name"] == "below"
+    assert manager.c.eval("self.hovered_window.name") == "below"

@@ -98,7 +98,7 @@ static void qw_internal_view_place(void *self, int x, int y, int width, int heig
     }
 
     // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(view->base.server->cursor);
+    qw_cursor_update_pointer_focus(view->base.server->cursor, false);
 }
 
 // TODO: Focus logic for internal views (empty for now)
@@ -125,7 +125,7 @@ static void qw_internal_view_kill(void *self) {
     view->image_surface = NULL;
     wlr_buffer_drop(view->buffer);
     wlr_scene_node_destroy(&view->base.content_tree->node);
-    qw_cursor_update_pointer_focus(view->base.server->cursor);
+    qw_cursor_update_pointer_focus(view->base.server->cursor, false);
     free(view);
 }
 

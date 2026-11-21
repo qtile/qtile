@@ -827,10 +827,20 @@ class Window(Base, base.Window):
         h: int | None = None,
         new_float_state: FloatStates = FloatStates.FLOATING,
     ) -> None:
-        if self._float_state != new_float_state:
-            old_state = self._float_state
+        old_state = self._float_state
+        state_changed = old_state != new_float_state
+
+        if state_changed:
             self._float_state = new_float_state
             self.reparent(self.get_new_layer(new_float_state))
+
+        # Apply geometry before the masked layout
+        if new_float_state != FloatStates.MINIMIZED:
+            self.place(
+                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
+            )
+
+        if state_changed:
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
             self._update_fullscreen(new_float_state == FloatStates.FULLSCREEN, old_state)
@@ -838,12 +848,9 @@ class Window(Base, base.Window):
             self._update_minimized(new_float_state == FloatStates.MINIMIZED, old_state)
 
             hook.fire("float_change")
+
         if new_float_state == FloatStates.MINIMIZED:
             self.hide()
-        else:
-            self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
-            )
 
     def _tweak_float(
         self,

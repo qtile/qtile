@@ -694,9 +694,16 @@ class Core(base.Core):
     def masked(self) -> Generator:
         lib.qw_cursor_mask_pointer_events(self.qw_cursor, True)
         yield
+        lib.qw_cursor_update_pointer_focus(self.qw_cursor, False)
         lib.qw_cursor_mask_pointer_events(self.qw_cursor, False)
         # Update pointer focus without cursor motion
-        lib.qw_cursor_update_pointer_focus(self.qw_cursor)
+        # lib.qw_cursor_update_pointer_focus(self.qw_cursor)
+
+        # The crossing was swallowed, so refresh hover from the view that is
+        # now under the pointer. Mirrors X11's QueryPointer refresh in masked().
+        view = self.qw_cursor.view
+        if view != ffi.NULL:
+            self.qtile.hovered_window = self.qtile.windows_map.get(view.wid)
 
     @property
     def name(self) -> str:
