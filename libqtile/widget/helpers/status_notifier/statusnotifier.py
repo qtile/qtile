@@ -190,7 +190,8 @@ class StatusNotifierItem:  # noqa: E303
 
         # If there's no XDG icon, try to use icon provided by application
         if self.icon:
-            self.item.on_new_icon(self._update_local_icon)
+            if hasattr(self.item, "on_new_icon"):
+                self.item.on_new_icon(self._update_local_icon)
         else:
             # Get initial application icons:
             for icon in ["Icon", "Attention", "Overlay"]:
@@ -198,9 +199,14 @@ class StatusNotifierItem:  # noqa: E303
 
             if self.has_icons:
                 # Attach listeners for when the icon is updated
-                self.item.on_new_icon(self._new_icon)
-                self.item.on_new_attention_icon(self._new_attention_icon)
-                self.item.on_new_overlay_icon(self._new_overlay_icon)
+                # Some items omit these optional signals, in which case
+                # dbus-fast does not create the corresponding proxy methods.
+                if hasattr(self.item, "on_new_icon"):
+                    self.item.on_new_icon(self._new_icon)
+                if hasattr(self.item, "on_new_attention_icon"):
+                    self.item.on_new_attention_icon(self._new_attention_icon)
+                if hasattr(self.item, "on_new_overlay_icon"):
+                    self.item.on_new_overlay_icon(self._new_overlay_icon)
 
         if not self.has_icons:
             logger.warning(
@@ -210,7 +216,8 @@ class StatusNotifierItem:  # noqa: E303
             # The "local" icon may be updated at a later time, so "_update_local_icon"
             # gets registered for "on_new_icon" with the option to fall back to
             # a default icon.
-            self.item.on_new_icon(self._update_local_icon)
+            if hasattr(self.item, "on_new_icon"):
+                self.item.on_new_icon(self._update_local_icon)
             await self._get_local_icon()
 
         return True
