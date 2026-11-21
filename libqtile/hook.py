@@ -11,6 +11,32 @@ HookHandler = Callable[[Callable], Callable]
 
 subscriptions = {}  # type: dict
 
+observers: list[Callable] = []
+
+
+def add_observer(observer: Callable) -> None:
+    """
+    Observers subscribed to qtile's event feed run before the event's subscribers.
+    They must be quick and synchronous, and any exception they raise is logged and swallowed.
+
+    Observers should be called with ``observer(event, *args, **kwargs)``
+    for every event fired on this registry.
+
+    libqtile.events.EventServer is, by default, the only observer but this approach allows
+    users to create their own observers to handle the event feed.
+
+    Note: the list of observers is not cleared whent he config is reloaded (the EventServer observer
+    is connected when qtile's event loop starts) so users must ensure stale observers are cleaned up
+    as appropriate.
+    """
+    if observer not in observers:
+        observers.append(observer)
+
+
+def remove_observer(observer: Callable) -> None:
+    with contextlib.suppress(ValueError):
+        observers.remove(observer)
+
 
 def clear():
     subscriptions.clear()
@@ -150,6 +176,13 @@ class Registry:
         # Do not fire for Internal windows
         if any(isinstance(arg, backend.base.window.Internal) for arg in args):
             return
+
+        for observer in observers:
+            try:
+                observer(event, *args, **kwargs)
+            except Exception:
+                logger.exception("Error in hook observer for %s", event)
+
         # We should check if the registry name is in the subscriptions dict
         # A name can disappear if the config is reloaded (which clears subscriptions)
         # but there are no hook subscriptions. This is not an issue for qtile core but
