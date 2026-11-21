@@ -45,6 +45,7 @@ let
       disabledTests = qtile-prev.disabledTests ++ [
         # dbus-launch fails in the build sandbox (no /var/lib/dbus/machine-id)
         "test_statusnotifier_item_without_introspection"
+        "test_statusnotifier_item_without_signal_handlers"
       ];
 
       postInstall = ''

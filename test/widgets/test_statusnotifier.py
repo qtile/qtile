@@ -210,3 +210,43 @@ def test_statusnotifier_item_without_introspection():
             app_bus.disconnect()
 
     asyncio.run(run())
+
+
+class NoNewIconItem(ServiceInterface):
+    """StatusNotifierItem that omits the optional NewIcon signals."""
+
+    def __init__(self):
+        super().__init__("org.kde.StatusNotifierItem")
+
+    @dbus_property(access=PropertyAccess.READ)
+    def IconName(self) -> "s":  # type: ignore  # noqa: F722, F821, N802
+        return "qtile-test-icon-that-does-not-exist"
+
+    @dbus_property(access=PropertyAccess.READ)
+    def IconPixmap(self) -> "a(iiay)":  # type: ignore  # noqa: F722, F821, N802
+        return [[1, 1, bytes(4)]]
+
+
+@pytest.mark.usefixtures("dbus")
+def test_statusnotifier_item_without_signal_handlers():
+    """
+    Items that don't advertise the optional NewIcon signals should still start.
+
+    Some implementations omit them, and dbus-fast only creates the ``on_<signal>``
+    proxy attributes for signals present in the introspection data.
+    """
+
+    async def run():
+        path = "/StatusNotifierItem"
+        app_bus = await MessageBus().connect()
+        app_bus.export(path, NoNewIconItem())
+        host_bus = await MessageBus().connect()
+        item = StatusNotifierItem(host_bus, app_bus.unique_name, path)
+        try:
+            assert await item.start()
+            assert item._pixmaps.get("Icon")
+        finally:
+            host_bus.disconnect()
+            app_bus.disconnect()
+
+    asyncio.run(run())
