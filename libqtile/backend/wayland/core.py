@@ -804,7 +804,7 @@ class Core(base.Core):
     def unhide_cursor(self) -> None:
         """Unhide the cursor."""
         lib.qw_cursor_show(self.qw_cursor)
-        
+
     @expose_command
     def set_cursor_shape(self, shape: str) -> None:
         """Set a somewhat persistent cursor shape override."""
@@ -817,7 +817,7 @@ class Core(base.Core):
     @expose_command
     def reset_cursor_shape(self) -> None:
         """Reset the cursor shape override."""
-        lib.qw_cursor_reset_shape(self.qw_cursor)        
+        lib.qw_cursor_reset_shape(self.qw_cursor)
 
     @expose_command()
     def get_inputs(self) -> dict[str, list[dict[str, str]]]:
