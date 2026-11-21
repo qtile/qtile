@@ -94,6 +94,9 @@ class Core(CommandObject, metaclass=ABCMeta):
     def warp_pointer(self, x: int, y: int) -> None:
         """Warp the pointer to the given coordinates relative."""
 
+    def clear_focus(self) -> None:
+        """Clear keyboard focus when the active group has no window."""
+
     @contextlib.contextmanager
     def masked(self):
         """A context manager to suppress window events while operating on many windows."""
