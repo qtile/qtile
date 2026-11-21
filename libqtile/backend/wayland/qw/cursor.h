@@ -21,6 +21,7 @@ struct qw_cursor {
     struct qw_implicit_grab implicit_grab;
     struct wlr_cursor_shape_manager_v1 *cursor_shape_mgr;
     const char *current_shape_name;
+    const char *temp_cursor_shape_override_name;
 
     // private data
     struct qw_server *server;
@@ -74,6 +75,10 @@ void qw_cursor_update_pointer_focus(struct qw_cursor *cursor);
 // Functions for hiding and showing the cursor
 void qw_cursor_hide(struct qw_cursor *cursor);
 void qw_cursor_show(struct qw_cursor *cursor);
+
+// cursor shape override & reset coming from py
+void qw_cursor_set_shape(struct qw_cursor *cursor, const char *name);
+void qw_cursor_reset_shape(struct qw_cursor *cursor);
 
 void qw_cursor_release_implicit_grab(struct qw_cursor *cursor, uint32_t time);
 

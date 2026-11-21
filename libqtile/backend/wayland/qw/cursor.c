@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/util/region.h>
+#include <string.h>
 
 #include "cursor.h"
 #include "output.h"
@@ -8,6 +9,26 @@
 #include "util.h"
 #include "view.h"
 #include "wayland-util.h"
+
+
+
+void qw_cursor_set_shape(struct qw_cursor *cursor, const char *name) {
+    free((void *)cursor->temp_cursor_shape_override_name);
+    cursor->temp_cursor_shape_override_name = strdup(name);
+
+    wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+}
+
+void qw_cursor_reset_shape(struct qw_cursor *cursor) {
+    free((void *)cursor->temp_cursor_shape_override_name);
+    cursor->temp_cursor_shape_override_name = NULL;
+
+    wlr_cursor_set_xcursor(
+        cursor->cursor,
+        cursor->mgr,
+        cursor->current_shape_name ? cursor->current_shape_name : "default"
+    );
+}
 
 void qw_cursor_destroy(struct qw_cursor *cursor) {
     wl_list_remove(&cursor->request_set.link);
@@ -252,6 +273,10 @@ static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void
     cursor->saved_surface = event->surface;
     cursor->saved_hotspot_x = event->hotspot_x;
     cursor->saved_hotspot_y = event->hotspot_y;
+    
+    if (cursor->temp_cursor_shape_override_name) {
+        return;
+    }
 
     if (cursor->hidden) {
         // Skip applying the cursor while hidden
@@ -798,7 +823,9 @@ static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, voi
     const char *name = wlr_cursor_shape_v1_name(event->shape);
     cursor->current_shape_name = name;
 
-    wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+    if (!cursor->temp_cursor_shape_override_name) {
+        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+    }
 }
 
 void qw_cursor_drag_polling_rate(struct qw_cursor *cursor, int32_t rate) {
