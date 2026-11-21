@@ -183,7 +183,7 @@ def start_repl(_args):
             while True:
                 try:
                     session.prompt(">>> ")
-                except KeyboardInterrupt:
+                except (KeyboardInterrupt, EOFError):
                     print("\nExiting.")
                     break
 
