@@ -63,8 +63,9 @@ static void cmd_move(struct test_state *state, const char *arg) {
         test_error("extent must be set before move.");
         return;
     }
-    zwlr_virtual_pointer_v1_motion_absolute(state->vpointer, now_ms(), x, y, state->extent_w,
-                                            state->extent_h);
+    // Add half pixel shift to avoid issues with rounding errors
+    zwlr_virtual_pointer_v1_motion_absolute(state->vpointer, now_ms(), 2 * x + 1, 2 * y + 1,
+                                            2 * state->extent_w, 2 * state->extent_h);
     zwlr_virtual_pointer_v1_frame(state->vpointer);
     do_roundtrip(&state->base);
     test_ok();
