@@ -96,6 +96,13 @@ class WaylandBackend(Backend):
         self.env["WAYLAND_DISPLAY"] = manager.c.eval("self.core.display_name")
         # Optionally for XWayland tests get the DISPLAY variable
         self.env["DISPLAY"] = manager.c.eval('os.environ.get("DISPLAY", "")')
+        # Pointer starts at the centre of the first screen, like x11
+        manager.c.eval(
+            "self.core.warp_pointer("
+            "self.screens[0].x + self.screens[0].width // 2, "
+            "self.screens[0].y + self.screens[0].height // 2, "
+            "motion=False)"
+        )
 
     def fake_motion(self, x, y):
         """Move pointer to the specified coordinates"""
