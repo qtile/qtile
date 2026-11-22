@@ -41,6 +41,7 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
         // Reset cursor if we're not over a surface and we're not dragging
         if (seat->drag == NULL) {
             wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+            cursor->current_shape_name = NULL;
         }
     } else {
         // no-op if surface is already focused
