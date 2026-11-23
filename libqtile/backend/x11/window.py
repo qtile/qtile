@@ -1858,36 +1858,34 @@ class Window(_Window, base.Window):
         hook.fire("client_managed", s)
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0, w=None, h=None, dw=0, dh=0):
-        if x is not None:
-            self.x = x
-        self.x += dx
+        if x is None:
+            x = self.x
+        x += dx
 
-        if y is not None:
-            self.y = y
-        self.y += dy
+        if y is None:
+            y = self.y
+        y += dy
 
-        if w is not None:
-            self.width = w
-        self.width += dw
+        if w is None:
+            w = self.width
+        w += dw
 
-        if h is not None:
-            self.height = h
-        self.height += dh
+        if h is None:
+            h = self.height
+        h += dh
 
-        if self.height < 0:
-            self.height = 0
-        if self.width < 0:
-            self.width = 0
+        if h < 0:
+            h = 0
+        if w < 0:
+            w = 0
 
-        screen = self.qtile.find_closest_screen(
-            self.x + self.width // 2, self.y + self.height // 2
-        )
+        screen = self.qtile.find_closest_screen(x + w // 2, y + h // 2)
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
             screen.group.add(self, force=True)
             self.qtile.focus_screen(screen.index)
 
-        self._reconfigure_floating()
+        self._reconfigure_floating(x=x, y=y, w=w, h=h)
 
     @expose_command()
     def get_size(self):
