@@ -806,6 +806,16 @@ class Core(base.Core):
         lib.qw_cursor_show(self.qw_cursor)
 
     @expose_command()
+    def set_cursor_shape(self, shape: str) -> None:
+        """Set the cursor shape very persistently, or reset to whatever the client wants, what we keep track of & save"""
+        """Error handling is not needed, because WLR will just reset the cursor to default if an invalid cursor shape name is called"""
+        if shape == "reset_cursor":
+            lib.qw_cursor_set_shape(self.qw_cursor, ffi.NULL)
+        else:
+            shape_buf = ffi.new("char[]", shape.encode("utf-8"))
+            lib.qw_cursor_set_shape(self.qw_cursor, shape_buf)
+
+    @expose_command()
     def get_inputs(self) -> dict[str, list[dict[str, str]]]:
         """Get information on all input devices."""
         info: defaultdict[str, list[dict]] = defaultdict(list)
