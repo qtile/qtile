@@ -232,6 +232,10 @@ class XBackend(Backend):
         self.core = Core
         self.manager = None
 
+    def configure(self, manager):
+        super().configure(manager)
+        self.fake_motion(WIDTH // 2, HEIGHT // 2)
+
     @contextlib.contextmanager
     def _xtest(self):
         conn = Connection(self.env["DISPLAY"])
