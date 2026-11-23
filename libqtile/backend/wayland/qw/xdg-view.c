@@ -176,7 +176,11 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         qw_xdg_view_clip(xdg_view);
 
         // View under the cursor may have changed
-        qw_cursor_update_pointer_focus(xdg_view->base.server->cursor, false);
+        // TODO: should client initiated changes not be masked?
+        struct qw_cursor *cursor = xdg_view->base.server->cursor;
+        qw_cursor_mask_pointer_events(cursor, true);
+        qw_cursor_update_pointer_focus(cursor, false);
+        qw_cursor_mask_pointer_events(cursor, false);
     }
     // Every time a commit happens, opacity is reset
     // Together, we can stop this
