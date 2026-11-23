@@ -134,7 +134,8 @@ class _Group(CommandObject):
                     self.floating_layout.layout(floating, screen_rect)
                 if focus:
                     if self.current_window and self.screen == self.qtile.current_screen:
-                        self.current_window.focus(warp)
+                        if not self.current_window.minimized:
+                            self.current_window.focus(warp)
                     else:
                         # Screen has lost focus so we reset record of focused window so
                         # focus will warp when screen is focused again
