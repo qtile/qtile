@@ -95,7 +95,7 @@ static void qw_xdg_view_hide(void *self) {
     }
 
     // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
+    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor, false);
 }
 
 // Handle the unmap event for the xdg_view (when it's hidden/unmapped)
@@ -104,9 +104,9 @@ static void qw_xdg_view_handle_unmap(struct wl_listener *listener, void *data) {
 
     struct qw_xdg_view *xdg_view = wl_container_of(listener, xdg_view, unmap);
     qw_view_cleanup_borders((struct qw_view *)xdg_view);
+    qw_xdg_view_hide(xdg_view);
     xdg_view->base.server->unmanage_view_cb((struct qw_view *)&xdg_view->base,
                                             xdg_view->base.server->cb_data);
-    qw_xdg_view_hide(xdg_view);
 
     wl_list_remove(&xdg_view->request_maximize.link);
     wl_list_remove(&xdg_view->request_fullscreen.link);
@@ -176,7 +176,7 @@ static void qw_xdg_view_handle_commit(struct wl_listener *listener, void *data) 
         qw_xdg_view_clip(xdg_view);
 
         // View under the cursor may have changed
-        qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
+        qw_cursor_update_pointer_focus(xdg_view->base.server->cursor, false);
     }
     // Every time a commit happens, opacity is reset
     // Together, we can stop this
@@ -264,7 +264,7 @@ static void qw_xdg_view_place(void *self, int x, int y, int width, int height,
     }
 
     // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor);
+    qw_cursor_update_pointer_focus(xdg_view->base.server->cursor, false);
 }
 
 // Send close event to the xdg_toplevel surface (kill the view)
@@ -389,7 +389,7 @@ static void qw_xdg_popup_handle_destroy(struct wl_listener *listener, void *data
     wl_list_remove(&popup->surface_commit.link);
     wl_list_remove(&popup->reposition.link);
     wlr_scene_node_destroy(&popup->scene_tree->node);
-    qw_cursor_update_pointer_focus(popup->base.server->cursor);
+    qw_cursor_update_pointer_focus(popup->base.server->cursor, false);
     free(popup);
 }
 
