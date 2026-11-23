@@ -830,6 +830,12 @@ class Window(Base, base.Window):
         h: int | None = None,
         new_float_state: FloatStates = FloatStates.FLOATING,
     ) -> None:
+        if new_float_state == FloatStates.MINIMIZED:
+            self.hide()
+        else:
+            self.place(
+                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
+            )
         if self._float_state != new_float_state:
             old_state = self._float_state
             self._float_state = new_float_state
@@ -841,12 +847,6 @@ class Window(Base, base.Window):
             self._update_minimized(new_float_state == FloatStates.MINIMIZED, old_state)
 
             hook.fire("float_change")
-        if new_float_state == FloatStates.MINIMIZED:
-            self.hide()
-        else:
-            self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
-            )
 
     def _tweak_float(
         self,
