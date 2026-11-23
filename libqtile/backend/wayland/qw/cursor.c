@@ -11,7 +11,9 @@
 #include "wayland-util.h"
 
 static void qw_cursor_apply(struct qw_cursor *cursor) {
-    if (cursor->hidden) {
+    // persistent_hide always takes precedence over client-side cursor requests
+    if (cursor->override_shape && strcmp(cursor->override_shape, "persistent_hide") == 0) {
+        wlr_cursor_set_surface(cursor->cursor, NULL, 0, 0);
         return;
     }
 
@@ -579,6 +581,10 @@ void qw_cursor_show(struct qw_cursor *cursor) {
 }
 
 void qw_cursor_set_shape(struct qw_cursor *cursor, const char *name) {
+    if (name && strcmp(name, "reset_cursor") == 0) {
+        name = NULL;
+    }
+
     char *shape = name ? strdup(name) : NULL;
 
     if (name && !shape) {
