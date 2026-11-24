@@ -44,7 +44,7 @@ import signal
 import sys
 import time
 from collections import defaultdict
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +53,7 @@ from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
-from libqtile.backend.wayland.window import Base, Internal, Window
+from libqtile.backend.wayland.window import Base, Internal, Window, resolve_animation
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import Output, Screen, ScreenRect
 from libqtile.group import _Group
@@ -255,6 +255,11 @@ def on_system_bell_cb(userdata: ffi.CData, view: ffi.CData) -> None:
     core.handle_system_bell(wid)
 
 
+def anim_complete_cb(wid, cb_data):
+    core = ffi.from_handle(cb_data)
+    core.on_animation_complete(wid)
+
+
 def get_wlr_log_level() -> int:
     if logger.level <= logging.DEBUG:
         return lib.WLR_DEBUG
@@ -313,6 +318,9 @@ class Core(base.Core):
             sys.exit(1)
         os.environ["WAYLAND_DISPLAY"] = self.display_name
         self.qw_cursor = lib.qw_server_get_cursor(self.qw)
+        self.qw.anim_complete_cb = lib.anim_complete_cb
+        self._anim_complete_callbacks: dict[int, list[tuple[int, Callable[[], None]]]] = {}
+        self._anim_generation: dict[int, int] = defaultdict(int)
 
         self.painter = Painter(self)
         self._locked = False
@@ -994,6 +1002,73 @@ class Core(base.Core):
     def handle_system_bell(self, wid: int) -> None:
         window = self.qtile.windows_map.get(wid, None)
         hook.fire("system_bell", window)
+
+    def bump_anim_generation(self, wid: int) -> None:
+        self._anim_generation[wid] += 1
+        self._anim_complete_callbacks.pop(wid, None)
+
+    def register_anim_complete(self, wid: int, callback: Callable[[], None]) -> None:
+        gen = self._anim_generation.get(wid, 0)
+        self._anim_complete_callbacks.setdefault(wid, []).append((gen, callback))
+
+    def on_animation_complete(self, wid: int) -> None:
+        gen = self._anim_generation.get(wid)
+        if gen is None:
+            return
+
+        callbacks = self._anim_complete_callbacks.pop(wid, [])
+        for cb_gen, cb in callbacks:
+            if cb_gen == gen:
+                cb()
+
+    def animate_group_switch(self, screen, old_group, new_group, warp) -> None:
+        old_index = self.qtile.groups.index(old_group)
+        new_index = self.qtile.groups.index(new_group)
+        direction = 1 if new_index > old_index else -1
+        offset = screen.width * direction
+
+        duration, ease = resolve_animation(self.qtile, "slide", None, None)
+
+        if duration == 0:
+            super().animate_group_switch(screen, old_group, new_group, warp)
+            return
+
+        sliding_out = list(old_group.windows)
+        old_group.screen = None
+
+        if sliding_out:
+            remaining = len(sliding_out)
+
+            def _on_slide_out_done():
+                nonlocal remaining
+                remaining -= 1
+                if remaining == 0:
+                    old_group.hide()
+
+            for win in sliding_out:
+                win.animate_to(
+                    win.x - offset,
+                    win.y,
+                    win.width,
+                    win.height,
+                    duration=duration,
+                    ease=ease,
+                    on_complete=_on_slide_out_done,
+                )
+        else:
+            old_group.hide()
+
+        new_group.set_screen(screen, warp)
+        for win in new_group.windows:
+            win.animate_to(
+                win.x,
+                win.y,
+                win.width,
+                win.height,
+                duration=duration,
+                ease=ease,
+            )
+            win.seed_anim_offset(offset, 0, duration, ease)
 
 
 class Painter:

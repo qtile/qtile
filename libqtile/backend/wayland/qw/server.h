@@ -156,6 +156,8 @@ typedef void (*workspace_manager_group_action_cb_t)(void *userdata, const char *
 
 // Callback for systemt bell
 typedef void (*on_system_bell_cb_t)(void *userdata, void *view);
+// Callback for animation completion
+typedef void (*qw_anim_complete_cb_t)(int wid, void *cb_data);
 
 enum {
     LAYER_BACKGROUND,   // background, layer shell
@@ -226,6 +228,7 @@ struct qw_server {
     void *cb_data;
     struct qw_layer_view *exclusive_layer;
     enum qw_session_lock_state lock_state;
+    qw_anim_complete_cb_t anim_complete_cb;
 
     // Private data
     struct wl_event_loop *event_loop;
@@ -289,6 +292,7 @@ struct qw_server {
     struct wl_listener system_bell_ring;
     struct wl_list grabbed_keys;
     struct wl_list grabbed_buttons;
+    struct wl_list views;
 #if WLR_HAS_XWAYLAND
     struct wlr_xwayland *xwayland;
     struct wl_listener xwayland_ready;
