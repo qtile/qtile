@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/util/region.h>
 
@@ -9,7 +10,65 @@
 #include "view.h"
 #include "wayland-util.h"
 
+static void qw_cursor_apply(struct qw_cursor *cursor) {
+    // persistent_hide always takes precedence over client-side cursor requests
+    if (cursor->override_shape && strcmp(cursor->override_shape, "persistent_hide") == 0) {
+        wlr_cursor_set_surface(cursor->cursor, NULL, 0, 0);
+        return;
+    }
+
+    if (cursor->override_shape) {
+        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, cursor->override_shape);
+    } else if (cursor->saved_surface_requested) {
+        wlr_cursor_set_surface(cursor->cursor, cursor->saved_surface, cursor->saved_hotspot_x,
+                               cursor->saved_hotspot_y);
+    } else {
+        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr,
+                               cursor->current_shape_name ? cursor->current_shape_name : "default");
+    }
+}
+
+static void qw_cursor_handle_saved_surface_destroy(struct wl_listener *listener, void *data) {
+    UNUSED(data);
+
+    struct qw_cursor *cursor = wl_container_of(listener, cursor, saved_surface_destroy);
+
+    cursor->saved_surface = NULL;
+    cursor->saved_surface_requested = false;
+
+    wl_list_remove(&cursor->saved_surface_destroy.link);
+
+    qw_cursor_apply(cursor);
+}
+
+static void qw_cursor_clear_saved_surface(struct qw_cursor *cursor) {
+    if (cursor->saved_surface) {
+        wl_list_remove(&cursor->saved_surface_destroy.link);
+    }
+
+    cursor->saved_surface = NULL;
+    cursor->saved_surface_requested = false;
+}
+
+static void qw_cursor_save_surface(struct qw_cursor *cursor, struct wlr_surface *surface,
+                                   uint32_t hotspot_x, uint32_t hotspot_y) {
+    qw_cursor_clear_saved_surface(cursor);
+
+    cursor->saved_surface = surface;
+    cursor->saved_hotspot_x = hotspot_x;
+    cursor->saved_hotspot_y = hotspot_y;
+    cursor->saved_surface_requested = true;
+    cursor->current_shape_name = NULL;
+
+    if (surface) {
+        cursor->saved_surface_destroy.notify = qw_cursor_handle_saved_surface_destroy;
+        wl_signal_add(&surface->events.destroy, &cursor->saved_surface_destroy);
+    }
+}
+
 void qw_cursor_destroy(struct qw_cursor *cursor) {
+    qw_cursor_clear_saved_surface(cursor);
+    free(cursor->override_shape);
     wl_list_remove(&cursor->request_set.link);
     wl_list_remove(&cursor->axis.link);
     wl_list_remove(&cursor->motion.link);
@@ -40,7 +99,9 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
         wlr_seat_pointer_clear_focus(seat);
         // Reset cursor if we're not over a surface and we're not dragging
         if (seat->drag == NULL) {
-            wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+            cursor->current_shape_name = "default";
+            qw_cursor_clear_saved_surface(cursor);
+            qw_cursor_apply(cursor);
         }
     } else {
         // no-op if surface is already focused
@@ -249,16 +310,8 @@ static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void
     }
 
     // Save the requested surface and hotspot info
-    cursor->saved_surface = event->surface;
-    cursor->saved_hotspot_x = event->hotspot_x;
-    cursor->saved_hotspot_y = event->hotspot_y;
-
-    if (cursor->hidden) {
-        // Skip applying the cursor while hidden
-        return;
-    }
-
-    wlr_cursor_set_surface(cursor->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+    qw_cursor_save_surface(cursor, event->surface, event->hotspot_x, event->hotspot_y);
+    qw_cursor_apply(cursor);
 }
 
 void qw_cursor_release_implicit_grab(struct qw_cursor *cursor, uint32_t time) {
@@ -524,10 +577,24 @@ void qw_cursor_show(struct qw_cursor *cursor) {
         return;
     cursor->hidden = false;
 
-    if (cursor->saved_surface) {
-        wlr_cursor_set_surface(cursor->cursor, cursor->saved_surface, cursor->saved_hotspot_x,
-                               cursor->saved_hotspot_y);
+    qw_cursor_apply(cursor);
+}
+
+void qw_cursor_set_shape(struct qw_cursor *cursor, const char *name) {
+    if (name && strcmp(name, "reset_cursor") == 0) {
+        name = NULL;
     }
+
+    char *shape = name ? strdup(name) : NULL;
+
+    if (name && !shape) {
+        return;
+    }
+
+    free(cursor->override_shape);
+    cursor->override_shape = shape;
+
+    qw_cursor_apply(cursor);
 }
 
 static void qw_cursor_handle_pointer_constraint_set_region(struct wl_listener *listener,
@@ -765,7 +832,7 @@ void qw_cursor_configure_xcursor(struct qw_cursor *cursor) {
 
         // Reset the cursor so that we apply it to outputs that just appeared
         wlr_cursor_unset_image(cursor->cursor);
-        wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+        qw_cursor_apply(cursor);
         wlr_cursor_warp(cursor->cursor, NULL, cursor->cursor->x, cursor->cursor->y);
     }
 }
@@ -797,8 +864,8 @@ static void qw_handle_request_set_cursor_shape(struct wl_listener *listener, voi
 
     const char *name = wlr_cursor_shape_v1_name(event->shape);
     cursor->current_shape_name = name;
-
-    wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, name);
+    qw_cursor_clear_saved_surface(cursor);
+    qw_cursor_apply(cursor);
 }
 
 void qw_cursor_drag_polling_rate(struct qw_cursor *cursor, int32_t rate) {

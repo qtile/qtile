@@ -806,6 +806,12 @@ class Core(base.Core):
         lib.qw_cursor_show(self.qw_cursor)
 
     @expose_command()
+    def set_cursor_shape(self, shape: str) -> None:
+        """'reset_cursor' , 'persistent_hide' or wp-cursor-shape-v1 cursor shapes can be used, such as crosshair"""
+        shape_buf = ffi.new("char[]", shape.encode("utf-8"))
+        lib.qw_cursor_set_shape(self.qw_cursor, shape_buf)
+
+    @expose_command()
     def get_inputs(self) -> dict[str, list[dict[str, str]]]:
         """Get information on all input devices."""
         info: defaultdict[str, list[dict]] = defaultdict(list)

@@ -37,6 +37,9 @@ struct qw_cursor {
     struct wlr_surface *saved_surface;
     uint32_t saved_hotspot_x;
     uint32_t saved_hotspot_y;
+    char *override_shape;
+    bool saved_surface_requested;
+    struct wl_listener saved_surface_destroy;
     bool hidden;
     struct wlr_pointer_constraint_v1 *active_constraint;
     bool active_confine_requires_warp;
@@ -74,6 +77,7 @@ void qw_cursor_update_pointer_focus(struct qw_cursor *cursor);
 // Functions for hiding and showing the cursor
 void qw_cursor_hide(struct qw_cursor *cursor);
 void qw_cursor_show(struct qw_cursor *cursor);
+void qw_cursor_set_shape(struct qw_cursor *cursor, const char *name);
 
 void qw_cursor_release_implicit_grab(struct qw_cursor *cursor, uint32_t time);
 
