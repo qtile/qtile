@@ -84,8 +84,10 @@ class Base(base._Window):
 
         if enable:
             self.reparent(lib.LAYER_KEEPABOVE)
+            self.move_to_top()
         else:
             self.reparent(lib.LAYER_LAYOUT)
+            self.move_to_top()
 
     @expose_command()
     def keep_below(self, enable: bool | None = None) -> None:
