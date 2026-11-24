@@ -44,7 +44,7 @@ struct qw_cursor {
     // wids of the Internal or client view currently under the pointer (-1 if none).
     int prev_wid;
     bool prev_was_internal;
-    bool pointer_masked;
+    int pointer_mask_depth;
     uint32_t drag_polling_rate;
     uint32_t last_motion_time;
     int pressed_button_count;

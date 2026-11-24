@@ -1,5 +1,6 @@
 #include "view.h"
 #include "cairo-buffer.h"
+#include "cursor.h"
 #include "server.h"
 #include "util.h"
 #include <stdlib.h>
@@ -94,9 +95,11 @@ void qw_view_reparent(struct qw_view *view, int layer) {
 
 void qw_view_raise_to_top(struct qw_view *view) {
     wlr_scene_node_raise_to_top(&view->content_tree->node);
+    qw_cursor_update_pointer_focus(view->server->cursor, false);
 }
 void qw_view_lower_to_bottom(struct qw_view *view) {
     wlr_scene_node_lower_to_bottom(&view->content_tree->node);
+    qw_cursor_update_pointer_focus(view->server->cursor, false);
 }
 
 void qw_view_move_up(struct qw_view *view) {
@@ -136,6 +139,8 @@ void qw_view_move_up(struct qw_view *view) {
     if (next_sibling) {
         wlr_scene_node_place_above(&view->content_tree->node, next_sibling);
     }
+
+    qw_cursor_update_pointer_focus(view->server->cursor, false);
 }
 
 void qw_view_move_down(struct qw_view *view) {
@@ -171,6 +176,8 @@ void qw_view_move_down(struct qw_view *view) {
     if (prev_sibling) {
         wlr_scene_node_place_below(&view->content_tree->node, prev_sibling);
     }
+
+    qw_cursor_update_pointer_focus(view->server->cursor, false);
 }
 
 bool qw_view_is_visible(struct qw_view *view) { return view->content_tree->node.enabled; }

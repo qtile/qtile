@@ -57,7 +57,7 @@ static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, do
     int new_wid = view ? view->wid : -1;
     bool new_internal = view && view->view_type == QW_VIEW_INTERNAL;
 
-    if (cursor->pointer_masked || server->pointer_event_cb == NULL) {
+    if (cursor->pointer_mask_depth > 0 || server->pointer_event_cb == NULL) {
         // Keep tracking the view under the pointer while delivery is suppressed
         cursor->prev_wid = new_wid;
         cursor->prev_was_internal = new_internal;
@@ -99,7 +99,11 @@ static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, do
 }
 
 void qw_cursor_mask_pointer_events(struct qw_cursor *cursor, bool masked) {
-    cursor->pointer_masked = masked;
+    if (masked) {
+        cursor->pointer_mask_depth++;
+    } else if (cursor->pointer_mask_depth > 0) {
+        cursor->pointer_mask_depth--;
+    }
 }
 
 // Update pointer focus without motion

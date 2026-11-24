@@ -103,24 +103,29 @@ class Base(base._Window):
 
     @expose_command()
     def move_to_top(self) -> None:
-        lib.qw_view_raise_to_top(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_raise_to_top(self._ptr)
 
     @expose_command()
     def move_up(self, force: bool = False) -> None:
-        lib.qw_view_move_up(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_up(self._ptr)
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
-        lib.qw_view_move_down(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_down(self._ptr)
 
     @expose_command()
     def move_to_bottom(self) -> None:
-        lib.qw_view_lower_to_bottom(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_lower_to_bottom(self._ptr)
 
     @expose_command()
     def bring_to_front(self) -> None:
         self.reparent(lib.LAYER_BRINGTOFRONT)
-        lib.qw_view_raise_to_top(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_raise_to_top(self._ptr)
 
     @property
     def wid(self) -> int:
@@ -710,14 +715,16 @@ class Window(Base, base.Window):
         if force and self.layer() == lib.LAYER_KEEPBELOW:
             new_layer = self.get_new_layer(self._float_state)
             self.reparent(new_layer)
-        lib.qw_view_move_up(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_up(self._ptr)
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
         if force and self.layer() == lib.LAYER_KEEPABOVE:
             new_layer = self.get_new_layer(self._float_state)
             self.reparent(new_layer)
-        lib.qw_view_move_down(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_down(self._ptr)
 
     @expose_command()
     def info(self) -> dict:
