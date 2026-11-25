@@ -369,8 +369,10 @@ class Internal(Base, base.Internal):
     @expose_command()
     def kill(self) -> None:
         if not self._killed:
-            self._ptr.kill(self._ptr)
             self._killed = True
+            self._ptr.kill(self._ptr)
+            self._ptr = None
+            self._internal_ptr = None
         if self.wid in self.qtile.windows_map:
             # It will be present during config reloads; absent during shutdown as this
             # will follow graceful_shutdown
@@ -560,6 +562,7 @@ class Window(Base, base.Window):
         win = self._to_static(conf_x, conf_y, conf_width, conf_height)
 
         # Remove references to original window
+        self._ptr = None
         self._userdata = None
 
         # TODO: pass over ftm
