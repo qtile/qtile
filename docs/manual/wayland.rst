@@ -10,7 +10,8 @@ orgs/qtile/projects/2>`__ for the current state of development. Also
 checkout the `unresolved Wayland-specific issues <https://github.com/
 qtile/qtile/issues?q=is%3Aissue+is%3Aopen+label%3A%22core%3A+wayland%22>`__
 and :ref:`troubleshooting <debugging-wayland>` for tips on how to debug Wayland
-problems.
+problems. The Wayland protocols that the compositor supports are listed on the
+:ref:`supported protocols <wayland_protocols>` page.
 
 Backend-Specific Configuration
 ==============================
