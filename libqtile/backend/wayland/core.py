@@ -53,7 +53,7 @@ from libqtile.backend import base
 from libqtile.backend.wayland import inputs
 from libqtile.backend.wayland.idle_inhibit import IdleInhibitorManager
 from libqtile.backend.wayland.idle_notify import IdleNotifier
-from libqtile.backend.wayland.window import Base, Internal, Window
+from libqtile.backend.wayland.window import Base, Internal, Static, Window
 from libqtile.command.base import allow_when_locked, expose_command
 from libqtile.config import Output, Screen, ScreenRect
 from libqtile.group import _Group
@@ -543,7 +543,10 @@ class Core(base.Core):
             self.check_screen_fullscreen_background(win.group.screen)
 
     def handle_unmanage_view(self, view: ffi.CData) -> None:
+        win = self.qtile.windows_map.get(view.wid)
         self.qtile.unmanage(view.wid)
+        if isinstance(win, (Window, Static)):
+            win._ptr = None
         self.check_screen_fullscreen_background()
 
     def handle_keyboard_key(self, keysym: int, mask: int) -> bool:
