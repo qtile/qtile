@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -28,6 +29,50 @@ def test_validate():
     f.keys[0].modifiers = ["nonexistent"]
     with pytest.raises(confreader.ConfigError):
         f.validate()
+
+
+@pytest.mark.parametrize("policy", [None, False, "swap_screen_groups"])
+def test_update_rejects_noncallable_screen_group_policy_before_changing_settings(policy):
+    f = confreader.Config(wmname="original")
+    original_policy = f.screen_group_policy
+    original_keys = f.keys
+
+    with pytest.raises(confreader.ConfigError, match="screen_group_policy must be callable"):
+        f.update(keys=[], wmname="replacement", screen_group_policy=policy)
+
+    assert f.screen_group_policy is original_policy
+    assert f.keys is original_keys
+    assert f.wmname == "original"
+
+
+def test_load_rejects_none_screen_group_policy_and_preserves_active_settings(
+    tmp_path, monkeypatch
+):
+    config_file = tmp_path / "screen_policy_reload.py"
+    config_file.write_text(
+        "from libqtile.screen_group_policy import swap_screen_groups\n"
+        "keys = []\n"
+        "wmname = 'original'\n"
+        "screen_group_policy = swap_screen_groups\n"
+    )
+    monkeypatch.syspath_prepend(tmp_path)
+    f = confreader.Config(config_file)
+    try:
+        f.load()
+        original_policy = f.screen_group_policy
+        original_keys = f.keys
+        config_file.write_text(
+            "keys = ['replacement']\nwmname = 'replacement'\nscreen_group_policy = None\n"
+        )
+
+        with pytest.raises(confreader.ConfigError, match="screen_group_policy must be callable"):
+            f.load()
+
+        assert f.screen_group_policy is original_policy
+        assert f.keys is original_keys
+        assert f.wmname == "original"
+    finally:
+        sys.modules.pop(config_file.stem, None)
 
 
 def test_basic():
