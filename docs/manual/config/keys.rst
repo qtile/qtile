@@ -234,8 +234,31 @@ to the list:
 Special keys
 ============
 
-These are most commonly used special keys. For complete list please see
-`the code <https://github.com/qtile/qtile/blob/master/libqtile/backend/x11/xkeysyms.py>`_.
+These are most commonly used special keys. The complete list comes from X11's
+``keysymdef.h`` and ``XF86keysym.h``: strip the ``XK_`` or ``XF86XK_`` prefix
+from any name in those headers (keeping the ``XF86`` part) to get the name
+qtile expects. For example:
+
+.. list-table::
+    :header-rows: 1
+
+    * - Header name
+      - qtile name
+    * - ``XK_Print``
+      - ``Print``
+    * - ``XK_Page_Up``
+      - ``Page_Up``
+    * - ``XK_KP_Enter``
+      - ``KP_Enter``
+    * - ``XK_adiaeresis``
+      - ``adiaeresis``
+    * - ``XF86XK_AudioPlay``
+      - ``XF86AudioPlay``
+    * - ``XF86XK_AudioMicMute``
+      - ``XF86AudioMicMute``
+    * - ``XF86XK_Calculator``
+      - ``XF86Calculator``
+
 You can create bindings on them just like for the regular keys. For example
 ``Key(["mod1"], "F4", lazy.window.kill())``.
 
