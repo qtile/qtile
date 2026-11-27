@@ -44,7 +44,7 @@ struct qw_cursor {
     // wids of the Internal or client view currently under the pointer (-1 if none).
     int prev_wid;
     bool prev_was_internal;
-    bool pointer_masked;
+    int pointer_mask_depth;
     uint32_t drag_polling_rate;
     uint32_t last_motion_time;
     int pressed_button_count;
@@ -69,7 +69,7 @@ struct qw_cursor *qw_server_cursor_create(struct qw_server *cursor);
 
 void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y, bool motion);
 
-void qw_cursor_update_pointer_focus(struct qw_cursor *cursor);
+void qw_cursor_update_pointer_focus(struct qw_cursor *cursor, bool motion);
 
 // Functions for hiding and showing the cursor
 void qw_cursor_hide(struct qw_cursor *cursor);

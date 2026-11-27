@@ -29,7 +29,7 @@ void qw_cursor_destroy(struct qw_cursor *cursor) {
 
 // Forward declaration: dispatch Internal-view enter/leave/motion to compositor.
 static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, double sx, double sy,
-                                                    uint32_t time);
+                                                    uint32_t time, bool motion);
 
 // Pointer focus helper function
 static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *surface, double sx,
@@ -41,6 +41,7 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
         // Reset cursor if we're not over a surface and we're not dragging
         if (seat->drag == NULL) {
             wlr_cursor_set_xcursor(cursor->cursor, cursor->mgr, "default");
+            cursor->current_shape_name = NULL;
         }
     } else {
         // no-op if surface is already focused
@@ -49,16 +50,19 @@ static void update_pointer_focus(struct qw_cursor *cursor, struct wlr_surface *s
 }
 
 static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, double sx, double sy,
-                                                    uint32_t time) {
+                                                    uint32_t time, bool motion) {
     struct qw_server *server = cursor->server;
     struct qw_view *view = cursor->view;
 
-    if (cursor->pointer_masked || server->pointer_event_cb == NULL) {
-        return;
-    }
-
     int new_wid = view ? view->wid : -1;
     bool new_internal = view && view->view_type == QW_VIEW_INTERNAL;
+
+    if (cursor->pointer_mask_depth > 0 || server->pointer_event_cb == NULL) {
+        // Keep tracking the view under the pointer while delivery is suppressed
+        cursor->prev_wid = new_wid;
+        cursor->prev_was_internal = new_internal;
+        return;
+    }
 
     if (new_wid != cursor->prev_wid) {
         // pointer moved over a different window
@@ -82,6 +86,10 @@ static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, do
         }
     } else if ((new_wid != -1 && new_internal) || cursor->pointer_grabbed) {
         // pointer moved within an internal window or we're dragging
+        if (!motion) {
+            return;
+        }
+
         uint32_t rate = cursor->drag_polling_rate; // 0 = unlimited
         if (rate == 0 || (time - cursor->last_motion_time) > 1000 / rate) {
             cursor->last_motion_time = time;
@@ -91,11 +99,15 @@ static void qw_cursor_dispatch_pointer_notification(struct qw_cursor *cursor, do
 }
 
 void qw_cursor_mask_pointer_events(struct qw_cursor *cursor, bool masked) {
-    cursor->pointer_masked = masked;
+    if (masked) {
+        cursor->pointer_mask_depth++;
+    } else if (cursor->pointer_mask_depth > 0) {
+        cursor->pointer_mask_depth--;
+    }
 }
 
 // Update pointer focus without motion
-void qw_cursor_update_pointer_focus(struct qw_cursor *cursor) {
+void qw_cursor_update_pointer_focus(struct qw_cursor *cursor, bool motion) {
     struct wlr_surface *surface = NULL;
     double sx = 0.0, sy = 0.0;
 
@@ -103,6 +115,7 @@ void qw_cursor_update_pointer_focus(struct qw_cursor *cursor) {
         qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
     update_pointer_focus(cursor, surface, sx, sy);
+    qw_cursor_dispatch_pointer_notification(cursor, sx, sy, 0, motion);
 }
 
 static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
@@ -167,7 +180,7 @@ static void qw_cursor_process_motion(struct qw_cursor *cursor, uint32_t time,
         qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
 
     update_pointer_focus(cursor, surface, sx, sy);
-    qw_cursor_dispatch_pointer_notification(cursor, sx, sy, time);
+    qw_cursor_dispatch_pointer_notification(cursor, sx, sy, time, true);
 
     wlr_scene_node_set_position(&cursor->server->drag_icon->node, (int)cursor->cursor->x,
                                 (int)cursor->cursor->y);
@@ -232,9 +245,7 @@ void qw_cursor_warp_cursor(struct qw_cursor *cursor, double x, double y, bool mo
     cursor->view =
         qw_server_view_at(cursor->server, cursor->cursor->x, cursor->cursor->y, &surface, &sx, &sy);
     update_pointer_focus(cursor, surface, sx, sy);
-    if (motion) {
-        qw_cursor_dispatch_pointer_notification(cursor, sx, sy, 0);
-    }
+    qw_cursor_dispatch_pointer_notification(cursor, sx, sy, 0, motion);
 }
 
 static void qw_cursor_handle_seat_request_set(struct wl_listener *listener, void *data) {
@@ -601,7 +612,7 @@ static void check_constraint_region(struct qw_cursor *cursor) {
 
         // We may be over the constrained surface but haven't got pointer focus yet
         if (cursor->server->seat->pointer_state.focused_surface != constraint->surface) {
-            qw_cursor_update_pointer_focus(cursor);
+            qw_cursor_update_pointer_focus(cursor, false);
         }
 
         double sx = cursor->cursor->x - view->x;
@@ -616,7 +627,7 @@ static void check_constraint_region(struct qw_cursor *cursor) {
 
                 wlr_cursor_warp_closest(cursor->cursor, NULL, sx - view->x, sy - view->y);
 
-                qw_cursor_update_pointer_focus(cursor);
+                qw_cursor_update_pointer_focus(cursor, false);
             }
         }
     }

@@ -84,8 +84,10 @@ class Base(base._Window):
 
         if enable:
             self.reparent(lib.LAYER_KEEPABOVE)
+            self.move_to_top()
         else:
             self.reparent(lib.LAYER_LAYOUT)
+            self.move_to_top()
 
     @expose_command()
     def keep_below(self, enable: bool | None = None) -> None:
@@ -101,24 +103,29 @@ class Base(base._Window):
 
     @expose_command()
     def move_to_top(self) -> None:
-        lib.qw_view_raise_to_top(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_raise_to_top(self._ptr)
 
     @expose_command()
     def move_up(self, force: bool = False) -> None:
-        lib.qw_view_move_up(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_up(self._ptr)
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
-        lib.qw_view_move_down(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_down(self._ptr)
 
     @expose_command()
     def move_to_bottom(self) -> None:
-        lib.qw_view_lower_to_bottom(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_lower_to_bottom(self._ptr)
 
     @expose_command()
     def bring_to_front(self) -> None:
         self.reparent(lib.LAYER_BRINGTOFRONT)
-        lib.qw_view_raise_to_top(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_raise_to_top(self._ptr)
 
     @property
     def wid(self) -> int:
@@ -708,14 +715,16 @@ class Window(Base, base.Window):
         if force and self.layer() == lib.LAYER_KEEPBELOW:
             new_layer = self.get_new_layer(self._float_state)
             self.reparent(new_layer)
-        lib.qw_view_move_up(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_up(self._ptr)
 
     @expose_command()
     def move_down(self, force: bool = False) -> None:
         if force and self.layer() == lib.LAYER_KEEPABOVE:
             new_layer = self.get_new_layer(self._float_state)
             self.reparent(new_layer)
-        lib.qw_view_move_down(self._ptr)
+        with self.qtile.core.masked():
+            lib.qw_view_move_down(self._ptr)
 
     @expose_command()
     def info(self) -> dict:
@@ -830,6 +839,12 @@ class Window(Base, base.Window):
         h: int | None = None,
         new_float_state: FloatStates = FloatStates.FLOATING,
     ) -> None:
+        if new_float_state == FloatStates.MINIMIZED:
+            self.hide()
+        else:
+            self.place(
+                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
+            )
         if self._float_state != new_float_state:
             old_state = self._float_state
             self._float_state = new_float_state
@@ -841,12 +856,6 @@ class Window(Base, base.Window):
             self._update_minimized(new_float_state == FloatStates.MINIMIZED, old_state)
 
             hook.fire("float_change")
-        if new_float_state == FloatStates.MINIMIZED:
-            self.hide()
-        else:
-            self.place(
-                x, y, w, h, self.borderwidth, self.bordercolor, above=False, respect_hints=True
-            )
 
     def _tweak_float(
         self,

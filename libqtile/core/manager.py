@@ -933,7 +933,7 @@ class Qtile(CommandObject):
                 continue
 
             if isinstance(m, Click):
-                if self.config.follow_mouse_focus == "click_or_drag_only":
+                if self.config.follow_mouse_focus is not False:
                     self.focus_hovered_window()
                 for i in m.commands:
                     if i.check(self):
@@ -944,7 +944,7 @@ class Qtile(CommandObject):
                             logger.error("Mouse command error %s: %s", i.name, val)
                         handled = True
             elif isinstance(m, Drag):
-                if self.config.follow_mouse_focus == "click_or_drag_only":
+                if self.config.follow_mouse_focus is not False:
                     self.focus_hovered_window()
                 if not self.current_window or self.current_window.fullscreen:
                     continue

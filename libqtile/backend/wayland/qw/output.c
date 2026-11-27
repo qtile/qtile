@@ -140,7 +140,7 @@ void qw_output_arrange_layers(struct qw_output *output) {
     }
 
     // View under the cursor may have changed
-    qw_cursor_update_pointer_focus(output->server->cursor);
+    qw_cursor_update_pointer_focus(output->server->cursor, false);
 }
 
 void qw_server_output_new(struct qw_server *server, struct wlr_output *wlr_output) {

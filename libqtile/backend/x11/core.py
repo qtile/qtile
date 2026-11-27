@@ -620,6 +620,11 @@ class Core(base.Core):
         yield
         for i in self.qtile.windows_map.values():
             i._reset_mask()
+        # Update hovered_window
+        reply = self.conn.conn.core.QueryPointer(self._root.wid).reply()
+        if not reply.child:
+            return
+        self.qtile.hovered_window = self.qtile.windows_map.get(reply.child)
 
     def create_internal(
         self,

@@ -696,10 +696,15 @@ class Core(base.Core):
     @contextlib.contextmanager
     def masked(self) -> Generator:
         lib.qw_cursor_mask_pointer_events(self.qw_cursor, True)
-        yield
-        lib.qw_cursor_mask_pointer_events(self.qw_cursor, False)
-        # Update pointer focus without cursor motion
-        lib.qw_cursor_update_pointer_focus(self.qw_cursor)
+        try:
+            yield
+        finally:
+            lib.qw_cursor_mask_pointer_events(self.qw_cursor, False)
+
+            # Since any crossings are swallowed, refresh hovered window
+            view = self.qw_cursor.view
+            if view != ffi.NULL:
+                self.qtile.hovered_window = self.qtile.windows_map.get(view.wid)
 
     @property
     def name(self) -> str:
