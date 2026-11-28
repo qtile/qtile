@@ -378,6 +378,7 @@ class TestManager:
             env.pop("WAYLAND_DISPLAY", None)
             env.update(self.backend.env)
             proc = subprocess.Popen(args, env=env)
+            self.testwindows.append(proc)
 
         def failed():
             if proc.poll() is not None:
@@ -385,7 +386,6 @@ class TestManager:
             return False
 
         self.create_window(spawn, failed=failed)
-        self.testwindows.append(proc)
         return proc
 
     def kill_window(self, proc):
