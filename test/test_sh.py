@@ -1,10 +1,11 @@
 import pytest
 
-from libqtile import config, ipc, resources
+from libqtile import config, resources
 from libqtile.bar import Bar
 from libqtile.command.base import expose_command
 from libqtile.command.interface import IPCCommandInterface
 from libqtile.confreader import Config
+from libqtile.ipc.client import Client
 from libqtile.layout import Max
 from libqtile.sh import COMMA_MATCHER, QSh, split_args
 from libqtile.widget import TextBox
@@ -34,7 +35,7 @@ sh_config = pytest.mark.parametrize("manager", [ShConfig], indirect=True)
 
 @sh_config
 def test_columnize(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.columnize(["one", "two"]) == "one  two"
@@ -49,7 +50,7 @@ def test_columnize(manager):
 
 @sh_config
 def test_ls(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_ls(None) == "bar/     group/   layout/  screen/  widget/  window/  core/  "
@@ -66,7 +67,7 @@ def test_ls(manager):
 
 @sh_config
 def test_do_cd(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_cd("layout") == "layout"
@@ -79,7 +80,7 @@ def test_do_cd(manager):
 
 @sh_config
 def test_call(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.process_line("status()") == "OK"
@@ -96,7 +97,7 @@ def test_call(manager):
 
 @sh_config
 def test_complete(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh._complete("c", "c") == [
@@ -115,7 +116,7 @@ def test_complete(manager):
 
 @sh_config
 def test_help(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_help("nonexistent").startswith("No such command")
@@ -124,7 +125,7 @@ def test_help(manager):
 
 @sh_config
 def test_eval(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     sh.process_line("eval(self._test_val=(1,2))")
@@ -161,7 +162,7 @@ def test_args_splitting(input, args, kwargs):
 
 @sh_config
 def test_comma_splitting(manager):
-    client = ipc.Client(manager.sockfile)
+    client = Client(manager.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
 
