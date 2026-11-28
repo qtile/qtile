@@ -39,6 +39,7 @@ struct qw_output {
     int y;
 
     struct wlr_box full_area;
+    struct wlr_box layer_area;
     struct wlr_box area;
 
     // Private data

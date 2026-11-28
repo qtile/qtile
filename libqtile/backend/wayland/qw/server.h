@@ -432,4 +432,7 @@ bool qw_server_button_grabbed(struct qw_server *server, uint32_t button, uint32_
 void qw_server_grab_button(struct qw_server *server, uint32_t button, uint32_t modifiers);
 void qw_server_ungrab_buttons(struct qw_server *server);
 
+void qw_server_set_output_usable_area(struct qw_server *server, int x, int y, int dx, int dy,
+                                      int dwidth, int dheight);
+
 #endif /* SERVER_H */
