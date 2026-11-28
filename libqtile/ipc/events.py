@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Any
 
-PROTOCOL_VERSION = 1
-
 # Clients whose unsent backlog exceeds this are disconnected rather than
 # allowed to grow qtile's memory use or stall the event loop.
 MAX_WRITE_BUFFER = 256 * 1024

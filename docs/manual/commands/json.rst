@@ -323,3 +323,10 @@ The ``status`` field inside reply messages indicates the execution status:
    * - ``2``
      - ``EXCEPTION``
      - An unhandled Python exception was raised during execution. The ``data`` field contains the formatted traceback string array.
+
+Versioning
+==========
+
+Qtile does not currently implement protocol versioning. While we reserve the right to change the contents of the json structures,
+we do not intend to make any changes to the framing protocol (i.e. length-prefixed json strings). Future changes are expected to be
+additive rather than breaking.
